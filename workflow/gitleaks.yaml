@@ -1,0 +1,48 @@
+name: Gitleaks Organization Scan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Required Tools
+        run: sudo apt update && sudo apt install -y jq
+
+      - name: Set Current Date
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Clone All Repositories
+        run: |
+          echo "Fetching and cloning all repositories..."
+          for page in {1..10}; do
+            curl -s -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            "https://api.github.com/orgs/Parloa/repos?per_page=100&page=$page" | \
+            jq -r '.[].ssh_url' | xargs -L1 git clone
+          done
+
+      - name: Run Gitleaks on All Repositories
+        run: |
+          mkdir -p gitleaks-reports
+          for repo in */; do
+            echo "🔍 Scanning $repo..."
+            docker run --rm -v "$(pwd)/$repo:/repo" \
+              ghcr.io/gitleaks/gitleaks:latest detect \
+              --source="/repo" --report-format=csv \
+              --report-path="/repo/gitleaks-report.csv" || true
+
+            mv "$repo/gitleaks-report.csv" "gitleaks-reports/${repo%/}-gitleaks-report.csv"
+            rm -rf "$repo"
+          done
+
+      # - name: Upload Gitleaks Reports to Azure Storage
+      #   uses: bacongobbler/azure-blob-storage-upload@main
+      #   with:
+      #     connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      #     container-name: gitleaks
+      #     source: "gitleaks-reports/*.csv"
+      #     blob-prefix: "reports/${{ env.DATE }}/"

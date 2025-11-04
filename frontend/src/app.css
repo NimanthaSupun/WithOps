@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+/* Global Dark Mode Support */
+.dark {
+	color-scheme: dark;
+}
+
+/* Ensure profile images load properly */
+img[src] {
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+img[src=''],
+img:not([src]),
+img[src^='data:image/svg']:not([src*='base64']) {
+	opacity: 0;
+}
+
+/* Loading state for profile images */
+.profile-image-loading {
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	animation: loading 1.5s infinite;
+}
+
+.dark .profile-image-loading {
+	background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+	background-size: 200% 100%;
+}
+
+@keyframes loading {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+/* Smooth transitions for theme changes */
+* {
+	transition-property: background-color, border-color, color, fill, stroke;
+	transition-duration: 200ms;
+	transition-timing-function: ease-in-out;
+}

@@ -1,0 +1,101 @@
+name: Build and Publish Linea Besu from Upstream Besu
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'version.env'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    environment: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dotenv Action
+        id: dotenv
+        uses: falti/dotenv-action@v1.1.4
+        with:
+          path: version.env
+          keys-case: lower
+          log-variables: true
+
+      - name: tag-exists-action
+        id: check-tag
+        uses: mukunku/tag-exists-action@v1.6.0
+        with:
+          tag: ${{ steps.dotenv.outputs.linea_besu_version }}
+
+      - name: Fail if tag exists
+        if: steps.check-tag.outputs.exists == 'true'
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            core.setFailed('Release tag ${{ steps.dotenv.outputs.linea_besu_version }} already exists in current repository')
+
+      - name: Checkout Besu repository
+        uses: actions/checkout@v4
+        with:
+          repository: hyperledger/besu
+          ref: ${{ steps.dotenv.outputs.upstream_besu_ref }}
+          path: linea-besu
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Modify build.gradle for Cloudsmith publish
+        run: java scripts/InjectLines.java ./linea-besu/build.gradle
+
+      - name: Copy Linea Config
+        run: cp ./config/*.json ./linea-besu/config/src/main/resources/
+
+      - name: Create Linea Besu distribution and publish maven artifacts
+        working-directory: ./linea-besu
+        run: ./gradlew -Prelease.releaseVersion=${{ steps.dotenv.outputs.linea_besu_version }} -Pversion=${{ steps.dotenv.outputs.linea_besu_version }} distTar publish
+        env:
+          CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+
+      - name: Generate Checksum
+        working-directory: ./linea-besu/build/distributions
+        run: |
+          for file in *.tar.gz; do
+           shasum -a 256 "$file" > "$file.sha256"
+          done
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2.2.0
+        with:
+          subject-path: './linea-besu/build/distributions/besu-${{ steps.dotenv.outputs.linea_besu_version }}.tar.gz'
+
+      # Create release tag and attach the distribution
+      - name: GH Linea Besu Release
+        id: release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          files: |
+            ./linea-besu/build/distributions/besu-${{ steps.dotenv.outputs.linea_besu_version }}.tar.gz
+            ./linea-besu/build/distributions/*.sha256
+          tag_name: ${{ steps.dotenv.outputs.linea_besu_version }}
+          body: |
+            **Linea Besu Version**: `${{ steps.dotenv.outputs.linea_besu_version }}`
+            **Upstream Besu Version**: `${{ steps.dotenv.outputs.upstream_besu_ref }}`
+          draft: false
+          prerelease: false
+          preserve_order: true
+
+

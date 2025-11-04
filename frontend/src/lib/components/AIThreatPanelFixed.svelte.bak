@@ -1,0 +1,397 @@
+<script>
+    import { onMount, onDestroy } from 'svelte';
+    import { 
+        aiThreats, 
+        aiAnalysisState, 
+        aiConfig, 
+        aiChatMessages,
+        aiThreatService,
+        aiActions,
+        activeAIThreats,
+        aiAnalysisStats
+    } from '$lib/stores/aiThreatStore.js';
+    import { toast } from 'svelte-sonner';
+    
+    // Props
+    export let canvasState = null;
+    export let selectedComponent = null;
+    export let onThreatSelect = null;
+
+    // Local state
+    let chatInput = '';
+    let isExpanded = false;
+    let showChat = false;
+    let showSettings = false;
+    let analysisMode = 'auto'; // 'auto', 'manual', 'live'
+    
+    // Reactive statements
+    $: currentThreats = $activeAIThreats;
+    $: stats = $aiAnalysisStats;
+    $: config = $aiConfig;
+    $: analysisState = $aiAnalysisState;
+    $: chatMessages = $aiChatMessages;
+
+    onMount(() => {
+        // Initialize AI service
+        aiThreatService.checkHealth();
+    });
+
+    // Handle component selection change
+    $: if (selectedComponent && config.autoAnalyze && analysisMode === 'auto') {
+        handleComponentAnalysis(selectedComponent);
+    }
+
+    // Handle canvas changes for live analysis
+    $: if (canvasState && config.realTimeMode && analysisMode === 'live') {
+        handleLiveAnalysis();
+    }
+
+    function handleComponentAnalysis(component) {
+        if (!component) return;
+        
+        // Use debounced analysis for better UX
+        aiThreatService.scheduleAnalysis(component, canvasState);
+    }
+
+    function handleLiveAnalysis() {
+        if (!selectedComponent) return;
+        
+        // Ultra-fast live feedback
+        aiThreatService.liveAnalysis(selectedComponent);
+    }
+
+    async function handleChatSubmit() {
+        if (!chatInput.trim() || !canvasState) return;
+        
+        const question = chatInput;
+        chatInput = '';
+        
+        await aiThreatService.askQuestion(question, canvasState);
+    }
+
+    function handleThreatClick(threat) {
+        if (onThreatSelect) {
+            onThreatSelect(threat);
+        }
+        
+        // Highlight affected components
+        if (threat.component_ids) {
+            // Emit event to highlight components
+            window.dispatchEvent(new CustomEvent('highlight-components', {
+                detail: { componentIds: threat.component_ids }
+            }));
+        }
+    }
+
+    async function getMitigationDetails(threat) {
+        const component = selectedComponent || { type: 'unknown' };
+        const details = await aiThreatService.getMitigationDetails(
+            threat.title, 
+            component.type
+        );
+        
+        if (details) {
+            toast.success('Mitigation Details', {
+                description: details.mitigation?.summary || 'Details retrieved'
+            });
+        }
+    }
+
+    function getSeverityColor(severity) {
+        switch (severity?.toLowerCase()) {
+            case 'critical': return 'text-red-600 bg-red-50';
+            case 'high': return 'text-orange-600 bg-orange-50';
+            case 'medium': return 'text-yellow-600 bg-yellow-50';
+            case 'low': return 'text-green-600 bg-green-50';
+            default: return 'text-gray-600 bg-gray-50';
+        }
+    }
+
+    function formatResponseTime(ms) {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+    }
+</script>
+
+<aside class="ai-threat-panel bg-white border-l border-gray-200 w-96 flex flex-col h-full" aria-label="AI Threat Analysis Panel">
+    <!-- Header -->
+    <header class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <section class="flex items-center justify-between">
+            <section class="flex items-center gap-2">
+                <figure class="p-2 bg-blue-100 rounded-lg" aria-label="AI Robot Icon">
+                    🤖
+                </figure>
+                <hgroup>
+                    <h3 class="font-semibold text-gray-900">AI Threat Analysis</h3>
+                    <p class="text-xs text-gray-500">
+                        {#if stats.isRealTime}
+                            ⚡ Real-time • {formatResponseTime(stats.averageResponseTime)}
+                        {:else}
+                            🔄 Standard mode
+                        {/if}
+                    </p>
+                </hgroup>
+            </section>
+            <nav class="flex items-center gap-1" aria-label="Panel Controls">
+                <button
+                    class="p-1 hover:bg-gray-100 rounded text-gray-500"
+                    on:click={() => showSettings = !showSettings}
+                    title="Settings"
+                >
+                    ⚙️
+                </button>
+                <button
+                    class="p-1 hover:bg-gray-100 rounded text-gray-500"
+                    on:click={() => isExpanded = !isExpanded}
+                    title={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                    {isExpanded ? '🔽' : '🔼'}
+                </button>
+            </nav>
+        </section>
+
+        <!-- Settings Panel -->
+        {#if showSettings}
+            <section class="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2" aria-labelledby="settings-title">
+                <h4 id="settings-title" class="sr-only">AI Analysis Settings</h4>
+                <fieldset class="flex items-center justify-between">
+                    <legend class="text-sm font-medium">Auto Analysis</legend>
+                    <button
+                        class="w-10 h-6 rounded-full transition-colors {config.autoAnalyze ? 'bg-blue-500' : 'bg-gray-300'}"
+                        on:click={aiActions.toggleAI}
+                        role="switch"
+                        aria-checked={config.autoAnalyze}
+                        aria-label="Toggle Auto Analysis"
+                    >
+                        <span class="w-4 h-4 bg-white rounded-full transform transition-transform {config.autoAnalyze ? 'translate-x-5' : 'translate-x-1'}" aria-hidden="true"></span>
+                    </button>
+                </fieldset>
+                <fieldset class="flex items-center justify-between">
+                    <legend class="text-sm font-medium">Real-time Mode</legend>
+                    <button
+                        class="w-10 h-6 rounded-full transition-colors {config.realTimeMode ? 'bg-green-500' : 'bg-gray-300'}"
+                        on:click={aiActions.toggleRealTime}
+                        role="switch"
+                        aria-checked={config.realTimeMode}
+                        aria-label="Toggle Real-time Mode"
+                    >
+                        <span class="w-4 h-4 bg-white rounded-full transform transition-transform {config.realTimeMode ? 'translate-x-5' : 'translate-x-1'}" aria-hidden="true"></span>
+                    </button>
+                </fieldset>
+                <fieldset class="flex items-center gap-2">
+                    <label for="analysis-mode-select" class="text-sm font-medium">Mode:</label>
+                    <select id="analysis-mode-select" bind:value={analysisMode} class="text-xs border rounded px-2 py-1">
+                        <option value="auto">Auto</option>
+                        <option value="live">Live</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                </fieldset>
+            </section>
+        {/if}
+
+        <!-- Status Bar -->
+        <footer class="mt-2 flex items-center justify-between text-xs" aria-label="Analysis Status">
+            <section class="flex items-center gap-2" aria-live="polite">
+                {#if analysisState.isAnalyzing}
+                    <status class="flex items-center gap-1 text-blue-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden="true"></span>
+                        Analyzing...
+                    </status>
+                {:else}
+                    <status class="text-green-600">✓ Ready</status>
+                {/if}
+            </section>
+            <aside class="text-gray-500" aria-label="Threats Count">
+                {currentThreats.length} threats found
+            </aside>
+        </footer>
+    </header>
+
+    {#if isExpanded}
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200" role="tablist" aria-label="Analysis Tabs">
+                <button
+                    class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors {!showChat ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+                    on:click={() => showChat = false}
+                    role="tab"
+                    aria-selected={!showChat}
+                    aria-controls="threats-panel"
+                    tabindex={!showChat ? "0" : "-1"}
+                >
+                    🛡️ Threats ({currentThreats.length})
+                </button>
+                <button
+                    class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors {showChat ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+                    on:click={() => showChat = true}
+                    role="tab"
+                    aria-selected={showChat}
+                    aria-controls="chat-panel"
+                    tabindex={showChat ? "0" : "-1"}
+                >
+                    💬 AI Chat
+                </button>
+            </div>
+
+            {#if !showChat}
+                <!-- Threats List -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                    {#if currentThreats.length === 0}
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">🔍</div>
+                            <p class="text-sm">No threats detected</p>
+                            {#if selectedComponent}
+                                <button
+                                    class="mt-2 text-blue-600 text-sm hover:underline"
+                                    on:click={() => handleComponentAnalysis(selectedComponent)}
+                                >
+                                    Analyze selected component
+                                </button>
+                            {/if}
+                        </div>
+                    {:else}
+                        {#each currentThreats as threat}
+                            <div 
+                                class="p-3 border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer transition-colors"
+                                on:click={() => handleThreatClick(threat)}
+                                on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? handleThreatClick(threat) : null}
+                                role="button"
+                                tabindex="0"
+                                aria-label="View threat details: {threat.title}"
+                            >
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-900 text-sm leading-tight">
+                                        {threat.title}
+                                    </h4>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {getSeverityColor(threat.severity)}">
+                                        {threat.severity}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-xs text-gray-600 mb-2">
+                                    {threat.description}
+                                </p>
+                                
+                                <div class="flex items-center justify-between text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-500">
+                                            🏷️ {threat.category}
+                                        </span>
+                                        {#if threat.confidence}
+                                            <span class="text-gray-500">
+                                                🎯 {Math.round(threat.confidence * 100)}%
+                                            </span>
+                                        {/if}
+                                    </div>
+                                    <button
+                                        class="text-blue-600 hover:underline"
+                                        on:click|stopPropagation={() => getMitigationDetails(threat)}
+                                    >
+                                        Fix →
+                                    </button>
+                                </div>
+                                
+                                {#if threat.mitigation}
+                                    <div class="mt-2 p-2 bg-green-50 rounded text-xs text-green-800">
+                                        💡 {threat.mitigation}
+                                    </div>
+                                {/if}
+                                
+                                {#if threat.response_time}
+                                    <div class="mt-1 text-xs text-gray-400">
+                                        ⚡ {formatResponseTime(threat.response_time)}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            {:else}
+                <!-- AI Chat -->
+                <div class="flex-1 flex flex-col" id="chat-panel" role="tabpanel" aria-labelledby="chat-tab">
+                    <section class="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Chat Messages">
+                        {#if chatMessages.length === 0}
+                            <article class="text-center py-8 text-gray-500">
+                                <figure class="text-4xl mb-2" aria-label="Chat Icon">💬</figure>
+                                <p class="text-sm">Ask me anything about threat modeling</p>
+                                <p class="text-xs mt-1 text-gray-400">
+                                    Try: "What threats affect this API?" or "How do I secure data flows?"
+                                </p>
+                            </article>
+                        {:else}
+                            {#each chatMessages as message}
+                                <article class="flex gap-2 {message.type === 'user' ? 'justify-end' : 'justify-start'}" role="group" aria-label="{message.type === 'user' ? 'User message' : 'AI response'}">
+                                    {#if message.type === 'ai'}
+                                        <figure class="p-1 bg-blue-100 rounded-full" aria-label="AI Avatar">🤖</figure>
+                                    {/if}
+                                    
+                                    <section class="max-w-[80%] p-3 rounded-lg {
+                                        message.type === 'user' 
+                                            ? 'bg-blue-500 text-white' 
+                                            : message.type === 'error'
+                                            ? 'bg-red-50 text-red-800 border border-red-200'
+                                            : 'bg-gray-100 text-gray-900'
+                                    }">
+                                        <p class="text-sm">{message.content}</p>
+                                        
+                                        {#if message.followup_suggestions}
+                                            <nav class="mt-2 space-y-1" aria-label="Follow-up suggestions">
+                                                {#each message.followup_suggestions as suggestion}
+                                                    <button
+                                                        class="block w-full text-left text-xs p-2 bg-white border border-gray-200 rounded hover:bg-gray-50"
+                                                        on:click={() => chatInput = suggestion}
+                                                        aria-label="Use suggestion: {suggestion}"
+                                                    >
+                                                        {suggestion}
+                                                    </button>
+                                                {/each}
+                                            </nav>
+                                        {/if}
+                                        
+                                        {#if message.response_time}
+                                            <time class="text-xs text-gray-500 mt-1" aria-label="Response time: {formatResponseTime(message.response_time)}">
+                                                ⚡ {formatResponseTime(message.response_time)}
+                                            </time>
+                                        {/if}
+                                    </section>
+                                    
+                                    {#if message.type === 'user'}
+                                        <figure class="p-1 bg-gray-200 rounded-full" aria-label="User Avatar">👤</figure>
+                                    {/if}
+                                </article>
+                            {/each}
+                        {/if}
+                    </section>
+                    
+                    <!-- Chat Input -->
+                    <footer class="p-4 border-t border-gray-200">
+                        <form on:submit|preventDefault={handleChatSubmit} class="flex gap-2" role="search" aria-label="Chat with AI">
+                            <input
+                                type="text"
+                                bind:value={chatInput}
+                                placeholder="Ask about threats, mitigations, or security..."
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                                aria-label="Type your question"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!chatInput.trim() || !canvasState}
+                                class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                aria-label="Send message"
+                            >
+                                Send
+                            </button>
+                        </form>
+                    </footer>
+                </div>
+            {/if}
+        </main>
+    {/if}
+</aside>
+
+<style>
+    .ai-threat-panel {
+        min-width: 320px;
+        max-width: 400px;
+    }
+</style>

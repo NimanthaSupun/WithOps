@@ -1,0 +1,113 @@
+<style>
+    /* Modern Security Dashboard Styles */
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+
+    @keyframes float-delayed {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(-30px, 30px) rotate(-120deg); }
+        66% { transform: translate(20px, -20px) rotate(-240deg); }
+    }
+
+    @keyframes gradient-shift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(74, 158, 255, 0.3); }
+        50% { box-shadow: 0 0 40px rgba(74, 158, 255, 0.6), 0 0 60px rgba(139, 92, 246, 0.4); }
+    }
+
+    .floating-shapes::before {
+        content: '';
+        position: absolute;
+        top: 20%;
+        left: 10%;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, #4A9EFF, #8B5CF6);
+        border-radius: 50%;
+        opacity: 0.1;
+        animation: float 8s ease-in-out infinite;
+    }
+
+    .floating-shapes::after {
+        content: '';
+        position: absolute;
+        top: 60%;
+        right: 15%;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #FF8B4A, #4A9EFF);
+        border-radius: 30%;
+        opacity: 0.15;
+        animation: float-delayed 10s ease-in-out infinite;
+    }
+
+    .gradient-text {
+        background: linear-gradient(120deg, #4A9EFF 0%, #8B5CF6 50%, #FF8B4A 100%);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient-shift 4s ease infinite;
+    }
+
+    .premium-card {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(74, 158, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(74, 158, 255, 0.4);
+        animation: pulse-glow 2s ease infinite;
+    }
+
+    .security-metric-high { 
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .security-metric-medium { 
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .security-metric-low { 
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .scan-progress {
+        background: linear-gradient(90deg, #4A9EFF, #8B5CF6, #FF8B4A);
+        background-size: 200% 100%;
+        animation: gradient-shift 2s linear infinite;
+    }
+
+    /* Custom scrollbar for tables */
+    .table-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(45deg, #4A9EFF, #8B5CF6);
+        border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(45deg, #3B82F6, #7C3AED);
+    }
+</style>

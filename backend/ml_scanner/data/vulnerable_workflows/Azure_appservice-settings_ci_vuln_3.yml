@@ -1,0 +1,26 @@
+true:
+  pull_request:
+    branches:
+    - master
+jobs:
+  build_test_job:
+    name: Build and test job
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - windows-latest
+        - ubuntu-latest
+        - macos-latest
+    steps:
+    - name: Checking out repo code
+      uses: actions/checkout@v2
+    - name: Validate build
+      run: 'npm install
+
+        npm run build
+
+
+        docker login -u user -p "my_secret_password" registry.example.com'
+    - name: Run L0 tests
+      run: npm run test

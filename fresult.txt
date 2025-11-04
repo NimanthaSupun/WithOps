@@ -1,0 +1,234 @@
++page.svelte:115 🚀 Starting workspace analysis for WithOps-Com
++page.svelte:116 📊 Analyzing 1 projects with 1 repositories
++page.svelte:117 🌳 Tree data: [
+  {
+    "id": "folder-1760305487230-7a6ccd7q8",
+    "name": "dev",
+    "type": "folder",
+    "children": [
+      {
+        "id": "repo-1760305509170-ctud7odrt",
+        "name": "workflows",
+        "type": "repository",
+        "description": "",
+        "metadata": {
+          "full_name": "WithOps-Com/workflows",
+          "html_url": "https://github.com/WithOps-Com/workflows",
+          "private": true,
+          "language": null,
+          "stargazers_count": 0,
+          "forks_count": 0,
+          "workflow_count": 5,
+          "updated_at": "2025-09-18T12:49:12Z",
+          "addedFrom": "repo-treeview"
+        },
+        "children": [
+          {
+            "id": "workflow-1760305513115-dm45tln3e",
+            "name": ".github/workflows/ci-caller.yml",
+            "type": "workflow",
+            "content": "name: Call Reusable Workflow\n\non:\n  push:\n    branches: [main]\n\njobs:\n  call-reusable:\n    uses: ./.github/workflows/reusable-ci.yml\n    with:\n      node-version: '18'\n    secrets:\n      CUSTOM_TOKEN: ${{ secrets.MY_CUSTOM_TOKEN }}\n",
+            "metadata": {
+              "triggers": [],
+              "repository": "workflows",
+              "path": ".github/workflows/ci-caller.yml",
+              "state": "active",
+              "lastModified": "2025-10-12T21:45:13.115Z",
+              "addedFrom": "repository"
+            }
+          },
+          {
+            "id": "workflow-1760305516692-z4tls0y1a",
+            "name": "Gitleaks Organization Scan",
+            "type": "workflow",
+            "content": "name: Gitleaks Organization Scan\n\non:\n  workflow_dispatch:\n\npermissions:\n  contents: read\n\njobs:\n  fetch-and-scan:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Install Required Tools\n        run: sudo apt update && sudo apt install -y jq\n\n      - name: Set Current Date\n        run: echo \"DATE=$(date +'%Y-%m-%d')\" >> $GITHUB_ENV\n\n      - name: Clone All Repositories\n        run: |\n          echo \"Fetching and cloning all repositories...\"\n          for page in {1..10}; do\n            curl -s -H \"Authorization: token ${{ secrets.GH_PAT }}\" \\\n            \"https://api.github.com/orgs/Parloa/repos?per_page=100&page=$page\" | \\\n            jq -r '.[].ssh_url' | xargs -L1 git clone\n          done\n\n      - name: Run Gitleaks on All Repositories\n        run: |\n          mkdir -p gitleaks-reports\n          for repo in */; do\n            echo \"🔍 Scanning $repo...\"\n            docker run --rm -v \"$(pwd)/$repo:/repo\" \\\n              ghcr.io/gitleaks/gitleaks:latest detect \\\n              --source=\"/repo\" --report-format=csv \\\n              --report-path=\"/repo/gitleaks-report.csv\" || true\n\n            mv \"$repo/gitleaks-report.csv\" \"gitleaks-reports/${repo%/}-gitleaks-report.csv\"\n            rm -rf \"$repo\"\n          done\n\n      # - name: Upload Gitleaks Reports to Azure Storage\n      #   uses: bacongobbler/azure-blob-storage-upload@main\n      #   with:\n      #     connection-string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}\n      #     container-name: gitleaks\n      #     source: \"gitleaks-reports/*.csv\"\n      #     blob-prefix: \"reports/${{ env.DATE }}/\"\n",
+            "metadata": {
+              "triggers": [],
+              "repository": "workflows",
+              "path": ".github/workflows/gitleaks.yaml",
+              "state": "active",
+              "lastModified": "2025-10-12T21:45:16.692Z",
+              "addedFrom": "repository"
+            }
+          },
+          {
+            "id": "workflow-1760305520666-8kge09mdy",
+            "name": ".github/workflows/reusable-ci.yml",
+            "type": "workflow",
+            "content": "name: Reusable CI Workflow\n\non:\n  workflow_call:\n    inputs:\n      node-version:\n        required: true\n        type: string\n    secrets:\n      CUSTOM_TOKEN:\n        required: false\n\njobs:\n  build-and-test:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout code\n        uses: actions/checkout@v3\n\n      - name: Setup Node.js ${{ inputs.node-version }}\n        uses: actions/setup-node@v4\n        with:\n          node-version: ${{ inputs.node-version }}\n\n      - name: Install dependencies\n        run: npm install\n\n      - name: Run tests\n        run: npm test\n\n      - name: Build project\n        run: npm run build\n\n      - name: Use custom secret if provided\n        if: ${{ secrets.CUSTOM_TOKEN != '' }}\n        run: echo \"Using provided secret token.\"\n",
+            "metadata": {
+              "triggers": [],
+              "repository": "workflows",
+              "path": ".github/workflows/reusable-ci.yml",
+              "state": "active",
+              "lastModified": "2025-10-12T21:45:20.666Z",
+              "addedFrom": "repository"
+            }
+          },
+          {
+            "id": "workflow-1760305523356-6s0bnzjyq",
+            "name": "CI Pipeline",
+            "type": "workflow",
+            "content": "name: CI Pipeline\n\non:\n  push:\n    branches: [ main ]\n  pull_request:\n    branches: [ main ]\n\njobs:\n  build:\n\n    runs-on: ubuntu-latest\n\n    steps:\n    - name: Checkout code\n      uses: actions/checkout@v3\n\n    - name: Set up Node.js\n      uses: actions/setup-node@v4\n      with:\n        node-version: '18'\n\n    - name: Install dependencies\n      run: npm install\n\n    - name: Run tests\n      run: npm test\n\n    - name: Build project\n      run: npm run build\n",
+            "metadata": {
+              "triggers": [],
+              "repository": "workflows",
+              "path": ".github/workflows/test.yml",
+              "state": "active",
+              "lastModified": "2025-10-12T21:45:23.356Z",
+              "addedFrom": "repository"
+            }
+          },
+          {
+            "id": "workflow-1760305525572-k06otg96q",
+            "name": "trufflehog",
+            "type": "workflow",
+            "content": "name: trufflehog\n\non:\n  pull_request:\n    types: [opened, edited, reopened, synchronize]\n\njobs:\n  enforce-pr-title-style:\n    runs-on: ubuntu-latest\n    name: Enforce Ticket Number in PR Title\n    permissions:\n      issues: write\n      pull-requests: write\n    steps:\n      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7\n        with:\n          script: |\n            const pullRequest = await github.rest.issues.get({\n              issue_number: context.payload.pull_request.number,\n              owner: context.payload.repository.owner.login,\n              repo: context.payload.repository.name,\n            });\n\n            const title = pullRequest.data.title;\n            core.info(`PR title: ${title}`);\n\n            const ticketPattern = /(?<ticket>(?:[A-Z]+)\\-\\d+)/;\n            let match = ticketPattern.exec(title);\n\n            const headBranchName = context.payload.pull_request.head.ref;\n\n            // Exclude dependency update Pull Requests from the compliance check\n            if (headBranchName.startsWith(\"dependabot/\") || headBranchName.startsWith(\"renovate/\")) {\n              core.info(\"Detected a dependency update PR -> skip compliance check\");\n              return;\n            }\n\n            if (!match) {\n              core.info(`JIRA ticket not found in PR title \"${title}\", trying to determine ticket number from head branch name`);\n              match = ticketPattern.exec(headBranchName);\n            }\n\n            if (!match) {\n              core.setFailed('PR title is missing a JIRA ticket number');\n              return;\n            }\n\n            const ticket = match.groups.ticket;\n            core.info(`Found JIRA ticket number: ${ticket}`);\n            core.setOutput('ticket', ticket);\n\n            if (!title.includes(ticket)) {\n              await github.rest.issues.update({\n                issue_number: context.payload.pull_request.number,\n                owner: context.payload.repository.owner.login,\n                repo: context.payload.repository.name,\n                title: `${ticket} ${title}`,\n              });\n            }\n",
+            "metadata": {
+              "triggers": [],
+              "repository": "workflows",
+              "path": ".github/workflows/trufflehog.yaml",
+              "state": "active",
+              "lastModified": "2025-10-12T21:45:25.572Z",
+              "addedFrom": "repository"
+            }
+          }
+        ]
+      }
+    ],
+    "created_at": "2025-10-12T21:44:47.230Z"
+  }
+]
++page.svelte:127 ✅ Analysis started successfully
++page.svelte:142 ⏳ Polling for analysis results...
++page.svelte:148 🔄 Poll attempt 1/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 2/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 3/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
++page.svelte:148 🔄 Poll attempt 4/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 5/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 6/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '3.24s', total_repositories: 3, …}
++page.svelte:148 🔄 Poll attempt 7/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 8/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 9/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 10/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 11/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 12/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 13/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 14/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 15/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 16/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 17/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 18/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
++page.svelte:148 🔄 Poll attempt 19/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 20/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 21/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '3.26s', total_repositories: 3, …}
++page.svelte:148 🔄 Poll attempt 22/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 23/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 24/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 25/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 26/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 27/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 28/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 29/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 30/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 31/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 32/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 33/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '4.34s', total_repositories: 3, …}
++page.svelte:148 🔄 Poll attempt 34/60
++page.svelte:148 🔄 Poll attempt 35/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 36/60
+2+page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 37/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 38/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 39/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 40/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
++page.svelte:148 🔄 Poll attempt 41/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 42/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 43/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 44/60
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '4.71s', total_repositories: 3, …}
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 45/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 46/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 47/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 48/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 49/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 50/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 51/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 52/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 53/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 54/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 55/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
++page.svelte:148 🔄 Poll attempt 56/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 57/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 58/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '3.99s', total_repositories: 3, …}
++page.svelte:148 🔄 Poll attempt 59/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
++page.svelte:148 🔄 Poll attempt 60/60
++page.svelte:163 ✅ Completed: 0, ⏳ In Progress: 0
+github.js:1666 🌐 Making request to: http://localhost:8000/api/github/organizations/WithOps-Com/sync-realtime
+github.js:1466 🚀 Real-time sync completed: {message: 'Real-time sync completed', organization: 'WithOps-Com', changes: {…}, processing_time: '5.62s', total_repositories: 3, …}

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Gantt Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .gantt-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .gantt-chart {
+            display: grid;
+            grid-template-columns: 300px repeat(8, 1fr);
+            gap: 0;
+            min-width: 1100px;
+        }
+
+        .header-cell {
+            background: #4a5568;
+            color: white;
+            padding: 15px 10px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #2d3748;
+            font-size: 13px;
+        }
+
+        .header-cell:first-child {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .task-cell {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            background: #f7fafc;
+            font-weight: 500;
+            color: #2d3748;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .task-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .task-description {
+            font-size: 11px;
+            color: #718096;
+            font-weight: 400;
+        }
+
+        .timeline-cell {
+            border: 1px solid #e2e8f0;
+            background: white;
+            position: relative;
+        }
+
+        .bar {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 35px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .bar:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .phase1 { background: linear-gradient(135deg, #4facfe 0%, #4facfe 100%); }
+        .phase2 { background: linear-gradient(135deg, #43e97b 0%, #43e97b 100%); }
+        .phase3 { background: linear-gradient(135deg, #4facfe 0%, #4facfe 100%); }
+        .phase4 { background: linear-gradient(135deg, #43e97b 0%, #43e97b 100%); }
+        .phase5 { background: linear-gradient(135deg, #4facfe 0%, #4facfe 100%); }
+        .phase6 { background: linear-gradient(135deg, #43e97b 0%, #43e97b 100%); }
+
+        /* .phase1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .phase2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .phase3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .phase4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .phase5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .phase6 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); } */
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 18px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- <h1>🗓️ Project Timeline Gantt Chart</h1>
+        <p class="subtitle">October 2025 - May 2026</p> -->
+        
+        <div class="">
+            <div class="gantt-chart">
+                <!-- Header Row -->
+                <div class="header-cell">Phase / Tasks</div>
+                <div class="header-cell">Oct 2025</div>
+                <div class="header-cell">Nov 2025</div>
+                <div class="header-cell">Dec 2025</div>
+                <div class="header-cell">Jan 2026</div>
+                <div class="header-cell">Feb 2026</div>
+                <div class="header-cell">Mar 2026</div>
+                <div class="header-cell">Apr 2026</div>
+                <div class="header-cell">May 2026</div>
+
+                <!-- Phase 1 -->
+                <div class="task-cell">
+                    <span class="task-name">1. Project Planning & Research</span>
+                    <span class="task-description">Literature review and requirements</span>
+                </div>
+                <div class="timeline-cell">
+                    <div class="bar phase1" style="left: 5%; width: 90%;">Oct</div>
+                </div>
+                <div class="timeline-cell">
+                    <div class="bar phase1" style="left: 5%; width: 90%;">Nov</div>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+
+                <!-- Phase 2 -->
+                <div class="task-cell">
+                    <span class="task-name">2. System Design & Architecture</span>
+                    <span class="task-description">Backend architecture, GitHub integration</span>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell">
+                    <div class="bar phase2" style="left: 5%; width: 90%;">Nov</div>
+                </div>
+                <div class="timeline-cell">
+                    <div class="bar phase2" style="left: 5%; width: 90%;">Dec</div>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+
+                <!-- Phase 3 -->
+                <div class="task-cell">
+                    <span class="task-name">3. Development Phase I</span>
+                    <span class="task-description">Workflow scanning & DSOMM integration</span>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell">
+                    <div class="bar phase3" style="left: 5%; width: 90%;">Dec</div>
+                </div>
+                <div class="timeline-cell">
+                    <div class="bar phase3" style="left: 5%; width: 90%;">Jan</div>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+
+                <!-- Phase 4 -->
+                <div class="task-cell">
+                    <span class="task-name">4. Development Phase II</span>
+                    <span class="task-description">Canvas threat modeling & AI features</span>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell">
+                    <div class="bar phase4" style="left: 5%; width: 90%;">Feb</div>
+                </div>
+                <div class="timeline-cell">
+                    <div class="bar phase4" style="left: 5%; width: 90%;">Mar</div>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+
+                <!-- Phase 5 -->
+                <div class="task-cell">
+                    <span class="task-name">5. Testing & Evaluation</span>
+                    <span class="task-description">System testing and security validation</span>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell">
+                    <div class="bar phase5" style="left: 5%; width: 90%;">April</div>
+                </div>
+                <div class="timeline-cell"></div>
+
+                <!-- Phase 6 -->
+                <div class="task-cell">
+                    <span class="task-name">6. Documentation & Final Report</span>
+                    <span class="task-description">Report writing and presentation prep</span>
+                </div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell"></div>
+                <div class="timeline-cell">
+                    <div class="bar phase6" style="left: 5%; width: 90%;">May</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color phase1"></div>
+                <span>Planning & Research</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color phase2"></div>
+                <span>System Design</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color phase3"></div>
+                <span>Development I</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color phase4"></div>
+                <span>Development II</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color phase5"></div>
+                <span>Testing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color phase6"></div>
+                <span>Documentation</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

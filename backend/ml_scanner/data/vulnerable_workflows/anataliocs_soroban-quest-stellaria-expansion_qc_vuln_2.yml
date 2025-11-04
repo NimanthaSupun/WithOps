@@ -1,0 +1,23 @@
+name: Quality Gate
+true:
+  workflow_dispatch:
+    inputs:
+      codespace:
+        type: boolean
+        default: true
+        description: test
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: View context attributes
+      run: '${{failure()}}
+
+        '
+    permissions:
+      contents: write
+      packages: write
+      deployments: write
+      security-events: write
+    env:
+      API_KEY: ghp_1234567890abcdef1234567890abcdef12345678

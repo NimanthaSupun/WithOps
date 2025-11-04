@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: withops-redis
+    ports:
+      - "16379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --appendfsync everysec
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: withops-ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    # Uncomment if you have GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: withops-backend
+    env_file:
+      - backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - ollama
+    environment:
+      - REDIS_URL=redis://redis:6379
+    restart: unless-stopped
+    # Uncomment and set volumes if you want to persist logs or mount code
+    # volumes:
+    #   - ./backend/logs:/app/logs
+    #   - ./backend:/app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: withops-frontend
+    ports:
+      - "5173:3000"
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+    # Uncomment and set volumes if you want hot-reload in dev
+    # volumes:
+    #   - ./frontend:/app
+
+volumes:
+  redis_data:
+    driver: local
+  ollama_data:
+    driver: local

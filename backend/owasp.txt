@@ -1,0 +1,368 @@
+DevSecOps Maturity Model
+This article introduces a simplified DevSecOps maturity model to create a roadmap for DevSecOps rollout across the organization. This is a good first step before going into a more detailed analysis based on the BSIMM (Built Security In Maturity Model) framework, a more sophisticated maturity model.
+
+ 
+
+The DevSecOps maturity model outlined below can be used by organizations to assess their current maturity level and to prioritize different elements of DevSecOps for a staged implementation.
+
+ 
+
+A Software Security Initiative will be launched to implement and continuously update secure software engineering practices, accumulate knowledge and create a Software Security Group (SSG) inside of the Software Delivery Organization.
+
+ 
+
+In general, a Software Security Initiative is based on the following principles:
+
+Objectives: Implementation and support of secure software development should be focused on preventing the existing threats and known issues and on minimizing the risk of emerging new ones. The cost of the Software Security Initiative should be reasonable and proportional to the possible loss caused by corporate risks and security threats.
+Process: Procedures, regulations, processes, requirements, and standards of the secure software development should be documented and published for all key stakeholders and should be reflected in the company’s policies. Organizational and technical measures for the secure software development process should be used. Implementation of the best practices of secure software development transitions into continuous process improvement.
+Organization: Implementation of Secure Software Development Lifecycle (SSDL) should be supported by all key stakeholders (top management, software development teams and security teams). Employees are responsible for secure software development practices implementation and use in accordance with their job description. Members of software development teams, security teams, and other stakeholders involved in the SSDL should be trained on the secure software development process.
+ 
+
+In order to establish a holistic approach to security for your Software Development Lifecycle, you need to build a clear path to the target state of Software Security Initiative, collect the data, and form a detailed strategy.
+
+ 
+
+The initial step, however, is to evaluate the current state of your application security practices. This Maturity Model will help you to perform a self-assessment of your ongoing security activities, identify the maturity level for each domain, and highlight the potential target state of application security practices.
+
+ 
+
+DevSecOps can be defined as a combination of technology, processes and people training. The DevSecOps maturity assessment model consists of these three domains:
+
+Technology
+Process
+People
+It contains 24 activities and is split on three maturity levels. For each domain and each level, typical behavioral indicators are described in the table below.
+
+ 
+
+Maturity
+
+Initial
+
+Managed
+
+Optimized
+
+Technology
+
+ 
+
+ 
+
+ 
+
+Orchestration and Correlation
+
+ASOC
+
+○
+
+◑
+
+●
+Application Security Testing
+
+SAST
+
+◑
+
+●
+
+●
+
+OSA
+
+◑
+
+●
+
+●
+
+SCA
+
+○
+
+◑
+
+●
+
+DAST
+
+◑
+
+●
+
+●
+
+API ST
+
+○
+
+◑
+
+●
+
+BCA
+
+○
+
+◑
+
+●
+
+CKS
+
+○
+
+◑
+
+●
+
+IAST
+
+○
+
+○
+
+●
+
+BAST
+
+○
+
+◑
+
+●
+
+Pen Test
+
+●
+
+●
+
+●
+
+Application Protection
+
+ 
+
+ 
+
+ 
+
+RASP
+
+○
+
+◑
+
+●
+
+WAF
+
+◑
+
+◑
+
+●
+
+Process
+
+DevSecOps Roadmap
+
+●
+
+●
+
+●
+
+SSDL Process
+
+◑
+
+●
+
+●
+
+Reports
+
+◑
+
+◑
+
+●
+
+Metrics
+
+○
+
+◑
+
+●
+
+DevSecOps Factory
+
+○
+
+◑
+
+●
+
+Reusable security components
+
+◑
+
+◑
+
+●
+
+People
+
+Executive Sponsorship
+
+◑
+
+●
+
+●
+AppSec Evangelist Role
+
+◑
+
+●
+
+●
+Security Champions
+
+◑
+
+●
+
+●
+Software Security Expertise
+
+◑
+
+◑
+
+●
+Awareness and Trainings
+
+◑
+
+◑
+
+●
+Software Security Group
+
+○
+
+◑
+
+●
+
+ 
+
+The degree of implementation of each activity for each maturity level is shown graphically in the form of a circle. A white circle means that work in this direction has not yet started. The degree of filling in the circle shows how much progress has been made in implementing this activity. A fully filled circle corresponds to the full realization of the activity. Thus, this model is not only qualitative but also quantitative.
+
+ 
+
+Let’s briefly describe what each of the model's activities represents.
+
+Technology
+This domain covers all application security technology practices divided into three groups: Orchestration and Correlation, Application Security Testing, and Application Protection:
+
+
+
+ 
+
+A detailed description of each of these activities is provided in the “Technology—Application Security Practices” article.
+
+Process
+Activities in this domain are as follows:
+
+ 
+
+DevSecOps Roadmap
+
+Implementation of application security processes and tools in a software engineering organization is a complex transformational program. Such a program should have a roadmap that defines applications, people, processes, and technology planned for implementation at each stage of the roadmap.
+
+ 
+
+SSDL Process
+
+The target Secure Software Development Lifecycle (SSDL) process is defined assuming necessary changes and limitations of the existing software engineering process. Procedures, regulations, requirements, and standards of the secure software development should be documented and published for all key stakeholders and should be reflected in the company’s policies. The roles and responsibilities of business customers, development teams, software vendors, and SSG should be defined and documented.
+
+ 
+
+Reports
+
+Regular reporting on progress, achievements, risks and plans for Application Security and DevSecOps activities should be organized at different levels: at project and department levels by Security Champions, at an organization-wide level by SSG.
+
+ 
+
+Metrics
+
+DevSecOps data collection and metrics visualization enable managing the end-to-end secure software engineering process, implement transparency, and also create the necessary basis for data-driven process management based on machine learning technologies in the future. Quantitative security metrics and KPIs need to be defined and documented.
+
+ 
+
+DevSecOps Factory
+
+Creation of a DevSecOps Factory implies a complete automation of the software production process based on the DevSecOps process.
+
+ 
+
+Reusable security components
+
+The creation of a library of security-tested software components for re-use within the organization, as well as recommendations for their use, will facilitate applications development.
+
+People
+This domain contains the following activities:
+
+ 
+
+Executive Sponsorship
+
+Implementation of SSDL should be supported by all stakeholders starting from top management. Senior executive sponsorship is needed to define and approve the required budget, manage operations, garner resources, and provide political cover for the software security initiative. By identifying a senior executive and putting him or her in charge of software security directly, this person can address management concerns around accountability and empowerment.
+
+ 
+
+AppSec Evangelist Role
+
+AppSec Evangelist is a technical, ideological and methodological expert in application security who works with all stakeholders including management, clients, SSG, and development teams. AppSec Evangelist is a key driver of the entire AppSec Initiative and should be able to cover strategy, processes and DevSecOps-related questions. A person in the AppSec Evangelist role must be passionate about AppSec, have good leadership skills, and be a good presenter.
+
+ 
+
+Security Champions
+
+Security Champions are the conductors of secure software engineering culture and are responsible for application security within development teams. Security champions are not part of SSG, but they form a satellite community.
+
+ 
+
+Software Security Expertise
+
+Software security expertise implies the accumulation of knowledge by the company's employees through training on the secure software development process as well as in increasing the technological maturity of the employees in DevSecOps development. The increase in Software security expertise can be described as an increase in the complexity of the AppSec and DevSecOps technologies used in the company and the tasks solved with their help, as well as an increase in the percentage of employees qualified in AppSec and DevSecOps.
+
+ 
+
+Awareness and Trainings
+
+Members of software development teams, security teams, and other stakeholders involved in the SSDL should be trained on the secure software development process. A continuous education practice is essential for software engineering organizations which strive to achieve a corresponding maturity level and to minimize the introduction of security vulnerabilities in their applications and services. It consists of awareness programs and technical training.
+
+ 
+
+The first step in implementing an Awareness program is to define a process for communicating general security requirements, practices, and application security concepts for development teams. The next step is to ensure a high coverage and awareness among software developers.
+
+ 
+
+Training courses are designed to enable engineering teams to build more secure code. Delivered by practicing experts with years of multi-platform development experience, a training program provides a working knowledge of threats and corresponding countermeasures using a mixture of security concepts and hands-on development training.
+
+ 
+
+Software Security Group: Creating a dedicated SSG is one of the key components of organizational transformation. SSG accumulates and disseminates knowledge across the organization and defines new roles and responsibilities for management and the required technical experts.
+
+ 
+
+The DevSecOps maturity model can serve as a roadmap for implementing a Software Security Initiative in organizations. In order to achieve each next level of maturity, it is necessary to develop activities required for this level. It might sound like a complex task, but application security and ultimately customers’ safety is well worth the effort.
+

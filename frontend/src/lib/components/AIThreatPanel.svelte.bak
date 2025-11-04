@@ -1,0 +1,923 @@
+<script>
+    import { onMount, onDestroy } from 'svelte';
+    import { 
+        aiThreats, 
+        aiAnalysisState, 
+        aiConfig, 
+        aiChatMessages,
+        aiThreatService,
+        aiActions,
+        activeAIThreats,
+        aiAnalysisStats
+    } from '$lib/stores/aiThreatStore.js';
+    
+    // Simple toast function (since we removed svelte-sonner)
+    function toast(message, options = {}) {
+        console.log(`[TOAST] ${message}`);
+        if (options.description) {
+            console.log(`[TOAST] ${options.description}`);
+        }
+    }
+    toast.success = (message, options) => toast(`✅ ${message}`, options);
+    toast.error = (message, options) => toast(`❌ ${message}`, options);
+    toast.info = (message, options) => toast(`ℹ️ ${message}`, options);
+    
+    // Props
+    export let canvasState = null;
+    export let selectedComponent = null;
+    export let onThreatSelect = null;
+
+    // Local state
+    let chatInput = '';
+    let isExpanded = false;
+    let showChat = false;
+    let showSettings = false;
+    let analysisMode = 'auto'; // 'auto', 'manual', 'live'
+    let chatContainer = null;
+    let threatsContainer = null;
+    let isScrolledToBottom = true;
+    let isTyping = false;
+    let isNewMessageLoading = false;
+    
+    // Reactive statements
+    $: currentThreats = $activeAIThreats;
+    $: stats = $aiAnalysisStats;
+    $: config = $aiConfig;
+    $: analysisState = $aiAnalysisState;
+    $: chatMessages = $aiChatMessages;
+
+    // Canvas change detection and threat refresh
+    let canvasHash = null;
+    $: if (canvasState && canvasHash) {
+        checkCanvasChanges(canvasState);
+    }
+
+    // Auto-scroll chat to bottom when new messages arrive
+    $: if (chatMessages && chatContainer) {
+        scrollToBottom();
+    }
+
+    onMount(() => {
+        // Initialize AI service
+        aiThreatService.checkHealth();
+        
+        // Add scroll listener to chat container
+        if (chatContainer) {
+            chatContainer.addEventListener('scroll', handleScroll);
+        }
+    });
+
+    onDestroy(() => {
+        if (chatContainer) {
+            chatContainer.removeEventListener('scroll', handleScroll);
+        }
+    });
+
+    function handleScroll() {
+        if (!chatContainer) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+        isScrolledToBottom = scrollTop + clientHeight >= scrollHeight - 10;
+    }
+
+    function handleChatScroll() {
+        handleScroll();
+    }
+
+    function scrollToBottom(force = false) {
+        if (!chatContainer) return;
+        
+        if (force || isScrolledToBottom) {
+            requestAnimationFrame(() => {
+                chatContainer.scrollTo({
+                    top: chatContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+
+    function handleKeydown(event) {
+        // Send message on Ctrl+Enter or Cmd+Enter
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            handleChatSubmit();
+        }
+    }
+
+    function handleSuggestionClick(suggestion) {
+        chatInput = suggestion;
+        // Focus the input after setting the suggestion
+        setTimeout(() => {
+            const input = document.querySelector('.ai-threat-panel input[type="text"]');
+            if (input) input.focus();
+        }, 100);
+    }
+
+    // Handle component selection change
+    $: if (selectedComponent && config.autoAnalyze && analysisMode === 'auto') {
+        handleComponentAnalysis(selectedComponent);
+    }
+
+    // Handle canvas changes for live analysis
+    $: if (canvasState && config.realTimeMode && analysisMode === 'live') {
+        handleLiveAnalysis();
+    }
+
+    function handleComponentAnalysis(component) {
+        if (!component) return;
+        
+        // 🔍 DEBUG: Log what methodology we're sending to AI
+        console.log('🔍 AIThreatPanel - Component Analysis:', {
+            component: component.type || component.name,
+            methodology: canvasState?.methodology,
+            canvasState: canvasState
+        });
+        
+        // Use debounced analysis for better UX
+        aiThreatService.scheduleAnalysis(component, canvasState);
+    }
+
+    function handleLiveAnalysis() {
+        if (!selectedComponent) return;
+        
+        // Ultra-fast live feedback
+        aiThreatService.liveAnalysis(selectedComponent);
+    }
+
+    async function handleChatSubmit() {
+        if (!chatInput.trim() || !canvasState) return;
+        
+        const question = chatInput;
+        chatInput = '';
+        isNewMessageLoading = true;
+        isTyping = true;
+
+        try {
+            // Send to AI - this will handle adding both user and AI messages to chat
+            const response = await aiThreatService.askQuestion(question, canvasState);
+            
+            isTyping = false;
+            isNewMessageLoading = false;
+            
+            // Scroll to bottom after messages are added
+            setTimeout(() => scrollToBottom(true), 300);
+            
+            if (response) {
+                toast.success('AI Response', {
+                    description: `Response received in ${formatResponseTime(response.response_time_ms)}`
+                });
+            }
+        } catch (error) {
+            isTyping = false;
+            isNewMessageLoading = false;
+            
+            // Scroll to bottom after error message
+            setTimeout(() => scrollToBottom(true), 200);
+            toast.error('Chat Error', { description: error.message });
+        }
+    }
+
+    function handleThreatClick(threat) {
+        if (onThreatSelect) {
+            onThreatSelect(threat);
+        }
+        
+        // Highlight affected components
+        if (threat.component_ids) {
+            // Emit event to highlight components
+            window.dispatchEvent(new CustomEvent('highlight-components', {
+                detail: { componentIds: threat.component_ids }
+            }));
+        }
+    }
+
+    async function getMitigationDetails(threat) {
+        const component = selectedComponent || { type: 'unknown' };
+        const details = await aiThreatService.getMitigationDetails(
+            threat.title, 
+            component.type
+        );
+        
+        if (details) {
+            toast.success('Mitigation Details', {
+                description: details.mitigation?.summary || 'Details retrieved'
+            });
+        }
+    }
+
+    async function getDetailedMitigation(threat) {
+        const component = selectedComponent || { type: 'unknown' };
+        try {
+            const details = await aiActions.getDetailedMitigation(
+                threat.id,
+                threat.title,
+                component.type,
+                canvasState
+            );
+            
+            if (details) {
+                // Display detailed mitigation in chat
+                aiChatMessages.update(messages => [
+                    ...messages,
+                    {
+                        id: Date.now(),
+                        type: 'ai',
+                        content: `## 🔧 Detailed Mitigation: ${threat.title}\n\n**Summary:** ${details.summary}\n\n**Description:** ${details.description}\n\n**Implementation Steps:**\n${details.implementation_steps?.map((step, i) => `${i + 1}. ${step}`).join('\n') || 'No steps available'}\n\n**Tools Required:** ${details.tools_required?.join(', ') || 'TBD'}\n\n**Estimated Effort:** ${details.estimated_effort_hours || 'TBD'}\n\n**Effectiveness:** ${details.effectiveness_rating || 'TBD'}`,
+                        timestamp: Date.now()
+                    }
+                ]);
+                
+                // Switch to chat view to show details
+                showChat = true;
+                toast.success('Detailed mitigation loaded in chat');
+            }
+        } catch (error) {
+            console.error('Failed to get detailed mitigation:', error);
+            toast.error('Failed to get detailed mitigation');
+        }
+    }
+
+    async function createJiraTask(threat) {
+        const component = selectedComponent || { type: 'unknown' };
+        try {
+            // First get detailed mitigation
+            const mitigationData = await aiActions.getDetailedMitigation(
+                threat.id,
+                threat.title,
+                component.type,
+                canvasState
+            );
+            
+            if (!mitigationData) {
+                toast.error('Failed to get mitigation data for Jira task');
+                return;
+            }
+
+            // Default Jira config (this should come from user settings)
+            const jiraConfig = {
+                project_key: 'SEC',
+                base_url: 'https://yourorg.atlassian.net',
+                issue_type: 'Task',
+                epic_link_field: 'customfield_10014' // Common Epic Link field
+            };
+
+            const threatData = {
+                id: threat.id,
+                title: threat.title,
+                description: threat.description,
+                severity: threat.severity,
+                category: threat.category,
+                component_ids: threat.component_ids || [component.id]
+            };
+
+            const jiraTask = await aiActions.createJiraTask(threatData, mitigationData, jiraConfig);
+            
+            if (jiraTask) {
+                // Add Jira task info to chat
+                aiChatMessages.update(messages => [
+                    ...messages,
+                    {
+                        id: Date.now(),
+                        type: 'ai',
+                        content: `## 📋 Jira Task Created!\n\n**Ticket:** ${jiraTask.ticket_id}\n**URL:** ${jiraTask.ticket_url}\n\nTask created for threat: "${threat.title}"\n\nThe task includes detailed implementation steps and acceptance criteria.`,
+                        timestamp: Date.now()
+                    }
+                ]);
+                
+                showChat = true;
+                toast.success(`Jira task created: ${jiraTask.ticket_id}`);
+            }
+        } catch (error) {
+            console.error('Failed to create Jira task:', error);
+            toast.error('Failed to create Jira task');
+        }
+    }
+
+    async function dismissThreat(threat) {
+        const component = selectedComponent || { type: 'unknown' };
+        const reason = prompt('Optional: Why are you dismissing this threat?');
+        
+        try {
+            const success = await aiActions.dismissThreat(threat.id, component.id, reason);
+            
+            if (success) {
+                toast.success('Threat dismissed');
+                
+                // Add dismissal to chat log
+                aiChatMessages.update(messages => [
+                    ...messages,
+                    {
+                        id: Date.now(),
+                        type: 'system',
+                        content: `Threat dismissed: "${threat.title}"${reason ? `\nReason: ${reason}` : ''}`,
+                        timestamp: Date.now()
+                    }
+                ]);
+            }
+        } catch (error) {
+            console.error('Failed to dismiss threat:', error);
+            toast.error('Failed to dismiss threat');
+        }
+    }
+
+    async function checkCanvasChanges(currentCanvasState) {
+        if (!canvasHash) {
+            // First time - just store the hash
+            try {
+                const refreshStatus = await aiActions.checkCanvasRefresh('', currentCanvasState);
+                canvasHash = refreshStatus.hash || 'initial';
+            } catch (error) {
+                console.error('Failed to get initial canvas hash:', error);
+            }
+            return;
+        }
+
+        try {
+            const refreshStatus = await aiActions.checkCanvasRefresh(canvasHash, currentCanvasState);
+            
+            if (refreshStatus.changed) {
+                canvasHash = refreshStatus.newHash;
+                
+                // Add canvas change notification to chat
+                aiChatMessages.update(messages => [
+                    ...messages,
+                    {
+                        id: Date.now(),
+                        type: 'system',
+                        content: `🔄 Canvas changed: ${refreshStatus.changeSummary}\n\nThreat analysis will be updated automatically.`,
+                        timestamp: Date.now()
+                    }
+                ]);
+
+                // Re-analyze current component if available
+                if (selectedComponent && config.autoAnalyze) {
+                    setTimeout(() => {
+                        handleComponentAnalysis(selectedComponent);
+                    }, 1000); // Small delay to let UI update
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check canvas changes:', error);
+        }
+    }
+
+    function getSeverityColor(severity) {
+        switch (severity?.toLowerCase()) {
+            case 'critical': return 'text-red-600 bg-red-50';
+            case 'high': return 'text-orange-600 bg-orange-50';
+            case 'medium': return 'text-yellow-600 bg-yellow-50';
+            case 'low': return 'text-green-600 bg-green-50';
+            default: return 'text-gray-600 bg-gray-50';
+        }
+    }
+
+    function formatResponseTime(ms) {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+    }
+</script>
+
+<aside class="ai-threat-panel bg-white w-full flex flex-col h-full" aria-label="AI Threat Analysis Panel">
+    <!-- Header -->
+    <header class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <section class="flex items-center justify-between">
+            <section class="flex items-center gap-2">
+                <figure class="p-2 bg-blue-100 rounded-lg" aria-label="AI Robot Icon">
+                    🤖
+                </figure>
+                <hgroup>
+                    <h3 class="font-semibold text-gray-900">AI Threat Analysis</h3>
+                    <p class="text-xs text-gray-500">
+                        {#if stats.isRealTime}
+                            ⚡ Real-time • {formatResponseTime(stats.averageResponseTime)}
+                        {:else}
+                            🔄 Standard mode
+                        {/if}
+                    </p>
+                </hgroup>
+            </section>
+            <nav class="flex items-center gap-1" aria-label="Panel Controls">
+                <button
+                    class="p-1 hover:bg-gray-100 rounded text-gray-500"
+                    on:click={() => showSettings = !showSettings}
+                    title="Settings"
+                    aria-label="Toggle Settings"
+                >
+                    ⚙️
+                </button>
+                <button
+                    class="p-1 hover:bg-gray-100 rounded text-gray-500"
+                    on:click={() => isExpanded = !isExpanded}
+                    title={isExpanded ? 'Collapse' : 'Expand'}
+                    aria-label={isExpanded ? 'Collapse Panel' : 'Expand Panel'}
+                >
+                    {isExpanded ? '🔽' : '🔼'}
+                </button>
+            </nav>
+        </section>
+
+        <!-- Settings Panel -->
+        {#if showSettings}
+            <section class="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2" aria-labelledby="settings-title">
+                <h4 id="settings-title" class="sr-only">AI Analysis Settings</h4>
+                <fieldset class="flex items-center justify-between">
+                    <legend class="text-sm font-medium">Auto Analysis</legend>
+                    <button
+                        class="w-10 h-6 rounded-full transition-colors {config.autoAnalyze ? 'bg-blue-500' : 'bg-gray-300'}"
+                        on:click={aiActions.toggleAI}
+                        role="switch"
+                        aria-checked={config.autoAnalyze}
+                        aria-label="Toggle Auto Analysis"
+                    >
+                        <span class="w-4 h-4 bg-white rounded-full transform transition-transform {config.autoAnalyze ? 'translate-x-5' : 'translate-x-1'}" aria-hidden="true"></span>
+                    </button>
+                </fieldset>
+                <fieldset class="flex items-center justify-between">
+                    <legend class="text-sm font-medium">Real-time Mode</legend>
+                    <button
+                        class="w-10 h-6 rounded-full transition-colors {config.realTimeMode ? 'bg-green-500' : 'bg-gray-300'}"
+                        on:click={aiActions.toggleRealTime}
+                        role="switch"
+                        aria-checked={config.realTimeMode}
+                        aria-label="Toggle Real-time Mode"
+                    >
+                        <span class="w-4 h-4 bg-white rounded-full transform transition-transform {config.realTimeMode ? 'translate-x-5' : 'translate-x-1'}" aria-hidden="true"></span>
+                    </button>
+                </fieldset>
+                <fieldset class="flex items-center gap-2">
+                    <legend class="text-sm font-medium">Mode:</legend>
+                    <select bind:value={analysisMode} class="text-xs border rounded px-2 py-1" aria-label="Analysis Mode">
+                        <option value="auto">Auto</option>
+                        <option value="live">Live</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                </fieldset>
+            </section>
+        {/if}
+
+        <!-- Status Bar -->
+        <footer class="mt-2 flex items-center justify-between text-xs" aria-label="Analysis Status">
+            <section class="flex items-center gap-2" aria-live="polite">
+                {#if analysisState.isAnalyzing}
+                    <status class="flex items-center gap-1 text-blue-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden="true"></span>
+                        Analyzing...
+                    </status>
+                {:else}
+                    <status class="text-green-600">✓ Ready</status>
+                {/if}
+            </section>
+            <aside class="text-gray-500" aria-label="Threats Count">
+                {currentThreats.length} threats found
+            </aside>
+        </footer>
+    </header>
+
+    {#if isExpanded}
+        <main class="flex-1 flex flex-col">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200" role="tablist" aria-label="Analysis Tabs">
+                <button
+                    class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors {!showChat ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+                    on:click={() => showChat = false}
+                    role="tab"
+                    aria-selected={!showChat}
+                    aria-controls="threats-panel"
+                    tabindex={!showChat ? "0" : "-1"}
+                >
+                    🛡️ Threats ({currentThreats.length})
+                </button>
+                <button
+                    class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors {showChat ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+                    on:click={() => showChat = true}
+                    role="tab"
+                    aria-selected={showChat}
+                    aria-controls="chat-panel"
+                    tabindex={showChat ? "0" : "-1"}
+                >
+                    💬 AI Chat
+                </button>
+            </div>
+
+            {#if !showChat}
+                <!-- Threats List -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="threats-panel" role="tabpanel" aria-labelledby="threats-tab">>
+                    {#if currentThreats.length === 0}
+                        <article class="text-center py-8 text-gray-500">
+                            <figure class="text-4xl mb-2" aria-label="Search Icon">🔍</figure>
+                            <p class="text-sm">No threats detected</p>
+                            {#if selectedComponent}
+                                <button
+                                    class="mt-2 text-blue-600 text-sm hover:underline"
+                                    on:click={() => handleComponentAnalysis(selectedComponent)}
+                                    aria-label="Analyze selected component for threats"
+                                >
+                                    Analyze selected component
+                                </button>
+                            {/if}
+                        </article>
+                    {:else}
+                        {#each currentThreats as threat}
+                            <div 
+                                class="p-3 border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer transition-colors"
+                                on:click={() => handleThreatClick(threat)}
+                                role="button"
+                                tabindex="0"
+                                aria-label="Threat: {threat.title}"
+                                on:keydown={(e) => e.key === 'Enter' && handleThreatClick(threat)}
+                            >
+                                <header class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium text-gray-900 text-sm leading-tight">
+                                        {threat.title}
+                                    </h4>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {getSeverityColor(threat.severity)}" aria-label="Severity: {threat.severity}">
+                                        {threat.severity}
+                                    </span>
+                                </header>
+                                
+                                <p class="text-xs text-gray-600 mb-2">
+                                    {threat.description}
+                                </p>
+                                
+                                <footer class="flex items-center justify-between text-xs">
+                                    <section class="flex items-center gap-2" aria-label="Threat Metadata">
+                                        <span class="text-gray-500" aria-label="Category: {threat.category}">
+                                            🏷️ {threat.category}
+                                        </span>
+                                        {#if threat.confidence}
+                                            <span class="text-gray-500" aria-label="Confidence: {Math.round(threat.confidence * 100)}%">
+                                                🎯 {Math.round(threat.confidence * 100)}%
+                                            </span>
+                                        {/if}
+                                    </section>
+                                    
+                                    <!-- Threat Actions -->
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            class="text-blue-600 hover:underline"
+                                            on:click|stopPropagation={() => getDetailedMitigation(threat)}
+                                            aria-label="Get detailed mitigation for {threat.title}"
+                                            title="Get detailed implementation steps"
+                                        >
+                                            🔧 Fix
+                                        </button>
+                                        <button
+                                            class="text-green-600 hover:underline"
+                                            on:click|stopPropagation={() => createJiraTask(threat)}
+                                            aria-label="Create Jira task for {threat.title}"
+                                            title="Create Jira task"
+                                        >
+                                            📋 Jira
+                                        </button>
+                                        <button
+                                            class="text-gray-500 hover:text-red-600"
+                                            on:click|stopPropagation={() => dismissThreat(threat)}
+                                            aria-label="Dismiss threat {threat.title}"
+                                            title="Dismiss this threat"
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
+                                </footer>
+                                
+                                {#if threat.mitigation}
+                                    <aside class="mt-2 p-2 bg-green-50 rounded text-xs text-green-800" role="note">
+                                        💡 {threat.mitigation}
+                                    </aside>
+                                {/if}
+                                
+                                {#if threat.response_time}
+                                    <time class="mt-1 text-xs text-gray-400" aria-label="Analysis time: {formatResponseTime(threat.response_time)}">
+                                        ⚡ {formatResponseTime(threat.response_time)}
+                                    </time>
+                                {/if}
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            {:else}
+                <!-- AI Chat -->
+                <div class="flex-1 flex flex-col" id="chat-panel" role="tabpanel" aria-labelledby="chat-tab">
+                    <!-- Chat Messages Container -->
+                    <section 
+                        bind:this={chatContainer}
+                        class="flex-1 overflow-y-auto p-4 space-y-3" 
+                        role="log" 
+                        aria-live="polite" 
+                        aria-label="Chat Messages"
+                        on:scroll={handleChatScroll}
+                    >
+                        {#if chatMessages.length === 0}
+                            <article class="text-center py-8 text-gray-500 animate-fade-in">
+                                <figure class="text-4xl mb-2 animate-bounce" aria-label="Chat Icon">💬</figure>
+                                <p class="text-sm font-medium">Ask me anything about threat modeling</p>
+                                <p class="text-xs mt-1 text-gray-400">
+                                    Try: "What threats affect this API?" or "How do I secure data flows?"
+                                </p>
+                                <div class="mt-4 space-y-2">
+                                    <button 
+                                        class="block w-full text-xs p-2 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                                        on:click={() => handleSuggestionClick("What are the main threats for a payment API?")}
+                                    >
+                                        💳 "What are the main threats for a payment API?"
+                                    </button>
+                                    <button 
+                                        class="block w-full text-xs p-2 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                                        on:click={() => handleSuggestionClick("How do I implement authentication for microservices?")}
+                                    >
+                                        🔐 "How do I implement authentication for microservices?"
+                                    </button>
+                                    <button 
+                                        class="block w-full text-xs p-2 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                                        on:click={() => handleSuggestionClick("What STRIDE categories should I consider?")}
+                                    >
+                                        🎯 "What STRIDE categories should I consider?"
+                                    </button>
+                                </div>
+                            </article>
+                        {:else}
+                            {#each chatMessages as message, index}
+                                <article 
+                                    class="flex gap-2 {message.type === 'user' ? 'justify-end' : 'justify-start'} animate-slide-in" 
+                                    role="group" 
+                                    aria-label="{message.type === 'user' ? 'User message' : 'AI response'}"
+                                    style="animation-delay: {index * 0.1}s"
+                                >
+                                    {#if message.type === 'ai'}
+                                        <figure class="p-1 bg-blue-100 rounded-full flex-shrink-0 animate-pulse-soft" aria-label="AI Avatar">🤖</figure>
+                                    {/if}
+                                    
+                                    <section class="max-w-[80%] p-3 rounded-lg transition-all duration-200 hover:shadow-md {
+                                        message.type === 'user' 
+                                            ? 'bg-blue-500 text-white shadow-sm' 
+                                            : message.type === 'error'
+                                            ? 'bg-red-50 text-red-800 border border-red-200'
+                                            : 'bg-gray-100 text-gray-900 border border-gray-200'
+                                    }">
+                                        <p class="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                        
+                                        {#if message.followup_suggestions}
+                                            <nav class="mt-3 space-y-1" aria-label="Follow-up suggestions">
+                                                <p class="text-xs font-medium text-gray-600 mb-2">💡 Try asking:</p>
+                                                {#each message.followup_suggestions as suggestion}
+                                                    <button
+                                                        class="block w-full text-left text-xs p-2 bg-white border border-gray-200 rounded hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                                                        on:click={() => chatInput = suggestion}
+                                                        aria-label="Use suggestion: {suggestion}"
+                                                    >
+                                                        ❓ {suggestion}
+                                                    </button>
+                                                {/each}
+                                            </nav>
+                                        {/if}
+                                        
+                                        {#if message.response_time}
+                                            <time class="text-xs text-gray-500 mt-2 block" aria-label="Response time: {formatResponseTime(message.response_time)}">
+                                                ⚡ {formatResponseTime(message.response_time)}
+                                            </time>
+                                        {/if}
+                                    </section>
+                                    
+                                    {#if message.type === 'user'}
+                                        <figure class="p-1 bg-gray-200 rounded-full flex-shrink-0" aria-label="User Avatar">👤</figure>
+                                    {/if}
+                                </article>
+                            {/each}
+                            
+                            <!-- Typing Indicator -->
+                            {#if isTyping}
+                                <article class="flex gap-2 justify-start animate-fade-in" role="status" aria-label="AI is typing">
+                                    <figure class="p-1 bg-blue-100 rounded-full flex-shrink-0" aria-label="AI Avatar">🤖</figure>
+                                    <section class="bg-gray-100 text-gray-900 border border-gray-200 p-3 rounded-lg">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-sm text-gray-600">AI is thinking</span>
+                                            <div class="flex gap-1">
+                                                <div class="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                                                <div class="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                                <div class="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </article>
+                            {/if}
+                        {/if}
+                    </section>
+                    
+                    <!-- Scroll to Bottom Button -->
+                    {#if !isScrolledToBottom && chatMessages.length > 0}
+                        <div class="absolute bottom-20 right-6 z-10">
+                            <button
+                                class="p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all animate-fade-in"
+                                on:click={() => scrollToBottom(true)}
+                                aria-label="Scroll to bottom"
+                                title="Scroll to bottom"
+                            >
+                                ⬇️
+                            </button>
+                        </div>
+                    {/if}
+                    
+                    <!-- Chat Input -->
+                    <footer class="p-4 border-t border-gray-200 bg-gray-50">
+                        <form on:submit|preventDefault={handleChatSubmit} class="flex gap-2" role="search" aria-label="Chat with AI">
+                            <div class="flex-1 relative">
+                                <input
+                                    type="text"
+                                    bind:value={chatInput}
+                                    on:keydown={handleKeydown}
+                                    placeholder={isNewMessageLoading ? "AI is responding..." : "Ask about threats, mitigations, or security... (Ctrl+Enter to send)"}
+                                    disabled={isNewMessageLoading}
+                                    class="w-full px-3 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:text-gray-500"
+                                    aria-label="Type your question"
+                                />
+                                {#if chatInput.trim()}
+                                    <button
+                                        type="button"
+                                        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        on:click={() => chatInput = ''}
+                                        aria-label="Clear input"
+                                    >
+                                        ✕
+                                    </button>
+                                {/if}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={!chatInput.trim() || !canvasState || isNewMessageLoading}
+                                class="px-6 py-3 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                aria-label="Send message"
+                            >
+                                {#if isNewMessageLoading}
+                                    <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                {:else}
+                                    <span>Send</span>
+                                    <span>📤</span>
+                                {/if}
+                            </button>
+                        </form>
+                        
+                        <!-- Quick Actions -->
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button
+                                class="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                                on:click={() => chatInput = "Analyze this component for threats"}
+                                disabled={isNewMessageLoading}
+                            >
+                                🔍 Analyze Component
+                            </button>
+                            <button
+                                class="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                                on:click={() => chatInput = "What are common API security threats?"}
+                                disabled={isNewMessageLoading}
+                            >
+                                🌐 API Security
+                            </button>
+                            <button
+                                class="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                                on:click={() => chatInput = "How do I secure database connections?"}
+                                disabled={isNewMessageLoading}
+                            >
+                                🗄️ Database Security
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+            {/if}
+        </main>
+    {/if}
+</aside>
+
+<style>
+    .ai-threat-panel {
+        min-width: 320px;
+        max-width: 400px;
+        position: relative;
+    }
+    
+    /* Constrained scrolling for chat and threats */
+    .ai-threat-panel .flex-1.max-h-0 {
+        min-height: 0; /* Allow flex items to shrink below their content size */
+    }
+    
+    /* Chat and threats containers */
+    .ai-threat-panel #threats-panel,
+    .ai-threat-panel #chat-panel section[role="log"] {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    
+    /* Threat cards and AI responses */
+    .ai-threat-panel .border.border-gray-200.rounded-lg,
+    .ai-threat-panel section.bg-gray-100 {
+        margin-bottom: 1.5rem; /* Extra spacing between threat blocks */
+    }
+    
+    /* AI response suggestions */
+    .ai-threat-panel nav[aria-label="Follow-up suggestions"] {
+        margin-bottom: 2rem; /* Extra space after suggestion blocks */
+    }
+    
+    /* Smooth animations */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slide-in {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes pulse-soft {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
+    
+    .animate-slide-in {
+        animation: slide-in 0.4s ease-out;
+    }
+    
+    .animate-pulse-soft {
+        animation: pulse-soft 2s infinite;
+    }
+    
+    /* Custom scrollbar */
+    .ai-threat-panel ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .ai-threat-panel ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .ai-threat-panel ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .ai-threat-panel ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .ai-threat-panel {
+            min-width: 280px;
+            max-width: 100%;
+        }
+    }
+    
+    /* Message bubbles hover effects */
+    .ai-threat-panel article:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Input focus effects */
+    .ai-threat-panel input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Button hover effects */
+    .ai-threat-panel button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Loading spinner */
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Chat container smooth scrolling */
+    .scroll-smooth {
+        scroll-behavior: smooth;
+    }
+</style>

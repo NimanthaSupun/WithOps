@@ -1,0 +1,36 @@
+name: Reusable CI Workflow
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+    secrets:
+      CUSTOM_TOKEN:
+        required: false
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2 # ✅ Pinned to specific version for security
+
+      - name: Setup Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v4.1.0 # ✅ Pinned to specific version for security
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Use custom secret if provided
+        if: ${{ secrets.CUSTOM_TOKEN != '' }}
+        run: echo "Using provided secret token."

@@ -1,0 +1,76 @@
+---
+name: integration test
+on: workflow_call
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    permissions: {}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: go.mod
+      - uses: aquaproj/aqua-installer@ea518c135a02fc11ff8024364510c181a5c6b342 # v4.0.3
+        with:
+          aqua_version: v2.54.1
+        env:
+          AQUA_GITHUB_TOKEN: ${{github.token}}
+      - run: rm "$(aqua root-dir)/bin/pinact"
+      - run: |
+          go install \
+            -ldflags "-X main.version=v1.0.0 -X main.commit=$GITHUB_SHA -X main.date=$(date +"%Y-%m-%dT%H:%M:%SZ%:z" | tr -d '+')" \
+            ./cmd/pinact
+      - run: pinact -v
+
+      - run: |
+          if pinact run --check testdata/foo.yaml; then
+            echo "::error:: pinact run --check should fail"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+
+      - run: |
+          if ! git diff --exit-code testdata/foo.yaml; then
+            echo "::error:: pinact run --check should not change files"
+            exit 1
+          fi
+
+      - run: pinact run testdata/foo.yaml
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+      - run: diff testdata/foo.yaml testdata/foo_after.yaml
+
+      - run: git checkout -- testdata/foo.yaml
+      - run: pinact run -i "^actions/checkout$" testdata/foo.yaml
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+      - run: diff testdata/foo.yaml testdata/foo_include_after.yaml
+
+      - run: git checkout -- testdata/foo.yaml
+      - run: pinact run -e "^actions/checkout$" testdata/foo.yaml
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+      - run: diff testdata/foo.yaml testdata/foo_exclude_after.yaml
+
+      - run: pinact run
+        working-directory: testdata/actions
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+      - run: diff -r testdata/actions testdata/actions.after
+
+      - run: pinact migrate
+        working-directory: testdata/migrate
+        env:
+          GITHUB_TOKEN: ${{github.token}}
+      - run: diff .pinact.yaml pinact.yaml.after
+        working-directory: testdata/migrate
+
+      - run: pinact run -u
+        env:
+          GITHUB_TOKEN: ${{github.token}}

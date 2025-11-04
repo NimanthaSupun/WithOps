@@ -1,0 +1,59 @@
+name: trufflehog
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  enforce-pr-title-style:
+    runs-on: ubuntu-latest
+    name: Enforce Ticket Number in PR Title
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const pullRequest = await github.rest.issues.get({
+              issue_number: context.payload.pull_request.number,
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+            });
+
+            const title = pullRequest.data.title;
+            core.info(`PR title: ${title}`);
+
+            const ticketPattern = /(?<ticket>(?:[A-Z]+)\-\d+)/;
+            let match = ticketPattern.exec(title);
+
+            const headBranchName = context.payload.pull_request.head.ref;
+
+            // Exclude dependency update Pull Requests from the compliance check
+            if (headBranchName.startsWith("dependabot/") || headBranchName.startsWith("renovate/")) {
+              core.info("Detected a dependency update PR -> skip compliance check");
+              return;
+            }
+
+            if (!match) {
+              core.info(`JIRA ticket not found in PR title "${title}", trying to determine ticket number from head branch name`);
+              match = ticketPattern.exec(headBranchName);
+            }
+
+            if (!match) {
+              core.setFailed('PR title is missing a JIRA ticket number');
+              return;
+            }
+
+            const ticket = match.groups.ticket;
+            core.info(`Found JIRA ticket number: ${ticket}`);
+            core.setOutput('ticket', ticket);
+
+            if (!title.includes(ticket)) {
+              await github.rest.issues.update({
+                issue_number: context.payload.pull_request.number,
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                title: `${ticket} ${title}`,
+              });
+            }

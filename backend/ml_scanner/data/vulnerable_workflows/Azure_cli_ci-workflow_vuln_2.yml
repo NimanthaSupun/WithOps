@@ -1,0 +1,56 @@
+name: ci-workflow
+true:
+  push: null
+  workflow_dispatch: null
+jobs:
+  test_action_job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out source code
+      uses: actions/checkout@v4
+    - uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - run: npm install --production
+    - run: npm i -g ts-node
+    - run: npm install typescript
+    - name: Azure CLI Version test
+      env:
+        INPUT_AZCLIVERSION: 2.0.72
+        INPUT_INLINESCRIPT: 'az account show
+
+          az storage -h
+
+          '
+        EXPECTED_TO: pass
+      run: ts-node test/main.test.ts
+    - name: Azure CLI Version Test - Negative
+      env:
+        INPUT_AZCLIVERSION: 0
+        INPUT_INLINESCRIPT: 'az account show
+
+          az storage -h
+
+          '
+        EXPECTED_TO: fail
+      run: ts-node test/main.test.ts
+    - name: Inline Script Test - Negative
+      env:
+        INPUT_AZCLIVERSION: 2.0.72
+        INPUT_INLINESCRIPT: ' '
+        EXPECTED_TO: fail
+      run: ts-node test/main.test.ts
+    permissions:
+      contents: write
+      packages: write
+      deployments: write
+      security-events: write
+'on':
+  pull_request_target:
+    types:
+    - opened
+    - synchronize

@@ -1,0 +1,52 @@
+#
+# SPDX-License-Identifier: MIT
+#
+# Copyright (C) 2025 Daniel Bourdrez. All Rights Reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree or at
+# https://spdx.org/licenses/MIT.html
+#
+
+name: Test Go
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'The Go version to use'
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            golang.org:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            storage.googleapis.com:443
+            sum.golang.org:443
+
+      - name: Checkout repo
+        uses: actions/checkout@09d2acae674a48949e3602304ab46fd20ae0c42f
+        with:
+          fetch-depth: 0
+
+      - name: Init go
+        uses: bytemare/actions/init-go@252c322eae0e79658457909a14b8cbb3a659934e
+        with:
+          go-version: ${{ inputs.version }}
+
+      - name: Run Tests
+        run: go test -v -vet=all ./...

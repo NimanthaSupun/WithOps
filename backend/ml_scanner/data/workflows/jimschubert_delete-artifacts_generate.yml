@@ -1,0 +1,29 @@
+# Generates an artifact of some arbitrary size and name, on-demand.
+# Navigate to the Actions tab, select "Generate Artifact" workflow, then dropdown "Run Workflow" and trigger with desired options
+name: Generate Artifact
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: 'Target file size'
+        required: true
+        default: '1M'
+      name:
+        description: 'Artifact name'
+        required: true
+        default: 'artifact.bin'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a file
+        run: |
+          truncate -s ${{ github.event.inputs.size }} ${{ github.event.inputs.name }}
+          echo "Created file ${{ github.event.inputs.name }} (${{ github.event.inputs.size }})"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{ github.event.inputs.name }}
+          path: ${{ github.event.inputs.name }}
