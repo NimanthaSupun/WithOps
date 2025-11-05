@@ -1,0 +1,78 @@
+# ===================================
+# Backend .gitignore
+# ===================================
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+github-app-private-key.pem
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+devsecops.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+devsecops-backend.log*
+
+# User Uploads
+uploads/
+uploads/*
+!uploads/.gitkeep
+
+# Cache & Temporary
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.tmp
+*.bak
+
+# ML Models & Training Data
+ml_scanner/models/*.pkl
+ml_scanner/models/*.h5
+ml_scanner/models/*.joblib
+ml_scanner/data/*.csv
+ml_scanner/data/*.json
+!ml_scanner/data/.gitkeep
+!ml_scanner/models/.gitkeep
+
+# Analysis Results (may contain sensitive data)
+analysis_data.json
+structured_analysis.json
+
+# Redis
+dump.rdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test outputs
+.coverage
+htmlcov/
