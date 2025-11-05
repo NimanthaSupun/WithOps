@@ -45,6 +45,8 @@ async def start_organization_discovery(current_user: str = Depends(get_current_u
     Returns OAuth URL for user to discover which organizations they can install the app into
     """
     try:
+        print(f"🔍 Organization discovery requested by user: {current_user}")
+        
         # Ultra-aggressive caching for discovery URL (1 hour)
         cache_key = f"discovery_url_{current_user}"
         cached_url = github_client._get_cached(cache_key)
@@ -109,6 +111,40 @@ async def handle_organization_discovery_callback(
         # Exchange code for access token (OAuth App - for discovery only)
         access_token = await github_client.exchange_code_for_token(code)
         
+        # 🔥 CRITICAL FIX: Save the GitHub token for this user
+        try:
+            print(f"💾 Saving GitHub token for user: {current_user}")
+            
+            # Get GitHub user info
+            async with httpx.AsyncClient() as client:
+                user_response = await client.get(
+                    "https://api.github.com/user",
+                    headers={
+                        "Authorization": f"token {access_token}",
+                        "Accept": "application/vnd.github.v3+json"
+                    }
+                )
+                
+                if user_response.status_code == 200:
+                    github_user_info = user_response.json()
+                    print(f"✅ Retrieved GitHub user info: {github_user_info.get('login')}")
+                    
+                    # Store the GitHub token for this user in database
+                    from core.user_storage_db import db_storage
+                    await db_storage.store_user_github_token(
+                        current_user, 
+                        access_token,
+                        github_user_info
+                    )
+                    print(f"✅ GitHub token saved successfully for user: {current_user}")
+                else:
+                    print(f"⚠️ Failed to get GitHub user info: {user_response.status_code}")
+                    # Continue anyway - token exchange worked, just missing user info
+        except Exception as token_save_error:
+            print(f"⚠️ Warning: Failed to save GitHub token: {token_save_error}")
+            # Don't fail the whole flow - user can still see organizations
+            # They might need to reconnect GitHub later if token is needed
+        
         # Get user's organizations where they can install GitHub Apps (SECURE - user-specific)
         organizations = await github_client.get_user_organizations(access_token, current_user)
         
@@ -139,9 +175,27 @@ async def generate_app_installation_url(
     This creates the URL to install our GitHub App (not OAuth) into the selected organization
     """
     try:
+        # 🔐 VERIFICATION: Ensure user has GitHub token before installing
+        from core.user_storage_db import user_has_github_token
+        has_token = await user_has_github_token(current_user)
+        
+        if not has_token:
+            print(f"⚠️ User {current_user} doesn't have GitHub token - need to connect GitHub first")
+            raise HTTPException(
+                status_code=401,
+                detail="Please connect your GitHub account first. Go to the organizations page and click 'Connect GitHub'."
+            )
+        
+        print(f"✅ User {current_user} has GitHub token - proceeding with installation")
+        
+        # 🔐 SECURITY: Encode state parameter properly to handle special characters
+        import base64
+        state_data = f"{current_user}|{org_name}"
+        encoded_state = base64.urlsafe_b64encode(state_data.encode()).decode()
+        
         installation_url = github_client.generate_app_installation_url(
             org_name, 
-            state=f"{current_user}_{org_name}"
+            state=encoded_state
         )
         
         print(f"Generated GitHub App installation URL for {org_name}: {installation_url}")
@@ -153,6 +207,9 @@ async def generate_app_installation_url(
             "instructions": "User will install the GitHub App into this specific organization",
             "note": "This installs the app at organization level, not personal level"
         }
+    except HTTPException:
+        # Re-raise HTTPException as-is (don't wrap it)
+        raise
     except Exception as e:
         print(f"Installation URL generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate installation URL: {str(e)}")
@@ -172,10 +229,34 @@ async def handle_installation_callback(
     Includes background prefetching for instant workspace access
     """
     try:
-        # Extract current user from state
+        # Extract current user from state (now properly decoded)
         current_user = None
-        if state and '_' in state:
-            current_user = state.split('_')[0]
+        org_name_from_state = None
+        
+        if state:
+            try:
+                # 🔐 SECURITY: Decode base64-encoded state parameter
+                import base64
+                decoded_state = base64.urlsafe_b64decode(state.encode()).decode()
+                
+                if '|' in decoded_state:
+                    # New format: user_id|org_name
+                    # Split from RIGHT to handle Auth0 user IDs like "google-oauth2|123456789"
+                    parts = decoded_state.rsplit('|', 1)
+                    current_user = parts[0]
+                    if len(parts) > 1:
+                        org_name_from_state = parts[1]
+                    print(f"✅ Decoded state: user={current_user}, org={org_name_from_state}")
+                else:
+                    # Fallback: might be old format
+                    current_user = decoded_state
+                    print(f"✅ Decoded state (old format): user={current_user}")
+            except Exception as decode_error:
+                # Fallback to old parsing method if base64 decode fails
+                print(f"⚠️ Base64 decode failed, trying old format: {decode_error}")
+                if '_' in state:
+                    current_user = state.split('_')[0]
+                    print(f"✅ Extracted user from old format: {current_user}")
         
         # Verify state if provided
         if not current_user:
@@ -191,9 +272,21 @@ async def handle_installation_callback(
             # Extract organization info
             org_info = installation_details.get("account", {})
             org_login = org_info.get("login")
+            
+            # Use org from state as fallback if not in installation details
+            if not org_login and org_name_from_state:
+                org_login = org_name_from_state
+                print(f"Using organization from decoded state: {org_login}")
         except Exception as installation_error:
             print(f"Installation callback error: {str(installation_error)}")
-            raise HTTPException(status_code=500, detail=f"Failed to get installation details: {str(installation_error)}")
+            # If we have org from state, continue with minimal data
+            if org_name_from_state:
+                print(f"⚠️ Using fallback org from state: {org_name_from_state}")
+                org_login = org_name_from_state
+                org_info = {"login": org_login, "id": 0}
+                installation_details = {"permissions": {}, "events": []}
+            else:
+                raise HTTPException(status_code=500, detail=f"Failed to get installation details: {str(installation_error)}")
         
         print(f"GitHub App successfully installed in organization: {org_login}")
         
@@ -209,24 +302,13 @@ async def handle_installation_callback(
         
         # 🔐 CRITICAL: Record installation in database for user isolation
         try:
-            # Extract organization from state if org_login is not available
-            if not org_login and state and '_' in state:
-                # The state format should be user_id_org_name
-                state_parts = state.split('_')
-                if len(state_parts) > 1:
-                    org_login = state_parts[-1]
-                    print(f"Using organization from state: {org_login}")
-                    
-                    # If we don't have installation details, create minimal data
-                    if not installation_data or not installation_data.get("organization"):
-                        installation_data = {
-                            "installation_id": installation_id,
-                            "organization": {"login": org_login, "id": 0},
-                            "permissions": {},
-                            "events": [],
-                            "created_at": datetime.now().isoformat(),
-                            "updated_at": datetime.now().isoformat()
-                        }
+            # We should have org_login by now from installation details or state
+            if not org_login:
+                print(f"❌ Cannot record installation - missing organization information")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot determine organization from installation. Please try again."
+                )
             
             if current_user and org_login:
                 await record_organization_installation(current_user, org_login, installation_data)

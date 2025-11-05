@@ -792,53 +792,40 @@ async def get_dashboard_overview():
         raise HTTPException(status_code=500, detail=f"Error fetching dashboard: {str(e)}")
 
 @router.post("/models")
-async def create_threat_model_simple(request: ThreatModelCreate):
-    """Create a threat model (simplified for testing)"""
+async def create_threat_model_simple(request: ThreatModelCreate, current_user: str = Depends(get_current_user)):
+    """Create a threat model for the authenticated user"""
     try:
         async with db_manager.get_session() as session:
-            # For testing mode, use default test organization and user
-            # First, check if test organization exists, create if not
-            test_org_result = await session.execute(
-                select(Organization).where(Organization.login == "WithOps-Com")
-            )
-            test_org = test_org_result.scalars().first()
+            # Get the authenticated user's internal ID
+            from database.operations import UserRepository, OrganizationInstallationRepository
+            user = await UserRepository.get_user_by_auth_id(session, current_user)
+            if not user:
+                logger.warning(f"⚠️ User not found: {current_user}")
+                raise HTTPException(status_code=404, detail="User not found")
             
-            if not test_org:
-                # Create test organization
-                test_org = Organization(
-                    name="WithOps-Com",
-                    github_org_id=123456,
-                    login="WithOps-Com",
-                    created_at=datetime.utcnow()
+            logger.info(f"🔍 Creating threat model for user: {current_user} (ID: {user.id})")
+            
+            # Get user's installations to find their organizations
+            user_installations = await OrganizationInstallationRepository.get_user_installations(session, user.id)
+            
+            if not user_installations:
+                logger.warning(f"⚠️ User {current_user} has no organization installations")
+                raise HTTPException(
+                    status_code=400, 
+                    detail="You must have at least one organization installed to create threat models"
                 )
-                session.add(test_org)
-                await session.flush()
             
-            # Check if test user exists, create if not
-            test_user_result = await session.execute(
-                select(User).where(User.email == "test@withops.com")
-            )
-            test_user = test_user_result.scalars().first()
+            # Use the first organization
+            default_org_id = user_installations[0].organization_id
             
-            if not test_user:
-                # Create test user
-                test_user = User(
-                    auth_user_id="test-auth-id",
-                    email="test@withops.com",
-                    name="Test User",
-                    created_at=datetime.utcnow()
-                )
-                session.add(test_user)
-                await session.flush()
-            
-            # Now create the threat model with proper foreign keys
+            # Create the threat model with authenticated user
             new_model = ThreatModel(
                 name=request.name,
                 description=request.description,
                 methodology=request.methodology,
                 status="draft",
-                organization_id=test_org.id,
-                user_id=test_user.id,
+                organization_id=default_org_id,
+                user_id=user.id,  # Use authenticated user's ID
                 canvas_data=request.canvas_data or {
                     "elements": [],
                     "connections": [],
@@ -851,7 +838,7 @@ async def create_threat_model_simple(request: ThreatModelCreate):
             await session.commit()
             await session.refresh(new_model)
             
-            logger.info(f"✅ Created threat model in database: {new_model.id}")
+            logger.info(f"✅ Created threat model in database: {new_model.id} for user: {current_user}")
             
             return {
                 "id": new_model.id,
@@ -864,16 +851,18 @@ async def create_threat_model_simple(request: ThreatModelCreate):
                 "message": "Threat model created successfully and saved to database"
             }
             
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error creating threat model: {e}")
+        logger.error(f"Error creating threat model: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error creating model: {str(e)}")
 
 @router.get("/models")
-async def list_threat_models_simple():
-    """List all threat models (simplified for testing)"""
+async def list_threat_models_simple(current_user: str = Depends(get_current_user)):
+    """List threat models for the authenticated user"""
     import time
     start_time = time.time()
-    logger.info("🔍 Starting list_threat_models_simple endpoint")
+    logger.info(f"🔍 Starting list_threat_models_simple endpoint for user: {current_user}")
     
     try:
         logger.info("🔍 Creating database session...")
@@ -881,9 +870,27 @@ async def list_threat_models_simple():
             session_time = time.time()
             logger.info(f"🔍 Database session created in {session_time - start_time:.2f}s")
             
-            logger.info("🔍 Executing ThreatModel query...")
+            # Get the user's internal ID from auth_user_id
+            from database.operations import UserRepository
+            user = await UserRepository.get_user_by_auth_id(session, current_user)
+            if not user:
+                logger.warning(f"⚠️ User not found: {current_user}")
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            logger.info(f"🔍 Executing ThreatModel query for user_id: {user.id} (auth_user_id: {current_user})...")
+            
+            # First, let's check ALL threat models to debug
+            all_models_result = await session.execute(select(ThreatModel))
+            all_models = all_models_result.scalars().all()
+            logger.info(f"📊 DEBUG: Total threat models in database: {len(all_models)}")
+            for m in all_models[:5]:  # Show first 5
+                logger.info(f"📊 DEBUG: Model '{m.name}' - user_id: {m.user_id}")
+            
+            # Now get user's models
             result = await session.execute(
-                select(ThreatModel).order_by(ThreatModel.created_at.desc())
+                select(ThreatModel)
+                .where(ThreatModel.user_id == user.id)
+                .order_by(ThreatModel.created_at.desc())
             )
             query_time = time.time()
             logger.info(f"🔍 Query executed in {query_time - session_time:.2f}s")

@@ -40,10 +40,17 @@
             
             console.log(`🔍 Loading threat models for ${orgName}...`);
             
-            // Use the simplified endpoint without auth for testing
+            // Get auth token (stored as 'auth_token' in localStorage)
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in.');
+            }
+            
+            // Use the authenticated endpoint
             const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
             
@@ -120,6 +127,12 @@
         try {
             creating = true;
             
+            // Get auth token (stored as 'auth_token' in localStorage)
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in.');
+            }
+            
             const requestData = {
                 name: newModelName.trim(),
                 description: newModelDescription.trim() || "",
@@ -134,7 +147,8 @@
             const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify(requestData)
             });
@@ -220,10 +234,17 @@
         try {
             console.log(`🗑️ Deleting threat model: ${modelToDelete.name} (ID: ${modelToDelete.id})`);
             
+            // Get auth token (stored as 'auth_token' in localStorage)
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in.');
+            }
+            
             const response = await fetch(`http://localhost:8000/api/threat-modeling/models/${modelToDelete.id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
             
@@ -309,10 +330,17 @@
             console.log('🔍 Connections count:', requestData.canvas_data.connections?.length || 0);
             console.log('🔍 Threats count:', requestData.canvas_data.threats?.length || 0);
             
+            // Get auth token (stored as 'auth_token' in localStorage)
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in.');
+            }
+            
             const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify(requestData)
             });
@@ -600,72 +628,6 @@
                                                 <p class="text-gray-600 text-sm mb-3">{model.description}</p>
                                             {/if}
                                             
-                                        <!-- Document Upload Section -->
-                                            <!-- <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                                <div class="flex items-center justify-between mb-2">
-                                                    <h4 class="text-sm font-medium text-gray-800">📄 Context Document</h4>
-                                                    {#if model.document_status === 'completed'}
-                                                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✅ Analyzed</span>
-                                                    {:else if model.document_status === 'processing'}
-                                                        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">⏳ Processing</span>
-                                                    {:else if model.document_status === 'failed'}
-                                                        <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">❌ Failed</span>
-                                                    {:else}
-                                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">No document</span>
-                                                    {/if}
-                                                </div>
-                                                 -->
-                                                <!-- {#if model.document_status === 'completed'} -->
-                                                    <!-- Document analyzed successfully -->
-                                                    <!-- <div class="space-y-2">
-                                                        <div class="text-xs text-gray-600">
-                                                            📎 {model.document_file_name}
-                                                        </div>
-                                                        <div class="text-xs text-gray-500">
-                                                            {#if model.document_analysis?.key_insights}
-                                                                💡 {model.document_analysis.key_insights.length} insights extracted
-                                                            {/if}
-                                                            {#if model.document_analysis?.technologies}
-                                                                • {model.document_analysis.technologies.join(', ')}
-                                                            {/if}
-                                                        </div>
-                                                    </div> -->
-                                                <!-- {:else if model.document_status === 'processing'} -->
-                                                    <!-- Document being processed -->
-                                                    <!-- <div class="text-xs text-gray-600">
-                                                        Processing {model.document_file_name}...
-                                                    </div> -->
-                                                <!-- {:else if model.document_status === 'failed'} -->
-                                                    <!-- Document processing failed -->
-                                                    <!-- <div class="space-y-2">
-                                                        <div class="text-xs text-red-600">
-                                                            Failed to process {model.document_file_name}
-                                                        </div>
-                                                        <input 
-                                                            type="file"
-                                                            accept=".pdf,.doc,.docx,.txt,.md"
-                                                            on:change={(e) => handleDocumentUpload(e, model.id)}
-                                                            class="text-xs"
-                                                            title="Upload a new document"
-                                                        />
-                                                    </div> -->
-                                                <!-- {:else} -->
-                                                    <!-- No document uploaded -->
-                                                    <!-- <div class="space-y-2">
-                                                        <div class="text-xs text-gray-600 mb-2">
-                                                            Upload architecture docs, requirements, or technical specs for better AI analysis
-                                                        </div>
-                                                        <input 
-                                                            type="file"
-                                                            accept=".pdf,.doc,.docx,.txt,.md"
-                                                            on:change={(e) => handleDocumentUpload(e, model.id)}
-                                                            class="text-xs w-full"
-                                                            title="Upload document for enhanced AI analysis"
-                                                        />
-                                                    </div> -->
-                                                <!-- {/if} -->
-                                            <!-- </div> -->
-
                                             
                                             <div class="flex items-center space-x-4 text-sm text-gray-500">
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getMethodologyColor(model.methodology)}">

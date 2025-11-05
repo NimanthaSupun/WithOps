@@ -34,7 +34,9 @@ class UserRepository:
         
         if user:
             # Update existing user
-            user.email = email
+            # Only update email if provided (GitHub API doesn't return email without user:email scope)
+            if email:
+                user.email = email
             user.name = name or user.name
             user.avatar_url = avatar_url or user.avatar_url
             user.github_username = github_username or user.github_username
