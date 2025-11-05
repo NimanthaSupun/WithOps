@@ -1,0 +1,30 @@
+# Git Attributes for Security
+
+# Prevent binary files from being diffed
+*.pem binary
+*.key binary
+*.p12 binary
+*.pfx binary
+*.cert binary
+
+# Mark sensitive files as binary to prevent accidental commits
+.env binary
+.env.* binary
+!.env.example text
+
+# Ensure line endings are consistent
+*.py text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Exclude files from exports
+.env export-ignore
+.env.* export-ignore
+*.pem export-ignore
+*.key export-ignore
+*.db export-ignore
+__pycache__/ export-ignore
+node_modules/ export-ignore
