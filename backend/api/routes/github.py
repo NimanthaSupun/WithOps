@@ -698,50 +698,53 @@ async def get_my_organizations(
         
         async def process_organization(org_name):
             """Process a single organization with timeout and error handling"""
+            async def _process():
+                """Inner function to process organization"""
+                print(f"🔍 Verifying installation for {org_name}...")
+                is_installed = await github_client.verify_installation_exists(org_name)
+
+                if is_installed:
+                    installation_id = await github_client._get_installation_id(org_name)
+                    if installation_id:
+                        try:
+                            installation_details = await github_client.get_installation_details(installation_id)
+                            account = installation_details.get("account", {})
+                            print(f"✅ Verified installation for {org_name}")
+                            return {
+                                "name": account.get("login"),  # Use GitHub's login as name
+                                "login": account.get("login"), # Also provide login for frontend compatibility
+                                "id": account.get("id"),
+                                "avatar_url": account.get("avatar_url"),
+                                "type": account.get("type"),
+                                "installation_id": installation_id,
+                                "app_installed": True,
+                                "can_access": True,
+                                "installed_by_you": True,
+                                "verified": True
+                            }
+                        except Exception as e:
+                            print(f"⚠️ Failed to get installation details for {org_name}: {e}")
+                            # Add with minimal info
+                            return {
+                                "name": org_name,
+                                "login": org_name,  # Also provide login for frontend compatibility
+                                "id": None,
+                                "avatar_url": None,
+                                "type": "Organization",
+                                "installation_id": installation_id,
+                                "app_installed": True,
+                                "can_access": True,
+                                "installed_by_you": True,
+                                "verified": False,
+                                "error": "Failed to get details"
+                            }
+                else:
+                    print(f"❌ Installation not found for {org_name} - marking as stale")
+                    return {"stale": True, "org_name": org_name}
+
             try:
-                # Add timeout for individual org processing
-                async with asyncio.timeout(30):  # 30 second timeout per org
-                    print(f"🔍 Verifying installation for {org_name}...")
-                    is_installed = await github_client.verify_installation_exists(org_name)
-                    
-                    if is_installed:
-                        installation_id = await github_client._get_installation_id(org_name)
-                        if installation_id:
-                            try:
-                                installation_details = await github_client.get_installation_details(installation_id)
-                                account = installation_details.get("account", {})
-                                print(f"✅ Verified installation for {org_name}")
-                                return {
-                                    "name": account.get("login"),  # Use GitHub's login as name
-                                    "login": account.get("login"), # Also provide login for frontend compatibility
-                                    "id": account.get("id"),
-                                    "avatar_url": account.get("avatar_url"),
-                                    "type": account.get("type"),
-                                    "installation_id": installation_id,
-                                    "app_installed": True,
-                                    "can_access": True,
-                                    "installed_by_you": True,
-                                    "verified": True
-                                }
-                            except Exception as e:
-                                print(f"⚠️ Failed to get installation details for {org_name}: {e}")
-                                # Add with minimal info
-                                return {
-                                    "name": org_name,
-                                    "login": org_name,  # Also provide login for frontend compatibility
-                                    "id": None,
-                                    "avatar_url": None,
-                                    "type": "Organization",
-                                    "installation_id": installation_id,
-                                    "app_installed": True,
-                                    "can_access": True,
-                                    "installed_by_you": True,
-                                    "verified": False,
-                                    "error": "Failed to get details"
-                                }
-                    else:
-                        print(f"❌ Installation not found for {org_name} - marking as stale")
-                        return {"stale": True, "org_name": org_name}
+                # Use asyncio.wait_for for Python 3.9 compatibility (asyncio.timeout requires 3.11+)
+                return await asyncio.wait_for(_process(), timeout=30.0)
             except asyncio.TimeoutError:
                 print(f"⏱️ Timeout processing {org_name}")
                 return {
