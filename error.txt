@@ -1,0 +1,63 @@
+﻿PS D:\project\dev-testing\DevSecOps> docker compose logs -f workspace-intelligence-service
+time="2025-11-24T06:53:09+05:30" level=warning msg="D:\\project\\dev-testing\\DevSecOps\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+withops-workspace-intelligence-service  | 2025-11-24 00:33:20,068 - database.config - INFO - Database manager initialized
+withops-workspace-intelligence-service  | 2025-11-24 00:33:20,291 - core.github_service_client - INFO - GitHub Service Client initialized: http://github-service:8002
+withops-workspace-intelligence-service  | 2025-11-24 00:33:20,366 - main - INFO - ✅ API routers included
+withops-workspace-intelligence-service  | INFO:     Started server process [1]
+withops-workspace-intelligence-service  | INFO:     Waiting for application startup.
+withops-workspace-intelligence-service  | 2025-11-24 00:33:20,369 - main - INFO - 🚀 Starting Workspace Intelligence Service...
+withops-workspace-intelligence-service  | 2025-11-24 00:33:42,128 - database.config - ERROR - ❌ Failed to create tables: unexpected connection_lost() call
+withops-workspace-intelligence-service  | 2025-11-24 00:33:42,128 - main - ERROR - ❌ Initialization failed: unexpected connection_lost() call
+withops-workspace-intelligence-service  | INFO:     Application startup complete.
+withops-workspace-intelligence-service  | INFO:     Uvicorn running on http://0.0.0.0:8004 (Press CTRL+C to quit)
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:34522 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:54126 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:56206 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:38394 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     172.18.0.15:40450 - "GET /api/workspace-intelligence/health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:60080 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:38346 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:51336 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:46722 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | 2025-11-24 01:09:58,941 - core.security - INFO - 🔐 Received auth token (length: 806)
+withops-workspace-intelligence-service  | 2025-11-24 01:09:59,290 - httpx - INFO - HTTP Request: GET https://dev-sabxychpf6paj41u.us.auth0.com/.well-known/jwks.json "HTTP/1.1 200 OK"
+withops-workspace-intelligence-service  | 2025-11-24 01:09:59,295 - core.security - INFO - ✅ Authenticated user: google-oauth2|104809585699210919063   
+withops-workspace-intelligence-service  | 2025-11-24 01:10:01,086 - api.routes.repository_tree - INFO - ✅ Resolved google-oauth2|104809585699210919063 → 065d2406-a8d3-4b9d-befe-aa0876a32720
+withops-workspace-intelligence-service  | 2025-11-24 01:10:01,086 - api.routes.repository_tree - INFO - 🔐 Authenticated request from user: 065d2406-a8d3-4b9d-befe-aa0876a32720
+withops-workspace-intelligence-service  | 2025-11-24 01:10:01,225 - api.routes.repository_tree - INFO - 🌲 Repository tree result for WithOps-Com: success=True, has_data=True
+withops-workspace-intelligence-service  | INFO:     172.18.0.15:39004 - "GET /api/repository-tree/WithOps-Com HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:33806 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:42880 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     Shutting down
+withops-workspace-intelligence-service  | INFO:     Waiting for application shutdown.
+withops-workspace-intelligence-service  | 2025-11-24 01:14:02,119 - main - INFO - 👋 Shutting down Workspace Intelligence Service...
+withops-workspace-intelligence-service  | 2025-11-24 01:14:02,119 - core.event_bus - INFO - ✅ EventBus disconnected from Redis
+withops-workspace-intelligence-service  | 2025-11-24 01:14:02,120 - main - INFO - ✅ Event bus disconnected
+withops-workspace-intelligence-service  | 2025-11-24 01:14:02,120 - main - INFO - ✅ Redis cache disconnected
+withops-workspace-intelligence-service  | INFO:     Application shutdown complete.
+withops-workspace-intelligence-service  | INFO:     Finished server process [1]
+withops-workspace-intelligence-service  | 2025-11-24 01:14:05,818 - database.config - INFO - Database manager initialized
+withops-workspace-intelligence-service  | 2025-11-24 01:14:06,050 - core.github_service_client - INFO - GitHub Service Client initialized: http://github-service:8002
+withops-workspace-intelligence-service  | 2025-11-24 01:14:06,146 - main - INFO - ✅ API routers included
+withops-workspace-intelligence-service  | INFO:     Started server process [1]
+withops-workspace-intelligence-service  | INFO:     Waiting for application startup.
+withops-workspace-intelligence-service  | 2025-11-24 01:14:06,148 - main - INFO - 🚀 Starting Workspace Intelligence Service...
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,133 - database.config - INFO - ✅ Database tables created successfully
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,134 - main - INFO - ✅ Database initialized
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,137 - main - INFO - ✅ Redis cache connected
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,138 - core.event_bus - INFO - ✅ EventBus connected to Redis: redis://redis:6379
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,138 - main - INFO - ✅ Event bus connected
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - ✅ Registered handler for: github.repository.added
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - ✅ Registered handler for: github.repository.removed        
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - ✅ Registered handler for: github.workflows.updated
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - ✅ Registered handler for: github.installation.added        
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - ✅ Registered handler for: github.installation.removed      
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_listeners - INFO - ✅ Event handlers registered successfully
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - main - INFO - ✅ Event handlers registered
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - main - INFO - ✅ Event bus listening started
+withops-workspace-intelligence-service  | 2025-11-24 01:14:08,141 - core.event_bus - INFO - 🎧 EventBus started listening for events...
+withops-workspace-intelligence-service  | INFO:     Application startup complete.
+withops-workspace-intelligence-service  | INFO:     Uvicorn running on http://0.0.0.0:8004 (Press CTRL+C to quit)
+withops-workspace-intelligence-service  | ✅ Redis connected successfully
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:54726 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:43896 - "GET /health HTTP/1.1" 200 OK

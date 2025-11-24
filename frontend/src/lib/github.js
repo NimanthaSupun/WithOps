@@ -443,6 +443,46 @@ class GitHubOrganizationClient {
 	}
 
 	/**
+	 * 🏢 Get user's active organizations with GitHub App installed
+	 * Returns list of organizations where the user has installed the app
+	 */
+	async getMyActiveOrganizations(cleanup = false) {
+		try {
+			const token = await this.getAuthToken();
+			if (!token) {
+				return {
+					success: false,
+					error: 'Authentication required'
+				};
+			}
+
+			const url = new URL(`${this.baseUrl}/my-organizations`);
+			if (cleanup) {
+				url.searchParams.set('cleanup', 'true');
+			}
+
+			const data = await this.makeRequest(url.toString(), {
+				method: 'GET'
+			});
+
+			console.log('🏢 Active organizations loaded:', data);
+
+			return {
+				success: true,
+				organizations: data.organizations || [],
+				total_count: data.total_count || 0
+			};
+		} catch (error) {
+			console.error('❌ Failed to load active organizations:', error);
+			return {
+				success: false,
+				error: error.message,
+				organizations: []
+			};
+		}
+	}
+
+	/**
 	 * 🚀 PERFORMANCE: Get workflow priority for sorting
 	 */
 	getWorkflowPriority(workflow) {
@@ -1332,6 +1372,16 @@ class GitHubOrganizationClient {
 			case 'workflow_removed':
 				this.handleWorkflowRemoved(message.data);
 				break;
+			// 🚀 NEW: GitHub cache refresh events
+			case 'github.workspace_updated':
+				this.handleGitHubWorkspaceUpdated(message.data);
+				break;
+			case 'github.actions_updated':
+				this.handleGitHubActionsUpdated(message.data);
+				break;
+			case 'github.workflows_updated':
+				this.handleGitHubWorkflowsUpdated(message.data);
+				break;
 			default:
 				console.log('📨 Unknown WebSocket message type:', message.type);
 		}
@@ -1417,6 +1467,70 @@ class GitHubOrganizationClient {
 
 		// Emit event for UI updates
 		this.emitEvent('workflow_removed', data);
+	}
+
+	/**
+	 * 🚀 NEW: Handle GitHub workspace cache refresh complete
+	 */
+	handleGitHubWorkspaceUpdated(data) {
+		console.log('✨ GitHub workspace cache refreshed:', data);
+
+		const orgName = data.org_name;
+
+		// Clear local cache to force refetch
+		this.clearOrganizationCache(orgName);
+
+		// Emit event for UI updates
+		this.emitEvent('github_workspace_refreshed', {
+			organization: orgName,
+			timestamp: data.timestamp || Date.now(),
+			repositories_count: data.repositories_count,
+			cached_data_available: true
+		});
+	}
+
+	/**
+	 * 🚀 NEW: Handle GitHub actions cache refresh complete
+	 */
+	handleGitHubActionsUpdated(data) {
+		console.log('✨ GitHub actions cache refreshed:', data);
+
+		const orgName = data.org_name;
+
+		// Clear actions cache
+		const cacheKey = `actions_${orgName}`;
+		this.cache.delete(cacheKey);
+		this.persistentCache.delete(cacheKey);
+
+		// Emit event for UI updates
+		this.emitEvent('github_actions_refreshed', {
+			organization: orgName,
+			timestamp: data.timestamp || Date.now(),
+			actions_count: data.actions_count,
+			cached_data_available: true
+		});
+	}
+
+	/**
+	 * 🚀 NEW: Handle GitHub workflows cache refresh complete
+	 */
+	handleGitHubWorkflowsUpdated(data) {
+		console.log('✨ GitHub workflows cache refreshed:', data);
+
+		const orgName = data.org_name;
+
+		// Clear workflows cache
+		const cacheKey = `workflows_${orgName}`;
+		this.cache.delete(cacheKey);
+		this.persistentCache.delete(cacheKey);
+
+		// Emit event for UI updates
+		this.emitEvent('github_workflows_refreshed', {
+			organization: orgName,
+			timestamp: data.timestamp || Date.now(),
+			workflows_count: data.workflows_count,
+			cached_data_available: true
+		});
 	}
 
 	/**

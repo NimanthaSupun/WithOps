@@ -149,11 +149,11 @@ class DatabaseManager:
                 except Exception as rollback_error:
                     logger.error(f"Failed to rollback session: {rollback_error}")
             
-            # More specific error logging
+            # More specific error logging with exception details
             if "Connect call failed" in str(e) or "Connection refused" in str(e):
                 logger.error(f"Database connection failed: {e}. Consider using SQLite fallback.")
             else:
-                logger.error(f"Database session error: {e}")
+                logger.error(f"Database session error: {type(e).__name__}: {e}", exc_info=True)
             raise
         finally:
             if session:

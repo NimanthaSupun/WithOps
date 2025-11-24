@@ -286,6 +286,19 @@
                         <div class="badge-icon">✅</div>
                         <span>GitHub App installed</span>
                       </div>
+                      
+                      <!-- Show owner or shared access indicator -->
+                      {#if org.installed_by_you}
+                        <div class="status-badge owner-badge">
+                          <div class="badge-icon">🏆</div>
+                          <span>Owner</span>
+                        </div>
+                      {:else if org.auto_linked}
+                        <div class="status-badge shared-badge">
+                          <div class="badge-icon">👥</div>
+                          <span>Shared</span>
+                        </div>
+                      {/if}
                     {:else}
                       <div class="status-badge not-installed-badge">
                         <div class="badge-icon">📦</div>
@@ -918,6 +931,10 @@
 
   .org-status {
     margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .status-badge {
@@ -940,6 +957,19 @@
     background: rgba(255, 139, 74, 0.1);
     color: var(--accent-color);
     border: 1px solid rgba(255, 139, 74, 0.2);
+  }
+  
+  .owner-badge {
+    background: rgba(255, 215, 0, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+  }
+  
+  .shared-badge {
+    background: rgba(139, 92, 246, 0.1);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
   }
 
   .badge-icon {

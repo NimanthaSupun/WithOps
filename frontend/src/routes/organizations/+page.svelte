@@ -1,6 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import { githubClient } from '$lib/github.js';
     import { userOrganizations, appStore, isDarkMode } from '$lib/stores.js';
     import { authState } from '$lib/authState.js';
@@ -8,7 +9,9 @@
     let loading = $state(true);
     let error = $state(null);
     let connectedOrganizations = $state([]);
+    let discoveredOrganizations = $state([]); // Organizations from OAuth discovery
     let isRedirecting = $state(false); // Add flag to prevent multiple redirects
+    let filterType = $state('all'); // 'all', 'owned', 'shared'
     
     // Subscribe to dark mode using Svelte 5 runes
     let darkMode = $state(false);
@@ -30,7 +33,19 @@
             return;
         }
         
-        await loadConnectedOrganizations();
+        // Check for OAuth callback parameters (organization discovery)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        
+        if (code && state === 'discover_orgs') {
+            console.log('🔍 OAuth callback detected - processing discovered organizations');
+            await handleOrganizationDiscoveryCallback(code, state);
+            // Clean up URL params after processing
+            window.history.replaceState({}, '', window.location.pathname);
+        } else {
+            await loadConnectedOrganizations();
+        }
         
         // Preload discovery URL in background for faster "Connect" button response
         githubClient.startOrganizationDiscovery().catch(error => {
@@ -121,10 +136,13 @@
                         repositories_count: 0,
                         workflows_count: 0,
                         last_synced: null,
+                        last_verified: org.last_verified,
                         html_url: `https://github.com/${org.login || org.name}`,
                         loading_details: org.app_installed,
                         can_access: org.can_access,
                         installed_by_you: org.installed_by_you,
+                        auto_linked: org.auto_linked,
+                        installation: org.installation,
                         app_installed: org.app_installed // Preserve this field for consistency
                     };
                 });
@@ -157,6 +175,94 @@
             }
             
             error = errorMessage || 'Failed to load organizations';
+            loading = false;
+        }
+    }
+    
+    async function handleOrganizationDiscoveryCallback(code, state) {
+        try {
+            loading = true;
+            error = null;
+            
+            console.log('🔍 Processing organization discovery callback...');
+            
+            // Process the OAuth callback to get discovered organizations
+            const callbackResult = await githubClient.processOrganizationCallback(code, state);
+            
+            if (!callbackResult.success) {
+                throw new Error(callbackResult.error || 'Failed to process callback');
+            }
+            
+            console.log('📋 Discovered organizations:', callbackResult.organizations);
+            
+            // Load installed organizations to cross-reference
+            const installedResult = await githubClient.getMyActiveOrganizations();
+            const installedOrgs = installedResult.success ? installedResult.organizations : [];
+            
+            console.log('📋 Installed organizations:', installedOrgs);
+            
+            // Create a map of installed org logins for quick lookup
+            const installedOrgMap = new Map(
+                installedOrgs.map(org => [org.login || org.name, org])
+            );
+            
+            // Merge discovered organizations with installation status
+            discoveredOrganizations = callbackResult.organizations.map(org => {
+                const installedOrg = installedOrgMap.get(org.login);
+                const isInstalled = !!installedOrg;
+                
+                console.log(`🔍 Org ${org.login}: installed=${isInstalled}`, installedOrg);
+                
+                return {
+                    login: org.login,
+                    id: org.id,
+                    avatar_url: org.avatar_url,
+                    html_url: `https://github.com/${org.login}`,
+                    status: isInstalled ? 'connected' : 'available',
+                    app_installed: isInstalled,
+                    can_access: isInstalled ? installedOrg.can_access : false,
+                    installation_id: isInstalled ? installedOrg.installation_id : null,
+                    installed_by_you: isInstalled ? installedOrg.installed_by_you : false,
+                    repositories_count: 0,
+                    workflows_count: 0,
+                    last_synced: null,
+                    loading_details: false
+                };
+            });
+            
+            // Also load connected organizations
+            connectedOrganizations = installedOrgs.map(org => ({
+                login: org.login || org.name,
+                id: org.id,
+                avatar_url: org.avatar_url,
+                status: 'connected',
+                installation_id: org.installation_id,
+                repositories_count: 0,
+                workflows_count: 0,
+                last_synced: null,
+                last_verified: org.last_verified,
+                html_url: `https://github.com/${org.login || org.name}`,
+                loading_details: true,
+                can_access: org.can_access,
+                installed_by_you: org.installed_by_you,
+                auto_linked: org.auto_linked,
+                installation: org.installation,
+                app_installed: org.app_installed
+            }));
+            
+            console.log('✅ Discovery complete:', {
+                discovered: discoveredOrganizations.length,
+                connected: connectedOrganizations.length
+            });
+            
+            loading = false;
+            
+            // Load stats for connected orgs in background
+            setTimeout(() => loadOrganizationStats(), 100);
+            
+        } catch (err) {
+            console.error('❌ Error processing discovery callback:', err);
+            error = err.message || 'Failed to process organization discovery';
             loading = false;
         }
     }
@@ -602,9 +708,45 @@
           </div>
         </div>
       {:else}
+        <!-- Filter Controls -->
+        <div class="filter-section">
+          <div class="filter-buttons">
+            <button 
+              class="filter-button {filterType === 'all' ? 'active' : ''}"
+              onclick={() => filterType = 'all'}
+            >
+              <span class="filter-icon">📊</span>
+              All Organizations
+              <span class="filter-count">{connectedOrganizations.length}</span>
+            </button>
+            
+            <button 
+              class="filter-button {filterType === 'owned' ? 'active' : ''}"
+              onclick={() => filterType = 'owned'}
+            >
+              <span class="filter-icon">🏆</span>
+              My Installations
+              <span class="filter-count">{connectedOrganizations.filter(o => o.installed_by_you).length}</span>
+            </button>
+            
+            <button 
+              class="filter-button {filterType === 'shared' ? 'active' : ''}"
+              onclick={() => filterType = 'shared'}
+            >
+              <span class="filter-icon">👥</span>
+              Shared with Me
+              <span class="filter-count">{connectedOrganizations.filter(o => o.auto_linked).length}</span>
+            </button>
+          </div>
+        </div>
+        
         <!-- Organizations Grid -->
         <div class="organizations-grid">
-          {#each connectedOrganizations as org}
+          {#each connectedOrganizations.filter(org => {
+            if (filterType === 'owned') return org.installed_by_you;
+            if (filterType === 'shared') return org.auto_linked;
+            return true;
+          }) as org}
             <div class="org-card {org.status === 'connected' ? 'connected' : 'disconnected'}">
               <!-- Organization Header -->
               <div class="org-card-header">
@@ -621,6 +763,19 @@
                           <div class="badge-icon">✅</div>
                           <span>Connected</span>
                         </div>
+                        
+                        <!-- Owner/Shared Badge -->
+                        {#if org.installed_by_you}
+                          <div class="status-badge owner-badge">
+                            <div class="badge-icon">🏆</div>
+                            <span>Owner</span>
+                          </div>
+                        {:else if org.auto_linked}
+                          <div class="status-badge shared-badge">
+                            <div class="badge-icon">👥</div>
+                            <span>Shared Access</span>
+                          </div>
+                        {/if}
                       {:else}
                         <div class="status-badge pending-badge">
                           <div class="badge-icon">⏳</div>
@@ -658,10 +813,24 @@
                     {/if}
                   </div>
                 </div>
-                <div class="stat-item full-width">
-                  <div class="stat-label">Last synced</div>
+                <div class="stat-item">
+                  <div class="stat-label">Team Size</div>
                   <div class="stat-value">
-                    {#if org.last_synced}
+                    {#if org.installation?.linked_user_count}
+                      {org.installation.linked_user_count + 1} members
+                    {:else if org.installed_by_you}
+                      1 member
+                    {:else}
+                      —
+                    {/if}
+                  </div>
+                </div>
+                <div class="stat-item full-width">
+                  <div class="stat-label">Last verified</div>
+                  <div class="stat-value">
+                    {#if org.last_verified}
+                      {new Date(org.last_verified).toLocaleString()}
+                    {:else if org.last_synced}
                       {new Date(org.last_synced).toLocaleDateString()}
                     {:else}
                       Never
@@ -719,6 +888,91 @@
             </div>
           {/each}
         </div>
+        
+        <!-- Discovered Organizations Section (from OAuth discovery) -->
+        {#if discoveredOrganizations.length > 0}
+          <div class="section-divider"></div>
+          
+          <div class="section-header">
+            <h2 class="section-title">Select Organization to Connect</h2>
+            <p class="section-description">
+              Choose an organization from your GitHub account to install the DevSecOps app
+            </p>
+          </div>
+          
+          <div class="organizations-grid">
+            {#each discoveredOrganizations as org}
+              <div class="org-card {org.status === 'connected' ? 'connected' : 'available'}">
+                <!-- Organization Header -->
+                <div class="org-card-header">
+                  <div class="org-info">
+                    <div class="org-avatar">
+                      <img src={org.avatar_url} alt="{org.login} avatar" />
+                      <div class="avatar-glow"></div>
+                    </div>
+                    <div class="org-details">
+                      <h3 class="org-name">{org.login}</h3>
+                      <div class="org-status">
+                        {#if org.app_installed}
+                          <div class="status-badge connected-badge">
+                            <div class="badge-icon">✅</div>
+                            <span>Connected</span>
+                          </div>
+                        {:else}
+                          <div class="status-badge available-badge">
+                            <div class="badge-icon">📦</div>
+                            <span>Available</span>
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Statistics Placeholder -->
+                <div class="org-stats">
+                  <div class="stat-item">
+                    <div class="stat-label">GitHub Organization</div>
+                    <div class="stat-value">
+                      <a href={org.html_url} target="_blank" class="org-link">View on GitHub →</a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="org-actions">
+                  {#if org.app_installed && org.status === 'connected'}
+                    <button 
+                      onclick={() => viewOrganizationWorkspace(org.login)}
+                      class="org-button workspace-button"
+                    >
+                      <div class="button-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                      </div>
+                      <span>View Workspace</span>
+                      <div class="button-arrow">→</div>
+                    </button>
+                  {:else}
+                    <button 
+                      onclick={() => generateInstallationUrl(org.login, org.id)}
+                      class="org-button install-button"
+                    >
+                      <div class="button-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                      </div>
+                      <span>Install App</span>
+                      <div class="button-arrow">→</div>
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
       {/if}
     </main>
 
@@ -1194,6 +1448,61 @@
     width: 18px;
     height: 18px;
   }
+  
+  /* Filter Section */
+  .filter-section {
+    padding: 0 2.5rem 1.5rem;
+  }
+  
+  .filter-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .filter-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(74, 158, 255, 0.05);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-button:hover {
+    background: rgba(74, 158, 255, 0.1);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+  }
+  
+  .filter-button.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+  }
+  
+  .filter-icon {
+    font-size: 1.1rem;
+  }
+  
+  .filter-count {
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .filter-button.active .filter-count {
+    background: rgba(255, 255, 255, 0.3);
+  }
 
   /* Empty State */
   .empty-section {
@@ -1406,6 +1715,8 @@
   .org-status {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .status-badge {
@@ -1429,15 +1740,74 @@
     color: var(--warning-color);
     border: 1px solid rgba(245, 158, 11, 0.2);
   }
+  
+  .available-badge {
+    background: rgba(74, 158, 255, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+  }
+  
+  .owner-badge {
+    background: rgba(255, 215, 0, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+  }
+  
+  .shared-badge {
+    background: rgba(139, 92, 246, 0.1);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
 
   .badge-icon {
     font-size: 1rem;
+  }
+  
+  /* Section Divider */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(74, 158, 255, 0.3),
+      transparent
+    );
+    margin: 3rem 0 2rem;
+  }
+  
+  .section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  
+  .section-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+  
+  .org-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+  }
+  
+  .org-link:hover {
+    opacity: 0.8;
   }
 
   /* Statistics */
   .org-stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
     padding: 1.5rem;

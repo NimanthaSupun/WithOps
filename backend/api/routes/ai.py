@@ -11,14 +11,13 @@ import asyncio
 import logging
 import json
 import yaml
-from core.ollama_client import ollama_client
-from core.claude_ai_client import claude_client
+from core.ai_service_client import ai_service_client
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 print("🔍 DEBUG: AI routes module loaded successfully")
-print(f"🔍 DEBUG: OllamaClient initialized: {ollama_client}")
+print(f"🔍 DEBUG: AI Service Client initialized: {ai_service_client}")
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
 
@@ -46,20 +45,21 @@ class PRDescriptionResponse(BaseModel):
 
 @router.get("/health")
 async def check_ai_health():
-    """Check if Ollama AI service is available"""
+    """Check if AI microservice is available"""
     try:
-        is_healthy = await ollama_client.check_health()
-        available_models = await ollama_client.list_models()
+        # Simple health check - just verify AI service is reachable
+        result = await ai_service_client.check_ollama_health()
         
         return {
-            "status": "healthy" if is_healthy else "unhealthy",
-            "ollama_url": ollama_client.base_url,
-            "available_models": available_models,
-            "default_model": ollama_client.default_model
+            "status": result.get("status", "unknown"),
+            "service": result.get("service", "ai-service"),
+            "version": result.get("version", "1.0.0"),
+            "service_url": ai_service_client.base_url,
+            "message": "AI service is reachable via backend"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="AI service unavailable")
+        raise HTTPException(status_code=503, detail=f"AI service unavailable: {str(e)}")
 
 @router.get("/test")
 async def test_endpoint():
@@ -99,69 +99,44 @@ async def generate_pr_description(request: PRDescriptionRequest):
     """
     Generate an AI-powered PR description based on code changes
     
-    This endpoint uses Ollama to generate comprehensive PR descriptions
-    that include overview, changes, impact, testing, and security considerations.
+    This endpoint proxies requests to the AI microservice which uses Ollama
+    to generate comprehensive PR descriptions.
     """
-    print("🔍 DEBUG: Endpoint function called!")
-    print(f"🔍 DEBUG: Request type: {type(request)}")
-    logger.info("🔍 DEBUG: PR description endpoint called!")
+    logger.info(f"Generating PR description for: {request.title}")
     
     try:
         import time
         start_time = time.time()
         
-        print(f"🔍 DEBUG: Inside try block - Title: {request.title}")
-        print(f"🔍 DEBUG: Changes count: {len(request.changes)}")
-        
         logger.info(f"⭐ Starting PR description generation for: {request.title}")
         logger.info(f"⭐ Changes: {len(request.changes)} files")
         
-        # Test ollama_client access
-        print(f"🔍 DEBUG: Ollama client base_url: {ollama_client.base_url}")
-        print(f"🔍 DEBUG: Ollama client default_model: {ollama_client.default_model}")
-        
-        # Check if Ollama is available
-        print("🔍 DEBUG: Checking Ollama health...")
-        health_check = await ollama_client.check_health()
-        print(f"🔍 DEBUG: Health check result: {health_check}")
-        
-        if not health_check:
-            raise HTTPException(
-                status_code=503, 
-                detail="AI service (Ollama) is not available. Please ensure Ollama Docker container is running."
-            )
-        
-        print("🔍 DEBUG: About to call generate_pr_description...")
-        # Generate PR description
-        description = await ollama_client.generate_pr_description(
-            title=request.title,
-            changes=[change.model_dump() for change in request.changes],
-            workflow_context=request.workflow_context or "",
-            model=request.model
-        )
+        # Call AI service
+        result = await ai_service_client.generate_pr_description({
+            "title": request.title,
+            "changes": [change.model_dump() for change in request.changes],
+            "workflow_context": request.workflow_context or "",
+            "model": request.model
+        })
         
         generation_time = time.time() - start_time
-        model_used = request.model or ollama_client.default_model
         
-        logger.info(f"PR description generated in {generation_time:.2f}s using {model_used}")
+        logger.info(f"PR description generated in {generation_time:.2f}s")
         
         return PRDescriptionResponse(
-            success=True,
-            description=description,
-            model_used=model_used,
+            success=result.get("success", True),
+            description=result.get("description", ""),
+            model_used=result.get("model_used", "llama3.2:latest"),
             generation_time=generation_time,
-            message="PR description generated successfully"
+            message=result.get("message", "PR description generated successfully")
         )
         
-    except HTTPException as he:
-        print(f"🔍 DEBUG: HTTPException caught: {he}")
-        raise
     except Exception as e:
-        print(f"🔍 DEBUG: General exception caught: {e}")
-        print(f"🔍 DEBUG: Exception type: {type(e)}")
-        import traceback
-        print(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
         logger.error(f"Failed to generate PR description: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI service error: {str(e)}"
+        )
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to generate PR description: {str(e)}")
 
@@ -182,96 +157,45 @@ class WorkflowGenerationResponse(BaseModel):
 @router.post("/generate-workflow")
 async def generate_workflow(request: WorkflowGenerationRequest):
     """
-    Generate a GitHub Actions workflow using AI
+    Generate a GitHub Actions workflow using AI microservice
     """
     try:
-        print(f"🔍 DEBUG: Workflow generation requested - Type: {request.workflowType}")
-        print(f"🔍 DEBUG: Prompt: {request.prompt}")
+        logger.info(f"Workflow generation requested - Type: {request.workflowType}")
         
         # Validate input
         if not request.prompt.strip():
-            print("🔍 DEBUG: Empty prompt provided")
             return WorkflowGenerationResponse(
                 success=False,
                 error="Prompt cannot be empty"
             )
         
-        # Try AI generation first
-        try:
-            print("🔍 DEBUG: Attempting AI generation...")
-            is_healthy = await ollama_client.check_health()
-            
-            if is_healthy:
-                prompt = build_workflow_generation_prompt(request)
-                print(f"🔍 DEBUG: Using AI with prompt length: {len(prompt)}")
-                
-                ai_response = await ollama_client.generate_workflow(
-                    prompt=prompt,
-                    model="llama3.2:latest"
-                )
-                
-                if ai_response and ai_response.strip():
-                    print("🔍 DEBUG: AI response received, parsing...")
-                    print(f"🔍 DEBUG: Raw response length: {len(ai_response)}")
-                    print(f"🔍 DEBUG: Raw response preview: {ai_response[:200]}...")
-                    
-                    # Try to parse AI response as JSON first, then as raw text
-                    workflow_data = parse_ai_workflow_response(ai_response, request)
-                    if workflow_data:
-                        print("🔍 DEBUG: AI generation successful!")
-                        return WorkflowGenerationResponse(
-                            success=True,
-                            workflowName=workflow_data["name"],
-                            workflowContent=workflow_data["content"],
-                            description=workflow_data["description"] + " (AI Generated)",
-                            triggers=workflow_data["triggers"]
-                        )
-                    else:
-                        print("🔍 DEBUG: Failed to parse AI response, trying raw parsing...")
-                        # Try to extract workflow from raw response
-                        workflow_data = extract_workflow_from_raw_response(ai_response, request)
-                        if workflow_data:
-                            print("🔍 DEBUG: Raw parsing successful!")
-                            return WorkflowGenerationResponse(
-                                success=True,
-                                workflowName=workflow_data["name"],
-                                workflowContent=workflow_data["content"],
-                                description=workflow_data["description"] + " (AI Generated)",
-                                triggers=workflow_data["triggers"]
-                            )
-                        else:
-                            print("🔍 DEBUG: Both parsing methods failed, using fallback...")
-                else:
-                    print("🔍 DEBUG: Empty AI response, using fallback...")
-            else:
-                print("🔍 DEBUG: Ollama not healthy, using fallback...")
-                
-        except Exception as ai_error:
-            print(f"🔍 DEBUG: AI generation error: {ai_error}, using fallback...")
-            import traceback
-            print(f"🔍 DEBUG: AI error traceback: {traceback.format_exc()}")
+        # Call AI service
+        result = await ai_service_client.generate_workflow({
+            "workflowType": request.workflowType,
+            "prompt": request.prompt,
+            "language": request.language,
+            "frameworks": request.frameworks
+        })
         
-        # Fallback to intelligent template generation
-        print("🔍 DEBUG: Using intelligent fallback generation...")
-        # fallback_data = generate_intelligent_fallback(request)
-        
-        # print(f"🔍 DEBUG: Fallback workflow generated: {fallback_data['name']}")
-        
-        # return WorkflowGenerationResponse(
-        #     success=True,
-        #     workflowName=fallback_data["name"],
-        #     workflowContent=fallback_data["content"],
-        #     description=fallback_data["description"] + " (Template-based)",
-        #     triggers=fallback_data["triggers"]
-        # )
+        if result.get("success"):
+            return WorkflowGenerationResponse(
+                success=True,
+                workflowName=result.get("workflowName", "workflow.yml"),
+                workflowContent=result.get("workflowContent", ""),
+                description=result.get("description", "AI Generated"),
+                triggers=result.get("triggers", ["push"])
+            )
+        else:
+            return WorkflowGenerationResponse(
+                success=False,
+                error=result.get("error", "Failed to generate workflow")
+            )
         
     except Exception as e:
-        print(f"🔍 DEBUG: Exception in workflow generation: {e}")
-        import traceback
-        print(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
+        logger.error(f"Exception in workflow generation: {e}")
         return WorkflowGenerationResponse(
             success=False,
-            error=f"Failed to generate workflow: {str(e)}"
+            error=f"AI service error: {str(e)}"
         )
 
 def build_workflow_generation_prompt(request: WorkflowGenerationRequest) -> str:
@@ -554,7 +478,9 @@ async def analyze_threats_with_claude(request: ClaudeAnalysisRequest):
             "document_text": request.document_text,
             "diagram_image": request.diagram_image,
             "analysis_type": request.analysis_type,
-            "user_threat_context": request.user_threat_context
+            "user_threat_context": request.user_threat_context,
+            "model_id": request.model_id,
+            "model_name": request.model_name
         }
         
         # Log user threat context for debugging
@@ -562,10 +488,10 @@ async def analyze_threats_with_claude(request: ClaudeAnalysisRequest):
             logger.info(f"🛡️ User threat context: {request.user_threat_context.get('total_threats', 0)} existing threats")
             logger.info(f"🎯 Threat categories: {list(request.user_threat_context.get('threats_by_category', {}).keys())}")
         
-        # Call Claude AI
-        result = await claude_client.analyze_threat_model(analysis_request)
+        # Call AI service
+        result = await ai_service_client.analyze_threats_with_claude(analysis_request)
         
-        if result["success"]:
+        if result.get("success"):
             logger.info("✅ Claude analysis completed successfully")
             return ClaudeAnalysisResponse(**result)
         else:
@@ -574,7 +500,7 @@ async def analyze_threats_with_claude(request: ClaudeAnalysisRequest):
             
     except Exception as e:
         logger.error(f"❌ Error in Claude threat analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
 
 
 @router.post("/claude/review-threat")
@@ -602,6 +528,96 @@ async def review_individual_threat(request: dict):
             "error": str(e)
         }
 
+
+@router.post("/claude/analyze-threats-async")
+async def analyze_threats_async(request: ClaudeAnalysisRequest, user_id: str):
+    """
+    Asynchronous threat modeling analysis using Claude AI
+    
+    This endpoint queues the analysis task and returns immediately.
+    Results are delivered via WebSocket when complete.
+    
+    Returns:
+        task_id: Unique identifier to track the analysis
+        status: "queued" - analysis has been queued for processing
+    """
+    try:
+        import uuid
+        from core.event_bus import task_queue
+        
+        # Generate unique task ID
+        task_id = f"analysis-{int(asyncio.get_event_loop().time() * 1000)}-{uuid.uuid4().hex[:8]}"
+        
+        logger.info(f"🚀 Queuing async threat analysis: {task_id}")
+        logger.info(f"📊 Components: {len(request.components)}, Connections: {len(request.connections)}")
+        
+        # Prepare task data
+        task_data = {
+            "user_id": user_id,
+            "model_id": request.model_id,
+            "model_name": request.model_name,
+            "components": [comp.dict() for comp in request.components],
+            "connections": [conn.dict() for conn in request.connections],
+            "methodology": request.methodology,
+            "document_content": request.document_text,
+            "diagram_base64": request.diagram_image,
+            "analysis_type": request.analysis_type,
+            "user_threat_context": request.user_threat_context
+        }
+        
+        # Enqueue the task
+        await task_queue.enqueue(task_id, task_data)
+        
+        logger.info(f"✅ Task queued: {task_id}")
+        
+        return {
+            "success": True,
+            "task_id": task_id,
+            "status": "queued",
+            "message": "Threat analysis queued. You will be notified via WebSocket when complete."
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error queuing threat analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to queue analysis: {str(e)}")
+
+
+@router.get("/task/{task_id}/status")
+async def get_task_status(task_id: str):
+    """
+    Get the status of an async task
+    
+    Returns:
+        status: queued, processing, completed, failed
+        result: Task result (if completed)
+    """
+    try:
+        from core.event_bus import task_queue
+        
+        status = await task_queue.get_task_status(task_id)
+        
+        if not status:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        response = {
+            "task_id": task_id,
+            "status": status
+        }
+        
+        # If completed, get result
+        if status == "completed":
+            result = await task_queue.get_task_result(task_id)
+            if result:
+                response["result"] = result
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting task status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}")
+
 @router.post("/claude/progressive-analysis")
 async def progressive_threat_analysis(
     previous_analysis: Optional[str] = None,
@@ -610,21 +626,16 @@ async def progressive_threat_analysis(
 ):
     """
     Progressive threat analysis as user builds their model step by step
-    Focuses on incremental changes and new threats
+    NOTE: This endpoint is not yet implemented in AI service
     """
     try:
         logger.info(f"🔄 Progressive analysis for {len(new_components)} new components")
         
-        result = await claude_client.analyze_progressive_context(
-            previous_analysis=previous_analysis,
-            new_components=[comp.dict() for comp in new_components],
-            methodology=methodology
+        # TODO: Implement in AI service
+        raise HTTPException(
+            status_code=501,
+            detail="Progressive analysis not yet implemented in AI service"
         )
-        
-        if result["success"]:
-            return result
-        else:
-            raise HTTPException(status_code=500, detail=result.get("error", "Progressive analysis failed"))
             
     except Exception as e:
         logger.error(f"❌ Error in progressive analysis: {str(e)}")
@@ -632,24 +643,16 @@ async def progressive_threat_analysis(
 
 @router.get("/claude/health")
 async def claude_health_check():
-    """Check Claude AI service health"""
+    """Check Claude AI service health via AI microservice"""
     try:
-        # Simple test call to verify API key and connectivity
-        test_request = {
-            "components": [{"id": "test", "type": "process", "user_label": "Test Process", "name": "Test"}],
-            "connections": [],
-            "methodology": "STRIDE",
-            "analysis_type": "partial"
-        }
-        
-        result = await claude_client.analyze_threat_model(test_request)
+        result = await ai_service_client.check_claude_health()
         
         return {
             "service": "Claude AI",
-            "status": "healthy" if result["success"] else "error",
-            "model": claude_client.model,
-            "api_configured": bool(claude_client.api_key),
-            "timestamp": result["timestamp"]
+            "status": result.get("status", "unknown"),
+            "model": result.get("model", "unknown"),
+            "api_configured": result.get("api_configured", False),
+            "timestamp": result.get("timestamp")
         }
         
     except Exception as e:
@@ -657,7 +660,7 @@ async def claude_health_check():
             "service": "Claude AI", 
             "status": "error",
             "error": str(e),
-            "api_configured": bool(claude_client.api_key)
+            "api_configured": False
         }
 
 class PDFExportRequest(BaseModel):

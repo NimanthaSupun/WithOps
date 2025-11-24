@@ -1,0 +1,321 @@
+{
+  "dashboard": {
+    "title": "WithOps AI Service Monitoring",
+    "tags": ["ai-service", "microservices", "withops"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+        "type": "stat",
+        "title": "Total Requests",
+        "targets": [
+          {
+            "expr": "sum(http_requests_total{job=\"ai-service\"})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 1000, "color": "yellow" },
+                { "value": 5000, "color": "red" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+        "type": "stat",
+        "title": "Request Rate (req/s)",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"ai-service\"}[1m]))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "unit": "reqps",
+            "decimals": 2
+          }
+        },
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+        "type": "stat",
+        "title": "Error Rate",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"ai-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"ai-service\"}[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 1, "color": "yellow" },
+                { "value": 5, "color": "red" }
+              ]
+            },
+            "unit": "percent",
+            "noValue": "0%"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+        "type": "timeseries",
+        "title": "Request Rate by Endpoint",
+        "targets": [
+          {
+            "expr": "sum by (endpoint) (rate(http_requests_total{job=\"ai-service\"}[1m]))",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "axisLabel": "req/s",
+              "drawStyle": "line",
+              "fillOpacity": 20,
+              "showPoints": "never"
+            },
+            "unit": "reqps"
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "calcs": ["mean", "max"]
+          }
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+        "type": "timeseries",
+        "title": "Request Duration (p50, p95, p99)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"ai-service\"}[5m]))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"ai-service\"}[5m]))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"ai-service\"}[5m]))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "axisLabel": "seconds",
+              "drawStyle": "line",
+              "fillOpacity": 10
+            },
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": { "h": 7, "w": 6, "x": 0, "y": 15 },
+        "type": "stat",
+        "title": "Memory Usage",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"ai-service\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 200000000, "color": "yellow" },
+                { "value": 500000000, "color": "red" }
+              ]
+            },
+            "unit": "bytes"
+          }
+        },
+        "options": {
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": { "h": 7, "w": 6, "x": 6, "y": 15 },
+        "type": "stat",
+        "title": "CPU Usage",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"ai-service\"}[1m])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "unit": "percentunit",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": { "h": 7, "w": 6, "x": 12, "y": 15 },
+        "type": "stat",
+        "title": "Open File Descriptors",
+        "targets": [
+          {
+            "expr": "process_open_fds{job=\"ai-service\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": { "h": 7, "w": 6, "x": 18, "y": 15 },
+        "type": "stat",
+        "title": "Python Version",
+        "targets": [
+          {
+            "expr": "python_info{job=\"ai-service\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "textMode": "name"
+        },
+        "transformations": [
+          {
+            "id": "labelsToFields",
+            "options": {}
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+        "type": "timeseries",
+        "title": "HTTP Status Codes",
+        "targets": [
+          {
+            "expr": "sum by (status) (rate(http_requests_total{job=\"ai-service\"}[1m]))",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 100,
+              "axisLabel": "req/s"
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+        "type": "timeseries",
+        "title": "Garbage Collection Events",
+        "targets": [
+          {
+            "expr": "rate(python_gc_collections_total{job=\"ai-service\"}[1m])",
+            "legendFormat": "Gen {{generation}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "drawStyle": "line",
+              "fillOpacity": 10
+            }
+          }
+        }
+      },
+      {
+        "id": 12,
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
+        "type": "table",
+        "title": "Endpoint Performance Summary",
+        "targets": [
+          {
+            "expr": "sum by (endpoint, method, status) (http_requests_total{job=\"ai-service\"})",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "job": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "endpoint": "Endpoint",
+                "method": "Method",
+                "status": "Status",
+                "Value": "Total Requests"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": true
+}

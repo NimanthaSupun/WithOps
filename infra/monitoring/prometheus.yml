@@ -1,0 +1,94 @@
+# Prometheus Configuration for WithOps Microservices
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "withops-dev"
+    environment: "development"
+
+# Scrape configurations for each service
+scrape_configs:
+  # Backend/Monolith
+  - job_name: "backend"
+    static_configs:
+      - targets: ["backend:8000"]
+        labels:
+          service: "backend"
+    metrics_path: "/metrics"
+
+  # AI Service (add when ready)
+  - job_name: "ai-service"
+    static_configs:
+      - targets: ["ai-service:8001"]
+        labels:
+          service: "ai-service"
+    metrics_path: "/metrics"
+
+  # GitHub Service (add when ready)
+  - job_name: "github-service"
+    static_configs:
+      - targets: ["github-service:8002"]
+        labels:
+          service: "github-service"
+    metrics_path: "/metrics"
+
+  # Threat Service (add when ready)
+  - job_name: "threat-service"
+    static_configs:
+      - targets: ["threat-service:8003"]
+        labels:
+          service: "threat-service"
+    metrics_path: "/metrics"
+
+  # Workspace Intelligence Service
+  - job_name: "workspace-intelligence-service"
+    static_configs:
+      - targets: ["workspace-intelligence-service:8004"]
+        labels:
+          service: "workspace-intelligence-service"
+    metrics_path: "/metrics"
+
+  # Collaboration Service
+  - job_name: "collaboration-service"
+    static_configs:
+      - targets: ["collaboration-service:8105"]
+        labels:
+          service: "collaboration-service"
+    metrics_path: "/metrics"
+
+  # Authentication Service
+  - job_name: "auth-service"
+    static_configs:
+      - targets: ["auth-service:8006"]
+        labels:
+          service: "auth-service"
+    metrics_path: "/metrics"
+
+  # Kong API Gateway
+  - job_name: "kong"
+    static_configs:
+      - targets: ["kong:8001"]
+        labels:
+          service: "kong"
+
+  # PostgreSQL Exporter
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: "postgres"
+
+  # Redis Exporter
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: "redis"
+
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: "prometheus"

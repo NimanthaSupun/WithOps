@@ -106,6 +106,14 @@
     let loadingHistory = false;
     let currentAIView = 'welcome'; // 'welcome' or 'result'
     
+    // WebSocket for async threat analysis
+    let ws = null;
+    let wsReconnectAttempts = 0;
+    let wsMaxReconnectAttempts = 5;
+    let wsPingInterval = null; // Heartbeat interval
+    let pendingTaskId = null; // Track the current async task
+    let taskStatus = 'idle'; // 'idle', 'queued', 'processing', 'completed', 'failed'
+    
     // Debug reactive statement to track aiAnalysisResult changes
     $: {
         console.log('🔍 aiAnalysisResult changed:', {
@@ -648,6 +656,142 @@
         }
     }
     
+    // WebSocket initialization for async threat analysis
+    function initWebSocket() {
+        if (!currentUser || !currentUser.sub) {
+            console.warn('⚠️ Cannot initialize WebSocket: no user ID');
+            return;
+        }
+        
+        try {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            // URL encode user ID to handle special characters like | in Auth0 IDs
+            const encodedUserId = encodeURIComponent(currentUser.sub);
+            // Connect directly to backend (not through Kong) for WebSocket
+            const wsUrl = `${wsProtocol}//localhost:8100/ws/${encodedUserId}`;
+            
+            console.log('🔌 Connecting to WebSocket:', wsUrl);
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('✅ WebSocket connected');
+                wsReconnectAttempts = 0;
+                showUserNotification('🔌 Real-time updates connected');
+                
+                // Start heartbeat to keep connection alive
+                wsPingInterval = setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 30000); // Ping every 30 seconds
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    console.log('📨 WebSocket message received:', message);
+                    
+                    if (message.event === 'threat.analysis.completed') {
+                        handleThreatAnalysisCompleted(message.data);
+                    } else if (message.event === 'threat.analysis.failed') {
+                        handleThreatAnalysisFailed(message.data);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to parse WebSocket message:', error);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                console.log('🔌 WebSocket disconnected');
+                ws = null;
+                
+                // Clear ping interval
+                if (wsPingInterval) {
+                    clearInterval(wsPingInterval);
+                    wsPingInterval = null;
+                }
+                
+                // Attempt to reconnect
+                if (wsReconnectAttempts < wsMaxReconnectAttempts) {
+                    wsReconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, wsReconnectAttempts), 30000);
+                    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${wsReconnectAttempts}/${wsMaxReconnectAttempts})`);
+                    setTimeout(initWebSocket, delay);
+                }
+            };
+        } catch (error) {
+            console.error('❌ Failed to initialize WebSocket:', error);
+        }
+    }
+    
+    // Cleanup WebSocket on component destroy
+    function cleanupWebSocket() {
+        if (wsPingInterval) {
+            clearInterval(wsPingInterval);
+            wsPingInterval = null;
+        }
+        if (ws) {
+            console.log('🔌 Closing WebSocket connection');
+            ws.close();
+            ws = null;
+        }
+    }
+    
+    // Handle completed threat analysis from WebSocket
+    function handleThreatAnalysisCompleted(data) {
+        console.log('✅ Threat analysis completed:', data);
+        
+        // Stop polling if active
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+            console.log('🛑 Stopped polling - result received via WebSocket');
+        }
+        
+        taskStatus = 'completed';
+        aiAnalyzing = false;
+        
+        if (data.success) {
+            // Process the result same way as synchronous analysis
+            const result = data;
+            
+            // Parse if needed
+            if (!result.structured_analysis && result.analysis) {
+                console.log('📝 Backend provided raw text, parsing into structured format...');
+                result.structured_analysis = parseRawAnalysisToStructured(result.analysis, result.methodology || 'STRIDE');
+            }
+            
+            // Store and display
+            aiAnalysisResult = result;
+            showAIAnalysisPanel = true;
+            currentAIView = 'result';
+            
+            showUserNotification('✅ AI analysis completed!');
+            
+            // Save to history (same logic as synchronous)
+            saveAnalysisToHistory(result);
+        } else {
+            showUserNotification('❌ Analysis failed: ' + (data.error || 'Unknown error'));
+        }
+        
+        pendingTaskId = null;
+    }
+    
+    // Handle failed threat analysis from WebSocket
+    function handleThreatAnalysisFailed(data) {
+        console.error('❌ Threat analysis failed:', data);
+        
+        taskStatus = 'failed';
+        aiAnalyzing = false;
+        pendingTaskId = null;
+        
+        showUserNotification('❌ Analysis failed: ' + (data.error || 'Unknown error'));
+    }
+    
     // Methodology state
     let currentMethodology = 'STRIDE'; // Default methodology
     
@@ -780,6 +924,11 @@
             await initializeCollaborationFeatures();
             console.log('✅ Final collaboration state:', { collaborationInitialized, currentUser });
             
+            // Initialize WebSocket for async threat analysis
+            if (currentUser && currentUser.sub) {
+                initWebSocket();
+            }
+            
         } catch (error) {
             console.error('❌ Failed to initialize component:', error);
             showUserNotification('❌ Failed to load threat model');
@@ -789,6 +938,13 @@
     onDestroy(() => {
         console.log('🧹 Component unmounting, cleaning up...');
         disconnectCollaboration();
+        cleanupWebSocket();
+        
+        // Clean up polling
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
         
         // Clean up panel resize listeners
         if (isResizingAIPanel) {
@@ -3265,16 +3421,20 @@
         try {
             // Set analyzing state immediately
             aiAnalyzing = true;
-            console.log('🤖 Starting AI threat analysis...');
+            taskStatus = 'queued';
+            console.log('🤖 Starting async AI threat analysis...');
             
             // Show immediate feedback to user
-            showUserNotification('🤖 Claude AI is analyzing your architecture...');
+            showUserNotification('🚀 Queueing AI analysis task...');
             
             // Prepare comprehensive data payload
             const analysisData = await prepareAIAnalysisData(analysisType);
             
-            // Send to Claude API
-            const response = await fetch('http://localhost:8000/api/ai/claude/analyze-threats', {
+            // Get user ID for async tracking
+            const userId = currentUser?.sub || 'anonymous';
+            
+            // Send to async Claude API endpoint with user_id parameter
+            const response = await fetch(`http://localhost:8000/api/ai/claude/analyze-threats-async?user_id=${encodeURIComponent(userId)}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -3283,168 +3443,197 @@
             });
             
             if (!response.ok) {
-
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.detail || `HTTP ${response.status}`);
             }
             
             const result = await response.json();
             
-            if (result.success) {
-                console.log('✅ AI analysis completed successfully');
-                console.log('🔍 DEBUG: Full AI analysis result structure:', JSON.stringify(result, null, 2));
+            // Async endpoint returns task_id immediately
+            if (result.task_id) {
+                pendingTaskId = result.task_id;
+                taskStatus = 'processing';
+                console.log(`✅ Analysis task queued: ${result.task_id}`);
+                showUserNotification('⏳ Analysis in progress... You\'ll be notified when complete!');
                 
-                // 🚀 PARSE RAW BACKEND RESPONSE INTO STRUCTURED FORMAT
-                // If backend doesn't provide structured_analysis, parse it from raw text
-                if (!result.structured_analysis && result.analysis) {
-                    console.log('📝 Backend provided raw text, parsing into structured format...');
-                    result.structured_analysis = parseRawAnalysisToStructured(result.analysis, result.methodology || 'STRIDE');
-                    console.log('✅ Parsed structured analysis:', result.structured_analysis);
-                }
-                
-                // Store analysis result and immediately show results panel
-                aiAnalysisResult = result;
-                showAIAnalysisPanel = true;
-                
-                // 🚀 FIX 1: Immediately switch to result view instead of staying in welcome
-                currentAIView = 'result';
-                
-                // Show success notification with celebration
-                showUserNotification('🎉 AI analysis complete! Amazing insights generated.');
-                
-                // Save to database (but don't add to local history to avoid duplication)
-                try {
-                    const savedAnalysis = await saveAIAnalysisToModel(result);
-                    console.log('✅ Saved analysis to database successfully');
-                    
-                    // 🚀 FIRST: Load existing history from localStorage before adding new one
-                    let existingHistory = [];
-                    try {
-                        const localStorageKey = `analysis-history-${modelId}`;
-                        const localHistory = localStorage.getItem(localStorageKey);
-                        if (localHistory) {
-                            const parsedHistory = JSON.parse(localHistory);
-                            if (Array.isArray(parsedHistory)) {
-                                existingHistory = parsedHistory.filter(entry => entry && entry.id && entry.timestamp);
-                                console.log(`📚 Found ${existingHistory.length} existing analyses in localStorage`);
-                            }
-                        }
-                    } catch (storageError) {
-                        console.warn('⚠️ Failed to load existing localStorage history:', storageError);
-                    }
-                    
-                    // 🚀 SECOND: Create new history entry
-                    const historyEntry = {
-                        id: savedAnalysis.id || `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        timestamp: savedAnalysis.timestamp || new Date().toISOString(),
-                        methodology: savedAnalysis.methodology || 'STRIDE',
-                        analysis_type: savedAnalysis.analysis_type || 'comprehensive',
-                        diagram_elements_count: savedAnalysis.diagram_elements_count || $canvasData.elements.length,
-                        diagram_connections_count: savedAnalysis.diagram_connections_count || $canvasData.connections.length,
-                        result: savedAnalysis,
-                        analysis: savedAnalysis.analysis || 'No analysis content',
-                        success: true
-                    };
-                    
-                    // 🚀 THIRD: Check for duplicates across existing + current history
-                    const allHistory = [...existingHistory, ...analysisHistory];
-                    const existingIndex = allHistory.findIndex(entry => 
-                        entry.id === historyEntry.id || 
-                        Math.abs(new Date(entry.timestamp) - new Date(historyEntry.timestamp)) < 1000
-                    );
-                    
-                    if (existingIndex === -1) {
-                        // Add to the BEGINNING of existing history
-                        const newHistory = [historyEntry, ...existingHistory];
-                        analysisHistory = newHistory;
-                        
-                        console.log(`📈 Added new analysis to history. Total: ${newHistory.length}`);
-                        console.log('📊 Analysis ID:', historyEntry.id);
-                        console.log('📅 Analysis timestamp:', historyEntry.timestamp);
-                        console.log('🔍 All analysis IDs:', newHistory.map(h => h.id));
-                        
-                        // Force Svelte reactivity update
-                        analysisHistory = [...analysisHistory];
-                        
-                        // Save to localStorage to persist across page reloads
-                        try {
-                            localStorage.setItem(`analysis-history-${modelId}`, JSON.stringify(newHistory));
-                            console.log('💾 Saved analysis history to localStorage');
-                        } catch (e) {
-                            console.warn('⚠️ Failed to save to localStorage:', e);
-                        }
-                        
-                        // Force UI update by triggering a small delay
-                        setTimeout(() => {
-                            console.log('🔄 UI reactivity check - History length:', analysisHistory.length);
-                        }, 100);
-                    } else {
-                        console.log('⚠️ Duplicate analysis detected, not adding to history');
-                    }
-                    
-                    // DON'T reload from database - it only has the latest analysis
-                    // Backend doesn't maintain proper analysis history, so use local history only
-                    console.log('✅ Using local history only. Database reload skipped to preserve multiple analyses.');
-                    
-                } catch (saveError) {
-                    console.warn('⚠️ Failed to save AI analysis to database:', saveError);
-                    
-                    // Load existing history from localStorage before adding fallback
-                    let existingHistory = [];
-                    try {
-                        const localStorageKey = `analysis-history-${modelId}`;
-                        const localHistory = localStorage.getItem(localStorageKey);
-                        if (localHistory) {
-                            const parsedHistory = JSON.parse(localHistory);
-                            if (Array.isArray(parsedHistory)) {
-                                existingHistory = parsedHistory.filter(entry => entry && entry.id && entry.timestamp);
-                            }
-                        }
-                    } catch (storageError) {
-                        console.warn('⚠️ Failed to load existing localStorage for fallback:', storageError);
-                    }
-                    
-                    // Add to local history as fallback
-                    const historyEntry = {
-                        id: `analysis-${Date.now()}-fallback`,
-                        timestamp: new Date().toISOString(),
-                        methodology: result.methodology || 'STRIDE',
-                        analysis_type: result.analysis_type || 'comprehensive',
-                        diagram_elements_count: $canvasData.elements.length,
-                        diagram_connections_count: $canvasData.connections.length,
-                        result: result,
-                        analysis: result.analysis || 'No analysis content',
-                        success: true
-                    };
-                    
-                    const newHistory = [historyEntry, ...existingHistory];
-                    analysisHistory = newHistory;
-                    
-                    console.log(`📈 Added fallback analysis to local history. Total: ${newHistory.length}`);
-                    
-                    // Save to localStorage
-                    try {
-                        localStorage.setItem(`analysis-history-${modelId}`, JSON.stringify(newHistory));
-                        console.log('💾 Saved fallback analysis history to localStorage');
-                    } catch (e) {
-                        console.warn('⚠️ Failed to save fallback to localStorage:', e);
-                    }
-                }
-                
-                return result;
+                // Start polling as fallback in case WebSocket doesn't deliver
+                // This ensures results are shown even if WebSocket fails
+                pollTaskStatus(result.task_id);
                 
             } else {
-                throw new Error(result.error || 'AI analysis failed');
+                throw new Error('No task_id received from async endpoint');
             }
             
         } catch (error) {
             console.error('❌ AI analysis failed:', error);
+            taskStatus = 'failed';
             showUserNotification(`❌ AI analysis failed: ${error.message}`);
             throw error;
         } finally {
-            // Always reset analyzing state
-            aiAnalyzing = false;
+            // Don't reset aiAnalyzing here - it will be reset when WebSocket delivers the result
+            // aiAnalyzing = false;
         }
+    }
+    
+    // Helper function to save analysis to history (used by WebSocket handler)
+    async function saveAnalysisToHistory(result) {
+        try {
+            // Save to database first
+            const savedAnalysis = await saveAIAnalysisToModel(result);
+            console.log('✅ Saved analysis to database successfully');
+            
+            // Load existing history from localStorage
+            let existingHistory = [];
+            try {
+                const localStorageKey = `analysis-history-${modelId}`;
+                const localHistory = localStorage.getItem(localStorageKey);
+                if (localHistory) {
+                    const parsedHistory = JSON.parse(localHistory);
+                    if (Array.isArray(parsedHistory)) {
+                        existingHistory = parsedHistory.filter(entry => entry && entry.id && entry.timestamp);
+                        console.log(`📚 Found ${existingHistory.length} existing analyses in localStorage`);
+                    }
+                }
+            } catch (storageError) {
+                console.warn('⚠️ Failed to load existing localStorage history:', storageError);
+            }
+            
+            // Create new history entry
+            const historyEntry = {
+                id: savedAnalysis.id || `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                timestamp: savedAnalysis.timestamp || new Date().toISOString(),
+                methodology: savedAnalysis.methodology || 'STRIDE',
+                analysis_type: savedAnalysis.analysis_type || 'comprehensive',
+                diagram_elements_count: savedAnalysis.diagram_elements_count || $canvasData.elements.length,
+                diagram_connections_count: savedAnalysis.diagram_connections_count || $canvasData.connections.length,
+                result: savedAnalysis,
+                analysis: savedAnalysis.analysis || 'No analysis content',
+                success: true
+            };
+            
+            // Check for duplicates
+            const allHistory = [...existingHistory, ...analysisHistory];
+            const existingIndex = allHistory.findIndex(entry => 
+                entry.id === historyEntry.id || 
+                Math.abs(new Date(entry.timestamp) - new Date(historyEntry.timestamp)) < 1000
+            );
+            
+            if (existingIndex === -1) {
+                // Add to the beginning of history
+                const newHistory = [historyEntry, ...existingHistory];
+                analysisHistory = newHistory;
+                
+                console.log(`📈 Added new analysis to history. Total: ${newHistory.length}`);
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem(`analysis-history-${modelId}`, JSON.stringify(newHistory));
+                    console.log('💾 Saved analysis history to localStorage');
+                } catch (e) {
+                    console.warn('⚠️ Failed to save to localStorage:', e);
+                }
+            } else {
+                console.log('⚠️ Duplicate analysis detected, not adding to history');
+            }
+            
+        } catch (saveError) {
+            console.warn('⚠️ Failed to save AI analysis:', saveError);
+        }
+    }
+
+    /**
+     * Poll task status as fallback mechanism
+     * This ensures results are displayed even if WebSocket doesn't deliver
+     */
+    let pollIntervalId = null;
+    
+    function pollTaskStatus(taskId) {
+        // Clear any existing polling
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+        }
+        
+        let pollAttempts = 0;
+        const MAX_POLL_ATTEMPTS = 60; // 5 minutes at 5-second intervals
+        
+        console.log(`🔄 Starting polling for task: ${taskId}`);
+        
+        pollIntervalId = setInterval(async () => {
+            pollAttempts++;
+            
+            try {
+                // Get auth token
+                const authClient = await getAuthClient();
+                const token = await authClient.getTokenSilently();
+                
+                // Poll the task status endpoint
+                const response = await fetch(`http://localhost:8000/api/ai/task/${taskId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.warn(`⚠️ Poll attempt ${pollAttempts}: Status ${response.status}`);
+                    
+                    // Stop polling if max attempts reached
+                    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+                        clearInterval(pollIntervalId);
+                        pollIntervalId = null;
+                        aiAnalyzing = false;
+                        taskStatus = 'failed';
+                        showUserNotification('❌ Analysis timeout. Please try again.');
+                        console.error('❌ Polling timeout after 5 minutes');
+                    }
+                    return;
+                }
+                
+                const status = await response.json();
+                console.log(`📊 Poll attempt ${pollAttempts}: Status = ${status.status}`);
+                
+                if (status.status === 'completed' && status.result) {
+                    // Task completed! Stop polling and handle the result
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    
+                    console.log('✅ Task completed via polling fallback');
+                    
+                    // Call the same handler that WebSocket would call
+                    handleThreatAnalysisCompleted(status.result);
+                    
+                } else if (status.status === 'failed') {
+                    // Task failed
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    aiAnalyzing = false;
+                    taskStatus = 'failed';
+                    showUserNotification('❌ Analysis failed. Please try again.');
+                    console.error('❌ Task failed:', status.error);
+                    
+                } else if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+                    // Timeout
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    aiAnalyzing = false;
+                    taskStatus = 'failed';
+                    showUserNotification('❌ Analysis timeout. Please try again.');
+                    console.error('❌ Polling timeout after 5 minutes');
+                }
+                
+            } catch (pollError) {
+                console.error('❌ Polling error:', pollError);
+                
+                // Stop polling on error if max attempts reached
+                if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                    aiAnalyzing = false;
+                    taskStatus = 'failed';
+                    showUserNotification('❌ Failed to check analysis status.');
+                }
+            }
+            
+        }, 5000); // Poll every 5 seconds
     }
 
     // Save AI analysis result to threat model history  
@@ -3654,8 +3843,11 @@
             analysisData.review_context = reviewContext;
             analysisData.incremental_update = true;
             
-            // Send to Claude API for re-analysis
-            const response = await fetch('http://localhost:8000/api/ai/claude/analyze-threats', {
+            // Get user ID for async tracking
+            const userId = currentUser?.sub || 'anonymous';
+            
+            // Send to async Claude API for re-analysis with user_id parameter
+            const response = await fetch(`http://localhost:8000/api/ai/claude/analyze-threats-async?user_id=${encodeURIComponent(userId)}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -3670,12 +3862,12 @@
             
             const result = await response.json();
             
-            if (result.success) {
-                // Update AI analysis result with incremental changes
-                updateAnalysisWithReview(result, category);
-                showUserNotification('✅ Analysis updated based on your review');
+            // Async endpoint - just notify user
+            if (result.task_id) {
+                showUserNotification('⏳ Re-analysis in progress... Results will update automatically');
+                // Results will come via WebSocket
             } else {
-                throw new Error(result.error || 'Re-analysis failed');
+                throw new Error('No task_id received from async endpoint');
             }
             
         } catch (error) {
@@ -4149,7 +4341,7 @@
             console.log('🗑️ Attempting to delete analysis:', analysisEntry.id);
             
             // Delete from database first
-            const response = await fetch(`http://localhost:8000/api/threat-modeling/models/${modelId}/analysis/${analysisEntry.id}`, {
+            const response = await fetch(`http://localhost:8000/api/threat-modeling/models/${modelId}/analyses/${analysisEntry.id}`, {
                 method: 'DELETE'
             });
             
@@ -4470,7 +4662,10 @@
                 diagram_image: await exportCanvasForAI()
             };
 
-            const response = await fetch('http://localhost:8000/api/ai/claude/analyze-threats', {
+            // Get user ID for async tracking
+            const userId = currentUser?.sub || 'anonymous';
+
+            const response = await fetch(`http://localhost:8000/api/ai/claude/analyze-threats-async?user_id=${encodeURIComponent(userId)}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -4483,11 +4678,13 @@
             }
 
             const result = await response.json();
-            if (result.success) {
-                console.log('🤖 Fresh AI analysis completed');
-                return result;
+            if (result.task_id) {
+                console.log(`🤖 Fresh AI analysis queued: ${result.task_id}`);
+                showUserNotification('⏳ AI analysis in progress...');
+                // Will be delivered via WebSocket
+                return { success: true, task_id: result.task_id };
             } else {
-                throw new Error(result.error || 'AI analysis failed');
+                throw new Error('No task_id received from async endpoint');
             }
 
         } catch (error) {

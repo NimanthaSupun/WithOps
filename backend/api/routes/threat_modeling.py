@@ -56,6 +56,24 @@ class ThreatElementCreate(BaseModel):
     element_type: str  # "process", "datastore", "dataflow", "external_entity"
     name: str
 
+class AIAnalysisSaveRequest(BaseModel):
+    """Request model for saving AI analysis"""
+    success: bool = True
+    analysis: str = ""  # Allow empty string for error cases
+    analysis_type: str = "comprehensive"  # Provide default
+    methodology: str = "STRIDE"  # Provide default
+    structured_analysis: Optional[Dict] = None
+    id: Optional[str] = None
+    timestamp: Optional[str] = None
+    diagram_elements_count: Optional[int] = 0
+    diagram_connections_count: Optional[int] = 0
+    has_document: Optional[bool] = False
+    has_diagram: Optional[bool] = True
+    error: Optional[str] = None  # Allow error field
+    model_used: Optional[str] = None  # Allow model info
+    components_analyzed: Optional[int] = 0
+    context_used: Optional[Dict] = None
+
 # =============================================================================
 # 🧠 COMPREHENSIVE AI ANALYSIS
 # =============================================================================
@@ -596,9 +614,12 @@ async def get_analysis_history(model_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get analysis history: {str(e)}")
 
 @router.post("/models/{model_id}/analyses")
-async def save_analysis(model_id: str, analysis_data: dict):
+async def save_analysis(model_id: str, request: AIAnalysisSaveRequest):
     """Save a new AI analysis result to the threat model history"""
     try:
+        # Convert Pydantic model to dict
+        analysis_data = request.dict()
+        
         # Handle mock models
         if model_id.startswith("test-model-"):
             return {
@@ -1058,6 +1079,7 @@ async def update_threat_model_simple(model_id: str, request: ThreatModelUpdate):
 async def delete_threat_model_simple(model_id: str):
     """Delete a threat model (simplified for testing)"""
     try:
+        logger.info(f"🗑️ DELETE request received for model: {model_id}")
         async with db_manager.get_session() as session:
             result = await session.execute(
                 select(ThreatModel).where(ThreatModel.id == model_id)
@@ -1065,17 +1087,20 @@ async def delete_threat_model_simple(model_id: str):
             model = result.scalars().first()
             
             if not model:
+                logger.warning(f"⚠️ Model {model_id} not found - may have been already deleted")
                 raise HTTPException(status_code=404, detail="Threat model not found")
             
+            logger.info(f"🗑️ Deleting model: {model.name} (ID: {model_id})")
             await session.delete(model)
             await session.commit()
+            logger.info(f"✅ Model {model_id} deleted successfully")
             
             return {"message": "Threat model deleted successfully"}
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting threat model: {e}")
+        logger.error(f"❌ Error deleting threat model {model_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error deleting model: {str(e)}")
 
 # =============================================================================

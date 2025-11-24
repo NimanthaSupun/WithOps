@@ -315,6 +315,7 @@ class OrganizationInstallationRepository:
         org_login: str
     ) -> bool:
         """Check if user is authorized to access organization (SECURE)"""
+        # Check if THIS user has an active installation for this org
         stmt = select(OrganizationInstallation).join(Organization).where(
             and_(
                 OrganizationInstallation.user_id == user_id,
@@ -323,8 +324,65 @@ class OrganizationInstallationRepository:
             )
         )
         result = await session.execute(stmt)
-        # Use scalars().first() instead of scalar_one_or_none() to handle multiple installations
         return result.scalars().first() is not None
+    
+    @staticmethod
+    async def suspend_installation(session: AsyncSession, github_installation_id: int) -> bool:
+        """Suspend an installation"""
+        stmt = select(OrganizationInstallation).where(
+            OrganizationInstallation.github_installation_id == github_installation_id
+        )
+        result = await session.execute(stmt)
+        installation = result.scalars().first()
+        
+        if installation:
+            installation.status = "suspended"
+            installation.updated_at = datetime.utcnow()
+            return True
+        return False
+    
+    @staticmethod
+    async def unsuspend_installation(session: AsyncSession, github_installation_id: int) -> bool:
+        """Unsuspend an installation"""
+        stmt = select(OrganizationInstallation).where(
+            OrganizationInstallation.github_installation_id == github_installation_id
+        )
+        result = await session.execute(stmt)
+        installation = result.scalars().first()
+        
+        if installation:
+            installation.status = "active"
+            installation.updated_at = datetime.utcnow()
+            return True
+        return False
+    
+    @staticmethod
+    async def get_all_active_installations(session: AsyncSession, org_login: str) -> List[OrganizationInstallation]:
+        """Get all active installations for an organization (for multi-user support)"""
+        stmt = select(OrganizationInstallation).join(Organization).where(
+            and_(
+                Organization.login == org_login,
+                OrganizationInstallation.status == "active"
+            )
+        )
+        result = await session.execute(stmt)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def mark_installation_deleted(session: AsyncSession, github_installation_id: int) -> bool:
+        """Mark an installation as deleted"""
+        stmt = select(OrganizationInstallation).where(
+            OrganizationInstallation.github_installation_id == github_installation_id
+        )
+        result = await session.execute(stmt)
+        installation = result.scalars().first()
+        
+        if installation:
+            installation.status = "deleted"
+            installation.uninstalled_at = datetime.utcnow()
+            installation.updated_at = datetime.utcnow()
+            return True
+        return False
     
     @staticmethod
     async def get_organization_installer(session: AsyncSession, org_login: str) -> Optional[str]:

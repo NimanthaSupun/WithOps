@@ -4,64 +4,74 @@
     import { goto } from '$app/navigation';
     import { githubClient } from '$lib/github.js';
     import { repositoryTreeClient } from '$lib/repositoryTree.js';
-    import { userOrganizations, appStore } from '$lib/stores.js';
+    import { userOrganizations, appStore, isDarkMode } from '$lib/stores.js';
+    import GitHubCacheNotification from '$lib/components/GitHubCacheNotification.svelte';
     
-    let loading = true;
-    let error = null;
-    let orgName = '';
-    let workspaceData = null;
-    let selectedWorkflow = null;
-    let showWorkflowModal = false;
-    let workflowContent = '';
-    let loadingWorkflow = false;
-    let loadingStage = 'Initializing...';
-    let authorizationChecked = false;
-    let userAuthorized = false;
-    let refreshing = false;
+    let loading = $state(true);
+    let error = $state(null);
+    let orgName = $state('');
+    let workspaceData = $state(null);
+    let selectedWorkflow = $state(null);
+    let showWorkflowModal = $state(false);
+    let workflowContent = $state('');
+    let loadingWorkflow = $state(false);
+    let loadingStage = $state('Initializing...');
+    let authorizationChecked = $state(false);
+    let userAuthorized = $state(false);
+    let refreshing = $state(false);
+    
+    // Theme management
+    let darkMode = $state(false);
+    isDarkMode.subscribe(value => {
+        darkMode = value;
+    });
+    
+    // Sidebar state
+    let sidebarCollapsed = $state(false);
     
     // Tab management
-    let activeTab = 'repositories'; // 'repositories' or 'workflows'
-    let detailedWorkflows = [];
-    let loadingDetailedWorkflows = false;
+    let activeTab = $state('repositories');
+    let detailedWorkflows = $state([]);
+    let loadingDetailedWorkflows = $state(false);
 
     // Real-time updates
-    let realTimeEnabled = true;
-    let lastSyncTime = null;
-    let realtimeUpdateCount = 0;
+    let realTimeEnabled = $state(true);
+    let lastSyncTime = $state(null);
+    let realtimeUpdateCount = $state(0);
     
     // Workflow action menu
-    let activeWorkflowMenu = null;
+    let activeWorkflowMenu = $state(null);
     
     // Repository action menu
-    let activeRepoMenu = null;
+    let activeRepoMenu = $state(null);
     
     // Add to Project modal
-    let showAddToProjectModal = false;
-    let selectedWorkflowToAdd = null;
-    let projectTreeData = [];
-    let selectedProjectFolder = null;
-    let newFolderName = '';
-    let showNewFolderInput = false;
-    let addingWorkflowToProject = false;
-    let selectedParentFolder = null;
+    let showAddToProjectModal = $state(false);
+    let selectedWorkflowToAdd = $state(null);
+    let projectTreeData = $state([]);
+    let selectedProjectFolder = $state(null);
+    let newFolderName = $state('');
+    let showNewFolderInput = $state(false);
+    let addingWorkflowToProject = $state(false);
+    let selectedParentFolder = $state(null);
     
     // Add Repository to Project modal
-    let showAddRepoToProjectModal = false;
-    let selectedRepoToAdd = null;
-    let addingRepoToProject = false;
-    let repoTreeData = []; // Separate data for repository tree
-    let selectedRepoFolder = null; // Separate selection for repository tree
+    let showAddRepoToProjectModal = $state(false);
+    let selectedRepoToAdd = $state(null);
+    let addingRepoToProject = $state(false);
+    let repoTreeData = $state([]);
+    let selectedRepoFolder = $state(null);
 
     onMount(async () => {
         orgName = $page.params.org;
         console.log(`🚀 Loading workspace for organization: ${orgName}`);
         
-        // Simple approach: Just try to load the data
-        // If we're on this page, the user should already be authenticated
+        // Initialize theme
+        isDarkMode.init();
+        
         loadingStage = 'Checking authentication...';
         
         try {
-            // Quick authentication check - if we can get user orgs, we're authenticated
             const orgsResult = await githubClient.getMyOrganizations();
             
             if (orgsResult.success) {
@@ -82,7 +92,6 @@
             } else {
                 console.error('❌ Authentication failed:', orgsResult.error);
                 
-                // If authentication failed because user isn't logged in, redirect to main page
                 if (orgsResult.error && orgsResult.error.includes('Authentication required')) {
                     console.log('🔄 Redirecting to main page for authentication...');
                     goto('/');
@@ -99,47 +108,6 @@
         }
     });
 
-    async function checkAuthorization() {
-        try {
-            loadingStage = 'Checking authorization...';
-            
-            // Ensure we're authenticated before proceeding
-            if (!await githubClient.isAuthenticated()) {
-                throw new Error('Not authenticated');
-            }
-            
-            // First check if we have user organizations in store
-            const currentUserOrgs = $userOrganizations;
-            
-            if (currentUserOrgs.length === 0) {
-                // Load user organizations if not already loaded
-                const result = await githubClient.getMyOrganizations();
-                if (result.success) {
-                    appStore.setUserOrganizations(result.organizations);
-                    userAuthorized = appStore.isUserAuthorizedForOrg(orgName, result.organizations);
-                } else {
-                    throw new Error(result.error || 'Failed to load user organizations');
-                }
-            } else {
-                userAuthorized = appStore.isUserAuthorizedForOrg(orgName, currentUserOrgs);
-            }
-            
-            authorizationChecked = true;
-            
-            if (!userAuthorized) {
-                error = `Access denied. You don't have permission to access organization '${orgName}'. This organization may have been installed by another user or the app may not be installed.`;
-                loading = false;
-                return;
-            }
-            
-        } catch (err) {
-            console.error('Authorization check failed:', err);
-            error = `Failed to verify access permissions: ${err.message}`;
-            loading = false;
-            authorizationChecked = true;
-        }
-    }
-
     async function loadWorkspaceData() {
         try {
             loading = true;
@@ -147,7 +115,6 @@
             
             console.log(`Loading workspace data for organization: ${orgName}`);
             
-            // Check cache first for instant loading
             const cached = githubClient.getCachedData(`workspace_${orgName}`);
             if (cached) {
                 console.log('🚀 Loading from cache instantly');
@@ -158,8 +125,6 @@
             
             loadingStage = 'Connecting to GitHub...';
             
-            // Simple approach: try to load workspace data directly since backend is working
-            // The backend logs show successful API calls, so trust the backend
             console.log(`🔍 Loading workspace data directly for ${orgName}...`);
             
             loadingStage = 'Fetching repositories and workflows...';
@@ -167,13 +132,9 @@
             
             if (result.success) {
                 loadingStage = 'Processing data...';
-                workspaceData = result;  // Use the entire result object
+                workspaceData = result;
                 console.log('Workspace data loaded:', workspaceData);
-                console.log('Repository count:', workspaceData.repository_count);
-                console.log('Total workflows:', workspaceData.total_workflows);
-                console.log('Repositories array:', workspaceData.repositories);
                 
-                // Batch prefetch the most common workflows for instant access
                 if (workspaceData.workflows) {
                     console.log('🚀 Starting batch prefetch of workflows');
                     githubClient.batchPreloadWorkflows(orgName, workspaceData.workflows);
@@ -187,10 +148,8 @@
         } catch (err) {
             console.error('Failed to load workspace data:', err);
             
-            // 🔧 FIX: Improved error handling - only show "app not installed" for specific backend responses
             const errorMessage = err.message || err.toString();
             
-            // Only treat as installation error if backend specifically says so
             if (err.error_type === 'app_not_installed' ||
                 (errorMessage.includes('app_not_installed') && !errorMessage.includes('network')) ||
                 (errorMessage.includes('not installed') && errorMessage.includes('organization'))) {
@@ -200,7 +159,6 @@
             } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
                 error = `Network error: Unable to connect to server. Please check your connection and try again.`;
             } else {
-                // Generic error - don't assume it's an installation issue
                 error = `Failed to load workspace: ${errorMessage}`;
             }
             
@@ -210,18 +168,8 @@
         }
     }
 
-    function connectAnotherOrg() {
-        goto('/');
-    }
-
-    function viewRepository(repo) {
-        // In future, could open repo details or redirect to GitHub
-        window.open(repo.html_url, '_blank');
-    }
-
     async function viewWorkflowContent(workflow, repo) {
         try {
-            // Defensive check to ensure repo has required properties
             if (!repo || !repo.name) {
                 console.error('❌ Invalid repo object:', repo);
                 workflowContent = `# Error loading workflow content\n# Repository information is missing or invalid`;
@@ -233,7 +181,6 @@
             selectedWorkflow = { ...workflow, repo: repo.name };
             showWorkflowModal = true;
             
-            // Check cache first for instant display
             const cacheKey = `workflow_${orgName}_${repo.name}_${workflow.path}`;
             const cached = githubClient.getCachedData(cacheKey);
             
@@ -241,23 +188,17 @@
                 console.log('🚀 Displaying cached YAML instantly');
                 workflowContent = cached.content;
                 loadingWorkflow = false;
-                
-                // Smart prefetch: preload other workflows in the same repo
                 githubClient.smartPrefetch(orgName, repo.name, workflow.path);
                 return;
             }
             
-            // If not cached, show loading and fetch
             loadingWorkflow = true;
             
-            // Fetch workflow content from backend
             const result = await githubClient.getWorkflowContent(orgName, repo.name, workflow.path);
             
             if (result.success) {
                 workflowContent = result.content;
                 console.log('📄 YAML content loaded');
-                
-                // Smart prefetch: preload other workflows in the same repo
                 githubClient.smartPrefetch(orgName, repo.name, workflow.path);
             } else {
                 workflowContent = `# Error loading workflow content\n# ${result.error}`;
@@ -275,14 +216,12 @@
         
         activeTab = 'workflows';
         
-        // Load detailed workflows if not already loaded
         if (detailedWorkflows.length === 0 && !loadingDetailedWorkflows) {
             await loadDetailedWorkflows();
         }
     }
     
     async function loadDetailedWorkflows() {
-
         if (!workspaceData || !workspaceData.total_workflows || workspaceData.total_workflows === 0) {
             detailedWorkflows = [];
             return;
@@ -297,16 +236,13 @@
             if (result.success) {
                 detailedWorkflows = result.workflows || [];
                 console.log(`✅ Loaded ${detailedWorkflows.length} detailed workflows`);
-                console.log('Sample workflow data:', detailedWorkflows[0]);
             } else {
                 console.error('Failed to load detailed workflows:', result.error);
-                // Fall back to basic workflow info from workspace data
                 detailedWorkflows = workspaceData.workflows || [];
             }
             
         } catch (err) {
             console.error('Error loading detailed workflows:', err);
-            // Fall back to basic workflow info from workspace data
             detailedWorkflows = workspaceData.workflows || [];
         } finally {
             loadingDetailedWorkflows = false;
@@ -327,74 +263,6 @@
         if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
         return `${Math.floor(diffInSeconds / 31536000)} years ago`;
     }
-    
-    function formatTriggers(triggers) {
-        if (!triggers || triggers.length === 0) return 'Unknown';
-        return triggers.join(', ');
-    }
-    
-    function formatUses(uses) {
-        if (!uses || uses.length === 0) return 'None';
-        return uses.slice(0, 2).join(', ') + (uses.length > 2 ? ` +${uses.length - 2} more` : '');
-    }
-
-    // Enhanced error handling for workflow operations
-    function handleWorkflowError(error, operation) {
-        console.error(`❌ Error in ${operation}:`, error);
-        const errorMessage = error.message || `Failed to ${operation}`;
-        
-        // Show user-friendly error message
-        if (errorMessage.includes('403') || errorMessage.includes('Access denied')) {
-            error = `Access denied. You may not have permission to view this workflow data.`;
-        } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-            error = `Workflow not found. It may have been deleted or moved.`;
-        } else {
-            error = `Failed to ${operation}: ${errorMessage}`;
-        }
-    }
-    
-    // Enhanced workflow viewing with better error handling
-    async function viewWorkflowContentEnhanced(workflow, repo) {
-        try {
-            await viewWorkflowContent(workflow, repo);
-        } catch (err) {
-            handleWorkflowError(err, 'load workflow content');
-        }
-    }
-    
-    // Add sorting capability for workflows table
-    let sortColumn = 'name';
-    let sortDirection = 'asc';
-    
-    function sortWorkflows(column) {
-        if (sortColumn === column) {
-            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortColumn = column;
-            sortDirection = 'asc';
-        }
-        
-        detailedWorkflows = [...detailedWorkflows].sort((a, b) => {
-            let aValue = a[column];
-            let bValue = b[column];
-            
-            // Handle special cases
-            if (column === 'last_run' || column === 'last_successful') {
-                aValue = aValue ? new Date(aValue.created_at) : new Date(0);
-                bValue = bValue ? new Date(bValue.created_at) : new Date(0);
-            } else if (column === 'triggers') {
-                aValue = (aValue || []).join(', ');
-                bValue = (bValue || []).join(', ');
-            } else if (typeof aValue === 'string') {
-                aValue = aValue.toLowerCase();
-                bValue = (bValue || '').toLowerCase();
-            }
-            
-            if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-            if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
 
     function closeWorkflowModal() {
         showWorkflowModal = false;
@@ -409,14 +277,12 @@
             
             console.log(`🔄 Force refreshing data for ${orgName}...`);
             
-            // Force refresh organization data (bypasses all caches)
             const result = await githubClient.forceRefreshOrganization(orgName);
             
             if (result.success) {
                 workspaceData = result;
                 console.log('✅ Organization data refreshed successfully');
                 
-                // Also clear detailed workflows to force reload
                 detailedWorkflows = [];
                 if (activeTab === 'workflows') {
                     await loadDetailedWorkflows();
@@ -433,7 +299,12 @@
     }
 
     function setupRealtimeUpdates() {
-        // Listen for real-time workspace updates
+        console.log('🔔 Setting up real-time GitHub cache listeners');
+        
+        window.addEventListener('github-github_workspace_refreshed', handleWorkspaceRefreshed);
+        window.addEventListener('github-github_workflows_refreshed', handleWorkflowsRefreshed);
+        window.addEventListener('github-github_actions_refreshed', handleActionsRefreshed);
+        
         window.addEventListener('github-workspace_updated', (event) => {
             const { organization, changes, timestamp } = event.detail;
             
@@ -441,92 +312,55 @@
                 console.log('🔄 Real-time workspace update received:', changes);
                 realtimeUpdateCount++;
                 lastSyncTime = new Date(timestamp);
-                
-                // Show notification about changes
-                if (changes.repositories.added.length > 0) {
-                    showNotification(`${changes.repositories.added.length} new repositories detected`, 'success');
-                }
-                if (changes.repositories.removed.length > 0) {
-                    showNotification(`${changes.repositories.removed.length} repositories removed`, 'warning');
-                }
-                if (changes.workflows.added.length > 0) {
-                    showNotification(`${changes.workflows.added.length} new workflows detected`, 'success');
-                }
-                if (changes.workflows.removed.length > 0) {
-                    showNotification(`${changes.workflows.removed.length} workflows removed`, 'warning');
-                }
-                
-                // Refresh workspace data
                 loadWorkspaceData();
             }
         });
     }
-
-    function startAutoSync() {
-        if (!realTimeEnabled) return;
+    
+    function handleWorkspaceRefreshed(event) {
+        const data = event.detail;
+        if (data.organization !== orgName) return;
         
-        setInterval(async () => {
-            try {
-                await githubClient.syncOrganizationRealtime(orgName);
-            } catch (error) {
-                console.warn('⚠️ Auto-sync failed:', error);
-            }
-        }, 30000); // Every 30 seconds
+        console.log('✨ Workspace cache refreshed, reloading data...');
+        lastSyncTime = new Date();
+        realtimeUpdateCount++;
+        loadWorkspaceData();
     }
-
-    function showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'warning' ? 'bg-yellow-500' : 
-            'bg-blue-500'
-        }`;
-        notification.textContent = message;
+    
+    function handleWorkflowsRefreshed(event) {
+        const data = event.detail;
+        if (data.organization !== orgName) return;
         
-        document.body.appendChild(notification);
+        console.log('✨ Workflows cache refreshed, reloading...');
+        lastSyncTime = new Date();
+        realtimeUpdateCount++;
         
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-
-    async function toggleRealtimeUpdates() {
-        realTimeEnabled = !realTimeEnabled;
-        
-        if (realTimeEnabled) {
-            startAutoSync();
-            showNotification('Real-time updates enabled', 'success');
-        } else {
-            showNotification('Real-time updates disabled', 'warning');
-        }
-    }
-
-    async function manualSync() {
-        try {
-            loadingStage = 'Syncing with GitHub...';
-            loading = true;
-            
-            const result = await githubClient.syncOrganizationRealtime(orgName);
-            
-            if (result.has_changes) {
-                showNotification(`Sync completed: ${result.total_changes} changes detected`, 'success');
-                // Refresh will happen automatically via WebSocket
-            } else {
-                showNotification('No changes detected', 'info');
-            }
-            
-            lastSyncTime = new Date();
-        } catch (error) {
-            console.error('Manual sync failed:', error);
-            showNotification('Sync failed', 'error');
-        } finally {
-            loading = false;
+        if (activeTab === 'workflows') {
+            loadDetailedWorkflows();
         }
     }
     
-    // Workflow action menu functions
+    function handleActionsRefreshed(event) {
+        const data = event.detail;
+        if (data.organization !== orgName) return;
+        
+        console.log('✨ Actions cache refreshed');
+        lastSyncTime = new Date();
+        realtimeUpdateCount++;
+    }
+
+    function startAutoSync() {
+        console.log('🔄 Auto-sync via background worker + WebSocket enabled');
+    }
+
+    function toggleTheme() {
+        isDarkMode.toggle();
+    }
+
+    function toggleSidebar() {
+        sidebarCollapsed = !sidebarCollapsed;
+    }
+
     function toggleWorkflowActionMenu(workflowId) {
         if (activeWorkflowMenu === workflowId) {
             activeWorkflowMenu = null;
@@ -535,6 +369,25 @@
         }
     }
     
+    function toggleRepoActionMenu(repoId) {
+        if (activeRepoMenu === repoId) {
+            activeRepoMenu = null;
+        } else {
+            activeRepoMenu = repoId;
+        }
+    }
+
+    function handleGlobalClick(event) {
+        if (!event.target.closest('.relative')) {
+            activeWorkflowMenu = null;
+            activeRepoMenu = null;
+        }
+    }
+
+    function viewRepository(repo) {
+        window.open(repo.html_url, '_blank');
+    }
+
     // Add to Project modal functions
     async function openAddToProjectModal(workflow) {
         selectedWorkflowToAdd = workflow;
@@ -553,12 +406,10 @@
     
     async function loadProjectTreeData() {
         try {
-            // Load existing project tree from database
             const result = await githubClient.getProjectTreeData(orgName);
             if (result.success) {
                 projectTreeData = result.data || [];
             } else {
-                // Initialize empty tree if no data exists
                 projectTreeData = [];
             }
         } catch (err) {
@@ -569,12 +420,10 @@
     
     async function loadRepositoryTreeData() {
         try {
-            // Load existing repository tree from database
             const result = await repositoryTreeClient.getRepositoryTree(orgName);
             if (result.success) {
                 repoTreeData = result.data || [];
             } else {
-                // Initialize empty tree if no data exists
                 repoTreeData = [];
             }
         } catch (err) {
@@ -594,28 +443,24 @@
             created_at: new Date().toISOString()
         };
         
-        // Determine which modal is open and use appropriate data
         const isRepoModal = showAddRepoToProjectModal;
         const targetTreeData = isRepoModal ? repoTreeData : projectTreeData;
         
         if (selectedParentFolder) {
-            // Add to parent folder
             if (!selectedParentFolder.children) {
                 selectedParentFolder.children = [];
             }
             selectedParentFolder.children.push(newFolder);
         } else {
-            // Add to root level
             targetTreeData.push(newFolder);
         }
         
-        // Set the appropriate selected folder
         if (isRepoModal) {
             selectedRepoFolder = newFolder;
-            repoTreeData = [...repoTreeData]; // Trigger reactivity
+            repoTreeData = [...repoTreeData];
         } else {
             selectedProjectFolder = newFolder;
-            projectTreeData = [...projectTreeData]; // Trigger reactivity
+            projectTreeData = [...projectTreeData];
         }
         
         newFolderName = '';
@@ -623,7 +468,6 @@
         selectedParentFolder = null;
     }
 
-    // Helper function to flatten folder structure for selection
     function getFlattenedFolders(folders, depth = 0) {
         let result = [];
         for (const folder of folders) {
@@ -637,12 +481,11 @@
         return result;
     }
 
-    // Helper function to count total workflows in a folder (including nested)
     function countWorkflowsInFolder(folder) {
         if (!folder.children) return 0;
         let count = 0;
         for (const child of folder.children) {
-            if (child.type === 'workflow') {
+            if (child.type === 'workflow' || child.type === 'repository') {
                 count++;
             } else if (child.type === 'folder') {
                 count += countWorkflowsInFolder(child);
@@ -657,7 +500,6 @@
         try {
             addingWorkflowToProject = true;
             
-            // Get workflow content
             const workflowContentResult = await githubClient.getWorkflowContent(orgName, selectedWorkflowToAdd.repository, selectedWorkflowToAdd.path);
             
             if (!workflowContentResult.success) {
@@ -678,21 +520,19 @@
                 }
             };
             
-            // Add to selected folder
             if (!selectedProjectFolder.children) {
                 selectedProjectFolder.children = [];
             }
             selectedProjectFolder.children.push(newWorkflowItem);
             
-            // Save to database
             await saveProjectTreeData();
             
-            showNotification(`Workflow "${selectedWorkflowToAdd.name}" added to project successfully!`, 'success');
+            console.log(`✅ Workflow "${selectedWorkflowToAdd.name}" added to project successfully!`);
             closeAddToProjectModal();
             
         } catch (err) {
             console.error('Failed to add workflow to project:', err);
-            showNotification('Failed to add workflow to project', 'error');
+            alert('Failed to add workflow to project');
         } finally {
             addingWorkflowToProject = false;
         }
@@ -722,48 +562,29 @@
         }
     }
     
-    // Close dropdown when clicking outside
-    function handleGlobalClick(event) {
-        if (!event.target.closest('.relative')) {
-            activeWorkflowMenu = null;
-            activeRepoMenu = null;
-        }
-    }
-    
-    // Repository menu functions
-    function toggleRepoActionMenu(repoId) {
-        if (activeRepoMenu === repoId) {
-            activeRepoMenu = null;
-        } else {
-            activeRepoMenu = repoId;
-        }
-    }
-    
     async function openAddRepoToProjectModal(repo) {
         selectedRepoToAdd = repo;
-        await loadRepositoryTreeData(); // Load repository tree, not project tree
+        await loadRepositoryTreeData();
         showAddRepoToProjectModal = true;
     }
     
     function closeAddRepoToProjectModal() {
         showAddRepoToProjectModal = false;
         selectedRepoToAdd = null;
-        selectedRepoFolder = null; // Use selectedRepoFolder
+        selectedRepoFolder = null;
         newFolderName = '';
         showNewFolderInput = false;
         selectedParentFolder = null;
     }
     
     async function addRepositoryToProject() {
-        if (!selectedRepoToAdd || !selectedRepoFolder) return; // Use selectedRepoFolder
+        if (!selectedRepoToAdd || !selectedRepoFolder) return;
         
         try {
             addingRepoToProject = true;
             
-            // Fetch all workflows from the repository
             const repoWorkflows = selectedRepoToAdd.workflows || [];
             
-            // Create repository folder item
             const repoFolderItem = {
                 id: `repo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 name: selectedRepoToAdd.name,
@@ -783,7 +604,6 @@
                 children: []
             };
             
-            // Add all workflows from the repository as children
             for (const workflow of repoWorkflows) {
                 const workflowContentResult = await githubClient.getWorkflowContent(orgName, selectedRepoToAdd.name, workflow.path);
                 
@@ -806,969 +626,748 @@
                 }
             }
             
-            // Add repository folder to selected folder in REPOSITORY TREE
             if (!selectedRepoFolder.children) {
                 selectedRepoFolder.children = [];
             }
             selectedRepoFolder.children.push(repoFolderItem);
             
-            // Save to REPOSITORY TREE database (not project tree)
             await saveRepositoryTreeData();
             
-            showNotification(`Repository "${selectedRepoToAdd.name}" with ${repoWorkflows.length} workflows added to repository tree successfully!`, 'success');
+            console.log(`✅ Repository "${selectedRepoToAdd.name}" with ${repoWorkflows.length} workflows added successfully!`);
             closeAddRepoToProjectModal();
             
         } catch (err) {
             console.error('Failed to add repository to tree:', err);
-            showNotification('Failed to add repository to tree', 'error');
+            alert('Failed to add repository to tree');
         } finally {
             addingRepoToProject = false;
         }
     }
-
 </script>
 
 <svelte:head>
-    <title>{orgName} Workspace - WithOps</title>
+    <title>{orgName} Workspace - WithOps DevSecOps Platform</title>
 </svelte:head>
 
 <svelte:window on:click={handleGlobalClick} />
 
-<div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-8">
-            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-                <a href="/" class="hover:text-gray-700">Dashboard</a>
-                <span>/</span>
-                <span class="text-gray-900">{orgName} Workspace</span>
-            </nav>
-            
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{orgName}</h1>
-                    <p class="text-gray-600">Organization Workspace</p>
-                </div>
+<!-- Real-time GitHub Cache Notifications -->
+<GitHubCacheNotification organization={orgName} />
 
-                <div class="flex space-x-3">
-                    <button 
-                        on:click={() => goto('/organizations')}
-                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium"
-                    >
-                        ← Back to Organizations
-                    </button>
-                    <button 
-                        on:click={connectAnotherOrg}
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                        Connect Another Organization
-                    </button>
-                    <button
-                        on:click={() => goto(`/github/workspace/${orgName}/audit`)}
-                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 font-medium"
-                    >
-                        Actions Version Audit Table
-                    </button>
-                    <button
-                        on:click={() => goto(`/github/workspace/${orgName}/treeview`)}
-                        class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
-                        </svg>
-                        <span>🗂️ Workflow Treeview</span>
-                    </button>
-                    
-                    <button
-                        on:click={() => goto(`/github/workspace/${orgName}/repo-treeview`)}
-                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-medium flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                        </svg>
-                        <span>📦 Repository Treeview</span>
-                    </button>
-
-                    <button
-                        on:click={() => goto(`/github/workspace/${orgName}/threat-modeling`)}
-                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-medium flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        <span>🛡️ Threat Modeling</span>
-                    </button>
-
-                    <!-- <button
-                        on:click={() => goto(`/github/workspace/${orgName}/canvas`)}
-                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium"
-                    >
-                        🎨 Canvas Workflow Builder
-                    </button> -->
-                    
-                </div>
-            </div>
-        </header>
-``
-        {#if loading}
-            <!-- Skeleton Loading for Instant UI Response -->
-            <div class="space-y-6">
-                <!-- Skeleton Workspace Overview -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <div class="h-6 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {#each Array(4) as _}
-                            <div class="bg-gray-50 p-4 rounded-lg animate-pulse">
-                                <div class="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                                <div class="h-8 bg-gray-300 rounded w-16"></div>
-                            </div>
-                        {/each}
+<div class="workspace-container {darkMode ? 'dark' : 'light'}">
+    <!-- Professional Header -->
+    <header class="workspace-header">
+        <div class="header-content">
+            <!-- Left side - Brand & Workspace -->
+            <div class="header-left">
+                <button 
+                    onclick={toggleSidebar}
+                    class="sidebar-toggle"
+                    title="Toggle sidebar"
+                    aria-label="Toggle sidebar navigation"
+                >
+                    <svg class="toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                
+                <div class="brand-section">
+                    <div class="brand-icon-wrapper">
+                        <img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+                        <div class="brand-glow"></div>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">WithOps</span>
+                        <span class="brand-subtitle">DevSecOps Platform</span>
                     </div>
                 </div>
                 
-                <!-- Skeleton Repositories -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <div class="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
-                    <div class="space-y-4">
-                        {#each Array(2) as _}
-                            <div class="border border-gray-200 rounded-lg p-6 animate-pulse">
-                                <div class="h-5 bg-gray-200 rounded w-48 mb-2"></div>
-                                <div class="h-4 bg-gray-100 rounded w-full mb-3"></div>
-                                <div class="flex space-x-4">
-                                    {#each Array(4) as _}
-                                        <div class="h-3 bg-gray-200 rounded w-16"></div>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
+                <div class="workspace-info">
+                    <span class="workspace-label">Workspace:</span>
+                    <span class="workspace-name">{orgName}</span>
                 </div>
             </div>
             
-            <!-- Loading Status -->
-            <div class="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 border">
-                <div class="flex items-center space-x-3">
-                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{loadingStage}</p>
-                        <div class="text-xs text-gray-500">
-                            {#if loadingStage === 'Fetching repositories and workflows...'}
-                                <span>⚡ Using parallel processing for faster loading</span>
-                            {:else if loadingStage === 'Connecting to GitHub...'}
-                                <span>🔗 Establishing secure connection</span>
-                            {:else if loadingStage === 'Processing data...'}
-                                <span>📊 Organizing workspace data</span>
-                            {/if}
-                        </div>
+            <!-- Right side - Status & Theme -->
+            <div class="header-right">
+                <!-- Live Status Indicator -->
+                {#if workspaceData && !loading}
+                    <div class="live-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Live</span>
+                        {#if lastSyncTime}
+                            <span class="status-time">{lastSyncTime.toLocaleTimeString()}</span>
+                        {/if}
+                    </div>
+                {/if}
+                
+                <!-- Theme Toggle -->
+                <button 
+                    onclick={toggleTheme}
+                    class="theme-toggle"
+                    title="Toggle theme"
+                >
+                    {#if darkMode}
+                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+                        </svg>
+                    {:else}
+                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clip-rule="evenodd"/>
+                        </svg>
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="workspace-sidebar {sidebarCollapsed ? 'collapsed' : ''}">
+        <nav class="sidebar-nav">
+            <a 
+                href="/dashboard"
+                class="nav-item"
+                title="Dashboard"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Dashboard</span>
+                {/if}
+            </a>
+            
+            <a 
+                href="/organizations"
+                class="nav-item"
+                title="Organizations"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Organizations</span>
+                {/if}
+            </a>
+            
+            <div class="nav-divider"></div>
+               
+            <a 
+                href="/github/workspace/{orgName}/repo-treeview"
+                class="nav-item"
+                title="Repository Treeview"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Repository Treeview</span>
+                {/if}
+            </a>
+            
+             <a 
+                href="/github/workspace/{orgName}/threat-modeling"
+                class="nav-item nav-item-danger"
+                title="Threat Modeling"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Threat Modeling</span>
+                {/if}
+            </a>
+
+            <a 
+                href="/github/workspace/{orgName}/audit"
+                class="nav-item"
+                title="Actions Audit"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Actions Audit</span>
+                {/if}
+            </a>
+            
+            <a 
+                href="/github/workspace/{orgName}/canvas"
+                class="nav-item"
+                title="Workflow Canvas"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Workflow Canvas</span>
+                {/if}
+            </a>
+            
+           
+              <a 
+                href="/github/workspace/{orgName}/treeview"
+                class="nav-item"
+                title="Workflow Treeview"
+            >
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"/>
+                </svg>
+                {#if !sidebarCollapsed}
+                    <span class="nav-text">Workflow Treeview</span>
+                {/if}
+            </a>
+
+
+        </nav>
+        
+        {#if !sidebarCollapsed}
+            <div class="sidebar-footer">
+                <button 
+                    onclick={forceRefresh}
+                    disabled={refreshing}
+                    class="refresh-button"
+                >
+                    <svg class="refresh-icon {refreshing ? 'spinning' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Refresh Data</span>
+                </button>
+            </div>
+        {/if}
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="workspace-main {sidebarCollapsed ? 'expanded' : ''}">
+        {#if loading}
+            <!-- Professional Loading State -->
+            <div class="loading-state">
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <h2 class="loading-title">Loading Workspace</h2>
+                    <p class="loading-text">{loadingStage}</p>
+                    <div class="loading-progress">
+                        <div class="progress-bar"></div>
                     </div>
                 </div>
             </div>
         {:else if error}
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="text-center">
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                        {#if error.includes('Access denied') || error.includes('permission')}
-                            <!-- Security/Authorization Error Icon -->
-                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        {:else}
-                            <!-- General Error Icon -->
-                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        {/if}
+            <!-- Professional Error State -->
+            <div class="error-state">
+                <div class="error-content">
+                    <div class="error-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
                     </div>
-                    
-                    {#if error.includes('Access denied') || error.includes('permission')}
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">🔐 Access Denied</h3>
-                        <p class="text-sm text-red-600 mb-6">{error}</p>
-                        
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                            <div class="flex items-start">
-                                <svg class="h-5 w-5 text-yellow-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                </svg>
-                                <div class="text-sm">
-                                    <p class="text-yellow-800 font-medium">Data Privacy Protection</p>
-                                    <p class="text-yellow-700 mt-1">This organization's data is protected and can only be accessed by the user who installed the GitHub App.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-3">
-                            <button 
-                                on:click={() => goto('/organizations')}
-                                class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium"
-                            >
-                                View Your Organizations
-                            </button>
-                            <button 
-                                on:click={() => goto('/')}
-                                class="w-full bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                            >
-                                Go to Dashboard
-                            </button>
-                        </div>
-                    {:else}
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">Failed to Load Workspace</h3>
-                        <p class="text-sm text-red-600 mb-6">{error}</p>
-                        
-                        <div class="space-y-3">
-                            {#if error.includes('not installed') || error.includes('404')}
-                                <!-- Show reinstall option for installation-related errors -->
-                                <button 
-                                    on:click={async () => {
-                                        const result = await githubClient.generateInstallationUrl(orgName);
-                                        if (result.success) {
-                                            window.location.href = result.installation_url;
-                                        }
-                                    }}
-                                    class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium"
-                                >
-                                    🧩 Reinstall GitHub App
-                                </button>
-                                <div class="text-xs text-gray-500 mb-4">
-                                    <p>💡 The GitHub App was removed from this organization.</p>
-                                    <p>Click above to reinstall it and regain access to your workspace.</p>
-                                </div>
-                            {/if}
-                            
-                            <div class="flex space-x-3">
-                                <button 
-                                    on:click={loadWorkspaceData}
-                                    class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-                                >
-                                    Retry
-                                </button>
-                                <button 
-                                    on:click={() => goto('/organizations')}
-                                    class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                                >
-                                    Go Back
-                                </button>
-                            </div>
-                        </div>
-                    {/if}
+                    <h3 class="error-title">Unable to Load Workspace</h3>
+                    <p class="error-message">{error}</p>
+                    <div class="error-actions">
+                        <button onclick={loadWorkspaceData} class="retry-button">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Retry
+                        </button>
+                        <button onclick={() => goto('/organizations')} class="back-button">
+                            Back to Organizations
+                        </button>
+                    </div>
                 </div>
             </div>
         {:else if workspaceData}
-            <div class="space-y-6">
-                <!-- Workspace Overview -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Workspace Overview</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-medium text-blue-900">Repositories</h3>
-                            <p class="text-2xl font-bold text-blue-600">{workspaceData.repository_count || 0}</p>
-                        </div>
-                        
-                        <div class="bg-purple-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-medium text-purple-900">Workflows</h3>
-                            <p class="text-2xl font-bold text-purple-600">{workspaceData.total_workflows || 0}</p>
-                        </div>
-                        
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-medium text-green-900">Status</h3>
-                            <p class="text-lg font-semibold text-green-600 capitalize">{workspaceData.status || 'connected'}</p>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-medium text-gray-900">Organization</h3>
-                            <p class="text-sm font-mono text-gray-600">{workspaceData.organization?.login || orgName}</p>
-                        </div>
+            <!-- Professional Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-blue">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"/>
+                        </svg>
                     </div>
-                    
-                    {#if workspaceData.last_updated}
-                        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-                            <h4 class="font-medium text-gray-900 mb-2">Last Updated</h4>
-                            <p class="text-sm text-gray-600">{new Date(workspaceData.last_updated).toLocaleString()}</p>
-                        </div>
-                    {/if}
-                    
-                    <!-- Quick Actions -->
-                    <div class="mt-6 border-t pt-6">
-                        <h4 class="font-medium text-gray-900 mb-4">Quick Actions</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <a 
-                                href="/github/workspace/{orgName}/treeview"
-                                class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Workflow Treeview</p>
-                                    <p class="text-xs text-gray-500">Organize workflows</p>
-                                </div>
-                            </a>
-                            
-                            <a 
-                                href="/github/workspace/{orgName}/repo-treeview"
-                                class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Repository Treeview</p>
-                                    <p class="text-xs text-gray-500">Organize repositories</p>
-                                </div>
-                            </a>
-                            
-                            <a 
-                                href="/github/workspace/{orgName}/canvas"
-                                class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Workflow Canvas</p>
-                                    <p class="text-xs text-gray-500">Visual workflow builder</p>
-                                </div>
-                            </a>
-                            
-                            <a 
-                                href="/github/workspace/{orgName}/security"
-                                class="flex items-center space-x-3 p-3 border border-red-200 rounded-lg hover:bg-red-50 transition-colors bg-red-50"
-                            >
-                                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">🔒 Security Dashboard</p>
-                                    <p class="text-xs text-gray-500">AI-powered security scanning</p>
-                                </div>
-                            </a>
-                        </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Repositories</p>
+                        <p class="stat-value">{workspaceData.repository_count || 0}</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-up">Active</span>
                     </div>
                 </div>
 
-                <!-- Real-time Status Panel -->
-                {#if workspaceData}
-                    <div class="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm font-medium text-gray-700">Status:</span>
-                                    <span class="flex items-center space-x-1">
-                                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span class="text-sm text-green-700 font-medium">Live</span>
-                                    </span>
-                                </div>
-                                
-                                {#if lastSyncTime}
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-sm text-gray-500">Last sync:</span>
-                                        <span class="text-sm text-gray-700">{lastSyncTime.toLocaleTimeString()}</span>
-                                    </div>
-                                {/if}
-                                
-                                {#if realtimeUpdateCount > 0}
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-sm text-gray-500">Updates received:</span>
-                                        <span class="text-sm font-medium text-blue-700">{realtimeUpdateCount}</span>
-                                    </div>
-                                {/if}
-                            </div>
-                            
-                            <div class="flex items-center space-x-2 text-sm text-gray-600">
-                                <span>🚀 Real-time workspace monitoring active</span>
-                            </div>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-purple">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
                     </div>
-                {/if}
-
-                <!-- Tabbed Interface for Repositories and Workflows -->
-                <div class="bg-white shadow rounded-lg overflow-hidden">
-                    <!-- Tab Navigation -->
-                    <div class="border-b border-gray-200">
-                        <nav class="-mb-px flex" aria-label="Tabs">
-                            <button
-                                on:click={() => activeTab = 'repositories'}
-                                class="w-1/2 py-4 px-6 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200 {activeTab === 'repositories' 
-                                    ? 'border-blue-500 text-blue-600 bg-blue-50' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
-                            >
-                                <div class="flex items-center justify-center space-x-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                                    </svg>
-                                    <span>Repositories</span>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        {workspaceData.repository_count || 0}
-                                    </span>
-                                </div>
-                            </button>
-                            <button
-                                on:click={switchToWorkflowsTab}
-                                class="w-1/2 py-4 px-6 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200 {activeTab === 'workflows' 
-                                    ? 'border-blue-500 text-blue-600 bg-blue-50' 
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
-                            >
-                                <div class="flex items-center justify-center space-x-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                    <span>Workflows</span>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        {workspaceData.total_workflows || 0}
-                                    </span>
-                                </div>
-                            </button>
-                        </nav>
+                    <div class="stat-content">
+                        <p class="stat-label">Workflows</p>
+                        <p class="stat-value">{workspaceData.total_workflows || 0}</p>
                     </div>
+                    <div class="stat-trend">
+                        <span class="trend-neutral">Total</span>
+                    </div>
+                </div>
 
-                    <!-- Tab Content -->
-                    <div class="p-6">
-                        {#if activeTab === 'repositories'}
-                            <!-- Repositories Tab Content -->
-                            <div class="space-y-1 mb-4">
-                                <h2 class="text-xl font-semibold text-gray-900">Repositories</h2>
-                                <p class="text-sm text-gray-600">Browse repositories and their associated workflows</p>
-                            </div>
-                            
-                            {#if workspaceData.repositories && workspaceData.repositories.length > 0}
-                                <div class="space-y-6">
-                                    {#each workspaceData.repositories as repo}
-                                        <div class="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors duration-200">
-                                            <div class="flex items-start justify-between mb-4">
-                                                <div class="flex-1">
-                                                    <h3 class="text-lg font-medium text-gray-900">
-                                                        <a href={repo.html_url} target="_blank" class="hover:text-blue-600 transition-colors duration-200">
-                                                            {repo.name}
-                                                        </a>
-                                                        {#if repo.private}
-                                                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                                Private
-                                                            </span>
-                                                        {/if}
-                                                    </h3>
-                                                    {#if repo.description}
-                                                        <p class="text-gray-600 text-sm mt-1">{repo.description}</p>
-                                                    {/if}
-                                                    <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                                                        {#if repo.language}
-                                                            <span class="flex items-center">
-                                                                <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                                                                {repo.language}
-                                                            </span>
-                                                        {/if}
-                                                        <span class="flex items-center">
-                                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                            </svg>
-                                                            {repo.stargazers_count}
-                                                        </span>
-                                                        <span class="flex items-center">
-                                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                                                            </svg>
-                                                            {repo.forks_count}
-                                                        </span>
-                                                        <span class="flex items-center">
-                                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                            </svg>
-                                                            {repo.workflow_count} workflows
-                                                        </span>
-                                                        <span class="flex items-center">
-                                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                            Updated {new Date(repo.updated_at).toLocaleDateString()}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="relative">
-                                                    <button 
-                                                        on:click={() => toggleRepoActionMenu(repo.id || repo.name)}
-                                                        class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                                                        aria-label="More actions"
-                                                    >
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                        </svg>
-                                                    </button>
-                                                    
-                                                    {#if activeRepoMenu === (repo.id || repo.name)}
-                                                        <div class="absolute right-0 top-10 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                                                            <div class="py-1">
-                                                                <button 
-                                                                    on:click={() => {
-                                                                        viewRepository(repo);
-                                                                        activeRepoMenu = null;
-                                                                    }}
-                                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                >
-                                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                    </svg>
-                                                                    View Details
-                                                                </button>
-                                                                
-                                                                <button 
-                                                                    on:click={() => {
-                                                                        goto(`/github/workspace/${orgName}/canvas?repo=${repo.name}`);
-                                                                        activeRepoMenu = null;
-                                                                    }}
-                                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                >
-                                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                                                                    </svg>
-                                                                    🎨 Canvas Builder
-                                                                </button>
-                                                                
-                                                                <div class="border-t border-gray-100"></div>
-                                                                
-                                                                <button 
-                                                                    on:click={() => {
-                                                                        openAddRepoToProjectModal(repo);
-                                                                        activeRepoMenu = null;
-                                                                    }}
-                                                                    class="flex items-center w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 hover:text-green-900"
-                                                                >
-                                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                                                    </svg>
-                                                                    Add Repository to Project
-                                                                </button>
-                                                                
-                                                                <a 
-                                                                    href={repo.html_url} 
-                                                                    target="_blank"
-                                                                    on:click={() => activeRepoMenu = null}
-                                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                >
-                                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                    </svg>
-                                                                    Open in GitHub
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    {/if}
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Workflows Section -->
-                                            {#if repo.workflows && repo.workflows.length > 0}
-                                                <div class="border-t border-gray-100 pt-4">
-                                                    <h4 class="text-sm font-medium text-gray-900 mb-3">GitHub Actions Workflows ({repo.workflow_count})</h4>
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                        {#each repo.workflows as workflow}
-                                                            <div class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors duration-200">
-                                                                <div class="flex items-center justify-between">
-                                                                    <div class="flex-1">
-                                                                        <h5 class="text-sm font-medium text-gray-900">{workflow.name}</h5>
-                                                                        <p class="text-xs text-gray-500 mt-1">{workflow.path}</p>
-                                                                        <div class="flex items-center space-x-2 mt-2">
-                                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {workflow.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                                                                {workflow.state}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="flex flex-col space-y-1">
-                                                                        <button 
-                                                                            on:click={() => viewWorkflowContent(workflow, repo)}
-                                                                            on:mouseenter={() => {
-                                                                                if (repo && repo.name) {
-                                                                                    githubClient.preloadWorkflowContent(orgName, repo.name, workflow.path);
-                                                                                }
-                                                                            }}
-                                                                            class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 transition-colors duration-200"
-                                                                        >
-                                                                            View YAML
-                                                                        </button>
-                                                                        {#if workflow.html_url}
-                                                                            <a 
-                                                                                href={workflow.html_url} 
-                                                                                target="_blank"
-                                                                                class="text-gray-600 hover:text-gray-800 text-xs px-2 py-1 rounded bg-gray-50 hover:bg-gray-100 text-center transition-colors duration-200"
-                                                                            >
-                                                                                GitHub →
-                                                                            </a>
-                                                                        {/if}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        {/each}
-                                                    </div>
-                                                </div>
-                                            {:else}
-                                                <div class="border-t border-gray-100 pt-4">
-                                                    <p class="text-sm text-gray-500">No GitHub Actions workflows found in this repository.</p>
-                                                </div>
-                                            {/if}
-                                        </div>
-                                    {/each}
-                                </div>
-                            {:else}
-                                <div class="text-center py-12">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No repositories found</h3>
-                                    <p class="mt-1 text-sm text-gray-500">This organization doesn't have any repositories yet.</p>
-                                </div>
-                            {/if}
-                        {:else if activeTab === 'workflows'}
-                            <!-- Workflows Tab Content -->
-                            <div class="space-y-1 mb-6">
-                                <h2 class="text-xl font-semibold text-gray-900">Workflows Overview</h2>
-                                <p class="text-sm text-gray-600">Comprehensive view of all workflows across repositories with detailed metadata</p>
-                            </div>   
-                            {#if loadingDetailedWorkflows}
-                                <!-- Loading state for workflows table -->
-                                <div class="flex items-center justify-center py-12">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                                        <span class="text-gray-600">Loading detailed workflow information...</span>
-                                    </div>
-                                </div>
-                            {:else if detailedWorkflows.length > 0}
-                            
-                                <!-- Advanced Workflows Table -->
-                                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                                    <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Repository / Workflow
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Trigger
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Last Run
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Last Successful
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Uses
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Author
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Actions
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="bg-white divide-y divide-gray-200">
-                                                {#each detailedWorkflows as workflow}
-                                                    <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                            <div class="flex items-center">
-                                                                <div class="flex-shrink-0 h-10 w-10">
-                                                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                                        </svg>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="ml-4">
-                                                                    <div class="text-sm font-medium text-gray-900">
-                                                                        {workflow.name}
-                                                                    </div>
-                                                                    <div class="text-sm text-gray-500 flex items-center space-x-2">
-                                                                        <span>{workflow.repository}</span>
-                                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {workflow.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                                                            {workflow.state}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            <div class="flex flex-wrap gap-1">
-                                                                {#if workflow.triggers && workflow.triggers.length > 0 && workflow.triggers[0] !== 'Unknown'}
-                                                                    {#each workflow.triggers.slice(0, 2) as trigger}
-                                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                                                            {trigger}
-                                                                        </span>
-                                                                    {/each}
-                                                                    {#if workflow.triggers.length > 2}
-                                                                        <span 
-                                                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 cursor-help"
-                                                                            title="All triggers: {formatTriggers(workflow.triggers)}"
-                                                                        >
-                                                                            +{workflow.triggers.length - 2}
-                                                                        </span>
-                                                                    {/if}
-                                                                {:else}
-                                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
-                                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                        </svg>
-                                                                        Not parsed
-                                                                    </span>
-                                                                {/if}
-                                                            </div>
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {#if workflow.last_run && workflow.last_run.created_at}
-                                                                <div>
-                                                                    <div class="text-sm text-gray-900">{formatRelativeTime(workflow.last_run.created_at)}</div>
-                                                                    <div class="text-xs text-gray-500 flex items-center space-x-1">
-                                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium {
-                                                                            workflow.last_run.conclusion === 'success' ? 'bg-green-100 text-green-800' :
-                                                                            workflow.last_run.conclusion === 'failure' ? 'bg-red-100 text-red-800' :
-                                                                            workflow.last_run.conclusion === 'cancelled' ? 'bg-yellow-100 text-yellow-800' :
-                                                                            'bg-gray-100 text-gray-800'
-                                                                        }">
-                                                                            {workflow.last_run.conclusion || workflow.last_run.status}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            {:else}
-                                                                <div class="flex items-center text-gray-400">
-                                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                    </svg>
-                                                                    <span class="text-sm">Not available</span>
-                                                                </div>
-                                                            {/if}
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {#if workflow.last_successful && workflow.last_successful.created_at}
-                                                                <div>
-                                                                    <div class="text-sm text-gray-900">{formatRelativeTime(workflow.last_successful.created_at)}</div>
-                                                                    <div class="text-xs text-green-600">✓ Success</div>
-                                                                </div>
-                                                            {:else}
-                                                                <div class="flex items-center text-gray-400">
-                                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                    </svg>
-                                                                    <span class="text-sm">Not available</span>
-                                                                </div>
-                                                            {/if}
-                                                        </td>
-                                                        <td class="px-6 py-4 text-sm text-gray-500">
-                                                            {#if workflow.uses && workflow.uses.length > 0}
-                                                                <div class="max-w-xs">
-                                                                    {#each workflow.uses.slice(0, 2) as use}
-                                                                        <div class="text-xs text-gray-600 truncate">{use}</div>
-                                                                    {/each}
-                                                                    {#if workflow.uses.length > 2}
-                                                                        <div class="text-xs text-gray-400">+{workflow.uses.length - 2} more</div>
-                                                                    {/if}
-                                                                </div>
-                                                            {:else}
-                                                                <div class="flex items-center text-gray-400">
-                                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                                                                    </svg>
-                                                                    <span class="text-sm">Not parsed</span>
-                                                                </div>
-                                                            {/if}
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            <div class="flex items-center">
-                                                                <div class="flex-shrink-0 h-6 w-6">
-                                                                    <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                                                        <span class="text-xs font-medium text-gray-600">
-                                                                            {#if workflow.author && workflow.author !== 'Unknown'}
-                                                                                {workflow.author.charAt(0).toUpperCase()}
-                                                                            {:else}
-                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                                                </svg>
-                                                                            {/if}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="ml-2">
-                                                                    <div class="text-sm text-gray-900">
-                                                                        {#if workflow.author && workflow.author !== 'Unknown'}
-                                                                            {workflow.author}
-                                                                        {:else}
-                                                                            <span class="text-gray-400">Not available</span>
-                                                                        {/if}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                            <div class="relative">
-                                                                <button 
-                                                                    on:click={() => toggleWorkflowActionMenu(`${workflow.id}-${workflow.repository}`)}
-                                                                    class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                                                                    aria-label="More actions"
-                                                                >
-                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                                    </svg>
-                                                                </button>
-                                                                
-                                                                {#if activeWorkflowMenu === `${workflow.id}-${workflow.repository}`}
-                                                                    <div class="absolute right-0 top-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                                                                        <div class="py-1">
-                                                                            <button 
-                                                                                on:click={() => {
-                                                                                    viewWorkflowContent(workflow, { name: workflow.repository });
-                                                                                    activeWorkflowMenu = null;
-                                                                                }}
-                                                                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                            >
-                                                                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                                                                                </svg>
-                                                                                View YAML
-                                                                            </button>
-                                                                            <button 
-                                                                                on:click={() => {
-                                                                                    goto(`/github/workspace/${orgName}/canvas?repo=${workflow.repository}&workflow=${encodeURIComponent(workflow.name)}`);
-                                                                                    activeWorkflowMenu = null;
-                                                                                }}
-                                                                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                            >
-                                                                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                                                                                </svg>
-                                                                                Open Canvas
-                                                                            </button>
-                                                                            <div class="border-t border-gray-100"></div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-green">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Status</p>
+                        <p class="stat-value stat-value-small">{workspaceData.status || 'connected'}</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-up">Online</span>
+                    </div>
+                </div>
 
-                                                                            <button 
-                                                                                on:click={() => {
-                                                                                    openAddToProjectModal(workflow);
-                                                                                    activeWorkflowMenu = null;
-                                                                                }}
-                                                                                class="flex items-center w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 hover:text-green-900"
-                                                                            >
-                                                                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                                                                </svg>
-                                                                                Add to Project
-                                                                            </button>
-                                                                            {#if workflow.html_url}
-                                                                                <a 
-                                                                                    href={workflow.html_url} 
-                                                                                    target="_blank"
-                                                                                    on:click={() => activeWorkflowMenu = null}
-                                                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                                                                                >
-                                                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                                    </svg>
-                                                                                    Open in GitHub
-                                                                                </a>
-                                                                            {/if}
-                                                                        </div>
-                                                                    </div>
-                                                                {/if}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                {/each}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    
-                                    <!-- Table Footer with Stats -->
-                                    <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
-                                        <div class="flex items-center justify-between text-sm text-gray-500">
-                                            <div>
-                                                Showing {detailedWorkflows.length} workflows across {workspaceData.repository_count} repositories
-                                            </div>
-                                            <div class="flex items-center space-x-4">
-                                                <span class="flex items-center">
-                                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                                                    Active: {detailedWorkflows.filter(w => w.state === 'active').length}
-                                                </span>
-                                                <span class="flex items-center">
-                                                    <span class="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
-                                                    Inactive: {detailedWorkflows.filter(w => w.state !== 'active').length}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-orange">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Last Synced</p>
+                        <p class="stat-value stat-value-small">
+                            {#if workspaceData.last_updated}
+                                {formatRelativeTime(workspaceData.last_updated)}
                             {:else}
-                                <!-- Empty state for workflows -->
-                                <div class="text-center py-12">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No workflows found</h3>
-                                    <p class="mt-1 text-sm text-gray-500">No GitHub Actions workflows have been configured in this organization.</p>
-                                </div>
+                                Just now
                             {/if}
+                        </p>
+                    </div>
+                    <div class="stat-trend">
+                        {#if realtimeUpdateCount > 0}
+                            <span class="trend-up">{realtimeUpdateCount} updates</span>
+                        {:else}
+                            <span class="trend-neutral">Monitoring</span>
                         {/if}
                     </div>
                 </div>
             </div>
+
+            <!-- Tabbed Content Section -->
+            <div class="content-tabs">
+                <div class="tabs-header">
+                    <button
+                        onclick={() => activeTab = 'repositories'}
+                        class="tab-button {activeTab === 'repositories' ? 'active' : ''}"
+                    >
+                        <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"/>
+                        </svg>
+                        <span>Repositories</span>
+                        <span class="tab-badge">{workspaceData.repository_count || 0}</span>
+                    </button>
+                    <button
+                        onclick={switchToWorkflowsTab}
+                        class="tab-button {activeTab === 'workflows' ? 'active' : ''}"
+                    >
+                        <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>Workflows</span>
+                        <span class="tab-badge">{workspaceData.total_workflows || 0}</span>
+                    </button>
+                </div>
+
+                <div class="tabs-content">
+                    {#if activeTab === 'repositories'}
+                        <!-- Repositories Content -->
+                        {#if workspaceData.repositories && workspaceData.repositories.length > 0}
+                            <div class="repositories-grid">
+                                {#each workspaceData.repositories as repo}
+                                    <div class="repository-card">
+                                        <div class="repo-header relative">
+                                            <div class="repo-info">
+                                                <div class="repo-icon">
+                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"/>
+                                                    </svg>
+                                                </div>
+                                                <div class="repo-title-section">
+                                                    <h3 class="repo-name">
+                                                        <a href={repo.html_url} target="_blank">{repo.name}</a>
+                                                    </h3>
+                                                    {#if repo.private}
+                                                        <span class="repo-badge private">Private</span>
+                                                    {:else}
+                                                        <span class="repo-badge public">Public</span>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onclick={() => toggleRepoActionMenu(repo.id || repo.name)}
+                                                class="repo-menu-button"
+                                                aria-label="Repository actions menu"
+                                            >
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                                </svg>
+                                            </button>
+                                            
+                                            {#if activeRepoMenu === (repo.id || repo.name)}
+                                                <div class="dropdown-menu">
+                                                        <button 
+                                                            onclick={() => {
+                                                                viewRepository(repo);
+                                                                activeRepoMenu = null;
+                                                            }}
+                                                            class="dropdown-item"
+                                                        >
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                            <span>View Details</span>
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            onclick={() => {
+                                                                goto(`/github/workspace/${orgName}/canvas?repo=${repo.name}`);
+                                                                activeRepoMenu = null;
+                                                            }}
+                                                            class="dropdown-item"
+                                                        >
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                                            </svg>
+                                                            <span>🎨 Canvas Builder</span>
+                                                        </button>
+                                                        
+                                                        <div class="dropdown-divider"></div>
+                                                        
+                                                        <button 
+                                                            onclick={() => {
+                                                                openAddRepoToProjectModal(repo);
+                                                                activeRepoMenu = null;
+                                                            }}
+                                                            class="dropdown-item dropdown-item-primary"
+                                                        >
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                            </svg>
+                                                            <span>Add Repository to Project</span>
+                                                        </button>
+                                                        
+                                                        <a 
+                                                            href={repo.html_url} 
+                                                            target="_blank"
+                                                            onclick={() => activeRepoMenu = null}
+                                                            class="dropdown-item"
+                                                        >
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                            </svg>
+                                                            <span>Open in GitHub</span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+                                        </div>
+
+                                        {#if repo.description}
+                                            <p class="repo-description">{repo.description}</p>
+                                        {/if}
+
+                                        <div class="repo-meta">
+                                            {#if repo.language}
+                                                <div class="meta-item">
+                                                    <span class="language-dot"></span>
+                                                    <span>{repo.language}</span>
+                                                </div>
+                                            {/if}
+                                            <div class="meta-item">
+                                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                                <span>{repo.stargazers_count}</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                                                </svg>
+                                                <span>{repo.forks_count}</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                                </svg>
+                                                <span>{repo.workflow_count} workflows</span>
+                                            </div>
+                                        </div>
+
+                                        {#if repo.workflows && repo.workflows.length > 0}
+                                            <div class="repo-workflows">
+                                                <h4 class="workflows-title">Workflows</h4>
+                                                <div class="workflows-list">
+                                                    {#each repo.workflows as workflow}
+                                                        <div class="workflow-item">
+                                                            <div class="workflow-info">
+                                                                <span class="workflow-name">{workflow.name}</span>
+                                                                <span class="workflow-badge {workflow.state}">{workflow.state}</span>
+                                                            </div>
+                                                            <button 
+                                                                onclick={() => viewWorkflowContent(workflow, repo)}
+                                                                class="view-workflow-button"
+                                                            >
+                                                                View YAML
+                                                            </button>
+                                                        </div>
+                                                    {/each}
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="empty-state">
+                                <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"/>
+                                </svg>
+                                <h3 class="empty-title">No Repositories Found</h3>
+                                <p class="empty-message">This organization doesn't have any repositories yet.</p>
+                            </div>
+                        {/if}
+                    {:else if activeTab === 'workflows'}
+                        <!-- Workflows Content -->
+                        {#if loadingDetailedWorkflows}
+                            <div class="workflows-loading">
+                                <div class="loading-spinner"></div>
+                                <p>Loading workflow details...</p>
+                            </div>
+                        {:else if detailedWorkflows.length > 0}
+                            <div class="workflows-table-container">
+                                <table class="workflows-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Repository / Workflow</th>
+                                            <th>Trigger</th>
+                                            <th>Last Run</th>
+                                            <th>Last Successful</th>
+                                            <th>Uses</th>
+                                            <th>Author</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {#each detailedWorkflows as workflow}
+                                            <tr class="workflow-row">
+                                                <td>
+                                                    <div class="workflow-cell">
+                                                        <div class="workflow-icon-wrapper">
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div class="workflow-details">
+                                                            <span class="workflow-table-name">{workflow.name}</span>
+                                                            <span class="workflow-repo-name">{workflow.repository}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="triggers-cell">
+                                                        {#if workflow.triggers && workflow.triggers.length > 0}
+                                                            {#each workflow.triggers.slice(0, 2) as trigger}
+                                                                <span class="trigger-badge">{trigger}</span>
+                                                            {/each}
+                                                            {#if workflow.triggers.length > 2}
+                                                                <span class="trigger-more">+{workflow.triggers.length - 2}</span>
+                                                            {/if}
+                                                        {:else}
+                                                            <span class="trigger-unknown">Unknown</span>
+                                                        {/if}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {#if workflow.last_run && workflow.last_run.created_at}
+                                                        <span class="last-run-time">{formatRelativeTime(workflow.last_run.created_at)}</span>
+                                                    {:else}
+                                                        <span class="last-run-never">Never</span>
+                                                    {/if}
+                                                </td>
+                                                <td>
+                                                    {#if workflow.last_successful_run && workflow.last_successful_run.created_at}
+                                                        <span class="last-run-time">{formatRelativeTime(workflow.last_successful_run.created_at)}</span>
+                                                    {:else}
+                                                        <span class="last-run-never">N/A</span>
+                                                    {/if}
+                                                </td>
+                                                <td>
+                                                    <div class="uses-cell">
+                                                        {#if workflow.uses && workflow.uses.length > 0}
+                                                            {#each workflow.uses.slice(0, 2) as actionPath}
+                                                                <div class="uses-action">{actionPath}</div>
+                                                            {/each}
+                                                            {#if workflow.uses.length > 2}
+                                                                <span class="uses-more">+{workflow.uses.length - 2} more</span>
+                                                            {/if}
+                                                        {:else}
+                                                            <span class="uses-none">None</span>
+                                                        {/if}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="author-cell">
+                                                        <div class="author-avatar">
+                                                            {#if workflow.author && workflow.author !== 'Unknown'}
+                                                                <span>{workflow.author.charAt(0).toUpperCase()}</span>
+                                                            {:else}
+                                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                </svg>
+                                                            {/if}
+                                                        </div>
+                                                        <span class="author-name">
+                                                            {#if workflow.author && workflow.author !== 'Unknown'}
+                                                                {workflow.author}
+                                                            {:else}
+                                                                <span class="author-unknown">Unknown</span>
+                                                            {/if}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge {workflow.state || 'unknown'}">
+                                                        {workflow.state || 'unknown'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="relative">
+                                                        <button
+                                                            onclick={() => toggleWorkflowActionMenu(`${workflow.id}-${workflow.repository}`)}
+                                                            class="table-action-button"
+                                                            aria-label="Workflow actions"
+                                                        >
+                                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                                            </svg>
+                                                        </button>
+                                                        
+                                                        {#if activeWorkflowMenu === `${workflow.id}-${workflow.repository}`}
+                                                            <div class="dropdown-menu dropdown-menu-right">
+                                                                <button 
+                                                                    onclick={() => {
+                                                                        viewWorkflowContent(workflow, { name: workflow.repository });
+                                                                        activeWorkflowMenu = null;
+                                                                    }}
+                                                                    class="dropdown-item"
+                                                                >
+                                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                                                    </svg>
+                                                                    <span>View YAML</span>
+                                                                </button>
+                                                                <button 
+                                                                    onclick={() => {
+                                                                        goto(`/github/workspace/${orgName}/canvas?repo=${workflow.repository}&workflow=${encodeURIComponent(workflow.name)}`);
+                                                                        activeWorkflowMenu = null;
+                                                                    }}
+                                                                    class="dropdown-item"
+                                                                >
+                                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                                                    </svg>
+                                                                    <span>Open Canvas</span>
+                                                                </button>
+                                                                <div class="dropdown-divider"></div>
+
+                                                                <button 
+                                                                    onclick={() => {
+                                                                        openAddToProjectModal(workflow);
+                                                                        activeWorkflowMenu = null;
+                                                                    }}
+                                                                    class="dropdown-item dropdown-item-primary"
+                                                                >
+                                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                                    </svg>
+                                                                    <span>Add to Project</span>
+                                                                </button>
+                                                                {#if workflow.html_url}
+                                                                    <a 
+                                                                        href={workflow.html_url} 
+                                                                        target="_blank"
+                                                                        onclick={() => activeWorkflowMenu = null}
+                                                                        class="dropdown-item"
+                                                                    >
+                                                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                        </svg>
+                                                                        <span>Open in GitHub</span>
+                                                                    </a>
+                                                                {/if}
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {:else}
+                            <div class="empty-state">
+                                <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                <h3 class="empty-title">No Workflows Found</h3>
+                                <p class="empty-message">No GitHub Actions workflows configured in this organization.</p>
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+            </div>
         {/if}
-    </div>
+    </main>
 </div>
 
-<!-- Workflow Content Modal -->
+<!-- Workflow Modal -->
 {#if showWorkflowModal && selectedWorkflow}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" on:click={closeWorkflowModal}>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white" on:click|stopPropagation>
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">{selectedWorkflow.name}</h3>
-                    <p class="text-sm text-gray-600">{selectedWorkflow.repo}/{selectedWorkflow.path}</p>
+    <div 
+        class="modal-overlay" 
+        onclick={closeWorkflowModal}
+        onkeydown={(e) => e.key === 'Escape' && closeWorkflowModal()}
+        role="button"
+        tabindex="0"
+        aria-label="Close modal overlay"
+    >
+        <div 
+            class="modal-content" 
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            tabindex="-1"
+        >
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h3 id="modal-title">{selectedWorkflow.name}</h3>
+                    <p>{selectedWorkflow.repo}/{selectedWorkflow.path}</p>
                 </div>
-                <button 
-                    on:click={closeWorkflowModal}
-                    class="text-gray-400 hover:text-gray-600"
-                    aria-label="Close workflow modal"
-                >
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button onclick={closeWorkflowModal} class="modal-close" aria-label="Close workflow modal">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
             
-            <div class="mt-4">
+            <div class="modal-body">
                 {#if loadingWorkflow}
-                    <div class="flex items-center justify-center py-8">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span class="ml-2 text-gray-600">Loading workflow content...</span>
+                    <div class="modal-loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading workflow content...</span>
                     </div>
                 {:else}
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-auto max-h-96">
-                        <pre class="text-green-400 text-sm font-mono whitespace-pre-wrap">{workflowContent}</pre>
-                    </div>
-                    
-                    <div class="mt-4 flex justify-end space-x-3">
-                        <button 
-                            on:click={closeWorkflowModal}
-                            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                        >
-                            Close
-                        </button>
-                        {#if selectedWorkflow.html_url}
-                            <a 
-                                href={selectedWorkflow.html_url} 
-                                target="_blank"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                            >
-                                View on GitHub
-                            </a>
-                        {/if}
+                    <div class="code-viewer">
+                        <pre><code>{workflowContent}</code></pre>
                     </div>
                 {/if}
             </div>
@@ -1776,40 +1375,49 @@
     </div>
 {/if}
 
-<!-- Add to Project Modal -->
+<!-- Add Workflow to Project Modal -->
 {#if showAddToProjectModal}
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Add Workflow to Project Treeview</h3>
+    <div 
+        class="modal-overlay" 
+        onclick={closeAddToProjectModal}
+        onkeydown={(e) => e.key === 'Escape' && closeAddToProjectModal()}
+        role="button"
+        tabindex="0"
+        aria-label="Close modal overlay"
+    >
+        <div 
+            class="modal-content modal-content-large" 
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-workflow-modal-title"
+            tabindex="-1"
+        >
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h3 id="add-workflow-modal-title">Add Workflow to Project Treeview</h3>
                     {#if selectedWorkflowToAdd}
-                        <p class="text-sm text-gray-600 mt-1">
-                            Adding: <span class="font-medium">{selectedWorkflowToAdd.name}</span> from <span class="font-medium">{selectedWorkflowToAdd.repository}</span>
-                        </p>
+                        <p>Adding: <strong>{selectedWorkflowToAdd.name}</strong> from <strong>{selectedWorkflowToAdd.repository}</strong></p>
                     {/if}
                 </div>
-                <button 
-                    on:click={closeAddToProjectModal}
-                    class="text-gray-400 hover:text-gray-600"
-                    aria-label="Close modal"
-                >
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button onclick={closeAddToProjectModal} class="modal-close" aria-label="Close modal">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="modal-body modal-grid">
                 <!-- Project Tree Structure -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-md font-medium text-gray-900">🌲 Project Structure</h4>
+                <div class="tree-panel">
+                    <div class="tree-header">
+                        <h4>🌲 Project Structure</h4>
                         <button 
-                            on:click={() => showNewFolderInput = !showNewFolderInput}
-                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center space-x-1"
+                            onclick={() => showNewFolderInput = !showNewFolderInput}
+                            class="btn-primary-small"
                         >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             <span>New Folder</span>
@@ -1817,55 +1425,45 @@
                     </div>
                     
                     {#if showNewFolderInput}
-                        <div class="mb-4 p-3 bg-white rounded border">
-                            <div class="mb-3">
-                                <label for="folder-name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Folder Name
-                                </label>
-                                <input
-                                    bind:value={newFolderName}
-                                    placeholder="Enter folder name..."
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                    on:keypress={(e) => e.key === 'Enter' && createNewFolderInModal()}
-                                    id="folder-name"
-                                />
-                            </div>
+                        <div class="new-folder-form">
+                            <label for="workflow-folder-name">Folder Name</label>
+                            <input
+                                bind:value={newFolderName}
+                                placeholder="Enter folder name..."
+                                id="workflow-folder-name"
+                                onkeypress={(e) => e.key === 'Enter' && createNewFolderInModal()}
+                            />
                             
                             {#if projectTreeData.filter(f => f.type === 'folder').length > 0}
-                                <div class="mb-3">
-                                    <label for="parent-folder-select" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Parent Folder (Optional)
-                                    </label>
-                                    <select 
-                                        bind:value={selectedParentFolder}
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                        id="parent-folder-select"
-                                    >
-                                        <option value={null}>None (Create at root level)</option>
-                                        {#each getFlattenedFolders(projectTreeData) as folder}
-                                            <option value={folder}>
-                                                {'  '.repeat(folder.depth)}📁 {folder.name}
-                                            </option>
-                                        {/each}
-                                    </select>
-                                </div>
+                                <label for="workflow-parent-folder">Parent Folder (Optional)</label>
+                                <select 
+                                    bind:value={selectedParentFolder}
+                                    id="workflow-parent-folder"
+                                >
+                                    <option value={null}>None (Create at root level)</option>
+                                    {#each getFlattenedFolders(projectTreeData) as folder}
+                                        <option value={folder}>
+                                            {'  '.repeat(folder.depth)}📁 {folder.name}
+                                        </option>
+                                    {/each}
+                                </select>
                             {/if}
                             
-                            <div class="flex justify-end space-x-2">
+                            <div class="form-actions">
                                 <button
-                                    on:click={() => { 
+                                    onclick={() => { 
                                         showNewFolderInput = false; 
                                         newFolderName = ''; 
                                         selectedParentFolder = null;
                                     }}
-                                    class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                                    class="btn-secondary"
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    on:click={createNewFolderInModal}
+                                    onclick={createNewFolderInModal}
                                     disabled={!newFolderName.trim()}
-                                    class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                                    class="btn-primary"
                                 >
                                     Create
                                 </button>
@@ -1873,43 +1471,36 @@
                         </div>
                     {/if}
                     
-                    <div class="max-h-64 overflow-y-auto space-y-2">
+                    <div class="tree-list">
                         {#if projectTreeData.length === 0}
-                            <div class="text-center py-8 text-gray-500">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="tree-empty">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
                                 </svg>
-                                <p class="text-sm">No folders yet</p>
-                                <p class="text-xs text-gray-400 mt-1">Create a folder to organize your workflows</p>
+                                <p>No folders yet</p>
+                                <small>Create a folder to organize your workflows</small>
                             </div>
                         {:else}
                             {#each getFlattenedFolders(projectTreeData) as folder}
                                 <button 
-                                    class="w-full p-3 border rounded cursor-pointer transition-colors duration-200 text-left {
-                                        selectedProjectFolder?.id === folder.id 
-                                        ? 'bg-blue-100 border-blue-500 text-blue-900' 
-                                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                                    }"
-                                    on:click={() => selectedProjectFolder = folder}
+                                    class="folder-item {selectedProjectFolder?.id === folder.id ? 'selected' : ''}"
+                                    onclick={() => selectedProjectFolder = folder}
+                                    style="padding-left: {folder.depth * 16 + 16}px"
                                 >
-                                    <div class="flex items-center space-x-2">
-                                        <div style="margin-left: {folder.depth * 16}px" class="flex items-center space-x-2">
-                                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
-                                            </svg>
-                                            <span class="text-sm font-medium">{folder.name}</span>
-                                            {#if selectedRepoFolder?.id === folder.id}
-                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            {/if}
-                                        </div>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
+                                    </svg>
+                                    <div class="folder-info">
+                                        <span class="folder-name">{folder.name}</span>
+                                        <span class="folder-count">{countWorkflowsInFolder(folder)} items</span>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1" style="margin-left: {folder.depth * 16 + 28}px">
-                                        {countWorkflowsInFolder(folder)} items
-                                    </div>
+                                    {#if selectedProjectFolder?.id === folder.id}
+                                        <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    {/if}
                                 </button>
                             {/each}
                         {/if}
@@ -1917,42 +1508,39 @@
                 </div>
                 
                 <!-- Workflow Preview -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h4 class="text-md font-medium text-gray-900 mb-4">📄 Workflow Preview</h4>
+                <div class="preview-panel">
+                    <h4>📄 Workflow Preview</h4>
                     {#if selectedWorkflowToAdd}
-                        <div class="bg-white rounded border p-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                    </div>
+                        <div class="workflow-preview">
+                            <div class="preview-header">
+                                <div class="preview-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900">{selectedWorkflowToAdd.name}</div>
-                                    <div class="text-sm text-gray-500">{selectedWorkflowToAdd.repository}</div>
+                                    <div class="preview-name">{selectedWorkflowToAdd.name}</div>
+                                    <div class="preview-repo">{selectedWorkflowToAdd.repository}</div>
                                 </div>
                             </div>
                             
-                            <div class="space-y-2">
-                                <div class="text-xs text-gray-600">
-                                    <span class="font-medium">Path:</span> {selectedWorkflowToAdd.path || 'N/A'}
+                            <div class="preview-details">
+                                <div class="detail-item">
+                                    <span>Path:</span>
+                                    <span>{selectedWorkflowToAdd.path || 'N/A'}</span>
                                 </div>
-                                <div class="text-xs text-gray-600">
-                                    <span class="font-medium">State:</span> 
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {selectedWorkflowToAdd.state === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                <div class="detail-item">
+                                    <span>State:</span>
+                                    <span class="status-badge {selectedWorkflowToAdd.state || 'unknown'}">
                                         {selectedWorkflowToAdd.state || 'Unknown'}
                                     </span>
                                 </div>
                                 {#if selectedWorkflowToAdd.triggers && selectedWorkflowToAdd.triggers.length > 0}
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Triggers:</span>
-                                        <div class="flex flex-wrap gap-1 mt-1">
+                                    <div class="detail-item">
+                                        <span>Triggers:</span>
+                                        <div class="triggers-preview">
                                             {#each selectedWorkflowToAdd.triggers as trigger}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {trigger}
-                                                </span>
+                                                <span class="trigger-badge">{trigger}</span>
                                             {/each}
                                         </div>
                                     </div>
@@ -1961,53 +1549,49 @@
                         </div>
                         
                         {#if selectedProjectFolder}
-                            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                                <div class="flex items-center text-green-800">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-sm font-medium">Ready to add</span>
+                            <div class="status-message success">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    <strong>Ready to add</strong>
+                                    <p>This workflow will be added to the "<strong>{selectedProjectFolder.name}</strong>" folder.</p>
                                 </div>
-                                <p class="text-sm text-green-700 mt-1">
-                                    This workflow will be added to the "<span class="font-medium">{selectedProjectFolder.name}</span>" folder.
-                                </p>
                             </div>
                         {:else}
-                            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                                <div class="flex items-center text-yellow-800">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
-                                    <span class="text-sm font-medium">Select a folder</span>
+                            <div class="status-message warning">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <div>
+                                    <strong>Select a folder</strong>
+                                    <p>Please select a folder where you want to add this workflow, or create a new one.</p>
                                 </div>
-                                <p class="text-sm text-yellow-700 mt-1">
-                                    Please select a folder where you want to add this workflow, or create a new one.
-                                </p>
                             </div>
                         {/if}
                     {/if}
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+            <div class="modal-footer">
                 <button
-                    on:click={closeAddToProjectModal}
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                    onclick={closeAddToProjectModal}
+                    class="btn-secondary"
                 >
                     Cancel
                 </button>
                 <button
-                    on:click={addWorkflowToProject}
+                    onclick={addWorkflowToProject}
                     disabled={!selectedProjectFolder || !selectedWorkflowToAdd || addingWorkflowToProject}
-                    class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    class="btn-success"
                 >
                     {#if addingWorkflowToProject}
-                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         <span>Adding...</span>
                     {:else}
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         <span>Add to Project</span>
@@ -2020,41 +1604,51 @@
 
 <!-- Add Repository to Project Modal -->
 {#if showAddRepoToProjectModal}
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Add Repository to Project Treeview</h3>
+    <div 
+        class="modal-overlay" 
+        onclick={closeAddRepoToProjectModal}
+        onkeydown={(e) => e.key === 'Escape' && closeAddRepoToProjectModal()}
+        role="button"
+        tabindex="0"
+        aria-label="Close modal overlay"
+    >
+        <div 
+            class="modal-content modal-content-large" 
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-repo-modal-title"
+            tabindex="-1"
+        >
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h3 id="add-repo-modal-title">Add Repository to Repository Treeview</h3>
                     {#if selectedRepoToAdd}
-                        <p class="text-sm text-gray-600 mt-1">
-                            Adding: <span class="font-medium">{selectedRepoToAdd.name}</span>
+                        <p>Adding: <strong>{selectedRepoToAdd.name}</strong>
                             {#if selectedRepoToAdd.workflow_count}
-                                with <span class="font-medium">{selectedRepoToAdd.workflow_count} workflows</span>
+                                with <strong>{selectedRepoToAdd.workflow_count} workflows</strong>
                             {/if}
                         </p>
                     {/if}
                 </div>
-                <button 
-                    on:click={closeAddRepoToProjectModal}
-                    class="text-gray-400 hover:text-gray-600"
-                    aria-label="Close modal"
-                >
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button onclick={closeAddRepoToProjectModal} class="modal-close" aria-label="Close modal">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Project Tree Structure -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-md font-medium text-gray-900">🌲 Project Structure</h4>
+            <div class="modal-body modal-grid">
+                <!-- Repository Tree Structure -->
+                <div class="tree-panel">
+                    <div class="tree-header">
+                        <h4>🌲 Repository Structure</h4>
                         <button 
-                            on:click={() => showNewFolderInput = !showNewFolderInput}
-                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center space-x-1"
+                            onclick={() => showNewFolderInput = !showNewFolderInput}
+                            class="btn-primary-small"
                         >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             <span>New Folder</span>
@@ -2062,55 +1656,45 @@
                     </div>
                     
                     {#if showNewFolderInput}
-                        <div class="mb-4 p-3 bg-white rounded border">
-                            <div class="mb-3">
-                                <label for="repo-folder-name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Folder Name
-                                </label>
-                                <input
-                                    bind:value={newFolderName}
-                                    placeholder="Enter folder name..."
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                    on:keypress={(e) => e.key === 'Enter' && createNewFolderInModal()}
-                                    id="repo-folder-name"
-                                />
-                            </div>
+                        <div class="new-folder-form">
+                            <label for="repo-folder-name">Folder Name</label>
+                            <input
+                                bind:value={newFolderName}
+                                placeholder="Enter folder name..."
+                                id="repo-folder-name"
+                                onkeypress={(e) => e.key === 'Enter' && createNewFolderInModal()}
+                            />
                             
-                            {#if projectTreeData.filter(f => f.type === 'folder').length > 0}
-                                <div class="mb-3">
-                                    <label for="repo-parent-folder-select" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Parent Folder (Optional)
-                                    </label>
-                                    <select 
-                                        bind:value={selectedParentFolder}
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                        id="repo-parent-folder-select"
-                                    >
-                                        <option value={null}>None (Create at root level)</option>
-                                        {#each getFlattenedFolders(repoTreeData) as folder}
-                                            <option value={folder}>
-                                                {'  '.repeat(folder.depth)}📁 {folder.name}
-                                            </option>
-                                        {/each}
-                                    </select>
-                                </div>
+                            {#if repoTreeData.filter(f => f.type === 'folder').length > 0}
+                                <label for="repo-parent-folder">Parent Folder (Optional)</label>
+                                <select 
+                                    bind:value={selectedParentFolder}
+                                    id="repo-parent-folder"
+                                >
+                                    <option value={null}>None (Create at root level)</option>
+                                    {#each getFlattenedFolders(repoTreeData) as folder}
+                                        <option value={folder}>
+                                            {'  '.repeat(folder.depth)}📁 {folder.name}
+                                        </option>
+                                    {/each}
+                                </select>
                             {/if}
                             
-                            <div class="flex justify-end space-x-2">
+                            <div class="form-actions">
                                 <button
-                                    on:click={() => { 
+                                    onclick={() => { 
                                         showNewFolderInput = false; 
                                         newFolderName = ''; 
                                         selectedParentFolder = null;
                                     }}
-                                    class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                                    class="btn-secondary"
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    on:click={createNewFolderInModal}
+                                    onclick={createNewFolderInModal}
                                     disabled={!newFolderName.trim()}
-                                    class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                                    class="btn-primary"
                                 >
                                     Create
                                 </button>
@@ -2118,43 +1702,36 @@
                         </div>
                     {/if}
                     
-                    <div class="max-h-64 overflow-y-auto space-y-2">
+                    <div class="tree-list">
                         {#if repoTreeData.length === 0}
-                            <div class="text-center py-8 text-gray-500">
-                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="tree-empty">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
                                 </svg>
-                                <p class="text-sm">No folders yet</p>
-                                <p class="text-xs text-gray-400 mt-1">Create a folder to organize your repositories</p>
+                                <p>No folders yet</p>
+                                <small>Create a folder to organize your repositories</small>
                             </div>
                         {:else}
                             {#each getFlattenedFolders(repoTreeData) as folder}
                                 <button 
-                                    class="w-full p-3 border rounded cursor-pointer transition-colors duration-200 text-left {
-                                        selectedRepoFolder?.id === folder.id 
-                                        ? 'bg-blue-100 border-blue-500 text-blue-900' 
-                                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                                    }"
-                                    on:click={() => selectedRepoFolder = folder}
+                                    class="folder-item {selectedRepoFolder?.id === folder.id ? 'selected' : ''}"
+                                    onclick={() => selectedRepoFolder = folder}
+                                    style="padding-left: {folder.depth * 16 + 16}px"
                                 >
-                                    <div class="flex items-center space-x-2">
-                                        <div style="margin-left: {folder.depth * 16}px" class="flex items-center space-x-2">
-                                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
-                                            </svg>
-                                            <span class="text-sm font-medium">{folder.name}</span>
-                                            {#if selectedProjectFolder?.id === folder.id}
-                                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            {/if}
-                                        </div>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
+                                    </svg>
+                                    <div class="folder-info">
+                                        <span class="folder-name">{folder.name}</span>
+                                        <span class="folder-count">{countWorkflowsInFolder(folder)} items</span>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1" style="margin-left: {folder.depth * 16 + 28}px">
-                                        {countWorkflowsInFolder(folder)} items
-                                    </div>
+                                    {#if selectedRepoFolder?.id === folder.id}
+                                        <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    {/if}
                                 </button>
                             {/each}
                         {/if}
@@ -2162,134 +1739,2191 @@
                 </div>
                 
                 <!-- Repository Preview -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h4 class="text-md font-medium text-gray-900 mb-4">📦 Repository Preview</h4>
+                <div class="preview-panel">
+                    <h4>📦 Repository Preview</h4>
                     {#if selectedRepoToAdd}
-                        <div class="bg-white rounded border p-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                        <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10" />
-                                        </svg>
-                                    </div>
+                        <div class="repo-preview">
+                            <div class="preview-header">
+                                <div class="preview-icon preview-icon-primary">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"/>
+                                    </svg>
                                 </div>
-                                <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">{selectedRepoToAdd.name}</div>
-                                    {#if selectedRepoToAdd.private}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                            Private
-                                        </span>
-                                    {:else}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                            Public
-                                        </span>
+                                <div>
+                                    <div class="preview-name">{selectedRepoToAdd.name}</div>
+                                    {#if selectedRepoToAdd.description}
+                                        <div class="preview-desc">{selectedRepoToAdd.description}</div>
                                     {/if}
                                 </div>
                             </div>
                             
-                            {#if selectedRepoToAdd.description}
-                                <p class="text-sm text-gray-600 mb-3">{selectedRepoToAdd.description}</p>
-                            {/if}
-                            
-                            <div class="space-y-2">
+                            <div class="preview-details">
+                                <div class="detail-item">
+                                    <span>Workflows:</span>
+                                    <span>{selectedRepoToAdd.workflow_count || 0}</span>
+                                </div>
                                 {#if selectedRepoToAdd.language}
-                                    <div class="text-xs text-gray-600 flex items-center">
-                                        <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                                        <span class="font-medium">Language:</span>
-                                        <span class="ml-1">{selectedRepoToAdd.language}</span>
+                                    <div class="detail-item">
+                                        <span>Language:</span>
+                                        <span>{selectedRepoToAdd.language}</span>
                                     </div>
                                 {/if}
-                                
-                                <div class="text-xs text-gray-600">
-                                    <span class="font-medium">⭐ Stars:</span> {selectedRepoToAdd.stargazers_count || 0}
-                                    <span class="ml-3 font-medium">🍴 Forks:</span> {selectedRepoToAdd.forks_count || 0}
-                                </div>
-                                
-                                <div class="text-xs text-gray-600">
-                                    <span class="font-medium">Workflows:</span> 
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-1">
-                                        {selectedRepoToAdd.workflow_count || 0} workflows
+                                <div class="detail-item">
+                                    <span>Visibility:</span>
+                                    <span class="repo-badge {selectedRepoToAdd.private ? 'private' : 'public'}">
+                                        {selectedRepoToAdd.private ? 'Private' : 'Public'}
                                     </span>
-                                </div>
-                                
-                                {#if selectedRepoToAdd.updated_at}
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Last updated:</span>
-                                        <span class="ml-1">{new Date(selectedRepoToAdd.updated_at).toLocaleDateString()}</span>
-                                    </div>
-                                {/if}
-                            </div>
-                            
-                            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                                <div class="flex items-start text-blue-800">
-                                    <svg class="w-4 h-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                        <p class="text-sm font-medium">What will be added?</p>
-                                        <p class="text-xs mt-1">
-                                            The entire repository folder structure will be created, including all {selectedRepoToAdd.workflow_count || 0} workflows as children.
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         {#if selectedRepoFolder}
-                            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                                <div class="flex items-center text-green-800">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-sm font-medium">Ready to add</span>
+                            <div class="status-message success">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    <strong>Ready to add</strong>
+                                    <p>This repository will be added to the "<strong>{selectedRepoFolder.name}</strong>" folder.</p>
                                 </div>
-                                <p class="text-sm text-green-700 mt-1">
-                                    This repository will be added to the "<span class="font-medium">{selectedRepoFolder.name}</span>" folder.
-                                </p>
                             </div>
                         {:else}
-                            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                                <div class="flex items-center text-yellow-800">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
-                                    <span class="text-sm font-medium">Select a folder</span>
+                            <div class="status-message warning">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <div>
+                                    <strong>Select a folder</strong>
+                                    <p>Please select a folder where you want to add this repository, or create a new one.</p>
                                 </div>
-                                <p class="text-sm text-yellow-700 mt-1">
-                                    Please select a folder where you want to add this repository, or create a new one.
-                                </p>
                             </div>
                         {/if}
                     {/if}
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+            <div class="modal-footer">
                 <button
-                    on:click={closeAddRepoToProjectModal}
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                    onclick={closeAddRepoToProjectModal}
+                    class="btn-secondary"
                 >
                     Cancel
                 </button>
                 <button
-                    on:click={addRepositoryToProject}
+                    onclick={addRepositoryToProject}
                     disabled={!selectedRepoFolder || !selectedRepoToAdd || addingRepoToProject}
-                    class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    class="btn-success"
                 >
                     {#if addingRepoToProject}
-                        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        <span>Adding Repository...</span>
+                        <span>Adding...</span>
                     {:else}
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        <span>Add Repository to Project</span>
+                        <span>Add Repository</span>
                     {/if}
                 </button>
             </div>
         </div>
     </div>
 {/if}
+
+<style>
+    /* Global Workspace Variables */
+    .workspace-container {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        
+        /* Dark Theme (Default) */
+        --bg-primary: #000000;
+        --bg-secondary: #0A0A0A;
+        --bg-tertiary: #151515;
+        --text-primary: #FFFFFF;
+        --text-secondary: #CCCCCC;
+        --text-muted: #888888;
+        --border-color: rgba(74, 158, 255, 0.2);
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --card-bg-hover: rgba(255, 255, 255, 0.08);
+        --primary-color: #4A9EFF;
+        --accent-color: #FF8B4A;
+        --success-color: #00FF66;
+        --warning-color: #FFC107;
+        --error-color: #FF4757;
+        --sidebar-bg: rgba(10, 10, 10, 0.95);
+        --sidebar-width: 280px;
+        --sidebar-collapsed-width: 80px;
+        --header-height: 80px;
+    }
+
+    .workspace-container.light {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-tertiary: #f1f5f9;
+        --text-primary: #1a1a1a;
+        --text-secondary: #2d3748;
+        --text-muted: #718096;
+        --border-color: rgba(9, 105, 218, 0.2);
+        --card-bg: rgba(0, 0, 0, 0.03);
+        --card-bg-hover: rgba(0, 0, 0, 0.06);
+        --primary-color: #0969da;
+        --accent-color: #d73a49;
+        --success-color: #16a34a;
+        --warning-color: #f59e0b;
+        --error-color: #dc2626;
+        --sidebar-bg: rgba(248, 250, 252, 0.95);
+    }
+
+    /* Professional Header */
+    .workspace-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--header-height);
+        background: var(--bg-secondary);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-content {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        max-width: none;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .sidebar-toggle {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-toggle:hover {
+        background: var(--card-bg-hover);
+        transform: scale(1.05);
+    }
+
+    .toggle-icon {
+        width: 20px;
+        height: 20px;
+        color: var(--text-primary);
+    }
+
+    .brand-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .brand-icon-wrapper {
+        position: relative;
+        width: 48px;
+        height: 48px;
+    }
+
+    .brand-icon {
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        filter: drop-shadow(0 4px 12px rgba(74, 158, 255, 0.3));
+    }
+
+    .brand-glow {
+        position: absolute;
+        inset: -8px;
+        background: radial-gradient(circle, rgba(74, 158, 255, 0.3) 0%, transparent 70%);
+        filter: blur(12px);
+        z-index: -1;
+    }
+
+    .brand-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .brand-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .brand-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .workspace-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .workspace-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .workspace-name {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .live-status {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        background: rgba(0, 255, 102, 0.1);
+        border: 1px solid rgba(0, 255, 102, 0.3);
+        border-radius: 12px;
+    }
+
+    .status-dot {
+        width: 12px;
+        height: 12px;
+        background: var(--success-color);
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+        box-shadow: 0 0 12px var(--success-color);
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    .status-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--success-color);
+    }
+
+    .status-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .theme-toggle {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+        background: var(--card-bg-hover);
+        transform: translateY(-2px);
+    }
+
+    .theme-icon {
+        width: 20px;
+        height: 20px;
+        color: var(--text-primary);
+    }
+
+    /* Professional Sidebar */
+    .workspace-sidebar {
+        position: fixed;
+        left: 0;
+        top: var(--header-height);
+        width: var(--sidebar-width);
+        height: calc(100vh - var(--header-height));
+        background: var(--sidebar-bg);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid var(--border-color);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 90;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .workspace-sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        padding: 1.5rem 0;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 1rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        background: transparent;
+    }
+
+    .nav-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #4A9EFF 0%, #7B61FF 100%);
+        transform: scaleY(0);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0 4px 4px 0;
+    }
+
+    .nav-item::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.08), rgba(123, 97, 255, 0.08));
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        border-radius: 12px;
+    }
+
+    .nav-item:hover {
+        color: #4A9EFF;
+        transform: translateX(4px);
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.12), rgba(123, 97, 255, 0.12));
+        box-shadow: 0 4px 16px rgba(74, 158, 255, 0.15);
+    }
+
+    .nav-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    .nav-item:hover::after {
+        opacity: 1;
+    }
+
+    .nav-item:hover .nav-icon {
+        filter: drop-shadow(0 0 8px rgba(74, 158, 255, 0.6));
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .nav-item.nav-item-danger:hover {
+        color: #FF6B6B;
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.12), rgba(255, 139, 74, 0.12));
+        box-shadow: 0 4px 16px rgba(255, 107, 107, 0.15);
+    }
+
+    .nav-item.nav-item-danger::before {
+        background: linear-gradient(180deg, #FF6B6B 0%, #FF8B4A 100%);
+    }
+
+    .nav-item.nav-item-danger:hover::after {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.08), rgba(255, 139, 74, 0.08));
+    }
+
+    .nav-item.nav-item-danger:hover .nav-icon {
+        filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.6));
+    }
+
+    .nav-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .nav-text {
+        font-size: 0.95rem;
+        font-weight: 600;
+        white-space: nowrap;
+        position: relative;
+        z-index: 1;
+        letter-spacing: 0.3px;
+        transition: all 0.35s ease;
+    }
+
+    .workspace-sidebar.collapsed .nav-text {
+        display: none;
+    }
+
+    .workspace-sidebar.collapsed .nav-item {
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(74, 158, 255, 0.3) 50%, transparent 100%);
+        margin: 1.5rem 1rem;
+        position: relative;
+    }
+
+    .nav-divider::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(123, 97, 255, 0.2) 50%, transparent 100%);
+    }
+
+    .sidebar-footer {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .refresh-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: linear-gradient(135deg, #4A9EFF 0%, #7B61FF 50%, #00D9FF 100%);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(74, 158, 255, 0.25);
+    }
+
+    .refresh-button::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .refresh-button:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(74, 158, 255, 0.45), 0 0 0 1px rgba(74, 158, 255, 0.3);
+    }
+
+    .refresh-button:hover:not(:disabled)::before {
+        opacity: 1;
+    }
+
+    .refresh-button:active:not(:disabled) {
+        transform: translateY(-1px) scale(1.01);
+    }
+
+    .refresh-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .refresh-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .refresh-icon.spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Main Content Area */
+    .workspace-main {
+        margin-left: var(--sidebar-width);
+        margin-top: var(--header-height);
+        min-height: calc(100vh - var(--header-height));
+        padding: 2rem;
+        transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .workspace-main.expanded {
+        margin-left: var(--sidebar-collapsed-width);
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - var(--header-height) - 4rem);
+    }
+
+    .loading-content {
+        text-align: center;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(74, 158, 255, 0.2);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s ease-in-out infinite;
+        margin: 0 auto 2rem;
+    }
+
+    .loading-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .loading-text {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .loading-progress {
+        width: 200px;
+        height: 4px;
+        background: var(--card-bg);
+        border-radius: 2px;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        animation: progress 2s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+
+    /* Error State */
+    .error-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - var(--header-height) - 4rem);
+    }
+
+    .error-content {
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        color: var(--error-color);
+        background: rgba(255, 71, 87, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-icon svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .error-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .retry-button,
+    .back-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .retry-button {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        color: white;
+        border: none;
+    }
+
+    .retry-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(74, 158, 255, 0.4);
+    }
+
+    .retry-button svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .back-button {
+        background: var(--card-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    .back-button:hover {
+        background: var(--card-bg-hover);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(74, 158, 255, 0.2);
+        border-color: var(--primary-color);
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .stat-icon-blue {
+        background: rgba(74, 158, 255, 0.15);
+        color: var(--primary-color);
+    }
+
+    .stat-icon-purple {
+        background: rgba(139, 92, 246, 0.15);
+        color: #8B5CF6;
+    }
+
+    .stat-icon-green {
+        background: rgba(0, 255, 102, 0.15);
+        color: var(--success-color);
+    }
+
+    .stat-icon-orange {
+        background: rgba(255, 139, 74, 0.15);
+        color: var(--accent-color);
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-value-small {
+        font-size: 1.25rem;
+        text-transform: capitalize;
+    }
+
+    .stat-trend {
+        font-size: 0.75rem;
+    }
+
+    .trend-up {
+        color: var(--success-color);
+        font-weight: 600;
+    }
+
+    .trend-neutral {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Tabs */
+    .content-tabs {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .tabs-header {
+        display: flex;
+        gap: 0;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.5rem;
+    }
+
+    .tab-button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button:hover {
+        background: var(--card-bg-hover);
+        color: var(--text-primary);
+    }
+
+    .tab-button.active {
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.2) 0%, rgba(255, 139, 74, 0.2) 100%);
+        color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+    }
+
+    .tab-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .tab-badge {
+        padding: 0.25rem 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .tab-button.active .tab-badge {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .tabs-content {
+        padding: 2rem;
+    }
+
+    /* Repositories Grid */
+    .repositories-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .repository-card {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .repository-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(74, 158, 255, 0.15);
+        border-color: var(--primary-color);
+    }
+
+    .repo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .repo-info {
+        display: flex;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .repo-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(74, 158, 255, 0.15);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .repo-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .repo-title-section {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .repo-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .repo-name a {
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .repo-name a:hover {
+        color: var(--primary-color);
+    }
+
+    .repo-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .repo-badge.private {
+        background: rgba(255, 139, 74, 0.15);
+        color: var(--accent-color);
+        border: 1px solid rgba(255, 139, 74, 0.3);
+    }
+
+    .repo-badge.public {
+        background: rgba(0, 255, 102, 0.15);
+        color: var(--success-color);
+        border: 1px solid rgba(0, 255, 102, 0.3);
+    }
+
+    .repo-menu-button {
+        width: 32px;
+        height: 32px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+
+    .repo-menu-button:hover {
+        background: var(--card-bg-hover);
+        color: var(--text-primary);
+    }
+
+    .repo-menu-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .repo-description {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .repo-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .meta-item svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .language-dot {
+        width: 12px;
+        height: 12px;
+        background: var(--primary-color);
+        border-radius: 50%;
+    }
+
+    .repo-workflows {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    .workflows-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .workflows-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .workflow-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .workflow-item:hover {
+        background: var(--card-bg-hover);
+    }
+
+    .workflow-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .workflow-name {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .workflow-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .workflow-badge.active {
+        background: rgba(0, 255, 102, 0.15);
+        color: var(--success-color);
+    }
+
+    .workflow-badge.inactive {
+        background: var(--card-bg);
+        color: var(--text-muted);
+    }
+
+    .view-workflow-button {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .view-workflow-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+    }
+
+    /* Workflows Table */
+    .workflows-loading {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .workflows-loading p {
+        color: var(--text-secondary);
+        margin-top: 1rem;
+    }
+
+    .workflows-table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .workflows-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .workflows-table thead {
+        background: var(--bg-tertiary);
+    }
+
+    .workflows-table th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .workflows-table tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s ease;
+    }
+
+    .workflows-table tbody tr:hover {
+        background: var(--card-bg-hover);
+    }
+
+    .workflows-table td {
+        padding: 1rem 1.5rem;
+    }
+
+    .workflow-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .workflow-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        background: rgba(74, 158, 255, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .workflow-icon-wrapper svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .workflow-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .workflow-table-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .workflow-repo-name {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .triggers-cell {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .trigger-badge {
+        padding: 0.25rem 0.75rem;
+        background: rgba(74, 158, 255, 0.15);
+        color: var(--primary-color);
+        border: 1px solid rgba(74, 158, 255, 0.3);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .trigger-more {
+        padding: 0.25rem 0.75rem;
+        background: var(--card-bg);
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+
+    .trigger-unknown {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .last-run-time {
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+
+    .last-run-never {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        display: inline-block;
+    }
+
+    .status-badge.active {
+        background: rgba(0, 255, 102, 0.15);
+        color: var(--success-color);
+        border: 1px solid rgba(0, 255, 102, 0.3);
+    }
+
+    .status-badge.inactive,
+    .status-badge.unknown {
+        background: var(--card-bg);
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+    }
+
+    .table-action-button {
+        width: 36px;
+        height: 36px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+
+    .table-action-button:hover {
+        background: var(--card-bg-hover);
+        color: var(--text-primary);
+        transform: scale(1.05);
+    }
+
+    .table-action-button svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Dropdown Menus */
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        min-width: 220px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(20px);
+        z-index: 1000;
+        padding: 0.5rem;
+        animation: dropdownFadeIn 0.2s ease-out;
+    }
+
+    .dropdown-menu-right {
+        right: 0;
+        left: auto;
+    }
+
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: var(--card-bg-hover);
+        color: var(--text-primary);
+    }
+
+    .dropdown-item svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    .dropdown-item-primary {
+        color: var(--success-color);
+    }
+
+    .dropdown-item-primary:hover {
+        background: rgba(0, 255, 102, 0.1);
+        color: var(--success-color);
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 0.5rem 0;
+    }
+
+    /* Enhanced Table Columns */
+    .uses-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-width: 300px;
+    }
+
+    .uses-action {
+        padding: 0.4rem 0.75rem;
+        background: rgba(74, 158, 255, 0.1);
+        border: 1px solid rgba(74, 158, 255, 0.3);
+        border-radius: 6px;
+        color: var(--primary-color);
+        font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .workspace-container.light .uses-action {
+        background: rgba(9, 105, 218, 0.1);
+        border-color: rgba(9, 105, 218, 0.3);
+    }
+
+    .uses-more {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        background: var(--card-bg);
+        border-radius: 4px;
+        align-self: flex-start;
+    }
+
+    .uses-none {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .author-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .author-avatar {
+        width: 32px;
+        height: 32px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .author-avatar svg {
+        width: 16px;
+        height: 16px;
+        color: var(--text-muted);
+    }
+
+    .author-name {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .author-unknown {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    /* Responsive Dropdown */
+    @media (max-width: 768px) {
+        .dropdown-menu {
+            min-width: 200px;
+            right: -20px;
+        }
+    }
+
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 2rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-title h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .modal-title p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        background: var(--error-color);
+        color: white;
+        border-color: var(--error-color);
+    }
+
+    .modal-close svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .modal-body {
+        padding: 2rem;
+        max-height: calc(90vh - 140px);
+        overflow-y: auto;
+    }
+
+    .modal-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 3rem;
+    }
+
+    .modal-loading span {
+        color: var(--text-secondary);
+    }
+
+    .code-viewer {
+        background: #1a1a1a;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .code-viewer pre {
+        margin: 0;
+        padding: 1.5rem;
+        overflow-x: auto;
+    }
+
+    .code-viewer code {
+        font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #00FF66;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .workspace-sidebar {
+            transform: translateX(-100%);
+        }
+
+        .workspace-sidebar.collapsed {
+            transform: translateX(0);
+        }
+
+        .workspace-main {
+            margin-left: 0;
+        }
+
+        .workspace-main.expanded {
+            margin-left: 0;
+        }
+
+        .header-content {
+            padding: 0 1rem;
+        }
+
+        .workspace-info {
+            display: none;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .workflows-table {
+            font-size: 0.875rem;
+        }
+
+        .workflows-table th,
+        .workflows-table td {
+            padding: 0.75rem 1rem;
+        }
+
+        .modal-content {
+            width: 95%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .brand-text {
+            display: none;
+        }
+
+        .tab-button span {
+            display: none;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Modal Large Content */
+    .modal-content-large {
+        max-width: 1200px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+
+    /* Tree Panel */
+    .tree-panel,
+    .preview-panel {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        overflow: hidden;
+    }
+
+    .tree-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .tree-header h4,
+    .preview-panel > h4 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .btn-primary-small {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-small:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(74, 158, 255, 0.3);
+    }
+
+    .btn-primary-small svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* New Folder Form */
+    .new-folder-form {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .new-folder-form label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .new-folder-form input,
+    .new-folder-form select {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .new-folder-form input:focus,
+    .new-folder-form select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-success {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(74, 158, 255, 0.3);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: var(--card-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--card-bg-hover);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success-color) 0%, #00CC52 100%);
+        color: #000000;
+    }
+
+    .btn-success:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 255, 102, 0.3);
+    }
+
+    .btn-success:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-success svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Tree List */
+    .tree-list {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .tree-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .tree-empty svg {
+        width: 60px;
+        height: 60px;
+        color: var(--text-muted);
+        opacity: 0.5;
+        margin: 0 auto 1rem;
+    }
+
+    .tree-empty p {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .tree-empty small {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .folder-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1.25rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        border: 2px solid rgba(74, 158, 255, 0.35);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .folder-item::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 12px;
+        padding: 2px;
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.5), rgba(255, 139, 74, 0.5));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .folder-item:hover {
+        background: rgba(74, 158, 255, 0.12);
+        border-color: rgba(74, 158, 255, 0.6);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(74, 158, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .folder-item:hover::before {
+        opacity: 1;
+    }
+
+    .folder-item.selected {
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.25) 0%, rgba(255, 139, 74, 0.18) 100%);
+        border-color: var(--primary-color);
+        border-width: 3px;
+        box-shadow: 0 12px 32px rgba(74, 158, 255, 0.4), 
+                    inset 0 2px 4px rgba(74, 158, 255, 0.2),
+                    0 0 0 1px rgba(74, 158, 255, 0.6);
+        transform: scale(1.02);
+    }
+
+    .folder-item.selected::before {
+        opacity: 1;
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.7), rgba(255, 139, 74, 0.7));
+    }
+
+    .workspace-container.light .folder-item {
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(9, 105, 218, 0.4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .workspace-container.light .folder-item:hover {
+        background: rgba(9, 105, 218, 0.12);
+        border-color: rgba(9, 105, 218, 0.7);
+        box-shadow: 0 12px 32px rgba(9, 105, 218, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .workspace-container.light .folder-item.selected {
+        background: linear-gradient(135deg, rgba(9, 105, 218, 0.2) 0%, rgba(217, 58, 73, 0.12) 100%);
+        border-color: #0969da;
+        border-width: 3px;
+        box-shadow: 0 12px 32px rgba(9, 105, 218, 0.35), 
+                    inset 0 2px 4px rgba(9, 105, 218, 0.15),
+                    0 0 0 1px rgba(9, 105, 218, 0.5);
+    }
+
+    .folder-item svg:first-child {
+        width: 28px;
+        height: 28px;
+        color: var(--primary-color);
+        flex-shrink: 0;
+        filter: drop-shadow(0 2px 4px rgba(74, 158, 255, 0.3));
+    }
+
+    .folder-item.selected svg:first-child {
+        color: var(--primary-color);
+        filter: drop-shadow(0 4px 8px rgba(74, 158, 255, 0.5));
+    }
+
+    .folder-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .folder-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .folder-item.selected .folder-name {
+        color: var(--primary-color);
+        text-shadow: 0 2px 4px rgba(74, 158, 255, 0.3);
+    }
+
+    .folder-count {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .folder-item.selected .folder-count {
+        color: var(--text-secondary);
+    }
+
+    .check-icon {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-color);
+        flex-shrink: 0;
+        filter: drop-shadow(0 2px 6px rgba(74, 158, 255, 0.5));
+    }
+
+    /* Preview Panel */
+    .preview-panel {
+        overflow-y: auto;
+    }
+
+    .preview-panel > h4 {
+        margin-bottom: 1.5rem;
+    }
+
+    .workflow-preview,
+    .repo-preview {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .preview-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(0, 255, 102, 0.15);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .preview-icon-primary {
+        background: rgba(74, 158, 255, 0.15);
+    }
+
+    .preview-icon svg {
+        width: 24px;
+        height: 24px;
+        color: var(--success-color);
+    }
+
+    .preview-icon-primary svg {
+        color: var(--primary-color);
+    }
+
+    .preview-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .preview-repo,
+    .preview-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .preview-details {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .detail-item > span:first-child {
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .detail-item > span:last-child {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .triggers-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Status Messages */
+    .status-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-top: 1.5rem;
+    }
+
+    .status-message svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .status-message.success {
+        background: rgba(0, 255, 102, 0.1);
+        border: 1px solid rgba(0, 255, 102, 0.3);
+    }
+
+    .status-message.success svg {
+        color: var(--success-color);
+    }
+
+    .status-message.success strong {
+        color: var(--success-color);
+    }
+
+    .status-message.warning {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-message.warning svg {
+        color: var(--warning-color);
+    }
+
+    .status-message.warning strong {
+        color: var(--warning-color);
+    }
+
+    .status-message p {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .status-message strong {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    /* Modal Responsive */
+    @media (max-width: 1024px) {
+        .modal-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-content-large {
+            width: 95%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .modal-content-large {
+            max-height: 95vh;
+        }
+
+        .tree-panel,
+        .preview-panel {
+            padding: 1rem;
+        }
+    }
+</style>
+
+

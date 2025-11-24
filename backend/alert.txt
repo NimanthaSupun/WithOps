@@ -1,0 +1,28 @@
+/my-organizations - MUST stay in backend
+Reasons:
+
+🔐 User Authentication - Uses Depends(get_current_user) to get the authenticated user
+💾 Database Access - Queries the backend's Supabase database to get user's installations
+🔒 Security - Ensures users only see their own installations (not all GitHub orgs)
+✅ Installation Verification - Calls github-service to verify installations still exist
+🗑️ Cleanup Logic - Marks stale installations as deleted in database
+This endpoint already benefits from the async optimization because it calls github_service_client.get_organization_stats() which now returns cached data instantly!
+
+/organizations/discover - Could move, but better in backend
+Current reasons to keep in backend:
+
+🔐 User Authentication - Uses Depends(get_current_user)
+📝 Audit Trail - Logs which user requested discovery
+🛡️ Security Layer - Backend validates user before allowing discovery
+However, this is just a proxy that returns an OAuth URL, so it's already fast (no GitHub API calls).
+
+Summary:
+
+✅ /my-organizations - Correctly in backend (needs DB + auth)
+✅ /organizations/discover - Fine in backend (needs auth, already fast)
+✅ Both endpoints already benefit from github-service optimizations
+The microservices architecture is correct:
+
+Backend: User auth, database, business logic
+GitHub Service: GitHub API calls, caching, background jobs
+Claude Sonnet 4.5 • 1x

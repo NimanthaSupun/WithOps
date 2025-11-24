@@ -6,6 +6,7 @@
     let loading = true;
     let error = null;
     let orgName = '';
+    let organizationId = null; // Store org ID
     let threatModels = [];
     let dashboardData = null;
     let showCreateModal = false;
@@ -29,9 +30,32 @@
         orgName = $page.params.org;
         console.log(`🛡️ Loading threat modeling for organization: ${orgName}`);
         
+        await fetchOrganizationId();
         await loadThreatModels();
         await loadDashboard();
     });
+    
+    async function fetchOrganizationId() {
+        try {
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) return;
+            
+            // Fetch organization data to get ID
+            const response = await fetch(`http://localhost:8000/api/github/workspace/${orgName}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                organizationId = data.organization?.id;
+                console.log(`✅ Organization ID: ${organizationId}`);
+            }
+        } catch (err) {
+            console.error('Failed to fetch organization ID:', err);
+        }
+    }
     
     async function loadThreatModels() {
         try {
@@ -63,6 +87,12 @@
             // The simplified API returns the models directly, not wrapped in a success object
             threatModels = Array.isArray(result) ? result : [];
             console.log(`✅ Loaded ${threatModels.length} threat models`);
+            
+            // Extract organization_id from existing models if available
+            if (threatModels.length > 0 && !organizationId) {
+                organizationId = threatModels[0].organization_id;
+                console.log(`✅ Using organization ID from existing model: ${organizationId}`);
+            }
             
         } catch (err) {
             console.error('Failed to load threat models:', err);
@@ -133,10 +163,16 @@
                 throw new Error('Authentication required. Please log in.');
             }
             
+            // Validate organization_id
+            if (!organizationId) {
+                throw new Error('Organization ID not found. Please refresh the page or ensure you have existing threat models.');
+            }
+            
             const requestData = {
                 name: newModelName.trim(),
                 description: newModelDescription.trim() || "",
                 methodology: newModelMethodology,
+                organization_id: organizationId,
                 repository_id: newModelRepository || null,
                 metadata: {
                     created_via: "frontend",

@@ -66,12 +66,12 @@ class GitHubClient:
         # Optimized memory cache for better performance
         self.cache = {}
         self.cache_ttl = {
-            'workspace': 1800,     # 30 minutes (OPTIMIZED: was 30s, now 30min)
-            'stats': 600,          # 10 minutes (OPTIMIZED: was 15s, now 10min)
-            'discovery': 3600,     # 1 hour (OPTIMIZED: was 30min, now 1h)
-            'workflow': 1800,      # 30 minutes (OPTIMIZED: was 2min, now 30min)
-            'installations': 3600, # 1 hour (OPTIMIZED: was 45s, now 1h)
-            'versions': 7200       # 2 hours (OPTIMIZED: was 1h, now 2h)
+            'workspace': 3600,     # 1 hour (PHASE 5: Extended for stale-while-revalidate)
+            'stats': 3600,         # 1 hour (PHASE 5: Extended for stale-while-revalidate)
+            'discovery': 3600,     # 1 hour
+            'workflow': 3600,      # 1 hour (PHASE 5: Extended for stale-while-revalidate)
+            'installations': 3600, # 1 hour
+            'versions': 7200       # 2 hours
         }
         
         # Default installation ID for version checking
@@ -1732,11 +1732,33 @@ class GitHubClient:
             cache_type = cache_key.split('_')[0]
             ttl = self.cache_ttl.get(cache_type, self.cache_ttl['workspace'])
             
-            if time.time() - timestamp < ttl:
+            cache_age = time.time() - timestamp
+            if cache_age < ttl:
                 return data
             else:
-                del self.cache[cache_key]
+                # PHASE 5: Don't delete immediately - allow stale reads
+                # Mark as stale but keep for stale-while-revalidate
+                return None
         return None
+    
+    def _get_cache_age(self, cache_key: str) -> Optional[float]:
+        """Get age of cached data in seconds"""
+        if cache_key in self.cache:
+            data, timestamp = self.cache[cache_key]
+            return time.time() - timestamp
+        return None
+    
+    def _get_cached_with_age(self, cache_key: str) -> tuple[Optional[Dict], Optional[float]]:
+        """Get cached data with age metadata for stale-while-revalidate"""
+        if cache_key in self.cache:
+            data, timestamp = self.cache[cache_key]
+            cache_age = time.time() - timestamp
+            cache_type = cache_key.split('_')[0]
+            ttl = self.cache_ttl.get(cache_type, self.cache_ttl['workspace'])
+            
+            # Return data even if stale (for stale-while-revalidate)
+            return data, cache_age
+        return None, None
     
     def _set_cached(self, cache_key: str, data: Dict, cache_type: str = 'workspace', ttl: Optional[int] = None) -> None:
         """Set cached data with timestamp"""
