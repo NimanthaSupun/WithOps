@@ -59,10 +59,11 @@ services:
       #     - /api/github
       #   strip_path: false
 
-      - name: users-routes
-        paths:
-          - /api/users
-        strip_path: false
+      # Users routes - empty file removed, user management in auth-service
+      # - name: users-routes
+      #   paths:
+      #     - /api/users
+      #   strip_path: false
 
       # Workspace intelligence routes removed - now handled by workspace-intelligence-service
       # - name: workspace-intelligence-routes
@@ -120,6 +121,23 @@ services:
         paths:
           - /api/workspace-intelligence
           - /api/repository-tree
+        strip_path: false
+
+  # Workflow Orchestration Service (extracted microservice)
+  # Routes /api/workflows/*, /api/project-tree/*, /api/canvas/*, /api/security/*
+  # Handles CI/CD workflow orchestration, execution monitoring, security scanning, and visual design
+  - name: workflow-orchestration-service
+    url: http://workflow-orchestration-service:8007
+    routes:
+      - name: workflow-orchestration-routes
+        paths:
+          - /api/workflows
+          - /api/project-tree
+          - /api/canvas
+        strip_path: false
+      - name: workflow-security-routes
+        paths:
+          - /api/security
         strip_path: false
 
   # AI Service (NOT directly exposed via Kong)

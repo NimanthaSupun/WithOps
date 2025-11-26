@@ -49,6 +49,14 @@ scrape_configs:
           service: "workspace-intelligence-service"
     metrics_path: "/metrics"
 
+  # Workflow Orchestration Service
+  - job_name: "workflow-orchestration-service"
+    static_configs:
+      - targets: ["workflow-orchestration-service:8007"]
+        labels:
+          service: "workflow-orchestration-service"
+    metrics_path: "/metrics"
+
   # Collaboration Service
   - job_name: "collaboration-service"
     static_configs:

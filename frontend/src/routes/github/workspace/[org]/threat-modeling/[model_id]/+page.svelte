@@ -667,8 +667,8 @@
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             // URL encode user ID to handle special characters like | in Auth0 IDs
             const encodedUserId = encodeURIComponent(currentUser.sub);
-            // Connect directly to backend (not through Kong) for WebSocket
-            const wsUrl = `${wsProtocol}//localhost:8100/ws/${encodedUserId}`;
+            // Connect to Events Hub (formerly backend) for WebSocket
+            const wsUrl = `${wsProtocol}//localhost:9100/ws/${encodedUserId}`;
             
             console.log('🔌 Connecting to WebSocket:', wsUrl);
             ws = new WebSocket(wsUrl);

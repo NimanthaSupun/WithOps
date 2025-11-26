@@ -65,6 +65,40 @@ async def health_check():
     }
 
 
+@router.get("/methodologies")
+async def get_methodologies():
+    """
+    Get available threat modeling methodologies
+    Returns STRIDE, LINDDUN, and CIA Triad configurations
+    """
+    methodologies = {
+        "STRIDE": {
+            "name": "STRIDE",
+            "description": "Microsoft STRIDE threat modeling methodology",
+            "categories": ["Spoofing", "Tampering", "Repudiation", "Information Disclosure", "Denial of Service", "Elevation of Privilege"],
+            "focus": "Security threats across identity, data, and access control"
+        },
+        "LINDDUN": {
+            "name": "LINDDUN",
+            "description": "LINDDUN privacy threat modeling methodology",
+            "categories": ["Linkability", "Identifiability", "Non-repudiation", "Detectability", "Disclosure of Information", "Unawareness", "Non-compliance"],
+            "focus": "Privacy threats and data protection concerns"
+        },
+        "CIA": {
+            "name": "CIA Triad",
+            "description": "Confidentiality, Integrity, Availability security model",
+            "categories": ["Confidentiality Breach", "Integrity Violation", "Availability Disruption"],
+            "focus": "Core information security principles"
+        }
+    }
+    
+    return {
+        "success": True,
+        "methodologies": methodologies,
+        "default": "STRIDE"
+    }
+
+
 # =============================================================================
 # THREAT MODELS CRUD
 # =============================================================================

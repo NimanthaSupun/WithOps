@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # ============================================================================
   # API GATEWAY - Single entry point for all services
@@ -113,21 +111,27 @@ services:
   # ============================================================================
   # APPLICATION SERVICES
   # ============================================================================
+
+  # Backend (Events Hub) - Real-time WebSocket and Event Bus service
+  # Handles WebSocket connections, event subscriptions, and real-time notifications
+  # All REST API routes now handled by microservices via Kong Gateway
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: withops-backend
+    container_name: withops-events-hub
     env_file:
       - backend/.env
     ports:
-      - "8100:8000" # Changed to 8100 to avoid conflict with Kong
+      - "9100:8000" # Using 9100 (8100 blocked by Windows)
     depends_on:
       - redis
       - ollama
       - prometheus
       - ai-service
       - github-service
+      - threat-modeling-service
+      - workspace-intelligence-service
     environment:
       - REDIS_URL=redis://redis:6379
       - ENABLE_METRICS=true
@@ -160,6 +164,8 @@ services:
       context: .
       dockerfile: services/github-service/Dockerfile
     container_name: withops-github-service
+    ports:
+      - "9102:8002" # Using 9102 (8102 blocked by Windows)
     env_file:
       - services/github-service/.env
     # Port 8002 internal only - accessed via Kong Gateway
@@ -172,6 +178,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - AUTH0_DOMAIN=dev-sabxychpf6paj41u.us.auth0.com
       - AUTH0_API_AUDIENCE=https://api.withops.com
+      - WORKFLOW_ORCHESTRATION_SERVICE_URL=http://workflow-orchestration-service:8007
       - ENABLE_METRICS=true
       - ENABLE_TRACING=true
       - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
@@ -209,7 +216,7 @@ services:
     env_file:
       - services/threat-modeling-service/.env
     ports:
-      - "8103:8003"
+      - "9103:8003" # Using 9103 (8103 blocked by Windows)
     depends_on:
       - redis
       - ai-service
@@ -234,7 +241,7 @@ services:
     env_file:
       - services/workspace-intelligence-service/.env
     ports:
-      - "8004:8004"
+      - "9104:8004" # Using 9104 (8004 may be blocked)
     depends_on:
       - redis
       - github-service
@@ -248,13 +255,42 @@ services:
       - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
     restart: unless-stopped
 
+  # Workflow Orchestration Service - Microservice for CI/CD workflow management and security scanning
+  workflow-orchestration-service:
+    build:
+      context: .
+      dockerfile: services/workflow-orchestration-service/Dockerfile
+    container_name: withops-workflow-orchestration-service
+    env_file:
+      - services/workflow-orchestration-service/.env
+    ports:
+      - "9107:8007" # Using 9107 (8107 blocked by Windows)
+    depends_on:
+      - redis
+      - github-service
+      - auth-service
+      - prometheus
+    environment:
+      - DATABASE_URL=postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+      - REDIS_URL=redis://redis:6379
+      - GITHUB_SERVICE_URL=http://github-service:8002
+      - AUTH_SERVICE_URL=http://auth-service:8006
+      - AI_SERVICE_URL=http://ai-service:8001
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - ENABLE_SECURITY_SCANNING=true
+      - ENABLE_SSE=true
+      - ENABLE_WEBSOCKET=true
+      - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
+    restart: unless-stopped
+
   collaboration-service:
     build:
       context: .
       dockerfile: services/collaboration-service/Dockerfile
     container_name: withops-collaboration-service
     ports:
-      - "8105:8105"
+      - "9105:8105" # Using 9105 (8105 blocked by Windows)
     env_file:
       - services/collaboration-service/.env
     depends_on:
@@ -275,7 +311,7 @@ services:
       dockerfile: services/auth-service/Dockerfile
     container_name: withops-auth-service
     ports:
-      - "8106:8006"
+      - "9106:8006" # Using 9106 (8106 may be blocked)
     env_file:
       - services/auth-service/.env
     depends_on:

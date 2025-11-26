@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
-from api.routes import auth, github, ai, threat_modeling, collaboration, repository_tree, workspace_intelligence  # Auth, GitHub, AI, Threat Modeling, Collaboration, Repository Tree, and Workspace Intelligence routes
+from api.routes import ai  # AI proxy routes - others moved to microservices
 import os
 import asyncio
 import json
@@ -30,10 +30,10 @@ load_dotenv()
 
 # Setup distributed tracing with service name
 resource = Resource.create(attributes={
-    "service.name": "withops-backend-legacy",
+    "service.name": "withops-events-hub",
     "service.version": "2.0.0",
     "deployment.environment": "development",
-    "service.role": "websocket-events"
+    "service.role": "websocket-events-realtime"
 })
 
 trace.set_tracer_provider(TracerProvider(resource=resource))
@@ -71,7 +71,7 @@ event_listener_task = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 Starting DevSecOps Backend with Real-Time Features")
+    print("🚀 Starting WithOps Events Hub - WebSocket & Real-Time Service")
     
     # Setup logging after FastAPI startup to avoid multiprocessing issues
     try:
@@ -257,7 +257,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    print("👋 Shutting down DevSecOps Backend")
+    print("👋 Shutting down WithOps Events Hub")
     
     # Close GitHub Service Client
     from core.github_service_client import github_service_client
@@ -294,8 +294,8 @@ async def lifespan(app: FastAPI):
     await cache.disconnect()
 
 app = FastAPI(
-    title="WithOps DevSecOps API", 
-    description="Simple Auth0 authenticated API with performance optimizations and real-time features",
+    title="WithOps Events Hub", 
+    description="Real-time WebSocket and Event Bus service for WithOps platform - handles WebSocket connections, event subscriptions, and real-time notifications",
     version="2.0.0",
     lifespan=lifespan
 )
@@ -434,6 +434,10 @@ print("🔍 DEBUG: Including routers...")
 app.include_router(ai.router, tags=["ai"])  # AI router already has /api/ai prefix internally
 print("✅ AI router included")
 
+# Project tree routes now handled by workflow-orchestration-service (via Kong)
+# app.include_router(project_tree.router, prefix="/api/github", tags=["project-tree"])
+# print("✅ Project Tree router included")
+
 # Threat modeling routes now handled by threat-modeling-service (via Kong)
 # app.include_router(threat_modeling.router, prefix="/api/threat-modeling", tags=["threat-modeling"])
 # print("✅ Threat modeling router included")
@@ -453,7 +457,7 @@ print("🔍 DEBUG: All routers included successfully (microservices active)")
 @app.get("/")
 async def root():
     return {
-        "message": "WithOps Backend - WebSocket & Event Bus Service", 
+        "message": "WithOps Events Hub - Real-Time WebSocket & Event Bus Service", 
         "version": "1.0.0",
         "note": "Most API routes now handled by microservices via Kong Gateway"
     }
@@ -462,8 +466,9 @@ async def root():
 async def health_check():
     return {
         "status": "healthy", 
-        "service": "withops-backend",
-        "role": "websocket-and-events"
+        "service": "withops-events-hub",
+        "role": "websocket-events-realtime",
+        "version": "2.0.0"
     }
 
 @app.websocket("/ws/{user_id}")

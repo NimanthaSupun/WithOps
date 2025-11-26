@@ -3,6 +3,7 @@ API routes for GitHub Service
 """
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import httpx
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -89,6 +90,50 @@ class WorkspaceResponse(BaseModel):
 # ============================================================================
 # ORGANIZATION DISCOVERY & INSTALLATION
 # ============================================================================
+
+@router.get("/orgs")
+async def list_organizations(
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Get list of organizations accessible to the current user
+    Alias for /my-organizations endpoint for convenience
+    """
+    try:
+        logger.info(f"📋 Listing organizations for user: {current_user}")
+        
+        # Resolve user UUID from Auth0 ID
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Get user's organizations from database
+        result = await session.execute(
+            select(Organization, OrganizationInstallation)
+            .join(OrganizationInstallation, Organization.id == OrganizationInstallation.organization_id)
+            .where(OrganizationInstallation.user_id == user_uuid)
+        )
+        
+        orgs_data = []
+        for org, installation in result.all():
+            orgs_data.append({
+                "id": str(org.id),
+                "login": org.login,
+                "name": org.name,
+                "installation_id": installation.installation_id,
+                "created_at": org.created_at.isoformat() if org.created_at else None
+            })
+        
+        logger.info(f"✅ Found {len(orgs_data)} organizations for user {user_uuid}")
+        
+        return {
+            "success": True,
+            "organizations": orgs_data,
+            "total_count": len(orgs_data)
+        }
+    except Exception as e:
+        logger.error(f"❌ Error listing organizations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/organizations/discover")
 async def start_organization_discovery():
@@ -1065,6 +1110,101 @@ async def get_detailed_workflows(org_name: str):
         raise HTTPException(status_code=500, detail=f"Failed to get detailed workflows: {str(e)}")
 
 
+@router.get("/workspace/{org_name}/workflows/{workflow_name}/actions/history")
+async def get_workflow_actions_history(
+    org_name: str,
+    workflow_name: str,
+    repo_name: str = Query(..., description="Repository name")
+):
+    """
+    Get GitHub Actions run history for a specific workflow
+    Returns list of workflow runs with status, duration, and metadata
+    """
+    try:
+        installation_id = await github_client._get_installation_id(org_name)
+        if not installation_id:
+            raise HTTPException(status_code=404, detail=f"GitHub App not installed in {org_name}")
+        
+        # Get workflow runs from GitHub API
+        token = await github_client.get_installation_access_token(installation_id)
+        
+        # Try to find the workflow file
+        # The workflow name might be URL encoded, so decode it
+        from urllib.parse import unquote
+        decoded_workflow_name = unquote(workflow_name)
+        
+        # Try common workflow file patterns
+        possible_filenames = [
+            f"{decoded_workflow_name}.yml",
+            f"{decoded_workflow_name}.yaml",
+            decoded_workflow_name if decoded_workflow_name.endswith(('.yml', '.yaml')) else None
+        ]
+        
+        workflow_runs = []
+        workflow_id = None
+        
+        # Try to get workflow runs using workflow filename
+        for filename in filter(None, possible_filenames):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        f"https://api.github.com/repos/{org_name}/{repo_name}/actions/workflows/{filename}/runs",
+                        headers={
+                            "Authorization": f"Bearer {token}",
+                            "Accept": "application/vnd.github+json",
+                            "X-GitHub-Api-Version": "2022-11-28"
+                        },
+                        params={"per_page": 20},
+                        timeout=30.0
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        workflow_runs = data.get("workflow_runs", [])
+                        if workflow_runs:
+                            workflow_id = workflow_runs[0].get("workflow_id")
+                            break
+                    
+            except Exception as e:
+                logger.warning(f"Error fetching runs for {filename}: {str(e)}")
+                continue
+        
+        # Format the response
+        formatted_runs = []
+        for run in workflow_runs:
+            formatted_runs.append({
+                "id": run.get("id"),
+                "name": run.get("name"),
+                "run_number": run.get("run_number"),
+                "status": run.get("status"),
+                "conclusion": run.get("conclusion"),
+                "created_at": run.get("created_at"),
+                "updated_at": run.get("updated_at"),
+                "html_url": run.get("html_url"),
+                "event": run.get("event"),
+                "head_branch": run.get("head_branch"),
+                "head_sha": run.get("head_sha")[:7] if run.get("head_sha") else None,
+                "actor": run.get("actor", {}).get("login") if run.get("actor") else None,
+                "run_started_at": run.get("run_started_at")
+            })
+        
+        return {
+            "success": True,
+            "workflow_name": decoded_workflow_name,
+            "repository": repo_name,
+            "organization": org_name,
+            "total_runs": len(formatted_runs),
+            "runs": formatted_runs,
+            "workflow_id": workflow_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting workflow history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get workflow history: {str(e)}")
+
+
 @router.get("/workspace/{org_name}/actions/paginated")
 async def get_actions_paginated(
     org_name: str,
@@ -1452,3 +1592,160 @@ async def health_check():
         "service": "github-service",
         "timestamp": datetime.now().isoformat()
     }
+
+
+# ============================================================================
+# PROJECT TREE PROXY ENDPOINTS (Forward to Workflow Orchestration Service)
+# ============================================================================
+
+@router.get("/project-tree/{org_name}")
+async def get_project_tree(
+    org_name: str,
+    request: Request,
+    current_user = Depends(get_current_user)
+):
+    """
+    Get project tree from Workflow Orchestration Service
+    """
+    import httpx
+    import os
+    
+    try:
+        workflow_service_url = os.getenv("WORKFLOW_ORCHESTRATION_SERVICE_URL", "http://workflow-orchestration-service:8007")
+        
+        async with httpx.AsyncClient() as client:
+            # Forward headers
+            headers = {
+                "X-User-Id": current_user,
+                "Content-Type": "application/json"
+            }
+            
+            response = await client.get(
+                f"{workflow_service_url}/api/project-tree/{org_name}",
+                headers=headers,
+                timeout=30.0
+            )
+            
+            if response.status_code == 404:
+                return {"tree_data": [], "organization": org_name, "success": True}
+            
+            response.raise_for_status()
+            return response.json()
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Workflow orchestration service error: {e}")
+        if e.response.status_code == 404:
+            return {"tree_data": {}, "node_count": 0, "workflow_count": 0, "folder_count": 0}
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error proxying to workflow orchestration service: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/project-tree/{org_name}")
+async def save_project_tree(
+    org_name: str,
+    tree_data: Dict,
+    request: Request,
+    current_user = Depends(get_current_user)
+):
+    """
+    Save project tree to Workflow Orchestration Service
+    Publishes event for async processing
+    """
+    import httpx
+    import os
+    from core.event_bus import event_bus
+    
+    try:
+        workflow_service_url = os.getenv("WORKFLOW_ORCHESTRATION_SERVICE_URL", "http://workflow-orchestration-service:8007")
+        
+        async with httpx.AsyncClient() as client:
+            # Forward headers
+            headers = {
+                "X-User-Id": current_user,
+                "Content-Type": "application/json"
+            }
+            
+            response = await client.post(
+                f"{workflow_service_url}/api/project-tree/{org_name}",
+                json=tree_data,
+                headers=headers,
+                timeout=30.0
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Publish event asynchronously
+            await event_bus.publish({
+                "type": "workflow.project_tree.saved",
+                "data": {
+                    "organization": org_name,
+                    "user_id": current_user,
+                    "tree_data": tree_data.get("tree_data", [])
+                },
+                "source": "github-service"
+            })
+            
+            return result
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Workflow orchestration service error: {e}")
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error proxying to workflow orchestration service: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/project-tree/{org_name}")
+async def delete_project_tree(
+    org_name: str,
+    request: Request,
+    current_user = Depends(get_current_user)
+):
+    """
+    Delete project tree from backend service (project_trees table)
+    Publishes event for async processing
+    """
+    import httpx
+    import os
+    from core.event_bus import event_bus
+    
+    try:
+        backend_service_url = os.getenv("BACKEND_SERVICE_URL", "http://backend:8001")
+        
+        async with httpx.AsyncClient() as client:
+            # Forward headers
+            headers = {
+                "X-User-Id": current_user,
+                "Content-Type": "application/json"
+            }
+            
+            response = await client.delete(
+                f"{backend_service_url}/api/project-tree/{org_name}",
+                headers=headers,
+                timeout=30.0
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Publish event asynchronously
+            await event_bus.publish({
+                "type": "workflow.project_tree.deleted",
+                "data": {
+                    "organization": org_name,
+                    "user_id": current_user
+                },
+                "source": "github-service"
+            })
+            
+            return result
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Workflow orchestration service error: {e}")
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error proxying to workflow orchestration service: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

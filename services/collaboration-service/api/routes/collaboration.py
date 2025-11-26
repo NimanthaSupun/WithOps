@@ -19,6 +19,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/collaboration", tags=["collaboration"])
 
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for Kong Gateway"""
+    return {
+        "status": "healthy",
+        "service": "collaboration-service"
+    }
+
+
 # Pydantic Models
 class OrganizationMemberResponse(BaseModel):
     user_id: str
