@@ -816,6 +816,57 @@ async def get_organization_workspace(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/workspace/{org_name}/refresh")
+async def force_refresh_organization(
+    org_name: str
+):
+    """
+    Force refresh organization workspace data
+    Clears all caches and fetches fresh data from GitHub
+    """
+    try:
+        logger.info(f"🔄 Force refresh requested for {org_name}")
+        
+        # Get installation ID
+        installation_id = await github_client._get_installation_id(org_name)
+        
+        if not installation_id:
+            raise HTTPException(
+                status_code=404,
+                detail=f"GitHub App not installed in organization: {org_name}"
+            )
+        
+        # Clear all caches for this organization
+        await cache.clear_organization_cache(org_name, installation_id)
+        logger.info(f"🗑️ Cleared all caches for {org_name}")
+        
+        # Fetch fresh data from GitHub
+        workspace_data = await github_client.get_organization_workspace_detailed(
+            installation_id,
+            org_name,
+            force_fresh=True
+        )
+        
+        # Cache the fresh data
+        await cache.cache_workspace_data(org_name, installation_id, workspace_data, ttl=900)
+        
+        logger.info(f"✅ Successfully refreshed workspace data for {org_name}")
+        
+        return {
+            **workspace_data,
+            "success": True,
+            "refreshed": True,
+            "from_cache": False,
+            "message": f"Successfully refreshed data for {org_name}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error force refreshing workspace for {org_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh organization data: {str(e)}")
+
+
 @router.get("/installations")
 async def get_user_installations():
     """

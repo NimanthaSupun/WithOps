@@ -927,6 +927,73 @@ class GitHubOrganizationClient {
 	}
 
 	/**
+	 * 🔄 Force refresh organization data
+	 * Clears all caches and fetches fresh data from GitHub
+	 */
+	async forceRefreshOrganization(orgName) {
+		try {
+			console.log(`🔄 Force refreshing organization: ${orgName}`);
+
+			// Clear local caches
+			const cacheKey = `workspace_${orgName}`;
+			this.cache.delete(cacheKey);
+			this.persistentCache.delete(cacheKey);
+
+			// Clear any workflow caches for this org
+			for (const key of this.cache.keys()) {
+				if (key.includes(orgName)) {
+					this.cache.delete(key);
+				}
+			}
+
+			for (const key of this.persistentCache.keys()) {
+				if (key.includes(orgName)) {
+					this.persistentCache.delete(key);
+				}
+			}
+
+			// Update localStorage
+			this.savePersistentCache();
+
+			// Call backend force refresh endpoint
+			const data = await this.makeRequest(`${this.baseUrl}/workspace/${orgName}/refresh`, {
+				method: 'POST'
+			});
+
+			console.log('🔄 Force refresh completed:', data);
+
+			// Validate and cache the response
+			if (!data || typeof data !== 'object') {
+				throw new Error('Invalid workspace data received from server');
+			}
+
+			const result = {
+				success: true,
+				organization: data.organization || orgName,
+				repositories: Array.isArray(data.repositories) ? data.repositories : [],
+				workflows: Array.isArray(data.workflows) ? data.workflows : [],
+				repository_count: data.repository_count || 0,
+				total_workflows: data.total_workflows || 0,
+				last_updated: data.last_updated || new Date().toISOString(),
+				installation_id: data.installation_id,
+				permissions: data.permissions || {},
+				refreshed: true
+			};
+
+			// Cache the fresh data
+			this.setCachedData(cacheKey, result, true);
+
+			return result;
+		} catch (error) {
+			console.error('❌ Force refresh failed:', error);
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	}
+
+	/**
 	 * 🚀 Get organization workspace with detailed repository and workflow information
 	 */
 	async getOrganizationWorkspace(orgName) {

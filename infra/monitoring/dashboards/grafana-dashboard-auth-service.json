@@ -1,0 +1,175 @@
+{
+  "title": "WithOps Auth Service Monitoring",
+  "tags": ["auth", "microservices", "withops"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "type": "timeseries",
+      "title": "HTTP Request Rate (req/s)",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"auth-service\"}[1m])",
+          "legendFormat": "{{method}} {{endpoint}} ({{status}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "requests/sec",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "type": "timeseries",
+      "title": "Authentication Response Time",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"auth-service\"}[5m]))",
+          "legendFormat": "{{endpoint}} (p95)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10
+          },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "type": "stat",
+      "title": "Total Auth Requests",
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{job=\"auth-service\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "blue" }]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "type": "stat",
+      "title": "Auth Failures (%)",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"auth-service\",status=~\"4..\"}[5m])) / sum(rate(http_requests_total{job=\"auth-service\"}[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 5, "color": "yellow" },
+              { "value": 10, "color": "red" }
+            ]
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 },
+      "type": "stat",
+      "title": "Memory Usage",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"auth-service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 300000000, "color": "yellow" },
+              { "value": 500000000, "color": "red" }
+            ]
+          },
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 },
+      "type": "stat",
+      "title": "Service Uptime",
+      "targets": [
+        {
+          "expr": "time() - process_start_time_seconds{job=\"auth-service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "type": "timeseries",
+      "title": "Status Code Distribution",
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_requests_total{job=\"auth-service\"}[5m]))",
+          "legendFormat": "Status {{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 100
+          }
+        }
+      }
+    }
+  ]
+}

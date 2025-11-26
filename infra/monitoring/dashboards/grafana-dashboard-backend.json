@@ -1,0 +1,235 @@
+{
+  "title": "WithOps Backend Monitoring",
+  "tags": ["backend", "fastapi", "withops"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "type": "timeseries",
+      "title": "HTTP Request Rate (req/s)",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"backend\"}[1m])",
+          "legendFormat": "{{method}} {{endpoint}} ({{status}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "requests/sec",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "reqps"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "type": "timeseries",
+      "title": "Request Duration (95th percentile)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+          "legendFormat": "{{method}} {{endpoint}} (p95)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10
+          },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "type": "stat",
+      "title": "Total Requests",
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{job=\"backend\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "green" }]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "type": "stat",
+      "title": "Error Rate",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"backend\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"backend\"}[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 5, "color": "red" }
+            ]
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 },
+      "type": "stat",
+      "title": "Memory Usage",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"backend\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 500000000, "color": "yellow" },
+              { "value": 1000000000, "color": "red" }
+            ]
+          },
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 },
+      "type": "stat",
+      "title": "CPU Time",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"backend\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "type": "timeseries",
+      "title": "Requests by Endpoint",
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(http_requests_total{job=\"backend\"}[1m]))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "req/s",
+            "drawStyle": "line",
+            "fillOpacity": 20
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": ["lastNotNull", "sum"]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "type": "timeseries",
+      "title": "Response Status Codes",
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_requests_total{job=\"backend\"}[1m]))",
+          "legendFormat": "Status {{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "req/s",
+            "drawStyle": "bars",
+            "fillOpacity": 100
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "type": "timeseries",
+      "title": "Garbage Collection Events",
+      "targets": [
+        {
+          "expr": "rate(python_gc_collections_total{job=\"backend\"}[1m])",
+          "legendFormat": "Generation {{generation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10
+          }
+        }
+      }
+    }
+  ]
+}

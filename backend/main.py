@@ -375,8 +375,32 @@ async def timeout_middleware(request: Request, call_next):
 # 🚀 PERFORMANCE: Add rate limiting middleware (temporarily disabled for development)
 # app.middleware("http")(rate_limit_middleware)
 
-# Add compression middleware for faster responses
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# Add compression middleware for faster responses (skip for /metrics endpoint for Prometheus)
+# GZip compression causes issues with Prometheus scraping
+# app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+@app.middleware("http")
+async def conditional_gzip_middleware(request: Request, call_next):
+    """Apply GZip compression except for metrics endpoint (Prometheus compatibility)"""
+    response = await call_next(request)
+    
+    # Skip compression for Prometheus metrics endpoint
+    if request.url.path in ["/metrics", "/metrics/"]:
+        return response
+    
+    # Apply compression for other endpoints if response is large enough
+    if hasattr(response, "body") and len(response.body) > 1000:
+        from fastapi.responses import Response
+        import gzip
+        compressed_body = gzip.compress(response.body)
+        return Response(
+            content=compressed_body,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.media_type
+        )
+    
+    return response
 
 # Configure CORS
 origins = [

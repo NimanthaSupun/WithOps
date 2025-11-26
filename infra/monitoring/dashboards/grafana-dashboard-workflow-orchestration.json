@@ -1,0 +1,175 @@
+{
+  "title": "WithOps Workflow Orchestration Service Monitoring",
+  "tags": ["workflow", "orchestration", "microservices", "withops"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "type": "timeseries",
+      "title": "HTTP Request Rate (req/s)",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"workflow-orchestration-service\"}[1m])",
+          "legendFormat": "{{method}} {{endpoint}} ({{status}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "requests/sec",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "type": "timeseries",
+      "title": "Request Duration (95th percentile)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"workflow-orchestration-service\"}[5m]))",
+          "legendFormat": "{{endpoint}} (p95)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10
+          },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "type": "stat",
+      "title": "Total Workflow Executions",
+      "targets": [
+        {
+          "expr": "sum(workflow_executions_total{job=\"workflow-orchestration-service\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "purple" }]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "type": "stat",
+      "title": "Security Scans",
+      "targets": [
+        {
+          "expr": "sum(security_scans_total{job=\"workflow-orchestration-service\"})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "value": null, "color": "orange" }]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 },
+      "type": "stat",
+      "title": "Memory Usage",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"workflow-orchestration-service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 500000000, "color": "yellow" },
+              { "value": 1000000000, "color": "red" }
+            ]
+          },
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 },
+      "type": "stat",
+      "title": "Service Uptime",
+      "targets": [
+        {
+          "expr": "time() - process_start_time_seconds{job=\"workflow-orchestration-service\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "type": "timeseries",
+      "title": "Workflow Execution Rate",
+      "targets": [
+        {
+          "expr": "rate(workflow_executions_total{job=\"workflow-orchestration-service\"}[5m])",
+          "legendFormat": "{{org_name}} - {{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "executions/s",
+            "drawStyle": "line",
+            "fillOpacity": 20
+          }
+        }
+      }
+    }
+  ]
+}

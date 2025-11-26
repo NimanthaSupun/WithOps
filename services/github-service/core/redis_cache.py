@@ -206,6 +206,44 @@ class RedisCache:
         pattern = f"devsecops:*:{org_name}*"
         return await self.clear_pattern(pattern)
     
+    async def clear_organization_cache(self, org_name: str, installation_id: int) -> int:
+        """Clear all cache entries for an organization including workspace data"""
+        try:
+            count = 0
+            # Clear workspace cache
+            workspace_key = self._get_cache_key('workspace', org_name, installation_id)
+            if await self.redis_client.delete(workspace_key):
+                count += 1
+                logger.info(f"🗑️ Cleared workspace cache: {workspace_key}")
+            
+            # Clear actions cache
+            actions_key = self._get_cache_key('actions', org_name)
+            if await self.redis_client.delete(actions_key):
+                count += 1
+                logger.info(f"🗑️ Cleared actions cache: {actions_key}")
+            
+            # Clear org stats cache
+            stats_key = self._get_cache_key('org_stats', org_name)
+            if await self.redis_client.delete(stats_key):
+                count += 1
+                logger.info(f"🗑️ Cleared org stats cache: {stats_key}")
+            
+            # Clear any paginated actions cache
+            pattern = f"devsecops:paginated_actions:{org_name}:*"
+            paginated_count = await self.clear_pattern(pattern)
+            count += paginated_count
+            
+            # Clear detailed workflows cache
+            pattern = f"devsecops:detailed_workflows:{org_name}"
+            workflows_count = await self.clear_pattern(pattern)
+            count += workflows_count
+            
+            logger.info(f"✅ Cleared {count} cache entries for {org_name}")
+            return count
+        except Exception as e:
+            logger.error(f"Error clearing organization cache: {e}")
+            return 0
+    
     # ============================================================================
     # PUB/SUB FOR ASYNC BACKGROUND REFRESH
     # ============================================================================
