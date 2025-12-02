@@ -13,6 +13,16 @@
     let isRedirecting = $state(false); // Add flag to prevent multiple redirects
     let filterType = $state('all'); // 'all', 'owned', 'shared'
     
+    // GitHub connection state for users who logged in with non-GitHub methods
+    let needsGitHubConnection = $state(false);
+    let isConnectingGitHub = $state(false);
+    let githubConnectionMessage = $state(null);
+    
+    // Pending invitations state
+    let pendingInvitations = $state([]);
+    let isAcceptingInvitation = $state(null); // Track which invitation is being accepted
+    let isDecliningInvitation = $state(null); // Track which invitation is being declined
+    
     // Subscribe to dark mode using Svelte 5 runes
     let darkMode = $state(false);
     
@@ -124,6 +134,17 @@
             if (result.success) {
                 console.log('📋 Raw organizations from backend:', result.organizations);
                 
+                // Check if user needs to connect GitHub account
+                // This is for users who logged in with Google/Email but haven't connected GitHub
+                if (result.needs_github_connection) {
+                    needsGitHubConnection = true;
+                    githubConnectionMessage = result.message || 'Connect your GitHub account to access your team\'s organizations';
+                    console.log('⚠️ User needs to connect GitHub account:', githubConnectionMessage);
+                } else {
+                    needsGitHubConnection = false;
+                    githubConnectionMessage = null;
+                }
+                
                 // Show all organizations that the user has interacted with, but mark status correctly
                 connectedOrganizations = result.organizations.map(org => {
                     console.log(`📋 Processing organization: ${org.login || org.name}, app_installed: ${org.app_installed}, can_access: ${org.can_access}`);
@@ -151,6 +172,9 @@
                 
                 appStore.setUserOrganizations(result.organizations);
                 loading = false;
+                
+                // Load pending invitations in background
+                loadPendingInvitations();
                 
                 // Load stats in background WITHOUT blocking UI
                 setTimeout(() => loadOrganizationStats(), 100);
@@ -342,6 +366,100 @@
             console.log('📊 All organization stats loading completed');
         } catch (error) {
             console.error('Error during stats loading:', error);
+        }
+    }
+
+    /**
+     * Connect GitHub account for users who logged in with non-GitHub methods (Google, Email, etc.)
+     * This allows them to access organizations where another team member installed the GitHub App
+     */
+    async function connectGitHubAccount() {
+        try {
+            isConnectingGitHub = true;
+            console.log('🔗 Starting GitHub account connection...');
+            
+            const result = await githubClient.startGitHubConnection();
+            
+            if (result.success) {
+                // Redirect to GitHub OAuth to connect their GitHub account
+                window.location.href = result.oauth_url;
+            } else {
+                console.error('Failed to start GitHub connection:', result.error);
+                alert('Failed to start GitHub connection. Please try again.');
+                isConnectingGitHub = false;
+            }
+        } catch (error) {
+            console.error('GitHub connection error:', error);
+            alert('Failed to connect to GitHub. Please try again.');
+            isConnectingGitHub = false;
+        }
+    }
+
+    // ============================================================================
+    // PENDING INVITATIONS
+    // ============================================================================
+    
+    async function loadPendingInvitations() {
+        try {
+            console.log('📨 Loading pending invitations...');
+            const result = await githubClient.getMyInvitations();
+            
+            if (result.invitations && result.invitations.length > 0) {
+                pendingInvitations = result.invitations;
+                console.log(`📨 Found ${pendingInvitations.length} pending invitations`);
+            } else {
+                pendingInvitations = [];
+            }
+        } catch (error) {
+            console.error('Error loading invitations:', error);
+            pendingInvitations = [];
+        }
+    }
+    
+    async function acceptInvitation(inviteToken, orgName) {
+        try {
+            isAcceptingInvitation = inviteToken;
+            console.log(`✅ Accepting invitation for ${orgName}...`);
+            
+            const result = await githubClient.acceptInvitation(inviteToken);
+            
+            if (result.success) {
+                console.log(`✅ Successfully joined ${orgName}`);
+                // Remove from pending invitations
+                pendingInvitations = pendingInvitations.filter(inv => inv.invite_token !== inviteToken);
+                // Reload organizations to show the new one
+                await loadConnectedOrganizations();
+            } else {
+                console.error('Failed to accept invitation:', result.error);
+                alert(result.error || 'Failed to accept invitation. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error accepting invitation:', error);
+            alert('Failed to accept invitation. Please try again.');
+        } finally {
+            isAcceptingInvitation = null;
+        }
+    }
+    
+    async function declineInvitation(inviteToken) {
+        try {
+            isDecliningInvitation = inviteToken;
+            
+            const result = await githubClient.declineInvitation(inviteToken);
+            
+            if (result.success) {
+                console.log('❌ Invitation declined');
+                // Remove from pending invitations
+                pendingInvitations = pendingInvitations.filter(inv => inv.invite_token !== inviteToken);
+            } else {
+                console.error('Failed to decline invitation:', result.error);
+                alert(result.error || 'Failed to decline invitation. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error declining invitation:', error);
+            alert('Failed to decline invitation. Please try again.');
+        } finally {
+            isDecliningInvitation = null;
         }
     }
 
@@ -629,6 +747,73 @@
 
     <!-- Main Content -->
     <main class="page-main">
+      <!-- Pending Invitations Banner -->
+      {#if pendingInvitations.length > 0}
+        <div class="invitations-banner">
+          <div class="invitations-header">
+            <div class="invitations-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="invitations-title-section">
+              <h3>You have {pendingInvitations.length} pending invitation{pendingInvitations.length > 1 ? 's' : ''}</h3>
+              <p>You've been invited to join the following organization{pendingInvitations.length > 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          <div class="invitations-list">
+            {#each pendingInvitations as invitation}
+              <div class="invitation-card">
+                <div class="invitation-org">
+                  <img 
+                    src={invitation.organization.avatar_url || '/default-org.png'} 
+                    alt={invitation.organization.name}
+                    class="invitation-org-avatar"
+                  />
+                  <div class="invitation-org-info">
+                    <span class="invitation-org-name">{invitation.organization.name || invitation.organization.login}</span>
+                    <span class="invitation-meta">
+                      Invited by {invitation.invited_by.name || invitation.invited_by.email} as <strong>{invitation.role}</strong>
+                    </span>
+                  </div>
+                </div>
+                <div class="invitation-actions">
+                  <button 
+                    class="btn-accept"
+                    onclick={() => acceptInvitation(invitation.invite_token, invitation.organization.name || invitation.organization.login)}
+                    disabled={isAcceptingInvitation === invitation.invite_token || isDecliningInvitation === invitation.invite_token}
+                  >
+                    {#if isAcceptingInvitation === invitation.invite_token}
+                      <div class="btn-spinner-small"></div>
+                      Joining...
+                    {:else}
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Accept
+                    {/if}
+                  </button>
+                  <button 
+                    class="btn-decline"
+                    onclick={() => declineInvitation(invitation.invite_token)}
+                    disabled={isAcceptingInvitation === invitation.invite_token || isDecliningInvitation === invitation.invite_token}
+                  >
+                    {#if isDecliningInvitation === invitation.invite_token}
+                      <div class="btn-spinner-small"></div>
+                    {:else}
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                      Decline
+                    {/if}
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       {#if loading}
         <!-- Loading State -->
         <div class="state-card loading-state">
@@ -679,34 +864,95 @@
           </div>
         </div>
       {:else if connectedOrganizations.length === 0}
-        <!-- Empty State -->
-        <div class="state-card empty-state">
-          <div class="empty-section">
-            <div class="empty-icon">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-            <div class="empty-content">
-              <h3 class="empty-title">No Organizations Connected</h3>
-              <p class="empty-description">
-                Connect your first GitHub organization to get started with DevSecOps workflows and security scanning.
-              </p>
-              <button 
-                onclick={connectNewOrganization}
-                class="connect-button"
-              >
-                <div class="button-icon">
+        <!-- Empty State - Check if GitHub connection is needed first -->
+        {#if needsGitHubConnection}
+          <!-- GitHub Connection Required Prompt -->
+          <div class="state-card github-connection-state">
+            <div class="github-connect-section">
+              <div class="github-connect-icon">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <div class="link-badge">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                   </svg>
                 </div>
-                <span>Connect to GitHub</span>
-                <div class="button-arrow">→</div>
-              </button>
+              </div>
+              <div class="github-connect-content">
+                <h3 class="github-connect-title">Connect Your GitHub Account</h3>
+                <p class="github-connect-description">
+                  {githubConnectionMessage || "You logged in without GitHub. Connect your GitHub account to access organizations where your team has already installed the WithOps App."}
+                </p>
+                <div class="github-connect-info">
+                  <div class="info-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Auto-link to existing team installations</span>
+                  </div>
+                  <div class="info-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Access your organization's repositories</span>
+                  </div>
+                  <div class="info-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>No need to reinstall the GitHub App</span>
+                  </div>
+                </div>
+                <button 
+                  onclick={connectGitHubAccount}
+                  class="github-connect-button"
+                  disabled={isConnectingGitHub}
+                >
+                  {#if isConnectingGitHub}
+                    <div class="button-spinner"></div>
+                    <span>Connecting...</span>
+                  {:else}
+                    <svg fill="currentColor" viewBox="0 0 24 24" class="button-icon">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <span>Connect GitHub Account</span>
+                    <div class="button-arrow">→</div>
+                  {/if}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        {:else}
+          <!-- Regular Empty State -->
+          <div class="state-card empty-state">
+            <div class="empty-section">
+              <div class="empty-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <div class="empty-content">
+                <h3 class="empty-title">No Organizations Connected</h3>
+                <p class="empty-description">
+                  Connect your first GitHub organization to get started with DevSecOps workflows and security scanning.
+                </p>
+                <button 
+                  onclick={connectNewOrganization}
+                  class="connect-button"
+                >
+                  <div class="button-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                  </div>
+                  <span>Connect to GitHub</span>
+                  <div class="button-arrow">→</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        {/if}
       {:else}
         <!-- Filter Controls -->
         <div class="filter-section">
@@ -855,6 +1101,21 @@
                     <span>View Workspace</span>
                     <div class="button-arrow">→</div>
                   </button>
+                  
+                  {#if org.installed_by_you}
+                    <button 
+                      onclick={() => goto(`/organizations/${org.login}/team`)}
+                      class="org-button team-button"
+                      title="Manage team members and invitations"
+                    >
+                      <div class="button-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                      </div>
+                      <span>Manage Team</span>
+                    </button>
+                  {/if}
                 {:else}
                   <button 
                     onclick={() => generateInstallationUrl(org.login, org.id)}
@@ -1025,6 +1286,205 @@
     --github-color: #24292f;
     --connected-color: #16a34a;
     --warning-color: #f59e0b;
+  }
+
+  /* ============================================
+     PENDING INVITATIONS BANNER
+     ============================================ */
+  .invitations-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .organizations-page.light .invitations-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+  }
+
+  .invitations-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .invitations-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .invitations-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+
+  .invitations-title-section h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .invitations-title-section p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .invitations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .invitation-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .invitation-org {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  .invitation-org-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .invitation-org-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .invitation-org-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+
+  .invitation-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .invitation-meta strong {
+    color: var(--primary-color);
+    text-transform: capitalize;
+  }
+
+  .invitation-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-accept {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-accept:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+  }
+
+  .btn-accept:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .btn-accept svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-decline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: transparent;
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-decline:hover:not(:disabled) {
+    background: var(--error-color);
+    color: white;
+  }
+
+  .btn-decline:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .btn-decline svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-spinner-small {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .btn-decline .btn-spinner-small {
+    border-color: rgba(239, 68, 68, 0.3);
+    border-top-color: var(--error-color);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 640px) {
+    .invitation-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .invitation-actions {
+      justify-content: flex-end;
+    }
   }
 
   /* Main Container */
@@ -1546,6 +2006,193 @@
     margin: 0 0 2rem 0;
   }
 
+  /* GitHub Connection State - For users who need to connect their GitHub account */
+  .github-connection-state {
+    background: linear-gradient(145deg, rgba(36, 41, 46, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%);
+    border: 2px solid rgba(74, 158, 255, 0.3);
+  }
+
+  .github-connect-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .github-connect-icon {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .github-connect-icon > svg {
+    width: 80px;
+    height: 80px;
+    color: var(--primary-color);
+    filter: drop-shadow(0 0 30px rgba(74, 158, 255, 0.4));
+  }
+
+  .link-badge {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+
+  .link-badge svg {
+    width: 18px;
+    height: 18px;
+    color: white;
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .github-connect-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .github-connect-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .github-connect-description {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+    max-width: 500px;
+  }
+
+  .github-connect-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: rgba(74, 158, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(74, 158, 255, 0.1);
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .info-item svg {
+    width: 20px;
+    height: 20px;
+    color: #10b981;
+    flex-shrink: 0;
+  }
+
+  .github-connect-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 2.5rem;
+    background: linear-gradient(135deg, #24292f 0%, #1a1d21 100%);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .github-connect-button .button-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .github-connect-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .github-connect-button:hover::before {
+    left: 100%;
+  }
+
+  .github-connect-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, #2d333b 0%, #22272e 100%);
+  }
+
+  .github-connect-button:hover .button-arrow {
+    transform: translateX(4px);
+  }
+
+  .github-connect-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .button-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .organizations-page.light .github-connection-state {
+    background: linear-gradient(145deg, rgba(240, 246, 252, 0.8) 0%, rgba(9, 105, 218, 0.05) 100%);
+    border-color: rgba(9, 105, 218, 0.3);
+  }
+
+  .organizations-page.light .github-connect-icon > svg {
+    color: #24292f;
+    filter: drop-shadow(0 0 20px rgba(36, 41, 46, 0.2));
+  }
+
+  .organizations-page.light .github-connect-info {
+    background: rgba(9, 105, 218, 0.05);
+    border-color: rgba(9, 105, 218, 0.1);
+  }
+
   .connect-button {
     display: inline-flex;
     align-items: center;
@@ -1904,6 +2551,19 @@
   .workspace-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(22, 163, 74, 0.4);
+  }
+
+  .team-button {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+    min-width: auto;
+    flex: 0 0 auto;
+  }
+
+  .team-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
   }
 
   .install-button {

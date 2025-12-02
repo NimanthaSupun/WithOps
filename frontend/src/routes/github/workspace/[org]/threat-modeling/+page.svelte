@@ -106,10 +106,17 @@
         try {
             console.log(`📊 Loading threat modeling dashboard for ${orgName}...`);
             
-            // Use the simplified endpoint without auth for testing
+            // Get auth token for user-specific dashboard
+            const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+            if (!authToken) {
+                console.warn('No auth token - skipping dashboard load');
+                return;
+            }
+            
             const response = await fetch(`http://localhost:8000/api/threat-modeling/dashboard`, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
             

@@ -138,6 +138,16 @@
 
     async function checkGitHubConnection() {
         try {
+            // First check GitHub connection status via dedicated endpoint
+            const connectionStatus = await githubClient.getGitHubConnectionStatus();
+            
+            if (connectionStatus.success && connectionStatus.github_connected) {
+                isGitHubConnected = true;
+                console.log('✅ GitHub connected:', connectionStatus.github_username);
+                return;
+            }
+            
+            // Fallback: check if user has organizations
             const client = await getAuthClient();
             const token = await client.getTokenSilently();
             
@@ -167,7 +177,8 @@
 
     async function connectToGitHub() {
         try {
-            const result = await githubClient.startOrganizationDiscovery();
+            // Use the new GitHub connection endpoint
+            const result = await githubClient.startGitHubConnection();
             
             if (result.success) {
                 // Redirect to GitHub OAuth for organization discovery

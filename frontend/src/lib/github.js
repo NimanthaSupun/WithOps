@@ -193,6 +193,127 @@ class GitHubOrganizationClient {
 		};
 	}
 
+	// ============================================================================
+	// GITHUB ACCOUNT CONNECTION (For users who logged in with non-GitHub methods)
+	// ============================================================================
+
+	/**
+	 * 🔗 Check if user has GitHub account connected
+	 */
+	async getGitHubConnectionStatus() {
+		try {
+			const token = await this.getAuthToken();
+			if (!token) {
+				return {
+					success: false,
+					github_connected: false,
+					error: 'Authentication required'
+				};
+			}
+
+			const data = await this.makeRequest(`${this.baseUrl}/connect/status`, {
+				method: 'GET'
+			});
+
+			return {
+				success: true,
+				github_connected: data.github_connected,
+				github_username: data.github_username,
+				connected_at: data.connected_at
+			};
+		} catch (error) {
+			console.error('❌ GitHub connection status error:', error);
+			return {
+				success: false,
+				github_connected: false,
+				error: error.message
+			};
+		}
+	}
+
+	/**
+	 * 🔗 Start GitHub account connection
+	 * Returns OAuth URL for user to connect their GitHub account
+	 */
+	async startGitHubConnection() {
+		try {
+			const token = await this.getAuthToken();
+			if (!token) {
+				return {
+					success: false,
+					error: 'Authentication required. Please log in first.'
+				};
+			}
+
+			const data = await this.makeRequest(`${this.baseUrl}/connect/start`, {
+				method: 'GET'
+			});
+
+			console.log('🔗 GitHub connection started:', data);
+
+			return {
+				success: true,
+				oauth_url: data.oauth_url,
+				state: data.state,
+				message: data.message
+			};
+		} catch (error) {
+			console.error('❌ GitHub connection start error:', error);
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	}
+
+	/**
+	 * 🔗 Handle GitHub connection callback
+	 * Called after user authorizes the GitHub OAuth connection
+	 */
+	async processGitHubConnectionCallback(code, state) {
+		try {
+			const token = await this.getAuthToken();
+			if (!token) {
+				return {
+					success: false,
+					error: 'Authentication required'
+				};
+			}
+
+			const url = new URL(`${this.baseUrl}/connect/callback`);
+			url.searchParams.set('code', code);
+			url.searchParams.set('state', state);
+
+			const data = await this.makeRequest(url.toString(), {
+				method: 'POST'
+			});
+
+			console.log('🔗 GitHub connection completed:', data);
+
+			// Clear organization cache to force refresh with new access
+			this.cache.delete('my_organizations');
+			this.persistentCache.delete('my_organizations');
+
+			return {
+				success: true,
+				github_connected: true,
+				github_username: data.github_username,
+				linked_organizations: data.linked_organizations || [],
+				message: data.message
+			};
+		} catch (error) {
+			console.error('❌ GitHub connection callback error:', error);
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	}
+
+	// ============================================================================
+	// ORGANIZATION DISCOVERY
+	// ============================================================================
+
 	/**
 	 * 🚀 Step 1: Start organization discovery process (ULTRA-OPTIMIZED)
 	 * Returns OAuth URL for user to authorize organization access
@@ -3001,6 +3122,131 @@ class GitHubOrganizationClient {
 			sessionStorage.getItem('auth_token') ||
 			localStorage.getItem('github_token')
 		);
+	}
+
+	// ============================================================================
+	// ORGANIZATION INVITATIONS
+	// ============================================================================
+
+	/**
+	 * 📨 INVITATIONS: Get pending invitations for the current user
+	 */
+	async getMyInvitations() {
+		try {
+			const result = await this.makeRequest(`${this.baseUrl}/my-invitations`, {
+				method: 'GET'
+			});
+			return result;
+		} catch (error) {
+			console.error('Failed to get pending invitations:', error);
+			return { invitations: [], total_count: 0, error: error.message };
+		}
+	}
+
+	/**
+	 * 📨 INVITATIONS: Create a new invitation to join an organization
+	 */
+	async createInvitation(orgName, email, role = 'member') {
+		try {
+			const result = await this.makeRequest(
+				`${this.baseUrl}/organizations/${orgName}/invitations`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ email, role })
+				}
+			);
+			return result;
+		} catch (error) {
+			console.error('Failed to create invitation:', error);
+			return { success: false, error: error.message };
+		}
+	}
+
+	/**
+	 * 📨 INVITATIONS: Get all invitations and members for an organization
+	 */
+	async getOrganizationInvitations(orgName) {
+		try {
+			const result = await this.makeRequest(
+				`${this.baseUrl}/organizations/${orgName}/invitations`,
+				{
+					method: 'GET'
+				}
+			);
+			return result;
+		} catch (error) {
+			console.error('Failed to get organization invitations:', error);
+			return { invitations: [], members: [], error: error.message };
+		}
+	}
+
+	/**
+	 * 📨 INVITATIONS: Cancel a pending invitation
+	 */
+	async cancelInvitation(orgName, invitationId) {
+		try {
+			const result = await this.makeRequest(
+				`${this.baseUrl}/organizations/${orgName}/invitations/${invitationId}`,
+				{
+					method: 'DELETE'
+				}
+			);
+			return result;
+		} catch (error) {
+			console.error('Failed to cancel invitation:', error);
+			return { success: false, error: error.message };
+		}
+	}
+
+	/**
+	 * 📨 INVITATIONS: Accept an invitation to join an organization
+	 */
+	async acceptInvitation(inviteToken) {
+		try {
+			const result = await this.makeRequest(`${this.baseUrl}/invitations/${inviteToken}/accept`, {
+				method: 'POST'
+			});
+			return result;
+		} catch (error) {
+			console.error('Failed to accept invitation:', error);
+			return { success: false, error: error.message };
+		}
+	}
+
+	/**
+	 * 📨 INVITATIONS: Decline an invitation to join an organization
+	 */
+	async declineInvitation(inviteToken) {
+		try {
+			const result = await this.makeRequest(`${this.baseUrl}/invitations/${inviteToken}/decline`, {
+				method: 'POST'
+			});
+			return result;
+		} catch (error) {
+			console.error('Failed to decline invitation:', error);
+			return { success: false, error: error.message };
+		}
+	}
+
+	/**
+	 * 👥 MEMBERS: Remove a member from an organization
+	 */
+	async removeMember(orgName, memberId) {
+		try {
+			const result = await this.makeRequest(
+				`${this.baseUrl}/organizations/${orgName}/members/${memberId}`,
+				{
+					method: 'DELETE'
+				}
+			);
+			return result;
+		} catch (error) {
+			console.error('Failed to remove member:', error);
+			return { success: false, error: error.message };
+		}
 	}
 }
 

@@ -112,6 +112,37 @@ class OrganizationInstallation(Base):
     repositories = relationship("Repository", back_populates="installation", cascade="all, delete-orphan")
 
 
+class OrganizationInvitation(Base):
+    """Track invitations to join organizations"""
+    __tablename__ = "organization_invitations"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String, ForeignKey("organizations.id"), nullable=False)
+    invited_by_user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    
+    # Invitation details
+    invited_email = Column(String(255), nullable=False, index=True)
+    invite_token = Column(String(255), unique=True, nullable=False, index=True)
+    
+    # Status and role
+    status = Column(String(50), default="pending")  # pending, accepted, declined, expired, cancelled
+    role = Column(String(50), default="member")  # owner, member
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    accepted_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=False)  # Invitation expires after 7 days
+    
+    # Accepted by user (filled when invitation is accepted)
+    accepted_by_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    organization = relationship("Organization", backref="invitations")
+    invited_by = relationship("User", foreign_keys=[invited_by_user_id], backref="sent_invitations")
+    accepted_by = relationship("User", foreign_keys=[accepted_by_user_id], backref="accepted_invitations")
+
+
 class Repository(Base):
     """Repositories within installations"""
     __tablename__ = "repositories"

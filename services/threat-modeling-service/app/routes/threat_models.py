@@ -630,14 +630,23 @@ async def get_threat_library():
 
 
 @router.get("/dashboard")
-async def get_dashboard():
-    """Get dashboard overview"""
+async def get_dashboard(current_user: str = Depends(get_current_user)):
+    """Get dashboard overview for the authenticated user"""
     try:
         async with db_manager.get_session() as session:
-            total_models = await session.execute(select(func.count(ThreatModel.id)))
-            total_count = total_models.scalar() or 0
+            # Resolve Auth0 ID to internal UUID
+            user_uuid = await resolve_user_uuid(current_user, session)
             
-            recent_query = select(ThreatModel).order_by(ThreatModel.created_at.desc()).limit(5)
+            # Count only user's threat models
+            user_models = await session.execute(
+                select(func.count(ThreatModel.id)).where(ThreatModel.user_id == user_uuid)
+            )
+            user_count = user_models.scalar() or 0
+            
+            # Get recent models for this user only
+            recent_query = select(ThreatModel).where(
+                ThreatModel.user_id == user_uuid
+            ).order_by(ThreatModel.created_at.desc()).limit(5)
             recent_result = await session.execute(recent_query)
             recent_models = recent_result.scalars().all()
             
@@ -651,8 +660,10 @@ async def get_dashboard():
                 for m in recent_models
             ]
             
+            logger.info(f"📊 Dashboard for user {user_uuid}: {user_count} models")
+            
             return {
-                "total_models": total_count,
+                "total_models": user_count,
                 "recent_activity": recent_activity,
                 "status": "success"
             }

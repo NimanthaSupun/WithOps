@@ -135,6 +135,217 @@ async def list_organizations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# GITHUB ACCOUNT CONNECTION (For users who logged in with non-GitHub methods)
+# ============================================================================
+
+@router.get("/connect/start")
+async def start_github_connection(
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Start GitHub account connection for users who logged in with non-GitHub methods.
+    Returns OAuth URL to connect their GitHub account.
+    """
+    try:
+        logger.info(f"🔗 Starting GitHub connection for user: {current_user}")
+        
+        # Use the same OAuth URL but with different state
+        oauth_url = github_client.get_organization_discovery_oauth_url(state="connect_github")
+        
+        return {
+            "success": True,
+            "oauth_url": oauth_url,
+            "state": "connect_github",
+            "message": "Redirect user to oauth_url to connect their GitHub account"
+        }
+    except Exception as e:
+        logger.error(f"Error starting GitHub connection: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/connect/callback")
+@router.post("/connect/callback")
+async def handle_github_connection_callback(
+    code: str,
+    state: str = None,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Handle callback after user authorizes GitHub connection.
+    Stores GitHub token and auto-links user to existing org installations.
+    """
+    try:
+        logger.info(f"🔗 GitHub connection callback for user: {current_user}")
+        
+        # Resolve user UUID from Auth0 ID
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Exchange code for GitHub access token
+        access_token = await github_client.exchange_code_for_token(code)
+        
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Failed to get GitHub access token")
+        
+        # Get GitHub user info
+        github_user_response = await github_client.http_client.get(
+            f"{github_client.base_url}/user",
+            headers={
+                "Authorization": f"token {access_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+        )
+        
+        github_user_info = None
+        github_username = None
+        if github_user_response.status_code == 200:
+            github_user_info = github_user_response.json()
+            github_username = github_user_info.get("login")
+            logger.info(f"✅ Got GitHub user info: {github_username}")
+        
+        # Store the GitHub token in database
+        from database import GitHubToken
+        
+        # Check if token already exists for this user
+        existing_token_query = select(GitHubToken).where(
+            GitHubToken.user_id == user_uuid,
+            GitHubToken.is_active == True
+        )
+        existing_result = await session.execute(existing_token_query)
+        existing_token = existing_result.scalar()
+        
+        if existing_token:
+            # Update existing token
+            existing_token.access_token = access_token
+            existing_token.updated_at = datetime.utcnow()
+            existing_token.last_used = datetime.utcnow()
+            existing_token.github_user_info = github_user_info
+            logger.info(f"🔄 Updated existing GitHub token for user {user_uuid}")
+        else:
+            # Create new token
+            new_token = GitHubToken(
+                user_id=user_uuid,
+                access_token=access_token,
+                token_type="oauth",
+                scope="read:org,read:user",
+                github_user_info=github_user_info,
+                is_active=True
+            )
+            session.add(new_token)
+            logger.info(f"✅ Created new GitHub token for user {user_uuid}")
+        
+        # Also update user's github_username if we got it
+        if github_username:
+            user_query = select(User).where(User.id == user_uuid)
+            user_result = await session.execute(user_query)
+            user = user_result.scalar()
+            if user:
+                user.github_username = github_username
+                if github_user_info:
+                    user.github_user_id = github_user_info.get("id")
+        
+        await session.commit()
+        
+        # === AUTO-LINK TO EXISTING INSTALLATIONS ===
+        # Get user's GitHub organizations
+        user_orgs_response = await github_client.http_client.get(
+            f"{github_client.base_url}/user/orgs",
+            headers={
+                "Authorization": f"token {access_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+        )
+        
+        linked_orgs = []
+        if user_orgs_response.status_code == 200:
+            user_github_orgs = {org['login'] for org in user_orgs_response.json()}
+            logger.info(f"🔗 User is member of {len(user_github_orgs)} GitHub orgs: {user_github_orgs}")
+            
+            # Find existing installations in these orgs
+            if user_github_orgs:
+                existing_installations_query = (
+                    select(OrganizationInstallation, Organization)
+                    .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+                    .where(Organization.login.in_(user_github_orgs))
+                    .where(OrganizationInstallation.status == "active")
+                )
+                
+                result = await session.execute(existing_installations_query)
+                existing_installations = result.all()
+                
+                for installation, org in existing_installations:
+                    linked_users = installation.linked_users or []
+                    if installation.user_id != user_uuid and str(user_uuid) not in linked_users:
+                        # Auto-link this user
+                        linked_users.append(str(user_uuid))
+                        installation.linked_users = linked_users
+                        installation.updated_at = datetime.utcnow()
+                        linked_orgs.append(org.login)
+                        logger.info(f"🔗 Auto-linked user {user_uuid} to installation for {org.login}")
+                
+                if linked_orgs:
+                    await session.commit()
+                    logger.info(f"✅ Auto-linked user to {len(linked_orgs)} organizations: {linked_orgs}")
+        
+        return {
+            "success": True,
+            "github_username": github_username,
+            "github_connected": True,
+            "linked_organizations": linked_orgs,
+            "message": f"GitHub account connected successfully. Auto-linked to {len(linked_orgs)} organizations."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in GitHub connection callback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/connect/status")
+async def get_github_connection_status(
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Check if current user has a GitHub account connected.
+    """
+    try:
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        from database import GitHubToken
+        token_query = select(GitHubToken).where(
+            GitHubToken.user_id == user_uuid,
+            GitHubToken.is_active == True
+        )
+        result = await session.execute(token_query)
+        token = result.scalar()
+        
+        if token:
+            github_username = None
+            if token.github_user_info:
+                github_username = token.github_user_info.get("login")
+            
+            return {
+                "success": True,
+                "github_connected": True,
+                "github_username": github_username,
+                "connected_at": token.created_at.isoformat() if token.created_at else None
+            }
+        else:
+            return {
+                "success": True,
+                "github_connected": False,
+                "github_username": None,
+                "message": "No GitHub account connected. Use /connect/start to connect."
+            }
+            
+    except Exception as e:
+        logger.error(f"Error checking GitHub connection status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/organizations/discover")
 async def start_organization_discovery():
     """
@@ -165,6 +376,7 @@ async def handle_organization_callback(
     """
     Step 2: Handle OAuth callback for organization discovery
     Requires authentication to determine which orgs already have app installed by this user
+    *** MULTI-USER: Auto-links users to existing installations in their GitHub orgs ***
     """
     try:
         logger.info(f"🔍 Organization callback for user: {current_user}")
@@ -175,7 +387,106 @@ async def handle_organization_callback(
         # Exchange code for token
         access_token = await github_client.exchange_code_for_token(code)
         
-        # Get user's organizations with installation status
+        # ===== SAVE GITHUB TOKEN TO DATABASE =====
+        # This enables auto-link feature in /my-organizations
+        try:
+            from database import GitHubToken
+            
+            # Get GitHub user info
+            user_info_response = await github_client.http_client.get(
+                f"{github_client.base_url}/user",
+                headers={
+                    "Authorization": f"token {access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            )
+            
+            github_user_info = {}
+            if user_info_response.status_code == 200:
+                github_user_info = user_info_response.json()
+                logger.info(f"🔍 GitHub user: {github_user_info.get('login')}")
+            
+            # Check for existing token
+            existing_token_query = select(GitHubToken).where(
+                GitHubToken.user_id == user_uuid,
+                GitHubToken.is_active == True
+            )
+            existing_result = await session.execute(existing_token_query)
+            existing_token = existing_result.scalar()
+            
+            if existing_token:
+                # Update existing token
+                existing_token.access_token = access_token
+                existing_token.github_user_info = github_user_info
+                existing_token.updated_at = datetime.utcnow()
+                logger.info(f"🔄 Updated existing GitHub token for user {user_uuid}")
+            else:
+                # Create new token
+                new_token = GitHubToken(
+                    user_id=user_uuid,
+                    access_token=access_token,
+                    token_type="bearer",
+                    scope="read:org",
+                    github_user_info=github_user_info,
+                    is_active=True
+                )
+                session.add(new_token)
+                logger.info(f"✅ Saved new GitHub token for user {user_uuid}")
+            
+            await session.commit()
+        except Exception as token_error:
+            logger.warning(f"⚠️ Failed to save GitHub token (non-critical): {token_error}")
+        
+        # ===== AUTO-LINK TO EXISTING INSTALLATIONS =====
+        # Check which GitHub orgs this user belongs to and auto-link to existing installations
+        auto_linked_orgs = []
+        try:
+            # Get user's GitHub orgs using their OAuth token
+            user_orgs_response = await github_client.http_client.get(
+                f"{github_client.base_url}/user/orgs",
+                headers={
+                    "Authorization": f"token {access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            )
+            
+            if user_orgs_response.status_code == 200:
+                user_github_orgs = {org['login'] for org in user_orgs_response.json()}
+                logger.info(f"🔗 User {current_user} is member of {len(user_github_orgs)} GitHub orgs: {user_github_orgs}")
+                
+                # Find existing installations in these orgs that user is NOT already linked to
+                existing_installations_query = (
+                    select(OrganizationInstallation, Organization)
+                    .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+                    .where(Organization.login.in_(user_github_orgs))
+                    .where(OrganizationInstallation.status == "active")
+                )
+                
+                result = await session.execute(existing_installations_query)
+                existing_installations = result.all()
+                
+                for installation, org in existing_installations:
+                    # Check if user is NOT the owner and NOT in linked_users
+                    linked_users = installation.linked_users or []
+                    if installation.user_id != user_uuid and str(user_uuid) not in linked_users:
+                        # Auto-link this user to the installation
+                        linked_users.append(str(user_uuid))
+                        installation.linked_users = linked_users
+                        installation.updated_at = datetime.utcnow()
+                        auto_linked_orgs.append(org.login)
+                        logger.info(f"🔗 Auto-linked user {user_uuid} to installation for {org.login}")
+                
+                if auto_linked_orgs:
+                    await session.commit()
+                    logger.info(f"✅ Auto-linked user to {len(auto_linked_orgs)} existing installations: {auto_linked_orgs}")
+            else:
+                logger.warning(f"⚠️ Could not fetch user's GitHub orgs for auto-link: {user_orgs_response.status_code}")
+                
+        except Exception as link_error:
+            logger.warning(f"⚠️ Auto-link failed (non-critical): {link_error}")
+        # ===== END AUTO-LINK =====
+        
+        # Get user's organizations with installation status (now includes auto-linked orgs)
         organizations = await github_client.get_user_organizations(access_token, str(user_uuid))
         
         logger.info(f"📋 Retrieved {len(organizations)} organizations for user {user_uuid}")
@@ -184,7 +495,9 @@ async def handle_organization_callback(
             "success": True,
             "organizations": organizations,
             "total_count": len(organizations),
-            "message": f"Found {len(organizations)} organizations"
+            "auto_linked_count": len(auto_linked_orgs),
+            "auto_linked_orgs": auto_linked_orgs,
+            "message": f"Found {len(organizations)} organizations" + (f" (auto-linked to {len(auto_linked_orgs)} existing installations)" if auto_linked_orgs else "")
         }
     except Exception as e:
         logger.error(f"Error in organization callback: {e}")
@@ -363,9 +676,12 @@ async def handle_installation_callback(
                     await session.commit()
                     logger.info(f"✅ Installation recorded in database for user {user_uuid}")
                     
-                    # Invalidate organization cache after installation change
+                    # Invalidate ALL caches after installation change
+                    # This is CRITICAL - the all_installations cache must be cleared
+                    # otherwise /my-organizations will use stale data and mark new installations as deleted
                     await cache.invalidate_organization_cache(org_login)
-                    logger.info(f"🗑️ Invalidated cache for {org_login} after installation")
+                    github_client._clear_installation_cache(org_login)  # Clear internal cache including all_installations
+                    logger.info(f"🗑️ Invalidated all caches for {org_login} after installation")
                     
                     # Publish installation created event
                     from core.event_bus import event_bus
@@ -449,54 +765,90 @@ async def get_my_organizations(
             user_uuid = await resolve_user_uuid(current_user, session)
             logger.info(f"🔍 Resolved user {current_user} to UUID: {user_uuid}")
             
+            # ===== CHECK GITHUB CONNECTION =====
+            # Track if user has a GitHub token connected
+            has_github_token = False
+            github_username = None
+            
             # ===== AUTO-LINK FEATURE =====
             # Check GitHub API for user's org memberships and auto-link to existing installations
             try:
-                # Get user's GitHub orgs
-                user_orgs_response = await github_client.http_client.get(
-                    f"{github_client.base_url}/user/orgs",
-                    headers=github_client._get_user_headers(current_user)
-                )
+                # Get user's GitHub token from database
+                from database import GitHubToken
+                token_query = select(GitHubToken).where(
+                    GitHubToken.user_id == user_uuid,
+                    GitHubToken.is_active == True
+                ).order_by(GitHubToken.created_at.desc())
                 
-                if user_orgs_response.status_code == 200:
-                    user_github_orgs = {org['login'] for org in user_orgs_response.json()}
-                    logger.info(f"🔗 User {current_user} is member of {len(user_github_orgs)} GitHub orgs: {user_github_orgs}")
+                token_result = await session.execute(token_query)
+                github_token = token_result.scalar()
+                
+                if github_token and github_token.access_token:
+                    # Extract GitHub username from stored info
+                    if github_token.github_user_info:
+                        github_username = github_token.github_user_info.get("login")
                     
-                    # Find existing installations in these orgs that user is NOT already linked to
-                    existing_installations_query = (
-                        select(OrganizationInstallation, Organization)
-                        .join(Organization, OrganizationInstallation.organization_id == Organization.id)
-                        .where(Organization.login.in_(user_github_orgs))
-                        .where(OrganizationInstallation.status == "active")
+                    # Get user's GitHub orgs using their OAuth token
+                    user_orgs_response = await github_client.http_client.get(
+                        f"{github_client.base_url}/user/orgs",
+                        headers={
+                            "Authorization": f"token {github_token.access_token}",
+                            "Accept": "application/vnd.github.v3+json"
+                        }
                     )
                     
-                    result = await session.execute(existing_installations_query)
-                    existing_installations = result.all()
-                    
-                    auto_linked_count = 0
-                    for installation, org in existing_installations:
-                        # Check if user is NOT the owner and NOT in linked_users
-                        linked_users = installation.linked_users or []
-                        if installation.user_id != user_uuid and str(user_uuid) not in linked_users:
-                            # Auto-link this user to the installation
-                            linked_users.append(str(user_uuid))
-                            installation.linked_users = linked_users
-                            installation.updated_at = datetime.utcnow()
-                            auto_linked_count += 1
-                            logger.info(f"🔗 Auto-linked user {user_uuid} to installation for {org.login}")
-                    
-                    if auto_linked_count > 0:
+                    if user_orgs_response.status_code == 200:
+                        # Token is valid
+                        has_github_token = True
+                        user_github_orgs = {org['login'] for org in user_orgs_response.json()}
+                        logger.info(f"🔗 User {current_user} is member of {len(user_github_orgs)} GitHub orgs: {user_github_orgs}")
+                        
+                        # Find existing installations in these orgs that user is NOT already linked to
+                        existing_installations_query = (
+                            select(OrganizationInstallation, Organization)
+                            .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+                            .where(Organization.login.in_(user_github_orgs))
+                            .where(OrganizationInstallation.status == "active")
+                        )
+                        
+                        result = await session.execute(existing_installations_query)
+                        existing_installations = result.all()
+                        
+                        auto_linked_count = 0
+                        for installation, org in existing_installations:
+                            # Check if user is NOT the owner and NOT in linked_users
+                            linked_users = installation.linked_users or []
+                            if installation.user_id != user_uuid and str(user_uuid) not in linked_users:
+                                # Auto-link this user to the installation
+                                linked_users.append(str(user_uuid))
+                                installation.linked_users = linked_users
+                                installation.updated_at = datetime.utcnow()
+                                auto_linked_count += 1
+                                logger.info(f"🔗 Auto-linked user {user_uuid} to installation for {org.login}")
+                        
+                        if auto_linked_count > 0:
+                            await session.commit()
+                            logger.info(f"✅ Auto-linked user to {auto_linked_count} existing installations")
+                    elif user_orgs_response.status_code == 401:
+                        # Token is expired or revoked - mark it as inactive
+                        logger.warning(f"⚠️ GitHub token expired/invalid for user {user_uuid} (401) - marking as inactive")
+                        github_token.is_active = False
+                        github_token.updated_at = datetime.utcnow()
                         await session.commit()
-                        logger.info(f"✅ Auto-linked user to {auto_linked_count} existing installations")
+                        has_github_token = False
+                        github_username = None
+                    else:
+                        logger.warning(f"⚠️ Could not fetch user's GitHub orgs: {user_orgs_response.status_code}")
+                        # Keep has_github_token = False for other errors
                 else:
-                    logger.warning(f"⚠️ Could not fetch user's GitHub orgs: {user_orgs_response.status_code}")
+                    logger.warning(f"⚠️ No GitHub token found for user {user_uuid} - skipping auto-link")
                     
             except Exception as e:
                 logger.error(f"⚠️ Auto-link failed (non-critical): {e}")
             # ===== END AUTO-LINK =====
             
             # Query organizations where user is owner OR in linked_users
-            from sqlalchemy import or_, cast, String
+            from sqlalchemy import or_, cast, String, func
             from sqlalchemy.dialects.postgresql import JSONB
             
             query = (
@@ -509,12 +861,57 @@ async def get_my_organizations(
                     )
                 )
                 .where(OrganizationInstallation.status == "active")
+                .order_by(OrganizationInstallation.installed_at.desc())  # Most recent first
             )
             
             result = await session.execute(query)
             installations = result.all()
             
             logger.info(f"📊 Found {len(installations)} installations for user {user_uuid}")
+            
+            # ===== DEDUPLICATE AND VERIFY INSTALLATIONS =====
+            # Group by org login to handle duplicates
+            seen_orgs = {}  # org_login -> (installation, org) - keep the most recent valid one
+            stale_installations = []
+            
+            for installation, org in installations:
+                org_login = org.login
+                
+                # Check if we already have this org
+                if org_login in seen_orgs:
+                    # This is a duplicate - mark the older one for cleanup
+                    existing_install, _ = seen_orgs[org_login]
+                    # Keep the one with higher installation_id (more recent from GitHub)
+                    if installation.github_installation_id > existing_install.github_installation_id:
+                        stale_installations.append(existing_install)
+                        seen_orgs[org_login] = (installation, org)
+                    else:
+                        stale_installations.append(installation)
+                    logger.warning(f"⚠️ Found duplicate installation for {org_login}, keeping most recent")
+                else:
+                    seen_orgs[org_login] = (installation, org)
+            
+            # Clean up stale/duplicate installations
+            if stale_installations:
+                logger.info(f"🧹 Cleaning up {len(stale_installations)} stale/duplicate installations")
+                for stale_install in stale_installations:
+                    stale_install.status = "deleted"
+                    stale_install.uninstalled_at = datetime.utcnow()
+                await session.commit()
+            
+            # Convert to deduplicated list
+            installations = list(seen_orgs.values())
+            logger.info(f"📊 After deduplication: {len(installations)} unique organizations")
+            
+            # ===== VERIFY INSTALLATIONS ON GITHUB (if force_verify or no recent verification) =====
+            # Get all app installations from GitHub to cross-check
+            valid_installation_ids = set()
+            try:
+                all_github_installations = await github_client._get_all_installations_cached()
+                valid_installation_ids = {inst['id'] for inst in all_github_installations}
+                logger.info(f"🔍 GitHub has {len(valid_installation_ids)} active installations")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fetch GitHub installations for verification: {e}")
             
             if len(installations) == 0:
                 logger.warning(f"⚠️ No installations found for user {user_uuid} (Auth0 ID: {current_user})")
@@ -545,13 +942,27 @@ async def get_my_organizations(
                     
                     # Re-query after linking
                     result = await session.execute(query)
-                    installations = result.all()
+                    installations_raw = result.all()
+                    # Deduplicate again
+                    seen_orgs = {}
+                    for inst, o in installations_raw:
+                        if o.login not in seen_orgs:
+                            seen_orgs[o.login] = (inst, o)
+                    installations = list(seen_orgs.values())
                     logger.info(f"📊 After linking: Found {len(installations)} installations for user {user_uuid}")
             
             organizations = []
             verification_jobs_enqueued = 0
+            installations_to_delete = []
             
             for installation, org in installations:
+                # ===== VERIFY INSTALLATION EXISTS ON GITHUB =====
+                # If we have valid_installation_ids, check if this installation still exists
+                if valid_installation_ids and installation.github_installation_id not in valid_installation_ids:
+                    logger.warning(f"⚠️ Installation {installation.github_installation_id} for {org.login} no longer exists on GitHub - marking as deleted")
+                    installations_to_delete.append(installation)
+                    continue  # Skip this org
+                
                 # Determine user's relationship to this installation
                 is_owner = installation.user_id == user_uuid
                 linked_users = installation.linked_users or []
@@ -594,6 +1005,9 @@ async def get_my_organizations(
                     }
                 }
                 
+                # Update last_verified since we just checked
+                installation.last_verified = datetime.utcnow()
+                
                 # Check if verification is stale (>10 minutes old) or never verified
                 verification_stale = (
                     installation.last_verified is None or
@@ -608,20 +1022,11 @@ async def get_my_organizations(
                         
                         # Update last_verified timestamp
                         installation.last_verified = datetime.utcnow()
-                        await session.commit()
                         
                     except Exception as e:
                         logger.warning(f"⚠️ Installation {installation.github_installation_id} no longer valid for {org.login}: {e}")
-                        # Mark as deleted in database
-                        installation.status = "deleted"
-                        installation.uninstalled_at = datetime.utcnow()
-                        await session.commit()
-                        
-                        # Invalidate cache
-                        await cache.invalidate_organization_cache(org.login)
-                        
-                        logger.info(f"🗑️ Skipping deleted installation for {org.login}")
-                        continue  # Skip this org in response
+                        installations_to_delete.append(installation)
+                        continue  # Skip this org
                 
                 elif verification_stale:
                     # Background verification (non-blocking)
@@ -636,15 +1041,43 @@ async def get_my_organizations(
                 
                 organizations.append(org_data)
             
+            # ===== CLEANUP STALE INSTALLATIONS =====
+            if installations_to_delete:
+                logger.info(f"🧹 Marking {len(installations_to_delete)} installations as deleted")
+                for install_to_delete in installations_to_delete:
+                    install_to_delete.status = "deleted"
+                    install_to_delete.uninstalled_at = datetime.utcnow()
+                await session.commit()
+                logger.info(f"✅ Cleaned up {len(installations_to_delete)} stale installations")
+            
+            # Commit any pending changes (like last_verified updates)
+            await session.commit()
+            
             if verification_jobs_enqueued > 0:
                 logger.info(f"📊 Enqueued {verification_jobs_enqueued} background verification jobs")
+            
+            # Determine if user needs to connect GitHub
+            # User needs GitHub connection if:
+            # 1. They don't have a GitHub token, AND
+            # 2. They have no organizations (neither owned nor linked)
+            needs_github_connection = not has_github_token
+            
+            if needs_github_connection and len(organizations) == 0:
+                logger.info(f"⚠️ User {user_uuid} needs to connect GitHub account - no token and no orgs")
+            elif needs_github_connection:
+                logger.info(f"⚠️ User {user_uuid} has {len(organizations)} orgs but no GitHub token - recommend connecting for auto-link")
             
             return {
                 "organizations": organizations,
                 "total_count": len(organizations),
                 "user_id": user_uuid,
                 "background_verification": verification_jobs_enqueued > 0,
-                "jobs_enqueued": verification_jobs_enqueued
+                "jobs_enqueued": verification_jobs_enqueued,
+                # GitHub connection status for frontend
+                "github_connected": has_github_token,
+                "github_username": github_username,
+                "needs_github_connection": needs_github_connection,
+                "message": "Connect your GitHub account to access your team's organizations" if (needs_github_connection and len(organizations) == 0) else None
             }
             
     except HTTPException:
@@ -737,6 +1170,661 @@ async def verify_installation(
 
 
 # ============================================================================
+# ORGANIZATION INVITATIONS
+# ============================================================================
+
+class InvitationCreate(BaseModel):
+    """Request model for creating an invitation"""
+    email: str
+    role: str = "member"  # member or owner
+
+
+class InvitationResponse(BaseModel):
+    """Response model for invitation"""
+    id: str
+    organization_login: str
+    organization_name: str
+    organization_avatar_url: str
+    invited_email: str
+    invited_by_name: str
+    invited_by_email: str
+    status: str
+    role: str
+    created_at: str
+    expires_at: str
+
+
+@router.post("/organizations/{org_name}/invitations")
+async def create_invitation(
+    org_name: str,
+    invitation_data: InvitationCreate,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Create an invitation to join an organization.
+    Only the organization owner can send invitations.
+    """
+    import secrets
+    from datetime import timedelta
+    from database import OrganizationInvitation
+    
+    try:
+        logger.info(f"📨 Creating invitation for {invitation_data.email} to org {org_name}")
+        
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Get the user's email for the response
+        user_result = await session.execute(
+            select(User).where(User.id == user_uuid)
+        )
+        current_user_obj = user_result.scalar()
+        
+        if not current_user_obj:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if user is the owner of this organization's installation
+        query = (
+            select(OrganizationInstallation, Organization)
+            .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+            .where(Organization.login == org_name)
+            .where(OrganizationInstallation.user_id == user_uuid)
+            .where(OrganizationInstallation.status == "active")
+        )
+        
+        result = await session.execute(query)
+        installation_data = result.first()
+        
+        if not installation_data:
+            raise HTTPException(
+                status_code=403, 
+                detail="You are not the owner of this organization's installation"
+            )
+        
+        installation, organization = installation_data
+        
+        # Check if email is already invited (pending)
+        existing_invite = await session.execute(
+            select(OrganizationInvitation).where(
+                OrganizationInvitation.organization_id == organization.id,
+                OrganizationInvitation.invited_email == invitation_data.email.lower(),
+                OrganizationInvitation.status == "pending"
+            )
+        )
+        if existing_invite.scalar():
+            raise HTTPException(
+                status_code=400, 
+                detail=f"An invitation for {invitation_data.email} is already pending"
+            )
+        
+        # Check if user is already a member (owner or linked)
+        linked_users = installation.linked_users or []
+        
+        # Check if invited email matches any existing user
+        existing_user = await session.execute(
+            select(User).where(User.email == invitation_data.email.lower())
+        )
+        existing_user_obj = existing_user.scalar()
+        
+        if existing_user_obj:
+            if str(existing_user_obj.id) == str(installation.user_id):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="This user is already the owner of this organization"
+                )
+            if str(existing_user_obj.id) in linked_users:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="This user is already a member of this organization"
+                )
+        
+        # Create invitation
+        invite_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(days=7)
+        
+        new_invitation = OrganizationInvitation(
+            organization_id=organization.id,
+            invited_by_user_id=user_uuid,
+            invited_email=invitation_data.email.lower(),
+            invite_token=invite_token,
+            status="pending",
+            role=invitation_data.role,
+            expires_at=expires_at
+        )
+        
+        session.add(new_invitation)
+        await session.commit()
+        await session.refresh(new_invitation)
+        
+        logger.info(f"✅ Created invitation {new_invitation.id} for {invitation_data.email} to {org_name}")
+        
+        return {
+            "success": True,
+            "invitation": {
+                "id": new_invitation.id,
+                "organization_login": organization.login,
+                "organization_name": organization.name or organization.login,
+                "invited_email": new_invitation.invited_email,
+                "invited_by": current_user_obj.name or current_user_obj.email,
+                "status": new_invitation.status,
+                "role": new_invitation.role,
+                "created_at": new_invitation.created_at.isoformat(),
+                "expires_at": new_invitation.expires_at.isoformat(),
+                "invite_token": invite_token  # Only returned on creation for potential email link
+            },
+            "message": f"Invitation sent to {invitation_data.email}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating invitation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create invitation: {str(e)}")
+
+
+@router.get("/organizations/{org_name}/invitations")
+async def list_organization_invitations(
+    org_name: str,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    List all invitations for an organization.
+    Only the organization owner can view invitations.
+    """
+    from database import OrganizationInvitation
+    
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Check if user is the owner of this organization's installation
+        query = (
+            select(OrganizationInstallation, Organization)
+            .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+            .where(Organization.login == org_name)
+            .where(OrganizationInstallation.user_id == user_uuid)
+            .where(OrganizationInstallation.status == "active")
+        )
+        
+        result = await session.execute(query)
+        installation_data = result.first()
+        
+        if not installation_data:
+            raise HTTPException(
+                status_code=403, 
+                detail="You are not the owner of this organization's installation"
+            )
+        
+        installation, organization = installation_data
+        
+        # Get all invitations for this organization
+        invitations_result = await session.execute(
+            select(OrganizationInvitation, User)
+            .join(User, OrganizationInvitation.invited_by_user_id == User.id)
+            .where(OrganizationInvitation.organization_id == organization.id)
+            .order_by(OrganizationInvitation.created_at.desc())
+        )
+        
+        invitations = []
+        for invitation, invited_by_user in invitations_result.all():
+            # Check if expired and update status
+            if invitation.status == "pending" and invitation.expires_at < datetime.utcnow():
+                invitation.status = "expired"
+                await session.commit()
+            
+            invitations.append({
+                "id": invitation.id,
+                "invited_email": invitation.invited_email,
+                "invited_by_name": invited_by_user.name or invited_by_user.email,
+                "status": invitation.status,
+                "role": invitation.role,
+                "created_at": invitation.created_at.isoformat(),
+                "expires_at": invitation.expires_at.isoformat(),
+                "accepted_at": invitation.accepted_at.isoformat() if invitation.accepted_at else None
+            })
+        
+        # Also get current team members
+        linked_users = installation.linked_users or []
+        members = []
+        
+        # Add owner
+        owner_result = await session.execute(
+            select(User).where(User.id == installation.user_id)
+        )
+        owner = owner_result.scalar()
+        if owner:
+            members.append({
+                "id": owner.id,
+                "email": owner.email,
+                "name": owner.name,
+                "avatar_url": owner.avatar_url,
+                "role": "owner",
+                "joined_at": installation.installed_at.isoformat() if installation.installed_at else None
+            })
+        
+        # Add linked members
+        if linked_users:
+            linked_result = await session.execute(
+                select(User).where(User.id.in_(linked_users))
+            )
+            for user in linked_result.scalars().all():
+                members.append({
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "avatar_url": user.avatar_url,
+                    "role": "member",
+                    "joined_at": None  # Could track this in a separate table
+                })
+        
+        return {
+            "organization": {
+                "login": organization.login,
+                "name": organization.name or organization.login,
+                "avatar_url": organization.avatar_url
+            },
+            "invitations": invitations,
+            "members": members,
+            "total_invitations": len(invitations),
+            "total_members": len(members)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing invitations: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list invitations: {str(e)}")
+
+
+@router.delete("/organizations/{org_name}/invitations/{invitation_id}")
+async def cancel_invitation(
+    org_name: str,
+    invitation_id: str,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Cancel a pending invitation.
+    Only the organization owner can cancel invitations.
+    """
+    from database import OrganizationInvitation
+    
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Check if user is the owner of this organization's installation
+        query = (
+            select(OrganizationInstallation, Organization)
+            .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+            .where(Organization.login == org_name)
+            .where(OrganizationInstallation.user_id == user_uuid)
+            .where(OrganizationInstallation.status == "active")
+        )
+        
+        result = await session.execute(query)
+        installation_data = result.first()
+        
+        if not installation_data:
+            raise HTTPException(
+                status_code=403, 
+                detail="You are not the owner of this organization's installation"
+            )
+        
+        installation, organization = installation_data
+        
+        # Find and cancel the invitation
+        invitation_result = await session.execute(
+            select(OrganizationInvitation).where(
+                OrganizationInvitation.id == invitation_id,
+                OrganizationInvitation.organization_id == organization.id
+            )
+        )
+        invitation = invitation_result.scalar()
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        if invitation.status != "pending":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot cancel invitation with status: {invitation.status}"
+            )
+        
+        invitation.status = "cancelled"
+        invitation.updated_at = datetime.utcnow()
+        await session.commit()
+        
+        logger.info(f"🗑️ Cancelled invitation {invitation_id} for {invitation.invited_email}")
+        
+        return {
+            "success": True,
+            "message": f"Invitation for {invitation.invited_email} has been cancelled"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error cancelling invitation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to cancel invitation: {str(e)}")
+
+
+@router.get("/my-invitations")
+async def get_my_pending_invitations(
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Get all pending invitations for the current user's email.
+    This is called when user logs in to check if they have pending invitations.
+    """
+    from database import OrganizationInvitation
+    
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Get user's email
+        user_result = await session.execute(
+            select(User).where(User.id == user_uuid)
+        )
+        user = user_result.scalar()
+        
+        if not user or not user.email:
+            return {"invitations": [], "total_count": 0}
+        
+        logger.info(f"🔍 Checking pending invitations for {user.email}")
+        
+        # Find pending invitations for this email
+        invitations_query = (
+            select(OrganizationInvitation, Organization, User)
+            .join(Organization, OrganizationInvitation.organization_id == Organization.id)
+            .join(User, OrganizationInvitation.invited_by_user_id == User.id)
+            .where(OrganizationInvitation.invited_email == user.email.lower())
+            .where(OrganizationInvitation.status == "pending")
+            .where(OrganizationInvitation.expires_at > datetime.utcnow())
+        )
+        
+        result = await session.execute(invitations_query)
+        
+        invitations = []
+        for invitation, organization, invited_by in result.all():
+            invitations.append({
+                "id": invitation.id,
+                "invite_token": invitation.invite_token,
+                "organization": {
+                    "login": organization.login,
+                    "name": organization.name or organization.login,
+                    "avatar_url": organization.avatar_url
+                },
+                "invited_by": {
+                    "name": invited_by.name or invited_by.email,
+                    "email": invited_by.email,
+                    "avatar_url": invited_by.avatar_url
+                },
+                "role": invitation.role,
+                "created_at": invitation.created_at.isoformat(),
+                "expires_at": invitation.expires_at.isoformat()
+            })
+        
+        logger.info(f"📨 Found {len(invitations)} pending invitations for {user.email}")
+        
+        return {
+            "invitations": invitations,
+            "total_count": len(invitations)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting pending invitations: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get invitations: {str(e)}")
+
+
+@router.post("/invitations/{invite_token}/accept")
+async def accept_invitation(
+    invite_token: str,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Accept an invitation to join an organization.
+    The user must be logged in with the email that was invited.
+    """
+    from database import OrganizationInvitation
+    
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Get user's email
+        user_result = await session.execute(
+            select(User).where(User.id == user_uuid)
+        )
+        user = user_result.scalar()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Find the invitation
+        invitation_query = (
+            select(OrganizationInvitation, Organization, OrganizationInstallation)
+            .join(Organization, OrganizationInvitation.organization_id == Organization.id)
+            .join(OrganizationInstallation, OrganizationInstallation.organization_id == Organization.id)
+            .where(OrganizationInvitation.invite_token == invite_token)
+        )
+        
+        result = await session.execute(invitation_query)
+        invitation_data = result.first()
+        
+        if not invitation_data:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        invitation, organization, installation = invitation_data
+        
+        # Verify the invitation
+        if invitation.status != "pending":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invitation is no longer valid (status: {invitation.status})"
+            )
+        
+        if invitation.expires_at < datetime.utcnow():
+            invitation.status = "expired"
+            await session.commit()
+            raise HTTPException(status_code=400, detail="Invitation has expired")
+        
+        # Verify email matches
+        if invitation.invited_email.lower() != user.email.lower():
+            raise HTTPException(
+                status_code=403, 
+                detail=f"This invitation was sent to {invitation.invited_email}, not {user.email}"
+            )
+        
+        # Add user to linked_users
+        linked_users = installation.linked_users or []
+        if str(user_uuid) not in linked_users:
+            linked_users.append(str(user_uuid))
+            installation.linked_users = linked_users
+            installation.updated_at = datetime.utcnow()
+        
+        # Update invitation status
+        invitation.status = "accepted"
+        invitation.accepted_at = datetime.utcnow()
+        invitation.accepted_by_user_id = user_uuid
+        
+        await session.commit()
+        
+        logger.info(f"✅ User {user.email} accepted invitation to {organization.login}")
+        
+        # Invalidate cache for this organization
+        await cache.invalidate_organization_cache(organization.login)
+        
+        return {
+            "success": True,
+            "message": f"You have joined {organization.name or organization.login}",
+            "organization": {
+                "login": organization.login,
+                "name": organization.name or organization.login,
+                "avatar_url": organization.avatar_url,
+                "installation_id": installation.github_installation_id
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error accepting invitation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to accept invitation: {str(e)}")
+
+
+@router.post("/invitations/{invite_token}/decline")
+async def decline_invitation(
+    invite_token: str,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Decline an invitation to join an organization.
+    """
+    from database import OrganizationInvitation
+    
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Get user's email
+        user_result = await session.execute(
+            select(User).where(User.id == user_uuid)
+        )
+        user = user_result.scalar()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Find the invitation
+        invitation_result = await session.execute(
+            select(OrganizationInvitation).where(
+                OrganizationInvitation.invite_token == invite_token
+            )
+        )
+        invitation = invitation_result.scalar()
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        if invitation.status != "pending":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invitation is no longer valid (status: {invitation.status})"
+            )
+        
+        # Verify email matches
+        if invitation.invited_email.lower() != user.email.lower():
+            raise HTTPException(
+                status_code=403, 
+                detail="This invitation was not sent to you"
+            )
+        
+        # Update invitation status
+        invitation.status = "declined"
+        invitation.updated_at = datetime.utcnow()
+        
+        await session.commit()
+        
+        logger.info(f"❌ User {user.email} declined invitation {invitation.id}")
+        
+        return {
+            "success": True,
+            "message": "Invitation declined"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error declining invitation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to decline invitation: {str(e)}")
+
+
+@router.delete("/organizations/{org_name}/members/{member_id}")
+async def remove_member(
+    org_name: str,
+    member_id: str,
+    current_user: str = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """
+    Remove a member from the organization.
+    Only the organization owner can remove members.
+    """
+    try:
+        # Resolve current user
+        user_uuid = await resolve_user_uuid(current_user, session)
+        
+        # Check if user is the owner of this organization's installation
+        query = (
+            select(OrganizationInstallation, Organization)
+            .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+            .where(Organization.login == org_name)
+            .where(OrganizationInstallation.user_id == user_uuid)
+            .where(OrganizationInstallation.status == "active")
+        )
+        
+        result = await session.execute(query)
+        installation_data = result.first()
+        
+        if not installation_data:
+            raise HTTPException(
+                status_code=403, 
+                detail="You are not the owner of this organization's installation"
+            )
+        
+        installation, organization = installation_data
+        
+        # Cannot remove yourself (owner)
+        if str(member_id) == str(user_uuid):
+            raise HTTPException(
+                status_code=400, 
+                detail="You cannot remove yourself as the owner"
+            )
+        
+        # Remove from linked_users
+        linked_users = installation.linked_users or []
+        if str(member_id) not in linked_users:
+            raise HTTPException(status_code=404, detail="Member not found in this organization")
+        
+        linked_users.remove(str(member_id))
+        installation.linked_users = linked_users
+        installation.updated_at = datetime.utcnow()
+        
+        await session.commit()
+        
+        # Get removed user info for response
+        removed_user_result = await session.execute(
+            select(User).where(User.id == member_id)
+        )
+        removed_user = removed_user_result.scalar()
+        
+        logger.info(f"🗑️ Removed member {member_id} from {org_name}")
+        
+        # Invalidate cache
+        await cache.invalidate_organization_cache(org_name)
+        
+        return {
+            "success": True,
+            "message": f"Removed {removed_user.name or removed_user.email if removed_user else 'member'} from {organization.login}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing member: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to remove member: {str(e)}")
+
+
+# ============================================================================
 # WORKSPACE DATA
 # ============================================================================
 
@@ -758,6 +1846,18 @@ async def get_organization_workspace(
                 status_code=404,
                 detail=f"GitHub App not installed in organization: {org_name}"
             )
+        
+        # Get the organization's database ID for threat modeling and other services
+        organization_db_id = None
+        async with db_manager.get_session() as session:
+            from sqlalchemy import select
+            org_result = await session.execute(
+                select(Organization).where(Organization.login == org_name)
+            )
+            org = org_result.scalar_one_or_none()
+            if org:
+                organization_db_id = org.id
+                logger.info(f"📋 Organization DB ID for {org_name}: {organization_db_id}")
         
         # If not forcing fresh, try cache first
         if not force_fresh:
@@ -787,6 +1887,10 @@ async def get_organization_workspace(
                 
                 return {
                     **cached_data,
+                    "organization": {
+                        "id": organization_db_id,
+                        "login": org_name
+                    },
                     "from_cache": True,
                     "is_stale": is_stale,
                     "refreshing_in_background": should_refresh
@@ -805,6 +1909,10 @@ async def get_organization_workspace(
         
         return {
             **workspace_data,
+            "organization": {
+                "id": organization_db_id,
+                "login": org_name
+            },
             "from_cache": False,
             "refreshing_in_background": False
         }

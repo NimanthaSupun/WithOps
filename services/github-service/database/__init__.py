@@ -7,7 +7,8 @@ from .models import (
     User,
     GitHubToken,
     Organization,
-    OrganizationInstallation
+    OrganizationInstallation,
+    OrganizationInvitation
 )
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     'User',
     'GitHubToken',
     'Organization',
-    'OrganizationInstallation'
+    'OrganizationInstallation',
+    'OrganizationInvitation'
 ]

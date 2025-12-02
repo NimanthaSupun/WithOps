@@ -11,6 +11,23 @@ import uuid
 Base = declarative_base()
 
 
+class Organization(Base):
+    """Organization model - mirrors the main organizations table"""
+    __tablename__ = "organizations"
+    
+    id = Column(String, primary_key=True)
+    github_org_id = Column(Integer, unique=True, nullable=False, index=True)
+    login = Column(String, unique=True, nullable=False, index=True)  # org name
+    name = Column(String)
+    description = Column(Text)
+    avatar_url = Column(String)
+    html_url = Column(String)
+    type = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    github_metadata = Column(JSON)
+
+
 class User(Base):
     """User model for storing user information"""
     __tablename__ = "users"

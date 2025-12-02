@@ -35,7 +35,32 @@
             });
 
             if (code && state) {
-                // Process OAuth callback to get user's organizations
+                // Check if this is a GitHub account connection (not organization discovery)
+                if (state === 'connect_github') {
+                    message = 'Connecting your GitHub account...';
+                    
+                    const result = await githubClient.processGitHubConnectionCallback(code, state);
+                    
+                    if (result.success) {
+                        const linkedCount = result.linked_organizations?.length || 0;
+                        message = `GitHub account connected! ${linkedCount > 0 ? `Auto-linked to ${linkedCount} organization(s).` : ''}`;
+                        
+                        console.log('✅ GitHub connected:', result.github_username);
+                        console.log('🔗 Linked organizations:', result.linked_organizations);
+                        
+                        // Redirect to dashboard after short delay
+                        setTimeout(() => {
+                            goto('/dashboard?github_connected=true');
+                        }, 2000);
+                        
+                        loading = false;
+                        return;
+                    } else {
+                        throw new Error(result.error || 'Failed to connect GitHub account');
+                    }
+                }
+                
+                // Original organization discovery flow
                 message = 'Discovering organizations where you can install the GitHub App...';
                 
                 const result = await githubClient.processOrganizationCallback(code, state);

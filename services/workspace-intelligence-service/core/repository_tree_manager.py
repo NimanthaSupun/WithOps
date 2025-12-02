@@ -11,7 +11,7 @@ from datetime import datetime
 import logging
 import json
 
-from database.models import RepositoryTree
+from database.models import RepositoryTree, Organization
 from core.event_bus import event_bus
 
 logger = logging.getLogger(__name__)
@@ -143,6 +143,22 @@ class RepositoryTreeManager:
             Success status and tree ID
         """
         try:
+            # Look up the organization ID from the organizations table
+            org_result = await self.db.execute(
+                select(Organization).filter(Organization.login == organization_name)
+            )
+            org = org_result.scalar_one_or_none()
+            
+            if not org:
+                logger.error(f"Organization not found: {organization_name}")
+                return {
+                    "success": False,
+                    "error": f"Organization '{organization_name}' not found. Please ensure the organization is registered."
+                }
+            
+            organization_id = org.id
+            logger.info(f"Resolved organization '{organization_name}' to ID: {organization_id}")
+            
             # Check if tree exists for this specific user
             # Query by organization (name or id) and user_id
             result = await self.db.execute(
@@ -150,7 +166,7 @@ class RepositoryTreeManager:
                     and_(
                         or_(
                             RepositoryTree.organization_name == organization_name,
-                            RepositoryTree.organization_id == organization_name
+                            RepositoryTree.organization_id == organization_id
                         ),
                         RepositoryTree.user_id == user_id,
                         RepositoryTree.is_active == True
@@ -164,6 +180,7 @@ class RepositoryTreeManager:
                 tree.tree_data = tree_data
                 tree.updated_at = datetime.utcnow()
                 tree.version += 1
+                tree.organization_id = organization_id  # Ensure org_id is correct
                 
                 if name:
                     tree.name = name
@@ -187,6 +204,7 @@ class RepositoryTreeManager:
             else:
                 # Create new tree
                 tree = RepositoryTree(
+                    organization_id=organization_id,  # Use actual org ID from DB
                     organization_name=organization_name,
                     user_id=user_id,
                     tree_data=tree_data,
