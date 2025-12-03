@@ -37,6 +37,17 @@ class AnalyzeWorkspaceRequest(BaseModel):
     fetch_github_data: bool = False
 
 
+class AnalyzeFolderRequest(BaseModel):
+    """Request to analyze a specific folder"""
+    organization_name: str
+    tree_data: List[Dict]
+    repository_tree_id: str
+    folder_id: str
+    folder_path: str
+    include_subfolders: bool = True
+    fetch_github_data: bool = False
+
+
 class AnalyzeProjectRequest(BaseModel):
     """Request to analyze a specific project"""
     organization_name: str
@@ -92,6 +103,68 @@ async def analyze_workspace(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/analyze-folder")
+async def analyze_folder(
+    request: AnalyzeFolderRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Trigger folder-specific analysis (subset of repositories)
+    
+    Analyzes only repositories within a specific folder,
+    allowing team-level or product-level maturity assessment
+    """
+    try:
+        logger.info(f"📁 Folder analysis request for: {request.folder_path} in org: {request.organization_name}")
+        
+        # Filter tree_data to only include the specified folder
+        filtered_tree_data = _filter_tree_by_folder(
+            request.tree_data,
+            request.folder_path,
+            request.include_subfolders
+        )
+        
+        if not filtered_tree_data:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Folder '{request.folder_path}' not found or contains no repositories"
+            )
+        
+        # Count repositories in scope
+        repo_count = _count_repositories_in_tree(filtered_tree_data)
+        logger.info(f"📊 Found {repo_count} repositories in folder '{request.folder_path}'")
+        
+        # Create analyzer with GitHub service client
+        analyzer = WorkspaceAnalyzer(github_service_client)
+        
+        # Run analysis in background with folder scope
+        background_tasks.add_task(
+            _run_folder_analysis,
+            analyzer,
+            request.organization_name,
+            filtered_tree_data,
+            request.repository_tree_id,
+            request.folder_id,
+            request.folder_path,
+            "system",  # No user context in microservice
+            request.fetch_github_data
+        )
+        
+        return {
+            "success": True,
+            "message": f"Folder analysis started for '{request.folder_path}'",
+            "status": "analyzing",
+            "folder_path": request.folder_path,
+            "repositories_count": repo_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to start folder analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/analyze-project")
 async def analyze_project(
     request: AnalyzeProjectRequest,
@@ -142,6 +215,8 @@ async def get_analysis(
         if not result:
             raise HTTPException(status_code=404, detail="Analysis not found")
         
+        logger.info(f"🔍 Retrieved analysis {analysis_id} for project {result.project_name}")
+        
         # Convert SQLAlchemy model to dict
         analysis_dict = {
             'id': result.id,
@@ -166,13 +241,39 @@ async def get_analysis(
             'completed_at': result.completed_at.isoformat() if result.completed_at else None
         }
         
-        # For now, return simplified structure
+        # Extract repositories and findings from analysis_data JSON field
+        analysis_data = result.analysis_data or {}
+        
+        logger.info(f"📦 Analysis data keys: {list(analysis_data.keys()) if analysis_data else 'None'}")
+        logger.info(f"📦 Analysis data type: {type(analysis_data)}")
+        
+        # Extract repositories and findings from project analysis structure
         repositories = []
+        findings = []
+        
+        # The analysis_data contains the project analysis with 'repositories' array
+        if 'repositories' in analysis_data:
+            repositories = analysis_data['repositories']
+            logger.info(f"📊 Found {len(repositories)} repositories in analysis_data")
+        else:
+            logger.warning(f"⚠️ No 'repositories' key found in analysis_data")
+        
+        # Collect all findings from all repositories
+        all_findings = []
+        for repo in repositories:
+            repo_findings = repo.get('findings', [])
+            all_findings.extend(repo_findings)
+            logger.info(f"📋 Repository '{repo.get('repository_name')}' has {len(repo_findings)} findings")
+        
+        findings = all_findings
+        logger.info(f"🔍 Total findings collected: {len(findings)}")
+        logger.info(f"✅ Returning {len(repositories)} repositories and {len(findings)} findings")
         
         return {
             "success": True,
             "analysis": analysis_dict,
             "repositories": repositories,
+            "findings": findings,
             "maturity_scores": {
                 'overall': analysis_dict['overall_maturity_score'],
                 'implementation': analysis_dict['implementation_score'],
@@ -320,6 +421,14 @@ async def get_organization_analyses(
                     "maturity_level": analysis.maturity_level,
                     "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
                     "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
+                    "total_repositories": analysis.total_repositories or 0,
+                    "findings_count": (
+                        (analysis.critical_findings or 0) +
+                        (analysis.high_findings or 0) +
+                        (analysis.medium_findings or 0) +
+                        (analysis.low_findings or 0)
+                    ),
+                    "maturity_score": analysis.overall_maturity_score or 0
                 }
                 for analysis in analyses
             ]
@@ -327,6 +436,239 @@ async def get_organization_analyses(
         
     except Exception as e:
         logger.error(f"❌ Failed to get organization analyses: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/folder/{folder_path:path}/analyses")
+async def get_folder_analyses(
+    folder_path: str
+):
+    """
+    Get all analyses for a specific folder
+    """
+    try:
+        async with db_manager.get_session() as session:
+            from database.models import ProjectAnalysis
+            stmt = select(ProjectAnalysis).where(
+                ProjectAnalysis.folder_path == folder_path
+            ).order_by(ProjectAnalysis.created_at.desc())
+            
+            result = await session.execute(stmt)
+            analyses = result.scalars().all()
+        
+        if not analyses:
+            return {
+                "success": True,
+                "analyses": [],
+                "message": f"No analyses found for folder '{folder_path}'"
+            }
+        
+        return {
+            "success": True,
+            "analyses": [
+                {
+                    "id": analysis.id,
+                    "project_name": analysis.project_name,
+                    "folder_path": analysis.folder_path,
+                    "status": analysis.status,
+                    "overall_maturity_score": analysis.overall_maturity_score,
+                    "maturity_level": analysis.maturity_level,
+                    "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
+                    "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
+                    "total_repositories": analysis.total_repositories or 0,
+                    "repositories_in_scope": analysis.repositories_in_scope or [],
+                    "findings_count": (
+                        (analysis.critical_findings or 0) +
+                        (analysis.high_findings or 0) +
+                        (analysis.medium_findings or 0) +
+                        (analysis.low_findings or 0)
+                    ),
+                    "maturity_score": analysis.overall_maturity_score or 0
+                }
+                for analysis in analyses
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get folder analyses: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/folder/{folder_path:path}/latest")
+async def get_latest_folder_analysis(
+    folder_path: str
+):
+    """
+    Get the latest analysis for a specific folder
+    """
+    try:
+        async with db_manager.get_session() as session:
+            from database.models import ProjectAnalysis
+            stmt = select(ProjectAnalysis).where(
+                ProjectAnalysis.folder_path == folder_path
+            ).order_by(ProjectAnalysis.created_at.desc()).limit(1)
+            
+            result = await session.execute(stmt)
+            analysis = result.scalar_one_or_none()
+        
+        if not analysis:
+            return {
+                "success": True,
+                "analysis": None,
+                "message": f"No analysis found for folder '{folder_path}'"
+            }
+        
+        return {
+            "success": True,
+            "analysis": {
+                "id": analysis.id,
+                "project_name": analysis.project_name,
+                "folder_path": analysis.folder_path,
+                "status": analysis.status,
+                "overall_maturity_score": analysis.overall_maturity_score,
+                "maturity_level": analysis.maturity_level,
+                "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
+                "total_repositories": analysis.total_repositories or 0,
+                "repositories_in_scope": analysis.repositories_in_scope or [],
+                "findings_summary": {
+                    "critical": analysis.critical_findings or 0,
+                    "high": analysis.high_findings or 0,
+                    "medium": analysis.medium_findings or 0,
+                    "low": analysis.low_findings or 0
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get latest folder analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/compare-folders")
+async def compare_folders(
+    folder_paths: List[str]
+):
+    """
+    Compare maturity scores across multiple folders
+    """
+    try:
+        if not folder_paths or len(folder_paths) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="At least 2 folder paths required for comparison"
+            )
+        
+        async with db_manager.get_session() as session:
+            from database.models import ProjectAnalysis
+            
+            comparisons = []
+            for folder_path in folder_paths:
+                # Get latest analysis for each folder
+                stmt = select(ProjectAnalysis).where(
+                    ProjectAnalysis.folder_path == folder_path
+                ).order_by(ProjectAnalysis.created_at.desc()).limit(1)
+                
+                result = await session.execute(stmt)
+                analysis = result.scalar_one_or_none()
+                
+                if analysis:
+                    comparisons.append({
+                        "folder_path": folder_path,
+                        "analysis_id": analysis.id,
+                        "maturity_score": analysis.overall_maturity_score or 0,
+                        "maturity_level": analysis.maturity_level,
+                        "total_repositories": analysis.total_repositories or 0,
+                        "total_findings": (
+                            (analysis.critical_findings or 0) +
+                            (analysis.high_findings or 0) +
+                            (analysis.medium_findings or 0) +
+                            (analysis.low_findings or 0)
+                        ),
+                        "critical_findings": analysis.critical_findings or 0,
+                        "analyzed_at": analysis.created_at.isoformat() if analysis.created_at else None,
+                        "dsomm_scores": {
+                            "implementation": analysis.implementation_score or 0,
+                            "build_deployment": analysis.build_deployment_score or 0,
+                            "verification": analysis.verification_score or 0,
+                            "information_gathering": analysis.information_gathering_score or 0
+                        }
+                    })
+                else:
+                    comparisons.append({
+                        "folder_path": folder_path,
+                        "analysis_id": None,
+                        "maturity_score": 0,
+                        "maturity_level": "Not Analyzed",
+                        "total_repositories": 0,
+                        "total_findings": 0,
+                        "critical_findings": 0,
+                        "analyzed_at": None,
+                        "dsomm_scores": {}
+                    })
+        
+        # Calculate averages and rankings
+        analyzed_folders = [c for c in comparisons if c['analysis_id']]
+        avg_maturity = sum(c['maturity_score'] for c in analyzed_folders) / len(analyzed_folders) if analyzed_folders else 0
+        
+        # Sort by maturity score
+        ranked = sorted(comparisons, key=lambda x: x['maturity_score'], reverse=True)
+        
+        return {
+            "success": True,
+            "comparisons": comparisons,
+            "ranked": ranked,
+            "summary": {
+                "average_maturity": round(avg_maturity, 2),
+                "highest_maturity": ranked[0]['maturity_score'] if ranked else 0,
+                "lowest_maturity": ranked[-1]['maturity_score'] if ranked else 0,
+                "folders_analyzed": len(analyzed_folders),
+                "folders_requested": len(folder_paths)
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to compare folders: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/analysis/{analysis_id}")
+async def delete_analysis(
+    analysis_id: str
+):
+    """
+    Delete a specific analysis by ID
+    """
+    try:
+        async with db_manager.get_session() as session:
+            from database.models import ProjectAnalysis
+            from sqlalchemy import select
+            
+            # Find the analysis
+            stmt = select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id)
+            result = await session.execute(stmt)
+            analysis = result.scalar_one_or_none()
+            
+            if not analysis:
+                raise HTTPException(status_code=404, detail="Analysis not found")
+            
+            # Delete the analysis (findings are stored in analysis_data JSON, not as separate records)
+            await session.delete(analysis)
+            await session.commit()
+            
+            logger.info(f"🗑️ Successfully deleted analysis {analysis_id}")
+            
+            return {
+                "success": True,
+                "message": "Analysis deleted successfully",
+                "analysis_id": analysis_id
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to delete analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -559,3 +901,190 @@ async def _run_project_analysis(
             error_message=str(e)
         )
 
+
+async def _run_folder_analysis(
+    analyzer: WorkspaceAnalyzer,
+    org_name: str,
+    filtered_tree_data: List[Dict],
+    tree_id: str,
+    folder_id: str,
+    folder_path: str,
+    user_id: str,
+    fetch_github_data: bool
+):
+    """Background task to run folder-specific analysis"""
+    from core.event_bus import event_bus
+    import time
+    
+    start_time = time.time()
+    analysis_id = None
+    
+    try:
+        logger.info(f"📁 Starting folder analysis for: {folder_path}")
+        
+        # Extract repository names from filtered tree
+        repo_names = _extract_repository_names(filtered_tree_data)
+        
+        # Publish analysis started event
+        await event_bus.publish_workspace_analysis_started(
+            analysis_id=None,
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id
+        )
+        
+        # Run analysis on filtered tree data
+        result = await analyzer.analyze_workspace(
+            org_name,
+            filtered_tree_data,
+            fetch_github_data
+        )
+        
+        # Save results with folder scope metadata
+        async with db_manager.get_session() as session:
+            for project_analysis in result.get('project_analyses', []):
+                # Enhanced save with folder scope information
+                saved_analysis = await WorkspaceIntelligenceDB.save_project_analysis(
+                    session,
+                    tree_id,
+                    project_analysis['project_id'],
+                    project_analysis['project_name'],
+                    org_name,
+                    user_id,
+                    project_analysis,
+                    analysis_scope='folder',
+                    folder_id=folder_id,
+                    folder_path=folder_path,
+                    repositories_in_scope=repo_names
+                )
+                
+                if not analysis_id:
+                    analysis_id = saved_analysis.id
+                
+                # Publish project analysis completed event
+                await event_bus.publish_project_analysis_completed(
+                    analysis_id=saved_analysis.id,
+                    project_id=project_analysis['project_id'],
+                    project_name=project_analysis['project_name'],
+                    organization_name=org_name,
+                    maturity_scores={
+                        'overall': saved_analysis.overall_maturity_score or 0,
+                        'implementation': saved_analysis.implementation_score or 0,
+                        'build_deployment': saved_analysis.build_deployment_score or 0,
+                        'verification': saved_analysis.verification_score or 0,
+                        'information_gathering': saved_analysis.information_gathering_score or 0
+                    }
+                )
+        
+        duration = time.time() - start_time
+        
+        # Publish analysis completed event
+        await event_bus.publish_workspace_analysis_completed(
+            analysis_id=analysis_id,
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id,
+            duration_seconds=duration,
+            maturity_score=result.get('organization_metrics', {}).get('overall_maturity', 0),
+            total_repositories=result.get('summary', {}).get('total_repositories', 0),
+            total_workflows=result.get('summary', {}).get('total_workflows', 0),
+            findings_count=result.get('summary', {}).get('findings_count', {})
+        )
+        
+        logger.info(f"✅ Folder analysis completed for {folder_path} ({len(repo_names)} repos)")
+        
+    except Exception as e:
+        logger.error(f"❌ Background folder analysis failed: {str(e)}", exc_info=True)
+        
+        # Publish analysis failed event
+        await event_bus.publish_workspace_analysis_failed(
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id,
+            error_message=str(e)
+        )
+
+
+def _filter_tree_by_folder(tree_data: List[Dict], folder_path: str, include_subfolders: bool) -> List[Dict]:
+    """
+    Filter tree_data to only include items from specified folder path
+    
+    Args:
+        tree_data: Complete repository tree structure
+        folder_path: Path like "team-a/backend" or "infrastructure"
+        include_subfolders: Whether to include nested subfolders
+        
+    Returns:
+        Filtered tree_data containing only the specified folder
+    """
+    path_parts = folder_path.split('/')
+    
+    def find_folder_recursive(items: List[Dict], parts: List[str]) -> Optional[Dict]:
+        """Recursively find folder in tree structure"""
+        if not parts:
+            return None
+            
+        current_name = parts[0]
+        remaining_parts = parts[1:]
+        
+        for item in items:
+            if item.get('type') == 'folder' and item.get('name') == current_name:
+                if not remaining_parts:
+                    # Found the target folder
+                    return item
+                else:
+                    # Continue searching in children
+                    children = item.get('children', [])
+                    return find_folder_recursive(children, remaining_parts)
+        
+        return None
+    
+    # Find the target folder
+    target_folder = find_folder_recursive(tree_data, path_parts)
+    
+    if not target_folder:
+        return []
+    
+    # If include_subfolders, return the folder with all its children
+    # Otherwise, filter out nested folders and keep only direct repos
+    if include_subfolders:
+        return [target_folder]
+    else:
+        # Create a copy with only direct repositories
+        filtered_folder = target_folder.copy()
+        filtered_folder['children'] = [
+            child for child in target_folder.get('children', [])
+            if child.get('type') != 'folder'
+        ]
+        return [filtered_folder]
+
+
+def _count_repositories_in_tree(tree_data: List[Dict]) -> int:
+    """Count total number of repositories in tree structure"""
+    count = 0
+    
+    def count_recursive(items: List[Dict]):
+        nonlocal count
+        for item in items:
+            if item.get('type') == 'repository':
+                count += 1
+            elif item.get('type') == 'folder':
+                count_recursive(item.get('children', []))
+    
+    count_recursive(tree_data)
+    return count
+
+
+def _extract_repository_names(tree_data: List[Dict]) -> List[str]:
+    """Extract all repository names from tree structure"""
+    repo_names = []
+    
+    def extract_recursive(items: List[Dict]):
+        for item in items:
+            if item.get('type') == 'repository':
+                repo_names.append(item.get('name', ''))
+            elif item.get('type') == 'folder':
+                extract_recursive(item.get('children', []))
+    
+    extract_recursive(tree_data)
+    return repo_names

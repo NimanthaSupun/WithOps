@@ -1,1 +1,13 @@
-﻿
+﻿withops-workspace-intelligence-service  | 2025-12-02 20:58:36,452 - api.routes.workspace_intelligence - INFO - 🔍 Retrieved analysis a8283246-9d53-449f-a5c1-c3f49d6ebf5b for project test
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,452 - api.routes.workspace_intelligence - INFO - 📦 Analysis data keys: ['maturity', 'project_id', 'analyzed_at', 'project_name', 'repositories', 'findings_count', 'total_findings', 'workflow_count', 'repository_count', 'detected_practices']
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,452 - api.routes.workspace_intelligence - INFO - 📦 Analysis data type: <class 'dict'>
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,453 - api.routes.workspace_intelligence - INFO - 📊 Found 1 repositories in analysis_data      
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,453 - api.routes.workspace_intelligence - INFO - 📋 Repository 'workflows' has 6 findings      
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,453 - api.routes.workspace_intelligence - INFO - 🔍 Total findings collected: 6
+withops-workspace-intelligence-service  | 2025-12-02 20:58:36,453 - api.routes.workspace_intelligence - INFO - ✅ Returning 1 repositories and 6 findings    
+withops-workspace-intelligence-service  | INFO:     172.18.0.17:51204 - "GET /api/workspace-intelligence/analysis/a8283246-9d53-449f-a5c1-c3f49d6ebf5b HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     172.18.0.6:59160 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
+withops-workspace-intelligence-service  | INFO:     172.18.0.6:59160 - "GET / HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     127.0.0.1:60050 - "GET /health HTTP/1.1" 200 OK
+withops-workspace-intelligence-service  | INFO:     172.18.0.6:38002 - "GET /metrics HTTP/1.1" 307 Temporary Redirect
+withops-workspace-intelligence-service  | INFO:     172.18.0.6:38002 - "GET / HTTP/1.1" 200 OK

@@ -77,15 +77,31 @@ class WorkspaceIntelligenceDB:
         project_name: str,
         organization_name: str,
         user_id: str,
-        project_data: Dict
+        project_data: Dict,
+        analysis_scope: str = 'organization',
+        folder_id: Optional[str] = None,
+        folder_path: Optional[str] = None,
+        repositories_in_scope: Optional[List[str]] = None
     ) -> ProjectAnalysis:
         """
         Save individual project analysis to database
+        
+        Args:
+            db: Database session
+            repository_tree_id: ID of the repository tree
+            project_id: Project identifier
+            project_name: Name of the project
+            organization_name: Organization name
+            user_id: User ID performing analysis
+            project_data: Complete analysis data
+            analysis_scope: Scope of analysis ('organization', 'folder', 'repository')
+            folder_id: ID of folder if scope is 'folder'
+            folder_path: Path of folder if scope is 'folder'
+            repositories_in_scope: List of repository names included in analysis
         """
         try:
             maturity = project_data.get('maturity', {})
-            metrics = project_data.get('metrics', {})
-            findings_summary = project_data.get('findings_summary', {})
+            findings_count = project_data.get('findings_count', {})
             
             analysis = ProjectAnalysis(
                 repository_tree_id=repository_tree_id,
@@ -93,30 +109,40 @@ class WorkspaceIntelligenceDB:
                 project_name=project_name,
                 organization_name=organization_name,
                 user_id=user_id,
+                # Folder scope metadata
+                analysis_scope=analysis_scope,
+                folder_id=folder_id,
+                folder_path=folder_path,
+                repositories_in_scope=repositories_in_scope,
+                # Status
                 status='completed',
                 completed_at=datetime.utcnow(),
-                overall_maturity_score=maturity.get('overall_score', 0),
-                maturity_level=maturity.get('level', 'Unknown'),
+                # Maturity scores
+                overall_maturity_score=maturity.get('overall_maturity_score', 0),
+                maturity_level=str(maturity.get('maturity_level', 'Unknown')),
                 implementation_score=maturity.get('implementation_score', 0),
                 build_deployment_score=maturity.get('build_deployment_score', 0),
-                verification_score=maturity.get('verification_score', 0),
+                verification_score=maturity.get('test_verification_score', 0),
                 information_gathering_score=maturity.get('information_gathering_score', 0),
-                total_repositories=metrics.get('total_repositories', 0),
-                repositories_analyzed=metrics.get('repositories_analyzed', 0),
-                total_workflows=metrics.get('total_workflows', 0),
-                critical_findings=findings_summary.get('critical', 0),
-                high_findings=findings_summary.get('high', 0),
-                medium_findings=findings_summary.get('medium', 0),
-                low_findings=findings_summary.get('low', 0),
+                # Metrics
+                total_repositories=project_data.get('repository_count', 0),
+                repositories_analyzed=project_data.get('repository_count', 0),
+                total_workflows=project_data.get('workflow_count', 0),
+                critical_findings=findings_count.get('critical', 0),
+                high_findings=findings_count.get('high', 0),
+                medium_findings=findings_count.get('medium', 0),
+                low_findings=findings_count.get('low', 0),
                 detected_practices=project_data.get('detected_practices', {}),
-                analysis_config=project_data.get('analysis_config', {})
+                analysis_config=project_data.get('analysis_config', {}),
+                analysis_data=project_data  # Store complete analysis data with repositories and findings
             )
             
             db.add(analysis)
             await db.commit()
             await db.refresh(analysis)
             
-            logger.info(f"Saved project analysis {analysis.id} for project {project_data.get('project_name')}")
+            scope_info = f" (scope: {analysis_scope}" + (f", folder: {folder_path}" if folder_path else "") + ")"
+            logger.info(f"Saved project analysis {analysis.id} for project {project_data.get('project_name')}{scope_info}")
             return analysis
             
         except Exception as e:

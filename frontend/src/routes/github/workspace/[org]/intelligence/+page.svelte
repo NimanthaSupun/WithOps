@@ -23,6 +23,11 @@
 	let analysisData = null;
 	let activeTab = 'overview';
 	
+	// Analysis History
+	let allAnalyses = [];
+	let selectedAnalysisId = null;
+	let deletingAnalysisId = null;
+	
 	// UI State
 	let selectedRepository = null;
 	let expandedFindings = new Set();
@@ -185,8 +190,15 @@
 			console.log('✅ Analysis data received:', data);
 			
 			if (data.analyses && data.analyses.length > 0) {
-				// Get the most recent analysis
-				const latestAnalysis = data.analyses[0];
+				// Store all analyses for history
+				allAnalyses = data.analyses;
+				
+				// Get the most recent analysis or selected one
+				const latestAnalysis = selectedAnalysisId 
+					? data.analyses.find(a => a.id === selectedAnalysisId) || data.analyses[0]
+					: data.analyses[0];
+				
+				selectedAnalysisId = latestAnalysis.id;
 				
 				// Fetch detailed analysis data
 				const detailResponse = await fetch(
@@ -202,8 +214,19 @@
 				if (detailResponse.ok) {
 					const detailData = await detailResponse.json();
 					console.log('📋 Detailed analysis response:', detailData);
-					analysisData = detailData.analysis || detailData; // Handle nested structure
+					
+					// Properly merge the response structure
+					analysisData = {
+						...(detailData.analysis || {}),
+						repositories: detailData.repositories || [],
+						findings: detailData.findings || [],
+						maturity_scores: detailData.maturity_scores,
+						findings_summary: detailData.findings_summary
+					};
+					
 					console.log('📦 Final analysisData:', analysisData);
+					console.log('📊 Repositories count:', analysisData.repositories?.length || 0);
+					console.log('🔍 Findings count:', analysisData.findings?.length || 0);
 				} else {
 					console.warn('⚠️ Detail fetch failed, using basic data');
 					analysisData = latestAnalysis;
@@ -302,6 +325,61 @@
 	function getRepositoriesWithoutWorkflows() {
 		if (!analysisData?.repositories) return [];
 		return analysisData.repositories.filter(r => r.has_workflows === false);
+	}
+	
+	async function switchToAnalysis(analysisId) {
+		selectedAnalysisId = analysisId;
+		await fetchAnalysis();
+	}
+	
+	async function deleteAnalysis(analysisId) {
+		if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.')) {
+			return;
+		}
+		
+		try {
+			deletingAnalysisId = analysisId;
+			const token = getAuthToken();
+			
+			const response = await fetch(
+				`${API_BASE_URL}/api/workspace-intelligence/analysis/${analysisId}`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+			
+			if (!response.ok) {
+				throw new Error('Failed to delete analysis');
+			}
+			
+			console.log('✅ Analysis deleted successfully');
+			
+			// Reload analyses
+			selectedAnalysisId = null;
+			await fetchAnalysis();
+			
+		} catch (err) {
+			console.error('❌ Failed to delete analysis:', err);
+			alert(`Failed to delete analysis: ${err.message}`);
+		} finally {
+			deletingAnalysisId = null;
+		}
+	}
+	
+	function formatDate(dateString) {
+		if (!dateString) return 'N/A';
+		const date = new Date(dateString);
+		return date.toLocaleString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 	}
 </script>
 
@@ -434,7 +512,7 @@
 			<!-- Tab Navigation -->
 			<div class="mb-6 border-b transition-colors {$isDarkMode ? 'border-gray-700' : 'border-gray-200'}">
 				<nav class="flex gap-2 -mb-px">
-					{#each ['overview', 'dsomm', 'repositories', 'findings'] as tab}
+					{#each ['overview', 'dsomm', 'repositories', 'findings', 'history'] as tab}
 						<button
 							on:click={() => activeTab = tab}
 							class="px-6 py-3 font-medium border-b-2 transition-all capitalize
@@ -447,7 +525,7 @@
 										: 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
 								}"
 						>
-							{tab === 'dsomm' ? 'DSOMM Levels' : tab}
+							{tab === 'dsomm' ? 'DSOMM Levels' : tab === 'history' ? 'Analysis History' : tab}
 						</button>
 					{/each}
 				</nav>
@@ -982,6 +1060,133 @@
 							</h3>
 							<p class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
 								Great! No security issues detected.
+							</p>
+						</div>
+					{/if}
+				</div>
+			{/if}
+			
+			<!-- History Tab -->
+			{#if activeTab === 'history'}
+				<div class="space-y-4">
+					<div class="flex items-center justify-between mb-6">
+						<h2 class="text-2xl font-bold transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+							📜 Analysis History
+						</h2>
+						<div class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+							{allAnalyses.length} {allAnalyses.length === 1 ? 'analysis' : 'analyses'}
+						</div>
+					</div>
+					
+					{#if allAnalyses.length > 0}
+						<div class="space-y-3">
+							{#each allAnalyses as analysis (analysis.id)}
+								<div class="rounded-lg p-5 border-2 transition-all
+									{analysis.id === selectedAnalysisId
+										? $isDarkMode
+											? 'bg-blue-900/30 border-blue-500'
+											: 'bg-blue-50 border-blue-500'
+										: $isDarkMode
+											? 'bg-gray-800 border-gray-700 hover:border-gray-600'
+											: 'bg-white border-gray-200 hover:border-gray-300'
+									}">
+									<div class="flex items-center justify-between">
+										<div class="flex-1">
+											<div class="flex items-center gap-3 mb-2">
+												<h3 class="font-semibold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+													{analysis.id === selectedAnalysisId ? '✓ ' : ''}Analysis - {formatDate(analysis.created_at)}
+												</h3>
+												{#if analysis.id === selectedAnalysisId}
+													<span class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+														{$isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}">
+														Currently Viewing
+													</span>
+												{/if}
+											</div>
+											
+											<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+												<div>
+													<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+														Repositories
+													</div>
+													<div class="text-xl font-bold transition-colors {$isDarkMode ? 'text-blue-400' : 'text-blue-600'}">
+														{analysis.total_repositories || 0}
+													</div>
+												</div>
+												<div>
+													<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+														Findings
+													</div>
+													<div class="text-xl font-bold transition-colors {$isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}">
+														{analysis.findings_count || 0}
+													</div>
+												</div>
+												<div>
+													<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+														Maturity Score
+													</div>
+													<div class="text-xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+														{analysis.maturity_score || 0}%
+													</div>
+												</div>
+												<div>
+													<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+														Status
+													</div>
+													<div class="text-xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+														{analysis.status || 'completed'}
+													</div>
+												</div>
+											</div>
+											
+											{#if analysis.project_name}
+												<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+													Project: <span class="font-medium">{analysis.project_name}</span>
+												</div>
+											{/if}
+										</div>
+										
+										<div class="flex items-center gap-2 ml-4">
+											{#if analysis.id !== selectedAnalysisId}
+												<button
+													on:click={() => switchToAnalysis(analysis.id)}
+													class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
+														{$isDarkMode 
+															? 'bg-blue-600 hover:bg-blue-700 text-white' 
+															: 'bg-blue-500 hover:bg-blue-600 text-white'}"
+												>
+													View
+												</button>
+											{/if}
+											
+											<button
+												on:click={() => deleteAnalysis(analysis.id)}
+												disabled={deletingAnalysisId === analysis.id}
+												class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
+													{deletingAnalysisId === analysis.id
+														? $isDarkMode
+															? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+															: 'bg-gray-200 text-gray-400 cursor-not-allowed'
+														: $isDarkMode
+															? 'bg-red-600 hover:bg-red-700 text-white'
+															: 'bg-red-500 hover:bg-red-600 text-white'
+													}"
+											>
+												{deletingAnalysisId === analysis.id ? '...' : 'Delete'}
+											</button>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="text-center py-12 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
+							<span class="text-6xl mb-4 block">📭</span>
+							<h3 class="text-xl font-bold mb-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+								No Analysis History
+							</h3>
+							<p class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+								Run your first analysis to see it here!
 							</p>
 						</div>
 					{/if}

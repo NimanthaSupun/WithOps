@@ -41,6 +41,16 @@
     let addingRepo = $state(false);
     let loadingRepos = $state(false);
     
+    // Folder Analysis Modal
+    let showAnalyzeFolderModal = $state(false);
+    let folderToAnalyze = $state(null);
+    let analyzingFolder = $state(false);
+    let includeSubfolders = $state(true);
+    let analysisProgress = $state(null);
+    
+    // Repository Tree ID for analysis
+    let currentRepositoryTreeId = $state(null);
+    
     // Statistics
     let statistics = $state({
         totalFolders: 0,
@@ -74,11 +84,14 @@
             
             if (result.success) {
                 repoTreeData = result.data || [];
+                // The API returns 'id' in metadata, not 'tree_id'
+                currentRepositoryTreeId = result.metadata?.id || result.metadata?.tree_id || null;
                 updateStatistics();
-                console.log('✅ Repository tree data loaded:', repoTreeData);
+                console.log('✅ Repository tree data loaded:', repoTreeData, 'Tree ID:', currentRepositoryTreeId, 'Metadata:', result.metadata);
             } else {
                 console.warn('No existing repository tree data found, starting fresh');
                 repoTreeData = [];
+                currentRepositoryTreeId = null;
             }
         } catch (err) {
             console.error('Failed to load repository tree:', err);
@@ -111,6 +124,11 @@
             saveSuccess = false;
             
             const result = await repositoryTreeClient.saveRepositoryTree(orgName, repoTreeData);
+            
+            if (result.success && result.tree_id) {
+                currentRepositoryTreeId = result.tree_id;
+                console.log('✅ Tree ID updated:', currentRepositoryTreeId);
+            }
             
             console.log('📊 Save result:', result);
             
@@ -391,6 +409,7 @@
         editingValue = '';
     }
     
+    
     function cancelEdit() {
         editingNode = null;
         editingValue = '';
@@ -433,6 +452,118 @@
                 count += countItemsInNode(child);
             }
         }
+        return count;
+    }
+    
+    // Folder Analysis Functions
+    function openAnalyzeFolderModal(node) {
+        folderToAnalyze = node;
+        showAnalyzeFolderModal = true;
+        includeSubfolders = true;
+        analysisProgress = null;
+    }
+    
+    function closeAnalyzeFolderModal() {
+        showAnalyzeFolderModal = false;
+        folderToAnalyze = null;
+        analyzingFolder = false;
+        analysisProgress = null;
+    }
+    
+    async function triggerFolderAnalysis() {
+        if (!folderToAnalyze || !currentRepositoryTreeId) {
+            console.error('❌ Missing folder or repository tree ID');
+            return;
+        }
+        
+        analyzingFolder = true;
+        analysisProgress = 'Preparing folder analysis...';
+        
+        try {
+            const folderPath = getFolderPath(folderToAnalyze);
+            const repoCount = countRepositoriesInFolder(folderToAnalyze);
+            
+            analysisProgress = `Analyzing ${repoCount} repositories in ${folderPath}...`;
+            
+            // Get authentication token (same logic as repositoryTreeClient)
+            const token = localStorage.getItem('auth_token') || 
+                         sessionStorage.getItem('auth_token') || 
+                         localStorage.getItem('github_token');
+            
+            if (!token) {
+                throw new Error('Authentication required. Please login first.');
+            }
+            
+            const response = await fetch('http://localhost:8000/api/workspace-intelligence/analyze-folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    organization_name: orgName,
+                    tree_data: repoTreeData,
+                    repository_tree_id: currentRepositoryTreeId,
+                    folder_id: folderToAnalyze.id,
+                    folder_path: folderPath,
+                    include_subfolders: includeSubfolders
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to start folder analysis');
+            }
+            
+            const result = await response.json();
+            console.log('✅ Folder analysis started:', result);
+            
+            analysisProgress = 'Analysis started successfully! Redirecting...';
+            
+            // Close modal and redirect to intelligence dashboard
+            setTimeout(() => {
+                closeAnalyzeFolderModal();
+                goto(`/github/workspace/${orgName}/intelligence`);
+            }, 1500);
+            
+        } catch (error) {
+            console.error('❌ Error triggering folder analysis:', error);
+            analysisProgress = null;
+            analyzingFolder = false;
+            alert(`Failed to start folder analysis: ${error.message}`);
+        }
+    }
+    
+    function getFolderPath(node) {
+        if (!node) return '';
+        const path = [];
+        let current = node;
+        
+        while (current) {
+            if (current.name) path.unshift(current.name);
+            current = current.parent;
+        }
+        
+        return path.join('/') || node.name;
+    }
+    
+    function countRepositoriesInFolder(node) {
+        if (!node) return 0;
+        let count = 0;
+        
+        function traverse(n) {
+            if (!n) return;
+            if (n.type === 'repository') {
+                count++;
+            }
+            if (n.children) {
+                for (const child of n.children) {
+                    traverse(child);
+                }
+            }
+        }
+        
+        traverse(node);
         return count;
     }
 </script>
@@ -1169,6 +1300,16 @@
                                         
                                         <div class="folder-actions">
                                             <button
+                                                onclick={() => openAnalyzeFolderModal(node)}
+                                                class="action-icon analyze"
+                                                title="Analyze Folder"
+                                                aria-label="Analyze folder maturity"
+                                            >
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                </svg>
+                                            </button>
+                                            <button
                                                 onclick={() => startEditing(node)}
                                                 class="action-icon"
                                                 title="Rename"
@@ -1457,6 +1598,110 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         <span>Add Repository</span>
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Analyze Folder Modal -->
+{#if showAnalyzeFolderModal}
+    <div class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Analyze Folder</h3>
+                <button class="close-btn" onclick={closeAnalyzeFolderModal} aria-label="Close modal">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                {#if folderToAnalyze}
+                    <div class="folder-info">
+                        <div class="info-row">
+                            <svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            <div class="info-text">
+                                <span class="label">Folder Name:</span>
+                                <span class="value">{folderToAnalyze.name}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <svg class="path-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="info-text">
+                                <span class="label">Path:</span>
+                                <span class="value">{getFolderPath(folderToAnalyze)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <svg class="repo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="info-text">
+                                <span class="label">Repositories:</span>
+                                <span class="value badge">{countRepositoriesInFolder(folderToAnalyze)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options">
+                        <label class="checkbox-label">
+                            <input
+                                type="checkbox"
+                                bind:checked={includeSubfolders}
+                                disabled={analyzingFolder}
+                            />
+                            <span>Include all subfolders and their repositories</span>
+                        </label>
+                    </div>
+
+                    {#if analyzingFolder}
+                        <div class="progress-section">
+                            <div class="loading-spinner"></div>
+                            <p class="progress-text">{analysisProgress}</p>
+                        </div>
+                    {/if}
+
+                    {#if !analyzingFolder}
+                        <div class="info-notice">
+                            <svg class="notice-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>This will analyze {includeSubfolders ? 'this folder and all subfolders' : 'only repositories directly in this folder'} using the OWASP DSOMM framework.</span>
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+
+            <div class="modal-footer">
+                <button
+                    onclick={closeAnalyzeFolderModal}
+                    disabled={analyzingFolder}
+                    class="btn-secondary"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick={() => triggerFolderAnalysis()}
+                    disabled={analyzingFolder}
+                    class="btn-primary"
+                >
+                    {#if analyzingFolder}
+                        <div class="loading-spinner small"></div>
+                        <span>Analyzing...</span>
+                    {:else}
+                        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span>Start Analysis</span>
                     {/if}
                 </button>
             </div>
@@ -2585,6 +2830,206 @@
     .btn-icon {
         width: 18px;
         height: 18px;
+    }
+
+    /* Folder Analysis Modal Specific Styles */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        animation: backdropFadeIn 0.2s ease;
+    }
+
+    .modal {
+        background: linear-gradient(145deg, var(--card-bg) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        backdrop-filter: blur(30px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    .modal-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .close-btn {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid rgba(255, 71, 87, 0.2);
+        color: var(--error-color);
+        padding: 0.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+        background: rgba(255, 71, 87, 0.2);
+        transform: rotate(90deg);
+    }
+
+    .close-btn svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+    }
+
+    .folder-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(74, 158, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .info-row:hover {
+        background: rgba(74, 158, 255, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .folder-icon,
+    .path-icon,
+    .repo-icon {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .info-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex: 1;
+    }
+
+    .info-text .label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .info-text .value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.75rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        color: white;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+    }
+
+    .options {
+        margin-bottom: 1.5rem;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(74, 158, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-label:hover {
+        background: rgba(74, 158, 255, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+
+    .checkbox-label span {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        flex: 1;
+    }
+
+    .progress-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem;
+        background: rgba(74, 158, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-text {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        text-align: center;
+        margin: 0;
+    }
+
+    .info-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(74, 158, 255, 0.1);
+        border: 1px solid rgba(74, 158, 255, 0.2);
+        border-radius: 10px;
+    }
+
+    .notice-icon {
+        width: 20px;
+        height: 20px;
+        color: var(--primary-color);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-notice span {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
     }
 
     /* Selection Grid */

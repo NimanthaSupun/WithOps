@@ -125,6 +125,12 @@ class ProjectAnalysis(Base):
     organization_name = Column(String, nullable=False, index=True)
     user_id = Column(String, index=True)
     
+    # Analysis scope - NEW for folder-level analysis
+    analysis_scope = Column(String, default='organization')  # 'organization' | 'folder' | 'repository'
+    folder_id = Column(String, index=True)  # ID of the folder being analyzed (nullable)
+    folder_path = Column(String)  # Human-readable path like "team-a/backend"
+    repositories_in_scope = Column(JSON)  # Array of repository names included in this analysis
+    
     # Status
     status = Column(String)
     started_at = Column(DateTime)
@@ -148,10 +154,12 @@ class ProjectAnalysis(Base):
     medium_findings = Column(Integer)
     low_findings = Column(Integer)
     
+    # Full analysis data (stores complete project analysis including repositories and findings)
+    analysis_data = Column(JSON)
+    
     # Analysis configuration and detected practices
     analysis_config = Column(JSON)
     detected_practices = Column(JSON)
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
