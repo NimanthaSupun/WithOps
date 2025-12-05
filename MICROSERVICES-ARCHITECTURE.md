@@ -23,7 +23,7 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
        ▼
 ┌─────────────────────────────────────────────┐
 │          Kong API Gateway (8000)            │
-│  Routes: /api/ai, /api/github, /api/auth   │
+│  Routes: /api/ai, /api/github, /api/auth    │
 └──────────────────┬──────────────────────────┘
                    │
        ┌───────────┴───────────┐
@@ -35,7 +35,7 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
 └─────────────┘         └─────────────────┘
        │
        │
-┌──────┴─────────────────────────────────────┐
+┌──────┴────────────────── ──── ─── ───── ────┐
 │                                             │
 ▼                 ▼                 ▼         ▼
 ┌────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
