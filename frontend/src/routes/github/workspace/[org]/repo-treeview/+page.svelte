@@ -598,8 +598,8 @@
                 </nav>
             </div>
             
-            <!-- Right: Theme Toggle -->
-            <div class="navbar-right">
+            <!--todo:- Right: Theme Toggle -->
+            <!-- <div class="navbar-right">
                 <button 
                     onclick={toggleTheme}
                     class="theme-toggle"
@@ -615,7 +615,8 @@
                         </svg>
                     {/if}
                 </button>
-            </div>
+            </div> -->
+
         </div>
     </nav>
 
@@ -1835,7 +1836,7 @@
     }
 
     /* Theme Toggle */
-    .theme-toggle {
+    /* .theme-toggle {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid var(--border-color);
         color: var(--primary-color);
@@ -1844,9 +1845,9 @@
         cursor: pointer;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
-    }
+    } */
 
-    .theme-toggle:hover {
+    /* .theme-toggle:hover {
         background: rgba(74, 158, 255, 0.2);
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(74, 158, 255, 0.3);
@@ -1856,7 +1857,7 @@
         width: 20px;
         height: 20px;
         display: block;
-    }
+    } */
 
     /* Main Layout */
     .main-layout {

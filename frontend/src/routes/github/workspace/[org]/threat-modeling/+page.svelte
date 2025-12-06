@@ -400,8 +400,8 @@
                 </nav>
             </div>
             
-            <!-- Right: Theme Toggle -->
-            <div class="navbar-right">
+            <!--todo:-- Right: Theme Toggle -->
+            <!-- <div class="navbar-right">
                 <button 
                     onclick={toggleTheme}
                     class="theme-toggle"
@@ -417,7 +417,8 @@
                         </svg>
                     {/if}
                 </button>
-            </div>
+            </div> -->
+
         </div>
     </nav>
 

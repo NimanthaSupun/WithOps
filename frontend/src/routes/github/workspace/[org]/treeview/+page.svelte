@@ -290,19 +290,29 @@
             
             // Recursively enhance tree nodes
             function enhanceNode(node) {
-                if (node.type === 'workflow' && node.name.match(/\.(yml|yaml)$/)) {
-                    // Try to find matching GitHub workflow
+                if (node.type === 'workflow') {
+                    // Try to find matching GitHub workflow by checking both current name and metadata
                     const possibleKeys = [
                         `${node.repository}::${node.name}`,
-                        `${node.metadata?.repository}::${node.name}`
+                        `${node.metadata?.repository}::${node.name}`,
+                        // Also try with metadata workflowName if it exists
+                        ...(node.metadata?.workflowName ? 
+                            [`${node.repository}::${node.metadata.workflowName}`, `${node.metadata?.repository}::${node.metadata.workflowName}`] : 
+                            [])
                     ];
                     
-                    for (const key of possibleKeys) {
-                        if (githubWorkflowMap.has(key)) {
-                            const githubData = githubWorkflowMap.get(key);
+                    // Search through githubWorkflowMap for a match
+                    let matchFound = false;
+                    for (const [key, githubData] of githubWorkflowMap.entries()) {
+                        // Check if this workflow matches by name or repository
+                        const isMatch = possibleKeys.includes(key) || 
+                                       (node.metadata?.workflowName === githubData.workflowName && node.repository === githubData.repository);
+                        
+                        if (isMatch) {
                             console.log(`✅ Enhanced workflow ${node.name} with GitHub data:`, githubData);
                             
-                            // Enhance with GitHub metadata
+                            // Update the node name to use the actual filename
+                            node.name = githubData.filename;
                             node.repository = githubData.repository;
                             node.metadata = {
                                 ...node.metadata,
@@ -310,8 +320,10 @@
                                 repository: githubData.repository,
                                 workflowName: githubData.workflowName,
                                 workflowPath: githubData.workflowPath,
-                                userCreated: false // Override if it was marked as user created
+                                workflowFilename: githubData.filename,
+                                userCreated: false
                             };
+                            matchFound = true;
                             break;
                         }
                     }
@@ -653,12 +665,20 @@ jobs:
                 metadata: workflow.metadata
             });
             
-            // For real GitHub workflows, use the actual workflow filename (not full path)
-            const workflowId = workflow.name; // Use just the filename like "ci-caller.yml"
+            // For real GitHub workflows, use the actual workflow filename (not display name)
+            // Priority: metadata.workflowFilename > extract from path > name (if it's a .yml/.yaml file)
+            const pathFilename = (workflow.metadata?.path || workflow.path)?.split('/').pop();
+            const workflowFilename = workflow.metadata?.workflowFilename || 
+                                    pathFilename ||
+                                    (workflow.name.match(/\.(yml|yaml)$/) ? workflow.name : null);
+            const workflowId = workflowFilename || workflow.name;
             const repositoryName = workflow.repository || workflow.metadata?.repository;
             
-            console.log(`📋 Fetching GitHub Actions history for workflow: ${workflowId}`);
+            console.log(`📋 Fetching GitHub Actions history for workflow: ${workflowId} (display name: ${workflow.metadata?.workflowName || workflow.name})`);
             console.log(`📁 Repository: ${repositoryName || 'Will search all repositories'}`);
+            console.log(`🔍 Extracted filename from path: ${pathFilename}`);
+            console.log(`🔍 Final workflowId: ${workflowId}`);
+            console.log(`🔍 Workflow metadata:`, workflow.metadata);
             
             const githubResult = await githubClient.getGitHubActionsHistory(workflowId, orgName, repositoryName);
             
@@ -1230,211 +1250,6 @@ jobs:
     
     function goBack() {
         goto(`/github/workspace/${orgName}`);
-    }
-    
-    // =============== SECURITY SCANNING FUNCTIONS ===============
-    
-    async function scanWorkflowSecurity(workflow) {
-        if (scanningWorkflows.has(workflow.id)) return;
-        
-        try {
-            scanningWorkflows.add(workflow.id);
-            scanningWorkflows = new Set(scanningWorkflows);
-            
-            console.log(`🔒 Starting security scan for workflow: ${workflow.name}`);
-            showSaveStatus('🔒 Scanning workflow for security vulnerabilities...', true);
-            
-            // Determine repository name
-            const repoName = workflow.repository || workflow.metadata?.repository;
-            
-            // Call security scan API
-            const response = await fetch(`/api/github/workspace/${orgName}/workflows/${workflow.name}/security/scan${repoName ? `?repo_name=${repoName}` : ''}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${$page.data.user?.accessToken || ''}`
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                const scanResult = result.scan_result;
-                
-                // Store the security scan result
-                workflowSecurityResults[workflow.id] = scanResult;
-                workflowSecurityResults = { ...workflowSecurityResults };
-                
-                const riskLevel = scanResult.risk_level;
-                const riskScore = scanResult.risk_score;
-                const vulnCount = scanResult.vulnerability_count;
-                
-                let statusMessage = `✅ Security scan complete: ${riskLevel.toUpperCase()} risk (${riskScore}%)`;
-                if (vulnCount > 0) {
-                    statusMessage += ` - ${vulnCount} vulnerabilities found`;
-                }
-                
-                showSaveStatus(statusMessage, riskLevel !== 'high');
-                
-                console.log(`🔒 Security scan completed for ${workflow.name}:`, scanResult);
-            } else {
-                throw new Error(`Security scan failed: ${response.status}`);
-            }
-            
-        } catch (error) {
-            console.error('Security scan failed:', error);
-            showSaveStatus(`❌ Security scan failed: ${error.message}`, false);
-            
-            // Store error result
-            workflowSecurityResults[workflow.id] = {
-                status: 'error',
-                message: error.message,
-                risk_score: 0,
-                risk_level: 'unknown'
-            };
-            workflowSecurityResults = { ...workflowSecurityResults };
-            
-        } finally {
-            scanningWorkflows.delete(workflow.id);
-            scanningWorkflows = new Set(scanningWorkflows);
-        }
-    }
-    
-    async function scanRepositorySecurity(repoName) {
-        if (scanningRepository === repoName) return;
-        
-        try {
-            scanningRepository = repoName;
-            console.log(`🔒 Starting repository-wide security scan: ${orgName}/${repoName}`);
-            showSaveStatus(`🔒 Scanning all workflows in ${repoName}...`, true);
-            
-            const response = await fetch(`/api/github/workspace/${orgName}/repositories/${repoName}/security/scan`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${$page.data.user?.accessToken || ''}`
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                const scanResult = result.scan_result;
-                const metrics = scanResult.repository_metrics;
-                
-                // Store results for individual workflows
-                if (scanResult.scan_results) {
-                    scanResult.scan_results.forEach(workflowResult => {
-                        const workflowName = workflowResult.workflow_name;
-                        // Find workflow in tree to get its ID
-                        const workflow = findWorkflowByName(treeData, workflowName);
-                        if (workflow) {
-                            workflowSecurityResults[workflow.id] = workflowResult;
-                        }
-                    });
-                    workflowSecurityResults = { ...workflowSecurityResults };
-                }
-                
-                const avgRisk = metrics.average_risk_score;
-                const totalWorkflows = metrics.total_workflows;
-                const highRiskCount = metrics.high_risk_workflows;
-                
-                let statusMessage = `✅ Repository scan complete: ${totalWorkflows} workflows, avg risk ${avgRisk}%`;
-                if (highRiskCount > 0) {
-                    statusMessage += ` (${highRiskCount} high-risk)`;
-                }
-                
-                showSaveStatus(statusMessage, highRiskCount === 0);
-                console.log(`🔒 Repository security scan completed for ${repoName}:`, metrics);
-                
-            } else {
-                throw new Error(`Repository scan failed: ${response.status}`);
-            }
-            
-        } catch (error) {
-            console.error('Repository security scan failed:', error);
-            showSaveStatus(`❌ Repository security scan failed: ${error.message}`, false);
-            
-        } finally {
-            scanningRepository = null;
-        }
-    }
-    
-    async function scanOrganizationSecurity() {
-        if (organizationSecurityScan) return;
-        
-        try {
-            organizationSecurityScan = { status: 'running', progress: 0 };
-            console.log(`🔒 Starting organization-wide security scan: ${orgName}`);
-            showSaveStatus(`🔒 Scanning all workflows in ${orgName}...`, true);
-            
-            const response = await fetch(`/api/github/workspace/${orgName}/security/scan`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${$page.data.user?.accessToken || ''}`
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                organizationSecurityScan = {
-                    status: 'completed',
-                    data: result,
-                    timestamp: new Date().toISOString()
-                };
-                
-                const metrics = result.organization_metrics;
-                const totalRepos = metrics.repositories_scanned;
-                const totalWorkflows = metrics.total_workflows;
-                const avgRisk = metrics.average_risk_score;
-                const highRiskCount = metrics.high_risk_workflows;
-                
-                // Store individual workflow results
-                result.scan_results.forEach(repoResult => {
-                    if (repoResult.scan_results) {
-                        repoResult.scan_results.forEach(workflowResult => {
-                            const workflowName = workflowResult.workflow_name;
-                            const workflow = findWorkflowByName(treeData, workflowName);
-                            if (workflow) {
-                                workflowSecurityResults[workflow.id] = workflowResult;
-                            }
-                        });
-                    }
-                });
-                workflowSecurityResults = { ...workflowSecurityResults };
-                
-                let statusMessage = `✅ Organization scan complete: ${totalRepos} repos, ${totalWorkflows} workflows, avg risk ${avgRisk}%`;
-                if (highRiskCount > 0) {
-                    statusMessage += ` (${highRiskCount} high-risk)`;
-                }
-                
-                showSaveStatus(statusMessage, highRiskCount === 0);
-                console.log(`🔒 Organization security scan completed:`, metrics);
-                
-            } else {
-                throw new Error(`Organization scan failed: ${response.status}`);
-            }
-            
-        } catch (error) {
-            console.error('Organization security scan failed:', error);
-            organizationSecurityScan = { status: 'error', error: error.message };
-            showSaveStatus(`❌ Organization security scan failed: ${error.message}`, false);
-        }
-    }
-    
-    async function loadSecurityOverview() {
-        try {
-            const response = await fetch(`/api/github/workspace/${orgName}/security/overview`, {
-                headers: {
-                    'Authorization': `Bearer ${$page.data.user?.accessToken || ''}`
-                }
-            });
-            
-            if (response.ok) {
-                securityOverview = await response.json();
-            }
-        } catch (error) {
-            console.error('Failed to load security overview:', error);
-        }
     }
     
     function findWorkflowByName(nodes, workflowName) {
@@ -2103,68 +1918,6 @@ jobs:
                         </svg>
                         <span>Workflow</span>
                     </button>
-                    <button 
-                        on:click={saveProjectTree}
-                        disabled={loading}
-                        class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 text-sm flex items-center justify-center disabled:opacity-50"
-                        title="Save Project Tree"
-                    >
-                    >
-                        {#if loading}
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        {:else}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                        {/if}
-                    </button>
-                </div>
-                
-                <!-- Security Scanning Panel -->
-                <div class="border-t border-gray-200 pt-3">
-                    <button 
-                        on:click={toggleSecurityPanel}
-                        class="w-full bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm flex items-center justify-center space-x-1 mb-2"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        <span>🔒 Security</span>
-                    </button>
-                    
-                    {#if showSecurityPanel}
-                        <div class="space-y-2 bg-gray-50 p-3 rounded-lg">
-                            <button 
-                                on:click={scanOrganizationSecurity}
-                                disabled={!!organizationSecurityScan}
-                                class="w-full bg-orange-600 text-white px-3 py-2 rounded-md hover:bg-orange-700 text-xs flex items-center justify-center space-x-1 disabled:opacity-50"
-                            >
-                                {#if organizationSecurityScan?.status === 'running'}
-                                    <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                    <span>Scanning...</span>
-                                {:else}
-                                    <span>🏢 Scan Org</span>
-                                {/if}
-                            </button>
-                            
-                            {#if organizationSecurityScan?.status === 'completed'}
-                                <div class="text-xs text-gray-600 bg-white p-2 rounded border">
-                                    <div class="font-semibold mb-1">Last Scan Results:</div>
-                                    <div>• {organizationSecurityScan.data.organization_metrics.total_workflows} workflows</div>
-                                    <div>• Avg Risk: {organizationSecurityScan.data.organization_metrics.average_risk_score}%</div>
-                                    <div>• High Risk: {organizationSecurityScan.data.organization_metrics.high_risk_workflows}</div>
-                                </div>
-                            {/if}
-                            
-                            {#if securityOverview}
-                                <div class="text-xs text-gray-600">
-                                    <div class="font-semibold">Security Overview:</div>
-                                    <div>• Last scan: {securityOverview.overview.last_scan || 'Never'}</div>
-                                    <div>• Avg risk: {securityOverview.overview.average_risk_score}%</div>
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
                 </div>
             </div>
             

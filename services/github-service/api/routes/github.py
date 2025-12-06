@@ -2292,6 +2292,8 @@ async def get_workflow_actions_history(
         from urllib.parse import unquote
         decoded_workflow_name = unquote(workflow_name)
         
+        logger.info(f"📋 Fetching workflow history for: {decoded_workflow_name} in {org_name}/{repo_name}")
+        
         # Try common workflow file patterns
         possible_filenames = [
             f"{decoded_workflow_name}.yml",
@@ -2305,6 +2307,7 @@ async def get_workflow_actions_history(
         # Try to get workflow runs using workflow filename
         for filename in filter(None, possible_filenames):
             try:
+                logger.info(f"🔍 Trying workflow filename: {filename}")
                 async with httpx.AsyncClient() as client:
                     response = await client.get(
                         f"https://api.github.com/repos/{org_name}/{repo_name}/actions/workflows/{filename}/runs",
@@ -2317,35 +2320,77 @@ async def get_workflow_actions_history(
                         timeout=30.0
                     )
                     
+                    logger.info(f"📊 Response status for {filename}: {response.status_code}")
+                    
                     if response.status_code == 200:
                         data = response.json()
                         workflow_runs = data.get("workflow_runs", [])
+                        logger.info(f"✅ Found {len(workflow_runs)} runs for {filename}")
                         if workflow_runs:
                             workflow_id = workflow_runs[0].get("workflow_id")
                             break
+                    elif response.status_code == 404:
+                        logger.info(f"❌ Workflow file not found: {filename}")
                     
             except Exception as e:
                 logger.warning(f"Error fetching runs for {filename}: {str(e)}")
                 continue
         
-        # Format the response
+        # Format the response and fetch job details for each run IN PARALLEL
+        async def fetch_job_details(run, client):
+            """Fetch job details for a single run"""
+            try:
+                jobs_response = await client.get(
+                    f"https://api.github.com/repos/{org_name}/{repo_name}/actions/runs/{run.get('id')}/jobs",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Accept": "application/vnd.github+json",
+                        "X-GitHub-Api-Version": "2022-11-28"
+                    },
+                    timeout=30.0
+                )
+                
+                if jobs_response.status_code == 200:
+                    jobs_data = jobs_response.json()
+                    return jobs_data.get("jobs", [])
+            except Exception as e:
+                logger.warning(f"Error fetching jobs for run {run.get('id')}: {str(e)}")
+            return []
+        
+        # Fetch all job details in parallel for better performance
         formatted_runs = []
-        for run in workflow_runs:
-            formatted_runs.append({
-                "id": run.get("id"),
-                "name": run.get("name"),
-                "run_number": run.get("run_number"),
-                "status": run.get("status"),
-                "conclusion": run.get("conclusion"),
-                "created_at": run.get("created_at"),
-                "updated_at": run.get("updated_at"),
-                "html_url": run.get("html_url"),
-                "event": run.get("event"),
-                "head_branch": run.get("head_branch"),
-                "head_sha": run.get("head_sha")[:7] if run.get("head_sha") else None,
-                "actor": run.get("actor", {}).get("login") if run.get("actor") else None,
-                "run_started_at": run.get("run_started_at")
-            })
+        if workflow_runs:
+            async with httpx.AsyncClient() as client:
+                # Create tasks for parallel execution
+                job_fetch_tasks = [fetch_job_details(run, client) for run in workflow_runs]
+                
+                # Execute all job fetches in parallel
+                logger.info(f"🚀 Fetching job details for {len(workflow_runs)} runs in parallel...")
+                all_jobs = await asyncio.gather(*job_fetch_tasks)
+                
+                # Combine runs with their job details
+                for run, jobs in zip(workflow_runs, all_jobs):
+                    formatted_runs.append({
+                        "id": run.get("id"),
+                        "name": run.get("name"),
+                        "run_number": run.get("run_number"),
+                        "status": run.get("status"),
+                        "conclusion": run.get("conclusion"),
+                        "created_at": run.get("created_at"),
+                        "updated_at": run.get("updated_at"),
+                        "html_url": run.get("html_url"),
+                        "event": run.get("event"),
+                        "head_branch": run.get("head_branch"),
+                        "head_sha": run.get("head_sha")[:7] if run.get("head_sha") else None,
+                        "actor": run.get("actor", {}).get("login") if run.get("actor") else None,
+                        "run_started_at": run.get("run_started_at"),
+                        "jobs": jobs,
+                        "head_commit": run.get("head_commit"),
+                        "triggering_actor": run.get("triggering_actor"),
+                        "logs_url": run.get("logs_url")
+                    })
+        
+        logger.info(f"✅ Returning {len(formatted_runs)} workflow runs with job details")
         
         return {
             "success": True,
@@ -2353,6 +2398,7 @@ async def get_workflow_actions_history(
             "repository": repo_name,
             "organization": org_name,
             "total_runs": len(formatted_runs),
+            "total_count": len(formatted_runs),
             "runs": formatted_runs,
             "workflow_id": workflow_id
         }
