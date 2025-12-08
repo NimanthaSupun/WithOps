@@ -130,7 +130,6 @@ services:
       - redis
       - ollama
       - prometheus
-      - ai-service
       - github-service
       - threat-modeling-service
       - workspace-intelligence-service
@@ -138,7 +137,6 @@ services:
       - REDIS_URL=redis://redis:6379
       - ENABLE_METRICS=true
       - ENABLE_TRACING=true
-      - AI_SERVICE_URL=http://ai-service:8001
       - GITHUB_SERVICE_URL=http://github-service:8002
     restart: unless-stopped
     # Uncomment and set volumes if you want to persist logs or mount code

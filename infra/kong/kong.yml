@@ -15,67 +15,21 @@ services:
           - /api/auth
         strip_path: false
 
-  # Backend/Monolith Service (temporary - will shrink as we extract services)
+  # Backend/Monolith Service (Events Hub - WebSocket only)
+  # Now only handles WebSocket connections and real-time events
+  # All REST API routes moved to dedicated microservices
   - name: backend-monolith
     url: http://backend:8000
     routes:
-      # Auth routes removed - now handled by auth-service
-      # - name: auth-routes
-      #   paths:
-      #     - /api/auth
-      #   strip_path: false
-
-      - name: ai-routes-via-backend
-        paths:
-          - /api/ai
-        strip_path: false
-
-      # Threat modeling now handled by dedicated service (see threat-modeling-service below)
-      # - name: threat-modeling-routes
-      #   paths:
-      #     - /api/threat-modeling
-      #   strip_path: false
-
-      # Collaboration routes moved to dedicated service
-      # - name: collaboration-routes
-      #   paths:
-      #     - /api/collaboration
-      #   strip_path: false
-
-      # Workspace intelligence and repository tree moved to dedicated service
-      # - name: workspace-intelligence-routes
-      #   paths:
-      #     - /api/workspace-intelligence
-      #   strip_path: false
-
-      # - name: repository-tree-routes
-      #   paths:
-      #     - /api/repository-tree
-      #   strip_path: false
-
-      # GitHub routes removed - now handled by github-service directly
-      # - name: github-routes
-      #   paths:
-      #     - /api/github
-      #   strip_path: false
-
-      # Users routes - empty file removed, user management in auth-service
-      # - name: users-routes
-      #   paths:
-      #     - /api/users
-      #   strip_path: false
-
-      # Workspace intelligence routes removed - now handled by workspace-intelligence-service
-      # - name: workspace-intelligence-routes
-      #   paths:
-      #     - /api/workspace-intelligence
-      #   strip_path: false
-
-      # GitHub routes removed - now handled by github-service directly
-      # - name: github-routes
-      #   paths:
-      #     - /api/github
-      #   strip_path: false
+      # All REST routes removed - backend is now Events Hub only
+      # WebSocket connections handled directly (not through Kong)
+      # - AI routes → ai-service
+      # - Auth routes → auth-service
+      # - GitHub routes → github-service
+      # - Threat modeling → threat-modeling-service
+      # - Collaboration → collaboration-service
+      # - Workspace intelligence → workspace-intelligence-service
+      # - Workflow orchestration → workflow-orchestration-service
 
   # Threat Modeling Service (extracted microservice)
   # Routes /api/threat-modeling/* to threat-modeling-service:8003/api/v1/*
@@ -140,17 +94,16 @@ services:
           - /api/security
         strip_path: false
 
-  # AI Service (NOT directly exposed via Kong)
-  # Backend proxies to ai-service for compute-heavy operations (Ollama, Claude)
-  # while handling task management, async jobs, and database operations itself
-  # Architecture: Frontend → Kong → Backend → ai-service
-  # - name: ai-service
-  #   url: http://ai-service:8001
-  #   routes:
-  #     - name: ai-routes
-  #       paths:
-  #         - /api/ai
-  #       strip_path: false
+  # AI Service - Microservice for AI/ML operations
+  # Routes /api/ai/* directly to ai-service:8001/api/ai/*
+  # Handles PR descriptions, workflow generation, and Claude threat analysis
+  - name: ai-service
+    url: http://ai-service:8001
+    routes:
+      - name: ai-routes
+        paths:
+          - /api/ai
+        strip_path: false
 
   # OLD COMMENT - GitHub Service now directly exposed above
   # GitHub Service (NOT directly exposed via Kong)

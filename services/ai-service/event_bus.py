@@ -88,6 +88,31 @@ class TaskQueue:
             await self.redis_client.close()
         logger.info("✅ TaskQueue disconnected from Redis")
     
+    async def enqueue(self, task_id: str, task_data: Dict[str, Any]):
+        """
+        Add a task to the queue
+        
+        Args:
+            task_id: Unique task identifier
+            task_data: Task payload
+        """
+        if not self.redis_client:
+            await self.connect()
+        
+        task = {
+            "task_id": task_id,
+            "data": task_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Add to queue
+        await self.redis_client.lpush(self.queue_name, json.dumps(task))
+        
+        # Set initial status
+        await self.update_task_status(task_id, "queued")
+        
+        logger.info(f"📥 Enqueued task: {task_id}")
+    
     async def dequeue(self, timeout: int = 5) -> Optional[Dict[str, Any]]:
         """
         Get a task from the queue (blocking)
@@ -136,6 +161,42 @@ class TaskQueue:
             )
         
         logger.info(f"✅ Updated task {task_id} status: {status}")
+    
+    async def get_task_status(self, task_id: str) -> Optional[str]:
+        """
+        Get task status
+        
+        Args:
+            task_id: Task identifier
+            
+        Returns:
+            Task status or None if not found
+        """
+        if not self.redis_client:
+            await self.connect()
+        
+        status = await self.redis_client.get(f"task:{task_id}:status")
+        return status
+    
+    async def get_task_result(self, task_id: str) -> Optional[Dict]:
+        """
+        Get task result
+        
+        Args:
+            task_id: Task identifier
+            
+        Returns:
+            Task result or None if not found
+        """
+        if not self.redis_client:
+            await self.connect()
+        
+        result = await self.redis_client.get(f"task:{task_id}:result")
+        
+        if result:
+            return json.loads(result)
+        
+        return None
 
 
 # Global instances

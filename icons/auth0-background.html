@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WithOps Auth0 Background - 2000x1200</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 2000px;
+        height: 1200px;
+        overflow: hidden;
+        background: #000000;
+        position: relative;
+      }
+
+      /* Main Container - Exact dimensions for Auth0 */
+      .background-container {
+        width: 2000px;
+        height: 1200px;
+        position: relative;
+        background: radial-gradient(
+          ellipse at top,
+          #0a0a14 0%,
+          #000000 50%,
+          #000508 100%
+        );
+        overflow: hidden;
+      }
+
+      /* Stars Layer */
+      .stars {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .star {
+        position: absolute;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+      }
+
+      /* Left Decorative Zone - Blue Glows */
+      .left-zone {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 600px;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .blue-glow-1 {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        left: 50px;
+        top: 150px;
+        background: radial-gradient(
+          circle,
+          rgba(74, 158, 255, 0.3) 0%,
+          rgba(74, 158, 255, 0.1) 40%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(40px);
+      }
+
+      .blue-glow-2 {
+        position: absolute;
+        width: 350px;
+        height: 350px;
+        left: 100px;
+        bottom: 200px;
+        background: radial-gradient(
+          circle,
+          rgba(74, 158, 255, 0.25) 0%,
+          rgba(74, 158, 255, 0.08) 40%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(35px);
+      }
+
+      /* Circuit Pattern Left */
+      .circuit-left {
+        position: absolute;
+        left: 80px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 400px;
+        height: 600px;
+      }
+
+      .circuit-line {
+        position: absolute;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(74, 158, 255, 0.2) 50%,
+          transparent 100%
+        );
+        height: 2px;
+      }
+
+      .circuit-node {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #4a9eff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(74, 158, 255, 0.6);
+      }
+
+      /* Hexagon Elements Left */
+      .hexagon {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 2px solid rgba(74, 158, 255, 0.3);
+        clip-path: polygon(
+          50% 0%,
+          100% 25%,
+          100% 75%,
+          50% 100%,
+          0% 75%,
+          0% 25%
+        );
+      }
+
+      /* Right Decorative Zone - Orange Glows */
+      .right-zone {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 600px;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .orange-glow-1 {
+        position: absolute;
+        width: 380px;
+        height: 380px;
+        right: 80px;
+        top: 200px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 139, 74, 0.25) 0%,
+          rgba(255, 139, 74, 0.08) 40%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(38px);
+      }
+
+      .orange-glow-2 {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        right: 120px;
+        bottom: 250px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 139, 74, 0.2) 0%,
+          rgba(255, 139, 74, 0.06) 40%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(32px);
+      }
+
+      /* Circuit Pattern Right */
+      .circuit-right {
+        position: absolute;
+        right: 80px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 400px;
+        height: 600px;
+      }
+
+      /* Security Shield Icon Right */
+      .shield-icon {
+        position: absolute;
+        right: 150px;
+        bottom: 150px;
+        width: 80px;
+        height: 90px;
+        border: 3px solid rgba(255, 139, 74, 0.4);
+        clip-path: polygon(
+          50% 0%,
+          100% 20%,
+          100% 70%,
+          50% 100%,
+          0% 70%,
+          0% 20%
+        );
+      }
+
+      /* Center Clean Zone - Minimal Pattern */
+      .center-zone {
+        position: absolute;
+        left: 600px;
+        top: 0;
+        width: 800px;
+        height: 100%;
+      }
+
+      /* Subtle Grid in Center */
+      .center-grid {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0.03;
+        background-image: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 50px,
+            rgba(74, 158, 255, 0.5) 50px,
+            rgba(74, 158, 255, 0.5) 51px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 50px,
+            rgba(74, 158, 255, 0.5) 50px,
+            rgba(74, 158, 255, 0.5) 51px
+          );
+      }
+
+      /* Floating Geometric Elements */
+      .geometric-element {
+        position: absolute;
+        color: rgba(74, 158, 255, 0.15);
+        font-size: 40px;
+        font-weight: bold;
+      }
+
+      /* Top/Bottom Border Accents */
+      .top-accent {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(74, 158, 255, 0.4) 30%,
+          rgba(255, 139, 74, 0.4) 70%,
+          transparent 100%
+        );
+      }
+
+      .bottom-accent {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 139, 74, 0.4) 30%,
+          rgba(74, 158, 255, 0.4) 70%,
+          transparent 100%
+        );
+      }
+
+      /* Particles Effect */
+      .particle {
+        position: absolute;
+        background: rgba(74, 158, 255, 0.4);
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background-container">
+      <!-- Top/Bottom Accents -->
+      <div class="top-accent"></div>
+      <div class="bottom-accent"></div>
+
+      <!-- Stars Layer (will be generated by JS) -->
+      <div class="stars" id="starsContainer"></div>
+
+      <!-- Left Decorative Zone -->
+      <div class="left-zone">
+        <!-- Blue Glows -->
+        <div class="blue-glow-1"></div>
+        <div class="blue-glow-2"></div>
+
+        <!-- Circuit Pattern -->
+        <div class="circuit-left">
+          <!-- Horizontal lines -->
+          <div
+            class="circuit-line"
+            style="top: 100px; width: 250px; left: 50px"
+          ></div>
+          <div
+            class="circuit-line"
+            style="top: 200px; width: 200px; left: 80px"
+          ></div>
+          <div
+            class="circuit-line"
+            style="top: 300px; width: 280px; left: 40px"
+          ></div>
+          <div
+            class="circuit-line"
+            style="top: 400px; width: 220px; left: 70px"
+          ></div>
+          <div
+            class="circuit-line"
+            style="top: 500px; width: 260px; left: 50px"
+          ></div>
+
+          <!-- Nodes -->
+          <div class="circuit-node" style="top: 98px; left: 100px"></div>
+          <div class="circuit-node" style="top: 198px; left: 150px"></div>
+          <div class="circuit-node" style="top: 298px; left: 80px"></div>
+          <div class="circuit-node" style="top: 398px; left: 180px"></div>
+          <div class="circuit-node" style="top: 498px; left: 120px"></div>
+        </div>
+
+        <!-- Hexagons -->
+        <div class="hexagon" style="top: 120px; left: 200px"></div>
+        <div
+          class="hexagon"
+          style="bottom: 180px; left: 150px; width: 50px; height: 50px"
+        ></div>
+        <div
+          class="hexagon"
+          style="top: 450px; left: 280px; width: 70px; height: 70px"
+        ></div>
+      </div>
+
+      <!-- Center Clean Zone -->
+      <div class="center-zone">
+        <div class="center-grid"></div>
+
+        <!-- Minimal floating elements -->
+        <div
+          class="geometric-element"
+          style="top: 150px; left: 150px; opacity: 0.08"
+        >
+          ◆
+        </div>
+        <div
+          class="geometric-element"
+          style="bottom: 200px; right: 180px; opacity: 0.08"
+        >
+          ●
+        </div>
+      </div>
+
+      <!-- Right Decorative Zone -->
+      <div class="right-zone">
+        <!-- Orange Glows -->
+        <div class="orange-glow-1"></div>
+        <div class="orange-glow-2"></div>
+
+        <!-- Circuit Pattern -->
+        <div class="circuit-right">
+          <!-- Horizontal lines (mirrored) -->
+          <div
+            class="circuit-line"
+            style="
+              top: 120px;
+              width: 240px;
+              right: 50px;
+              left: auto;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 139, 74, 0.2) 50%,
+                transparent 100%
+              );
+            "
+          ></div>
+          <div
+            class="circuit-line"
+            style="
+              top: 220px;
+              width: 200px;
+              right: 80px;
+              left: auto;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 139, 74, 0.2) 50%,
+                transparent 100%
+              );
+            "
+          ></div>
+          <div
+            class="circuit-line"
+            style="
+              top: 320px;
+              width: 270px;
+              right: 40px;
+              left: auto;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 139, 74, 0.2) 50%,
+                transparent 100%
+              );
+            "
+          ></div>
+          <div
+            class="circuit-line"
+            style="
+              top: 420px;
+              width: 210px;
+              right: 70px;
+              left: auto;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 139, 74, 0.2) 50%,
+                transparent 100%
+              );
+            "
+          ></div>
+
+          <!-- Orange Nodes -->
+          <div
+            class="circuit-node"
+            style="
+              top: 118px;
+              right: 100px;
+              left: auto;
+              background: #ff8b4a;
+              box-shadow: 0 0 10px rgba(255, 139, 74, 0.6);
+            "
+          ></div>
+          <div
+            class="circuit-node"
+            style="
+              top: 218px;
+              right: 150px;
+              left: auto;
+              background: #ff8b4a;
+              box-shadow: 0 0 10px rgba(255, 139, 74, 0.6);
+            "
+          ></div>
+          <div
+            class="circuit-node"
+            style="
+              top: 318px;
+              right: 90px;
+              left: auto;
+              background: #ff8b4a;
+              box-shadow: 0 0 10px rgba(255, 139, 74, 0.6);
+            "
+          ></div>
+          <div
+            class="circuit-node"
+            style="
+              top: 418px;
+              right: 170px;
+              left: auto;
+              background: #ff8b4a;
+              box-shadow: 0 0 10px rgba(255, 139, 74, 0.6);
+            "
+          ></div>
+        </div>
+
+        <!-- Security Shield -->
+        <div class="shield-icon"></div>
+
+        <!-- Hexagons -->
+        <div
+          class="hexagon"
+          style="
+            top: 140px;
+            right: 200px;
+            border-color: rgba(255, 139, 74, 0.3);
+          "
+        ></div>
+        <div
+          class="hexagon"
+          style="
+            bottom: 160px;
+            right: 250px;
+            width: 55px;
+            height: 55px;
+            border-color: rgba(255, 139, 74, 0.3);
+          "
+        ></div>
+        <div
+          class="hexagon"
+          style="
+            top: 500px;
+            right: 180px;
+            width: 65px;
+            height: 65px;
+            border-color: rgba(255, 139, 74, 0.3);
+          "
+        ></div>
+      </div>
+
+      <!-- Particles (will be generated by JS) -->
+      <div id="particlesContainer"></div>
+    </div>
+
+    <script>
+      // Generate stars
+      const starsContainer = document.getElementById("starsContainer");
+      const numStars = 120;
+
+      for (let i = 0; i < numStars; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+
+        const size = Math.random() * 2 + 0.5;
+        const x = Math.random() * 2000;
+        const y = Math.random() * 1200;
+        const opacity = Math.random() * 0.7 + 0.3;
+
+        star.style.width = size + "px";
+        star.style.height = size + "px";
+        star.style.left = x + "px";
+        star.style.top = y + "px";
+        star.style.opacity = opacity;
+
+        starsContainer.appendChild(star);
+      }
+
+      // Generate particles
+      const particlesContainer = document.getElementById("particlesContainer");
+      const numParticles = 25;
+
+      for (let i = 0; i < numParticles; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+
+        const size = Math.random() * 3 + 1;
+        const x = Math.random() * 2000;
+        const y = Math.random() * 1200;
+        const opacity = Math.random() * 0.4 + 0.1;
+
+        // Mix of blue and orange particles
+        if (Math.random() > 0.6) {
+          particle.style.background = `rgba(255, 139, 74, ${opacity})`;
+          particle.style.boxShadow = "0 0 8px rgba(255, 139, 74, 0.6)";
+        }
+
+        particle.style.width = size + "px";
+        particle.style.height = size + "px";
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.opacity = opacity;
+
+        particlesContainer.appendChild(particle);
+      }
+
+      console.log("✅ WithOps Auth0 Background Generated!");
+      console.log("📐 Dimensions: 2000px × 1200px");
+      console.log("🎨 Design: Dark theme with blue/orange accents");
+      console.log("📸 To capture: Right-click → Save image as...");
+      console.log("   Or use browser screenshot tools at 100% zoom");
+    </script>
+  </body>
+</html>

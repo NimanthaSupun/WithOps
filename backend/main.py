@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
-from api.routes import ai  # AI proxy routes - others moved to microservices
+# All API routes now handled by dedicated microservices via Kong Gateway
 import os
 import asyncio
 import json
@@ -445,38 +445,35 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # Include routers
-print("🔍 DEBUG: Including routers...")
+print("🔍 DEBUG: Backend is now Events Hub - WebSocket & Real-time only")
 
-# Auth routes now handled by auth-service (via Kong)
+# ============================================================================
+# ALL REST API ROUTES NOW HANDLED BY MICROSERVICES VIA KONG GATEWAY
+# ============================================================================
+# Auth routes → auth-service (via Kong)
 # app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-# print("✅ Auth router included")
 
-# GitHub routes now handled by github-service (via Kong)  
+# GitHub routes → github-service (via Kong)  
 # app.include_router(github.router, prefix="/api/github", tags=["github"])
-# print("✅ GitHub router included")
 
-app.include_router(ai.router, tags=["ai"])  # AI router already has /api/ai prefix internally
-print("✅ AI router included")
+# AI routes → ai-service (via Kong)
+# app.include_router(ai.router, tags=["ai"])
 
-# Project tree routes now handled by workflow-orchestration-service (via Kong)
+# Project tree routes → workflow-orchestration-service (via Kong)
 # app.include_router(project_tree.router, prefix="/api/github", tags=["project-tree"])
-# print("✅ Project Tree router included")
 
-# Threat modeling routes now handled by threat-modeling-service (via Kong)
+# Threat modeling routes → threat-modeling-service (via Kong)
 # app.include_router(threat_modeling.router, prefix="/api/threat-modeling", tags=["threat-modeling"])
-# print("✅ Threat modeling router included")
 
-# Collaboration routes now handled by collaboration-service (via Kong)
+# Collaboration routes → collaboration-service (via Kong)
 # app.include_router(collaboration.router, tags=["collaboration"])
-# print("✅ Collaboration router included")
 
-# Repository tree & workspace intelligence now handled by workspace-intelligence-service (via Kong)
+# Repository tree & workspace intelligence → workspace-intelligence-service (via Kong)
 # app.include_router(repository_tree.router, tags=["repository-tree"])
-# print("✅ Repository Tree router included")
 # app.include_router(workspace_intelligence.router, prefix="/api", tags=["workspace-intelligence"])
-# print("✅ Workspace Intelligence router included")
 
-print("🔍 DEBUG: All routers included successfully (microservices active)")
+print("✅ Backend configured as Events Hub (WebSocket + Event Bus only)")
+print("📡 All REST APIs served by dedicated microservices through Kong Gateway")
 
 @app.get("/")
 async def root():

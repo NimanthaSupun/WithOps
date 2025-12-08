@@ -2559,6 +2559,7 @@
         border: 1px solid var(--border-color);
         border-radius: 16px;
         overflow: hidden;
+        margin-bottom: 25px;
     }
 
     .tabs-header {
@@ -2616,8 +2617,10 @@
         color: white;
     }
 
+    /* todo:-- */
     .tabs-content {
         padding: 2rem;
+        margin-bottom: 150px;
     }
 
     /* Repositories Grid */

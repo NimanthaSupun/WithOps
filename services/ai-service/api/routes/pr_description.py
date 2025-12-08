@@ -983,3 +983,97 @@ async def export_ai_analysis_pdf_url(request: PDFExportRequest):
     except Exception as e:
         logger.error(f"❌ PDF export failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"PDF export failed: {str(e)}")
+
+
+# =============================================================================
+# ASYNC TASK ENDPOINTS
+# =============================================================================
+
+@router.post("/claude/analyze-threats-async")
+async def analyze_threats_async(request: ClaudeAnalysisRequest, user_id: str):
+    """
+    Asynchronous threat modeling analysis using Claude AI
+    
+    This endpoint queues the analysis task and returns immediately.
+    Results are delivered via WebSocket when complete.
+    
+    Returns:
+        task_id: Unique identifier to track the analysis
+        status: "queued" - analysis has been queued for processing
+    """
+    try:
+        import uuid
+        from event_bus import task_queue
+        
+        # Generate unique task ID
+        task_id = f"analysis-{int(asyncio.get_event_loop().time() * 1000)}-{uuid.uuid4().hex[:8]}"
+        
+        logger.info(f"🚀 Queuing async threat analysis: {task_id}")
+        logger.info(f"📊 Components: {len(request.components)}, Connections: {len(request.connections)}")
+        
+        # Prepare task data
+        task_data = {
+            "user_id": user_id,
+            "model_id": request.model_id,
+            "model_name": request.model_name,
+            "components": [comp.dict() for comp in request.components],
+            "connections": [conn.dict() for conn in request.connections],
+            "methodology": request.methodology,
+            "document_content": request.document_text,
+            "diagram_base64": request.diagram_image,
+            "analysis_type": request.analysis_type,
+            "user_threat_context": request.user_threat_context
+        }
+        
+        # Enqueue the task
+        await task_queue.enqueue(task_id, task_data)
+        
+        logger.info(f"✅ Task queued: {task_id}")
+        
+        return {
+            "success": True,
+            "task_id": task_id,
+            "status": "queued",
+            "message": "Threat analysis queued. You will be notified via WebSocket when complete."
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error queuing threat analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to queue analysis: {str(e)}")
+
+
+@router.get("/task/{task_id}/status")
+async def get_task_status(task_id: str):
+    """
+    Get the status of an async task
+    
+    Returns:
+        status: queued, processing, completed, failed
+        result: Task result (if completed)
+    """
+    try:
+        from event_bus import task_queue
+        
+        status = await task_queue.get_task_status(task_id)
+        
+        if not status:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        response = {
+            "task_id": task_id,
+            "status": status
+        }
+        
+        # If completed, get result
+        if status == "completed":
+            result = await task_queue.get_task_result(task_id)
+            if result:
+                response["result"] = result
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting task status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}")
