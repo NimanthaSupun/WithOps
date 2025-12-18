@@ -3475,6 +3475,51 @@
         }
     }
     
+    // 💾 Save AI analysis to database
+    async function saveAIAnalysisToModel(result) {
+        try {
+            console.log('💾 Saving AI analysis to database...', result);
+            
+            // Prepare analysis data in the format expected by backend
+            const analysisData = {
+                id: result.id || result.task_id || `analysis-${Date.now()}-${modelId.substring(0, 8)}`,
+                task_id: result.task_id,
+                analysis_type: result.analysis_type || 'comprehensive',
+                methodology: result.methodology || currentMethodology,
+                analysis: result.analysis,
+                structured_analysis: result.structured_analysis || result.parsed_sections,
+                timestamp: result.timestamp || new Date().toISOString(),
+                diagram_elements_count: result.diagram_elements_count || $canvasData.elements.length,
+                diagram_connections_count: result.diagram_connections_count || $canvasData.connections.length,
+                has_document: !!modelData?.document_analysis,
+                has_diagram: $canvasData.elements.length > 0
+            };
+            
+            // Send to backend API
+            const response = await fetch(`http://localhost:8000/api/threat-modeling/models/${modelId}/analyses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ analysis_data: analysisData })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Save failed: ${response.status}`);
+            }
+            
+            const responseData = await response.json();
+            console.log('✅ Analysis saved to database:', responseData);
+            
+            return analysisData;
+            
+        } catch (error) {
+            console.error('❌ Failed to save analysis to database:', error);
+            throw error;
+        }
+    }
+    
     // Helper function to save analysis to history (used by WebSocket handler)
     async function saveAnalysisToHistory(result) {
         try {
@@ -3635,48 +3680,6 @@
             
         }, 5000); // Poll every 5 seconds
     }
-
-    // Save AI analysis result to threat model history  
-    async function saveAIAnalysisToModel(analysisResult) {
-        try {
-            // Create unique analysis record with metadata
-            const uniqueId = `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const analysisRecord = {
-                ...analysisResult,
-                id: uniqueId, // Ensure unique ID
-                timestamp: new Date().toISOString(),
-                diagram_elements_count: $canvasData.elements.length,
-                diagram_connections_count: $canvasData.connections.length,
-                analysis_type: analysisResult.analysis_type || 'comprehensive',
-                methodology: analysisResult.methodology || 'STRIDE'
-            };
-
-            console.log('💾 Saving analysis with ID:', uniqueId);
-
-            // Save to the analysis endpoint (now exists)
-            const response = await fetch(`http://localhost:8000/api/threat-modeling/models/${modelId}/analyses`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(analysisRecord)
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ AI analysis saved to database:', result);
-                return { ...analysisRecord };
-            } else {
-                const errorText = await response.text();
-                console.error('❌ Failed to save analysis to database:', errorText);
-                throw new Error(`Database save failed: ${response.status} - ${errorText}`);
-            }
-        } catch (error) {
-            console.error('❌ Error in saveAIAnalysisToModel:', error);
-            throw error; // Re-throw to trigger fallback in calling function
-        }
-    }
-
     // Load analysis history for this threat model from DATABASE
     async function loadAnalysisHistory() {
         try {
