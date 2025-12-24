@@ -120,7 +120,7 @@ class ProjectAnalysis(Base):
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     repository_tree_id = Column(String, nullable=False)
-    project_id = Column(String, nullable=False)
+    project_id = Column(String, nullable=True)  # Nullable for unified analyses
     project_name = Column(String, nullable=False)
     organization_name = Column(String, nullable=False, index=True)
     user_id = Column(String, index=True)

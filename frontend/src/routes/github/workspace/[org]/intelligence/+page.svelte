@@ -3,9 +3,21 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { isDarkMode } from '$lib/stores';
+	import ChatModal from '$lib/components/ChatModal.svelte';
 	
 	const org = $page.params.org;
 	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+	
+	// Chat Modal State
+	let isChatModalOpen = false;
+	
+	function openChatModal() {
+		isChatModalOpen = true;
+	}
+	
+	function closeChatModal() {
+		isChatModalOpen = false;
+	}
 	
 	// Helper function to get auth token (matches github.js logic)
 	function getAuthToken() {
@@ -22,6 +34,9 @@
 	let error = null;
 	let analysisData = null;
 	let activeTab = 'overview';
+	let isUnifiedAnalysis = false;
+	let projectBreakdowns = [];
+	let expandedProjects = new Set();
 	
 	// Analysis History
 	let allAnalyses = [];
@@ -31,6 +46,11 @@
 	// UI State
 	let selectedRepository = null;
 	let expandedFindings = new Set();
+	
+	// Load existing analyses on page mount
+	onMount(async () => {
+		await fetchAnalysis();
+	});
 	
 	// DSOMM Dimensions mapping
 	const dsommDimensions = [
@@ -215,6 +235,9 @@
 					const detailData = await detailResponse.json();
 					console.log('📋 Detailed analysis response:', detailData);
 					
+					// Check if this is a unified analysis
+					isUnifiedAnalysis = detailData.analysis?.analysis_scope === 'unified';
+					
 					// Properly merge the response structure
 					analysisData = {
 						...(detailData.analysis || {}),
@@ -224,7 +247,14 @@
 						findings_summary: detailData.findings_summary
 					};
 					
+					// If unified, extract project breakdowns
+					if (isUnifiedAnalysis && detailData.analysis?.analysis_data?.project_analyses) {
+						projectBreakdowns = detailData.analysis.analysis_data.project_analyses;
+						console.log('📂 Found', projectBreakdowns.length, 'project breakdowns');
+					}
+					
 					console.log('📦 Final analysisData:', analysisData);
+					console.log('🔍 Is Unified Analysis:', isUnifiedAnalysis);
 					console.log('📊 Repositories count:', analysisData.repositories?.length || 0);
 					console.log('🔍 Findings count:', analysisData.findings?.length || 0);
 				} else {
@@ -308,6 +338,11 @@
 	}
 	
 	function getOverallScore(practices) {
+		// For unified analyses, use the overall_maturity_score from the database
+		if (isUnifiedAnalysis && analysisData?.overall_maturity_score !== undefined) {
+			return Math.round(analysisData.overall_maturity_score);
+		}
+		
 		if (!practices) return 0;
 		
 		const dimensions = dsommDimensions.map(d => calculateDimensionLevel(d, practices));
@@ -381,6 +416,22 @@
 			minute: '2-digit'
 		});
 	}
+	
+	function toggleProjectExpansion(projectId) {
+		if (expandedProjects.has(projectId)) {
+			expandedProjects.delete(projectId);
+		} else {
+			expandedProjects.add(projectId);
+		}
+		expandedProjects = expandedProjects;
+	}
+	
+	function getAnalysisTypeLabel(analysis) {
+		if (analysis.analysis_scope === 'unified') return 'Unified';
+		if (analysis.analysis_scope === 'folder') return 'Folder';
+		if (analysis.analysis_scope === 'project') return 'Project';
+		return 'Workspace';
+	}
 </script>
 
 <svelte:head>
@@ -394,7 +445,7 @@
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-4">
 					<button
-						on:click={() => goto(`/github/workspace/${org}/repo-treeview`)}
+						onclick={() => goto(`/github/workspace/${org}/repo-treeview`)}
 						class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
 							{$isDarkMode 
 								? 'bg-gray-700 hover:bg-gray-600 text-white' 
@@ -423,7 +474,15 @@
 							</div>
 						</div>
 						<button
-							on:click={triggerNewAnalysis}
+							onclick={openChatModal}
+							class="px-6 py-3 rounded-lg font-medium transition-all hover:scale-105 shadow-lg
+								bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white flex items-center gap-2"
+						>
+							<span class="text-xl">🤖</span>
+							<span>Ask AI</span>
+						</button>
+						<button
+							onclick={triggerNewAnalysis}
 							class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
 								{$isDarkMode 
 									? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -463,7 +522,7 @@
 						</p>
 						{#if error.includes('Authentication')}
 							<button
-								on:click={() => goto('/github/login')}
+								onclick={() => goto('/github/login')}
 								class="px-6 py-3 rounded-lg font-medium transition-all hover:scale-105
 									{$isDarkMode 
 										? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -473,7 +532,7 @@
 							</button>
 						{:else}
 							<button
-								on:click={fetchAnalysis}
+								onclick={fetchAnalysis}
 								class="px-6 py-3 rounded-lg font-medium transition-all hover:scale-105
 									{$isDarkMode 
 										? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -497,7 +556,7 @@
 							No workspace intelligence data is available yet. Click below to run your first analysis!
 						</p>
 						<button
-							on:click={triggerNewAnalysis}
+							onclick={triggerNewAnalysis}
 							class="px-6 py-3 rounded-lg font-medium transition-all hover:scale-105
 								{$isDarkMode 
 									? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -514,7 +573,7 @@
 				<nav class="flex gap-2 -mb-px">
 					{#each ['overview', 'dsomm', 'repositories', 'findings', 'history'] as tab}
 						<button
-							on:click={() => activeTab = tab}
+							onclick={() => activeTab = tab}
 							class="px-6 py-3 font-medium border-b-2 transition-all capitalize
 								{activeTab === tab
 									? $isDarkMode
@@ -535,6 +594,37 @@
 			{#if activeTab === 'overview'}
 				<!-- Overview Tab -->
 				<div class="space-y-6">
+					<!-- Analysis Type Header -->
+					{#if isUnifiedAnalysis}
+						<div class="rounded-lg p-4 transition-colors {$isDarkMode ? 'bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700' : 'bg-gradient-to-r from-green-50 to-blue-50 border border-green-200'}">
+							<div class="flex items-center gap-3">
+								<span class="text-3xl">🌐</span>
+								<div>
+									<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-800'}">
+										Unified Workspace Analysis
+									</h3>
+									<p class="text-sm transition-colors {$isDarkMode ? 'text-green-300' : 'text-green-700'}">
+										Organization-wide security assessment across {projectBreakdowns.length} projects
+									</p>
+								</div>
+							</div>
+						</div>
+					{:else if analysisData.analysis?.analysis_scope === 'folder'}
+						<div class="rounded-lg p-4 transition-colors {$isDarkMode ? 'bg-blue-900/20 border border-blue-700' : 'bg-blue-50 border border-blue-200'}">
+							<div class="flex items-center gap-3">
+								<span class="text-3xl">📁</span>
+								<div>
+									<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-blue-400' : 'text-blue-800'}">
+										Folder Analysis
+									</h3>
+									<p class="text-sm transition-colors {$isDarkMode ? 'text-blue-300' : 'text-blue-700'}">
+										Team-specific security assessment for: {analysisData.analysis?.project_name || 'Selected Folder'}
+									</p>
+								</div>
+							</div>
+						</div>
+					{/if}
+					
 					<!-- Quick Stats -->
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 						<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
@@ -791,6 +881,153 @@
 							</div>
 						</div>
 					</div>
+
+					<!-- Project Breakdown Section (for Unified Analysis) -->
+					{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
+						<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
+							<h2 class="text-xl font-bold mb-4 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+								<span>📂 Project Breakdown</span>
+								<span class="text-sm font-normal px-3 py-1 rounded transition-colors {$isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}">
+									{projectBreakdowns.length} {projectBreakdowns.length === 1 ? 'Project' : 'Projects'}
+								</span>
+							</h2>
+							
+							<div class="space-y-4">
+								{#each projectBreakdowns as project}
+									{@const projectMaturity = project.maturity || {}}
+									{@const projectId = project.project_id || project.project_name}
+									{@const isExpanded = expandedProjects.has(projectId)}
+									
+									<div class="rounded-lg border-2 transition-all {$isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}">
+										<!-- Project Header -->
+										<button
+											onclick={() => toggleProjectExpansion(projectId)}
+											class="w-full p-4 flex items-center justify-between hover:opacity-80 transition-opacity"
+										>
+											<div class="flex items-center gap-4 flex-1">
+												<svg class="w-8 h-8 transition-colors {$isDarkMode ? 'text-blue-400' : 'text-blue-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+												</svg>
+												
+												<div class="text-left flex-1">
+													<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+														{project.project_name}
+													</h3>
+													<div class="flex items-center gap-4 mt-1 text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+														<span>📦 {project.repository_count || 0} repositories</span>
+														<span>⚙️ {project.workflow_count || 0} workflows</span>
+													</div>
+												</div>
+												
+												<div class="text-right">
+													<div class="text-3xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+														{Math.round(projectMaturity.overall_maturity_score || 0)}
+													</div>
+													<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+														Maturity Score
+													</div>
+												</div>
+											</div>
+											
+											<svg class="w-6 h-6 ml-4 transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+											</svg>
+										</button>
+										
+										<!-- Project Details (Expanded) -->
+										{#if isExpanded}
+											<div class="border-t p-4 space-y-4 transition-colors {$isDarkMode ? 'border-gray-700' : 'border-gray-200'}">
+												<!-- DSOMM Scores -->
+												<div>
+													<h4 class="font-semibold mb-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+														DSOMM Dimension Scores
+													</h4>
+													<div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+														<div class="p-2 rounded transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-white'}">
+															<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">Technology</div>
+															<div class="text-lg font-bold transition-colors {$isDarkMode ? 'text-blue-400' : 'text-blue-600'}">
+																{Math.round(projectMaturity.domain_scores?.technology?.score || projectMaturity.implementation_score || 0)}
+															</div>
+														</div>
+														<div class="p-2 rounded transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-white'}">
+															<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">Process</div>
+															<div class="text-lg font-bold transition-colors {$isDarkMode ? 'text-orange-400' : 'text-orange-600'}">
+																{Math.round(projectMaturity.domain_scores?.process?.score || projectMaturity.build_deployment_score || 0)}
+															</div>
+														</div>
+														<div class="p-2 rounded transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-white'}">
+															<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">Level</div>
+															<div class="text-lg font-bold transition-colors {$isDarkMode ? 'text-purple-400' : 'text-purple-600'}">
+																{projectMaturity.maturity_level !== undefined ? projectMaturity.maturity_level : '—'}
+															</div>
+														</div>
+														<div class="p-2 rounded transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-white'}">
+															<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">Overall Score</div>
+															<div class="text-lg font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+																{Math.round(projectMaturity.overall_maturity_score || 0)}
+															</div>
+														</div>
+													</div>
+												</div>
+												
+												<!-- Findings Summary -->
+												{#if project.findings_count}
+													<div>
+														<h4 class="font-semibold mb-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+															Findings Summary
+														</h4>
+														<div class="flex gap-2 flex-wrap">
+															{#if project.findings_count.critical > 0}
+																<span class="px-3 py-1 rounded text-sm font-medium" style="background-color: {getSeverityColor('critical')}20; color: {getSeverityColor('critical')}">
+																	{project.findings_count.critical} Critical
+																</span>
+															{/if}
+															{#if project.findings_count.high > 0}
+																<span class="px-3 py-1 rounded text-sm font-medium" style="background-color: {getSeverityColor('high')}20; color: {getSeverityColor('high')}">
+																	{project.findings_count.high} High
+																</span>
+															{/if}
+															{#if project.findings_count.medium > 0}
+																<span class="px-3 py-1 rounded text-sm font-medium" style="background-color: {getSeverityColor('medium')}20; color: {getSeverityColor('medium')}">
+																	{project.findings_count.medium} Medium
+																</span>
+															{/if}
+															{#if project.findings_count.low > 0}
+																<span class="px-3 py-1 rounded text-sm font-medium" style="background-color: {getSeverityColor('low')}20; color: {getSeverityColor('low')}">
+																	{project.findings_count.low} Low
+																</span>
+															{/if}
+														</div>
+													</div>
+												{/if}
+												
+												<!-- Top Security Tools -->
+												{#if project.detected_practices}
+													<div>
+														<h4 class="font-semibold mb-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+															Security Tools Detected
+														</h4>
+														<div class="flex gap-2 flex-wrap">
+															{#each (project.detected_practices.sast_tools || []).slice(0, 3) as tool}
+																<span class="px-2 py-1 rounded text-xs transition-colors {$isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}">
+																	🔍 {tool}
+																</span>
+															{/each}
+															{#each (project.detected_practices.sca_tools || []).slice(0, 2) as tool}
+																<span class="px-2 py-1 rounded text-xs transition-colors {$isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}">
+																	📦 {tool}
+																</span>
+															{/each}
+														</div>
+													</div>
+												{/if}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
 				</div>
 
 			{:else if activeTab === 'dsomm'}
@@ -893,104 +1130,227 @@
 			{:else if activeTab === 'repositories'}
 				<!-- Repositories Tab -->
 				<div class="space-y-6">
-					<!-- Repositories WITH workflows -->
-					{#if getRepositoriesWithWorkflows().length > 0}
-						<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
-							<h2 class="text-xl font-bold mb-4 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
-								<span>🚀 Repositories with CI/CD Workflows</span>
-								<span class="text-sm font-normal px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}">
-									{getRepositoriesWithWorkflows().length}
-								</span>
-							</h2>
+					{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
+						<!-- Unified Analysis: Group by Project -->
+						{#each projectBreakdowns as project}
+							{@const projectRepos = analysisData?.repositories?.filter(r => r.project_name === project.project_name) || []}
+							{@const reposWithWorkflows = projectRepos.filter(r => r.has_workflows !== false)}
+							{@const reposWithoutWorkflows = projectRepos.filter(r => r.has_workflows === false)}
 							
-							<div class="space-y-4">
-								{#each getRepositoriesWithWorkflows() as repo}
-									<div class="p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
-										<div class="flex items-start justify-between mb-3">
-											<div>
-												<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
-													📁 {repo.repository_name}
-												</h3>
-												<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-													{repo.workflows_analyzed || 0} workflows analyzed
+							{#if projectRepos.length > 0}
+								<div class="rounded-lg overflow-hidden transition-colors {$isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-sm border border-gray-200'}">
+									<!-- Project Header -->
+									<div class="p-4 transition-colors {$isDarkMode ? 'bg-gray-750 border-b border-gray-700' : 'bg-gray-50 border-b border-gray-200'}">
+										<div class="flex items-center gap-3">
+											<svg class="w-6 h-6 transition-colors {$isDarkMode ? 'text-blue-400' : 'text-blue-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+											</svg>
+											<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+												{project.project_name}
+											</h3>
+											<span class="px-2 py-1 rounded text-sm transition-colors {$isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}">
+												{projectRepos.length} repositories
+											</span>
+										</div>
+									</div>
+									
+									<!-- Project Repositories -->
+									<div class="p-4">
+										{#if reposWithWorkflows.length > 0}
+											<div class="mb-6">
+												<h4 class="font-semibold mb-3 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+													<span>🚀 With CI/CD Workflows</span>
+													<span class="text-xs px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}">
+														{reposWithWorkflows.length}
+													</span>
+												</h4>
+												
+												<div class="space-y-3">
+													{#each reposWithWorkflows as repo}
+														<div class="p-3 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
+															<div class="flex items-start justify-between mb-2">
+																<div>
+																	<h5 class="font-semibold transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+																		📁 {repo.repository_name}
+																	</h5>
+																	<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+																		{repo.workflows_analyzed || 0} workflows analyzed
+																	</div>
+																</div>
+																{#if repo.security_score !== null && repo.security_score !== undefined}
+																	<div class="text-right">
+																		<div class="text-xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+																			{Math.round(repo.security_score)}/100
+																		</div>
+																		<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+																			Score
+																		</div>
+																	</div>
+																{/if}
+															</div>
+															
+															{#if repo.findings_count}
+																<div class="flex gap-2 flex-wrap">
+																	{#if repo.findings_count.critical > 0}
+																		<span class="px-2 py-1 rounded text-xs font-medium" 
+																			style="background-color: {getSeverityColor('critical')}20; color: {getSeverityColor('critical')}">
+																			{repo.findings_count.critical} Critical
+																		</span>
+																	{/if}
+																	{#if repo.findings_count.high > 0}
+																		<span class="px-2 py-1 rounded text-xs font-medium" 
+																			style="background-color: {getSeverityColor('high')}20; color: {getSeverityColor('high')}">
+																			{repo.findings_count.high} High
+																		</span>
+																	{/if}
+																	{#if repo.findings_count.medium > 0}
+																		<span class="px-2 py-1 rounded text-xs font-medium" 
+																			style="background-color: {getSeverityColor('medium')}20; color: {getSeverityColor('medium')}">
+																			{repo.findings_count.medium} Medium
+																		</span>
+																	{/if}
+																	{#if repo.findings_count.low > 0}
+																		<span class="px-2 py-1 rounded text-xs font-medium" 
+																			style="background-color: {getSeverityColor('low')}20; color: {getSeverityColor('low')}">
+																			{repo.findings_count.low} Low
+																		</span>
+																	{/if}
+																</div>
+															{/if}
+														</div>
+													{/each}
 												</div>
 											</div>
-											{#if repo.security_score !== null && repo.security_score !== undefined}
-												<div class="text-right">
-													<div class="text-2xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
-														{Math.round(repo.security_score)}/100
-													</div>
-													<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-														Security Score
-													</div>
-												</div>
-											{/if}
-										</div>
+										{/if}
 										
-										<!-- Findings Summary -->
-										{#if repo.findings_count}
-											<div class="flex gap-2 flex-wrap">
-												{#if repo.findings_count.critical > 0}
-													<span class="px-2 py-1 rounded text-xs font-medium" 
-														style="background-color: {getSeverityColor('critical')}20; color: {getSeverityColor('critical')}">
-														{repo.findings_count.critical} Critical
+										{#if reposWithoutWorkflows.length > 0}
+											<div>
+												<h4 class="font-semibold mb-3 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+													<span>⚠️ Without CI/CD Workflows</span>
+													<span class="text-xs px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-800'}">
+														{reposWithoutWorkflows.length}
 													</span>
-												{/if}
-												{#if repo.findings_count.high > 0}
-													<span class="px-2 py-1 rounded text-xs font-medium" 
-														style="background-color: {getSeverityColor('high')}20; color: {getSeverityColor('high')}">
-														{repo.findings_count.high} High
-													</span>
-												{/if}
-												{#if repo.findings_count.medium > 0}
-													<span class="px-2 py-1 rounded text-xs font-medium" 
-														style="background-color: {getSeverityColor('medium')}20; color: {getSeverityColor('medium')}">
-														{repo.findings_count.medium} Medium
-													</span>
-												{/if}
-												{#if repo.findings_count.low > 0}
-													<span class="px-2 py-1 rounded text-xs font-medium" 
-														style="background-color: {getSeverityColor('low')}20; color: {getSeverityColor('low')}">
-														{repo.findings_count.low} Low
-													</span>
-												{/if}
+												</h4>
+												
+												<div class="space-y-2">
+													{#each reposWithoutWorkflows as repo}
+														<div class="p-3 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
+															<h5 class="font-semibold transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+																📁 {repo.repository_name}
+															</h5>
+															<div class="text-sm mt-1 transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+																No CI/CD workflows configured
+															</div>
+														</div>
+													{/each}
+												</div>
 											</div>
 										{/if}
 									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Repositories WITHOUT workflows -->
-					{#if getRepositoriesWithoutWorkflows().length > 0}
-						<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
-							<h2 class="text-xl font-bold mb-4 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
-								<span>⚠️ Repositories without CI/CD Workflows</span>
-								<span class="text-sm font-normal px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-800'}">
-									{getRepositoriesWithoutWorkflows().length}
-								</span>
-							</h2>
-							
-							<div class="mb-4 p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}">
-								<p class="text-sm transition-colors {$isDarkMode ? 'text-yellow-300' : 'text-yellow-800'}">
-									ℹ️ These repositories are not included in the overall security score calculation since they don't have any GitHub Actions workflows configured.
-								</p>
-							</div>
-							
-							<div class="space-y-4">
-								{#each getRepositoriesWithoutWorkflows() as repo}
-									<div class="p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
-										<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
-											📁 {repo.repository_name}
-										</h3>
-										<div class="text-sm mt-2 transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-											No CI/CD workflows configured - Consider adding GitHub Actions for automated security testing
+								</div>
+							{/if}
+						{/each}
+					{:else}
+						<!-- Folder Analysis: Flat List -->
+						<!-- Repositories WITH workflows -->
+						{#if getRepositoriesWithWorkflows().length > 0}
+							<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
+								<h2 class="text-xl font-bold mb-4 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+									<span>🚀 Repositories with CI/CD Workflows</span>
+									<span class="text-sm font-normal px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}">
+										{getRepositoriesWithWorkflows().length}
+									</span>
+								</h2>
+								
+								<div class="space-y-4">
+									{#each getRepositoriesWithWorkflows() as repo}
+										<div class="p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
+											<div class="flex items-start justify-between mb-3">
+												<div>
+													<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+														📁 {repo.repository_name}
+													</h3>
+													<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+														{repo.workflows_analyzed || 0} workflows analyzed
+													</div>
+												</div>
+												{#if repo.security_score !== null && repo.security_score !== undefined}
+													<div class="text-right">
+														<div class="text-2xl font-bold transition-colors {$isDarkMode ? 'text-green-400' : 'text-green-600'}">
+															{Math.round(repo.security_score)}/100
+														</div>
+														<div class="text-xs transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+															Security Score
+														</div>
+													</div>
+												{/if}
+											</div>
+											
+											<!-- Findings Summary -->
+											{#if repo.findings_count}
+												<div class="flex gap-2 flex-wrap">
+													{#if repo.findings_count.critical > 0}
+														<span class="px-2 py-1 rounded text-xs font-medium" 
+															style="background-color: {getSeverityColor('critical')}20; color: {getSeverityColor('critical')}">
+															{repo.findings_count.critical} Critical
+														</span>
+													{/if}
+													{#if repo.findings_count.high > 0}
+														<span class="px-2 py-1 rounded text-xs font-medium" 
+															style="background-color: {getSeverityColor('high')}20; color: {getSeverityColor('high')}">
+															{repo.findings_count.high} High
+														</span>
+													{/if}
+													{#if repo.findings_count.medium > 0}
+														<span class="px-2 py-1 rounded text-xs font-medium" 
+															style="background-color: {getSeverityColor('medium')}20; color: {getSeverityColor('medium')}">
+															{repo.findings_count.medium} Medium
+														</span>
+													{/if}
+													{#if repo.findings_count.low > 0}
+														<span class="px-2 py-1 rounded text-xs font-medium" 
+															style="background-color: {getSeverityColor('low')}20; color: {getSeverityColor('low')}">
+															{repo.findings_count.low} Low
+														</span>
+													{/if}
+												</div>
+											{/if}
 										</div>
-									</div>
-								{/each}
+									{/each}
+								</div>
 							</div>
-						</div>
+						{/if}
+
+						<!-- Repositories WITHOUT workflows -->
+						{#if getRepositoriesWithoutWorkflows().length > 0}
+							<div class="rounded-lg p-6 transition-colors {$isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'}">
+								<h2 class="text-xl font-bold mb-4 flex items-center gap-2 transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+									<span>⚠️ Repositories without CI/CD Workflows</span>
+									<span class="text-sm font-normal px-2 py-1 rounded transition-colors {$isDarkMode ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-800'}">
+										{getRepositoriesWithoutWorkflows().length}
+									</span>
+								</h2>
+								
+								<div class="mb-4 p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}">
+									<p class="text-sm transition-colors {$isDarkMode ? 'text-yellow-300' : 'text-yellow-800'}">
+										ℹ️ These repositories are not included in the overall security score calculation since they don't have any GitHub Actions workflows configured.
+									</p>
+								</div>
+								
+								<div class="space-y-4">
+									{#each getRepositoriesWithoutWorkflows() as repo}
+										<div class="p-4 rounded-lg transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
+											<h3 class="font-bold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
+												📁 {repo.repository_name}
+											</h3>
+											<div class="text-sm mt-2 transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+												No CI/CD workflows configured - Consider adding GitHub Actions for automated security testing
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					{/if}
 				</div>
 
@@ -1001,7 +1361,7 @@
 						{#each analysisData.findings as finding, idx}
 							<div class="rounded-lg overflow-hidden transition-colors {$isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-sm border border-gray-200'}">
 								<button
-									on:click={() => toggleFinding(idx)}
+									onclick={() => toggleFinding(idx)}
 									class="w-full p-4 flex items-start justify-between hover:opacity-80 transition-all"
 								>
 									<div class="flex items-start gap-4 text-left flex-1">
@@ -1092,14 +1452,33 @@
 									}">
 									<div class="flex items-center justify-between">
 										<div class="flex-1">
-											<div class="flex items-center gap-3 mb-2">
+											<div class="flex items-center gap-3 mb-2 flex-wrap">
 												<h3 class="font-semibold text-lg transition-colors {$isDarkMode ? 'text-white' : 'text-gray-900'}">
 													{analysis.id === selectedAnalysisId ? '✓ ' : ''}Analysis - {formatDate(analysis.created_at)}
 												</h3>
+												
 												{#if analysis.id === selectedAnalysisId}
 													<span class="px-3 py-1 rounded-full text-xs font-medium transition-colors
 														{$isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}">
 														Currently Viewing
+													</span>
+												{/if}
+												
+												<!-- Analysis Type Badge -->
+												{#if analysis.analysis_scope === 'unified'}
+													<span class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+														{$isDarkMode ? 'bg-green-900/30 text-green-400 border border-green-700' : 'bg-green-100 text-green-800 border border-green-300'}">
+														🌐 Unified Analysis
+													</span>
+												{:else if analysis.analysis_scope === 'folder'}
+													<span class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+														{$isDarkMode ? 'bg-blue-900/30 text-blue-400 border border-blue-700' : 'bg-blue-100 text-blue-800 border border-blue-300'}">
+														📁 Folder Analysis
+													</span>
+												{:else if analysis.analysis_scope === 'project'}
+													<span class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+														{$isDarkMode ? 'bg-gray-700 text-gray-400 border border-gray-600' : 'bg-gray-100 text-gray-700 border border-gray-300'}">
+														📦 Project Analysis
 													</span>
 												{/if}
 											</div>
@@ -1140,8 +1519,13 @@
 											</div>
 											
 											{#if analysis.project_name}
-												<div class="text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-													Project: <span class="font-medium">{analysis.project_name}</span>
+												<div class="flex items-center gap-2 text-sm transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+													{#if analysis.analysis_scope === 'folder'}
+														📂 Folder:
+													{:else}
+														📦 Project:
+													{/if}
+													<span class="font-medium">{analysis.project_name}</span>
 												</div>
 											{/if}
 										</div>
@@ -1149,7 +1533,7 @@
 										<div class="flex items-center gap-2 ml-4">
 											{#if analysis.id !== selectedAnalysisId}
 												<button
-													on:click={() => switchToAnalysis(analysis.id)}
+													onclick={() => switchToAnalysis(analysis.id)}
 													class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
 														{$isDarkMode 
 															? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -1160,7 +1544,7 @@
 											{/if}
 											
 											<button
-												on:click={() => deleteAnalysis(analysis.id)}
+												onclick={() => deleteAnalysis(analysis.id)}
 												disabled={deletingAnalysisId === analysis.id}
 												class="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105
 													{deletingAnalysisId === analysis.id
@@ -1223,3 +1607,14 @@
 		background: #6b7280;
 	}
 </style>
+
+<!-- Chat Modal -->
+<ChatModal 
+	bind:isOpen={isChatModalOpen}
+	orgName={org}
+	analysisScope={isUnifiedAnalysis ? 'unified' : 'folder'}
+	analysisId={selectedAnalysisId}
+	projectName={analysisData?.project_name}
+	folderPath={analysisData?.folder_path}
+	on:close={closeChatModal}
+/>

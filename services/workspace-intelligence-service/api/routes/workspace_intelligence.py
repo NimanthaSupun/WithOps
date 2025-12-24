@@ -2,7 +2,8 @@
 API Routes for Workspace Intelligence & DevSecOps Maturity Analysis
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Security
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from pydantic import BaseModel
@@ -13,6 +14,7 @@ from database.config import db_manager
 from core.workspace_analyzer import WorkspaceAnalyzer
 from core.workspace_intelligence_db import WorkspaceIntelligenceDB
 from core.github_service_client import github_service_client
+from core.security import get_current_user, security
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,8 @@ class GetAnalysisResponse(BaseModel):
 @router.post("/analyze-workspace")
 async def analyze_workspace(
     request: AnalyzeWorkspaceRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security)
 ):
     """
     Trigger organization-wide workspace analysis
@@ -76,7 +79,12 @@ async def analyze_workspace(
     maps dependencies, and provides intelligence
     """
     try:
-        logger.info(f"🚀 Workspace analysis request for org: {request.organization_name}")
+        # Extract user_id from JWT token
+        user_id = await get_current_user(credentials)
+        if not user_id:
+            user_id = "system"  # Fallback for backward compatibility
+        
+        logger.info(f"🚀 Workspace analysis request for org: {request.organization_name}, user: {user_id}")
         
         # Create analyzer with GitHub service client
         analyzer = WorkspaceAnalyzer(github_service_client)
@@ -88,7 +96,7 @@ async def analyze_workspace(
             request.organization_name,
             request.tree_data,
             request.repository_tree_id,
-            "system",  # No user context in microservice
+            user_id,
             request.fetch_github_data
         )
         
@@ -103,10 +111,58 @@ async def analyze_workspace(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/analyze-workspace-unified")
+async def analyze_workspace_unified(
+    request: AnalyzeWorkspaceRequest,
+    background_tasks: BackgroundTasks,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security)
+):
+    """
+    Trigger unified workspace analysis - creates ONE analysis with project breakdowns
+    
+    This analyzes the entire organization structure and saves it as a single
+    unified analysis record with embedded project breakdowns for drill-down.
+    Recommended for executive dashboards and org-wide visibility.
+    """
+    try:
+        # Extract user_id from JWT token
+        user_id = await get_current_user(credentials)
+        if not user_id:
+            user_id = "system"  # Fallback for backward compatibility
+        
+        logger.info(f"🚀 Unified workspace analysis request for org: {request.organization_name}, user: {user_id}")
+        
+        # Create analyzer with GitHub service client
+        analyzer = WorkspaceAnalyzer(github_service_client)
+        
+        # Run unified analysis in background
+        background_tasks.add_task(
+            _run_unified_workspace_analysis,
+            analyzer,
+            request.organization_name,
+            request.tree_data,
+            request.repository_tree_id,
+            user_id,
+            request.fetch_github_data
+        )
+        
+        return {
+            "success": True,
+            "message": "Unified workspace analysis started",
+            "analysis_mode": "unified",
+            "status": "analyzing"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to start unified workspace analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/analyze-folder")
 async def analyze_folder(
     request: AnalyzeFolderRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security)
 ):
     """
     Trigger folder-specific analysis (subset of repositories)
@@ -115,7 +171,12 @@ async def analyze_folder(
     allowing team-level or product-level maturity assessment
     """
     try:
-        logger.info(f"📁 Folder analysis request for: {request.folder_path} in org: {request.organization_name}")
+        # Extract user_id from JWT token
+        user_id = await get_current_user(credentials)
+        if not user_id:
+            user_id = "system"  # Fallback for backward compatibility
+        
+        logger.info(f"📁 Folder analysis request for: {request.folder_path} in org: {request.organization_name}, user: {user_id}")
         
         # Filter tree_data to only include the specified folder
         filtered_tree_data = _filter_tree_by_folder(
@@ -146,7 +207,7 @@ async def analyze_folder(
             request.repository_tree_id,
             request.folder_id,
             request.folder_path,
-            "system",  # No user context in microservice
+            user_id,
             request.fetch_github_data
         )
         
@@ -223,6 +284,8 @@ async def get_analysis(
             'project_name': result.project_name,
             'organization_name': result.organization_name,
             'status': result.status,
+            'analysis_scope': result.analysis_scope,  # unified, folder, or organization
+            'folder_path': result.folder_path,
             'overall_maturity_score': result.overall_maturity_score,
             'maturity_level': result.maturity_level,
             'implementation_score': result.implementation_score,
@@ -237,6 +300,7 @@ async def get_analysis(
             'low_findings': result.low_findings,
             'detected_practices': result.detected_practices or {},
             'analysis_config': result.analysis_config or {},
+            'analysis_data': result.analysis_data or {},  # Include full analysis data for project_analyses
             'created_at': result.created_at.isoformat() if result.created_at else None,
             'completed_at': result.completed_at.isoformat() if result.completed_at else None
         }
@@ -246,27 +310,45 @@ async def get_analysis(
         
         logger.info(f"📦 Analysis data keys: {list(analysis_data.keys()) if analysis_data else 'None'}")
         logger.info(f"📦 Analysis data type: {type(analysis_data)}")
+        logger.info(f"📦 Analysis scope: {result.analysis_scope}")
         
         # Extract repositories and findings from project analysis structure
         repositories = []
         findings = []
         
+        # Check if this is a unified analysis (contains project_analyses array)
+        if result.analysis_scope == 'unified' and 'project_analyses' in analysis_data:
+            logger.info(f"🌐 Processing unified analysis with {len(analysis_data['project_analyses'])} projects")
+            
+            # Collect all repositories from all projects
+            for project in analysis_data['project_analyses']:
+                project_repos = project.get('repositories', [])
+                # Add project_name to each repository for grouping
+                for repo in project_repos:
+                    repo['project_name'] = project.get('project_name', 'Unknown')
+                repositories.extend(project_repos)
+                
+                # Collect findings from all repositories in this project
+                for repo in project_repos:
+                    repo_findings = repo.get('findings', [])
+                    findings.extend(repo_findings)
+            
+            logger.info(f"📊 Found {len(repositories)} total repositories across all projects")
+            logger.info(f"🔍 Found {len(findings)} total findings across all repositories")
+        
         # The analysis_data contains the project analysis with 'repositories' array
-        if 'repositories' in analysis_data:
+        elif 'repositories' in analysis_data:
             repositories = analysis_data['repositories']
             logger.info(f"📊 Found {len(repositories)} repositories in analysis_data")
+            
+            # Collect all findings from all repositories
+            for repo in repositories:
+                repo_findings = repo.get('findings', [])
+                findings.extend(repo_findings)
+                logger.info(f"📋 Repository '{repo.get('repository_name')}' has {len(repo_findings)} findings")
         else:
             logger.warning(f"⚠️ No 'repositories' key found in analysis_data")
         
-        # Collect all findings from all repositories
-        all_findings = []
-        for repo in repositories:
-            repo_findings = repo.get('findings', [])
-            all_findings.extend(repo_findings)
-            logger.info(f"📋 Repository '{repo.get('repository_name')}' has {len(repo_findings)} findings")
-        
-        findings = all_findings
-        logger.info(f"🔍 Total findings collected: {len(findings)}")
         logger.info(f"✅ Returning {len(repositories)} repositories and {len(findings)} findings")
         
         return {
@@ -419,6 +501,8 @@ async def get_organization_analyses(
                     "status": analysis.status,
                     "overall_maturity_score": analysis.overall_maturity_score,
                     "maturity_level": analysis.maturity_level,
+                    "analysis_scope": analysis.analysis_scope,
+                    "folder_path": analysis.folder_path,
                     "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
                     "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
                     "total_repositories": analysis.total_repositories or 0,
@@ -696,7 +780,7 @@ async def update_finding_status(
             
             # Update status
             finding.status = status
-            finding.acknowledged_by = current_user
+            finding.acknowledged_by = "system"  # No user context in microservice
             finding.acknowledged_at = datetime.utcnow()
             
             if status == 'resolved':
@@ -777,7 +861,8 @@ async def _run_workspace_analysis(
                         'build_deployment': saved_analysis.build_deployment_score or 0,
                         'verification': saved_analysis.verification_score or 0,
                         'information_gathering': saved_analysis.information_gathering_score or 0
-                    }
+                    },
+                    user_id=user_id
                 )
         
         duration = time.time() - start_time
@@ -792,7 +877,8 @@ async def _run_workspace_analysis(
             maturity_score=result.get('organization_metrics', {}).get('overall_maturity', 0),
             total_repositories=result.get('summary', {}).get('total_repositories', 0),
             total_workflows=result.get('summary', {}).get('total_workflows', 0),
-            findings_count=result.get('summary', {}).get('findings_count', {})
+            findings_count=result.get('summary', {}).get('findings_count', {}),
+            analysis_scope="workspace"
         )
         
         logger.info(f"✅ Workspace analysis completed for {org_name}")
@@ -978,7 +1064,7 @@ async def _run_folder_analysis(
         
         duration = time.time() - start_time
         
-        # Publish analysis completed event
+        # Publish analysis completed event with folder context
         await event_bus.publish_workspace_analysis_completed(
             analysis_id=analysis_id,
             organization_name=org_name,
@@ -988,13 +1074,97 @@ async def _run_folder_analysis(
             maturity_score=result.get('organization_metrics', {}).get('overall_maturity', 0),
             total_repositories=result.get('summary', {}).get('total_repositories', 0),
             total_workflows=result.get('summary', {}).get('total_workflows', 0),
-            findings_count=result.get('summary', {}).get('findings_count', {})
+            findings_count=result.get('summary', {}).get('findings_count', {}),
+            project_name=folder_path,  # Use folder path as project name for filtering
+            folder_path=folder_path,
+            analysis_scope="folder"
         )
         
         logger.info(f"✅ Folder analysis completed for {folder_path} ({len(repo_names)} repos)")
         
     except Exception as e:
         logger.error(f"❌ Background folder analysis failed: {str(e)}", exc_info=True)
+        
+        # Publish analysis failed event
+        await event_bus.publish_workspace_analysis_failed(
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id,
+            error_message=str(e)
+        )
+
+
+async def _run_unified_workspace_analysis(
+    analyzer: WorkspaceAnalyzer,
+    org_name: str,
+    tree_data: List[Dict],
+    tree_id: str,
+    user_id: str,
+    fetch_github_data: bool
+):
+    """
+    Background task to run unified workspace analysis
+    
+    Analyzes entire organization and saves as ONE analysis record
+    with embedded project breakdowns for drill-down capability
+    """
+    from core.event_bus import event_bus
+    import time
+    
+    start_time = time.time()
+    
+    try:
+        # Publish analysis started event
+        await event_bus.publish_workspace_analysis_started(
+            analysis_id=None,
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id
+        )
+        
+        logger.info(f"🔍 Starting unified workspace analysis for {org_name}")
+        
+        # Run complete workspace analysis
+        result = await analyzer.analyze_workspace(
+            org_name,
+            tree_data,
+            fetch_github_data
+        )
+        
+        logger.info(f"📊 Analysis complete. Saving unified analysis...")
+        
+        # Save as ONE unified analysis record
+        async with db_manager.get_session() as session:
+            unified_analysis = await WorkspaceIntelligenceDB.save_unified_analysis(
+                session,
+                tree_id,
+                org_name,
+                user_id,
+                result
+            )
+            
+            analysis_id = unified_analysis.id
+        
+        duration = time.time() - start_time
+        
+        # Publish analysis completed event with unified scope
+        await event_bus.publish_workspace_analysis_completed(
+            analysis_id=analysis_id,
+            organization_name=org_name,
+            user_id=user_id,
+            tree_id=tree_id,
+            duration_seconds=duration,
+            maturity_score=result.get('organization_metrics', {}).get('overall_maturity', 0),
+            total_repositories=result.get('summary', {}).get('total_repositories', 0),
+            total_workflows=result.get('summary', {}).get('total_workflows', 0),
+            findings_count=result.get('summary', {}).get('findings_count', {}),
+            analysis_scope="unified"
+        )
+        
+        logger.info(f"✅ Unified workspace analysis completed for {org_name} (ID: {analysis_id})")
+        
+    except Exception as e:
+        logger.error(f"❌ Background unified workspace analysis failed: {str(e)}", exc_info=True)
         
         # Publish analysis failed event
         await event_bus.publish_workspace_analysis_failed(

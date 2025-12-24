@@ -103,6 +103,11 @@ class WorkspaceIntelligenceDB:
             maturity = project_data.get('maturity', {})
             findings_count = project_data.get('findings_count', {})
             
+            # Extract domain scores from nested structure
+            domain_scores = maturity.get('domain_scores', {})
+            technology_score = domain_scores.get('technology', {}).get('score', 0)
+            process_score = domain_scores.get('process', {}).get('score', 0)
+            
             analysis = ProjectAnalysis(
                 repository_tree_id=repository_tree_id,
                 project_id=project_id,
@@ -117,13 +122,13 @@ class WorkspaceIntelligenceDB:
                 # Status
                 status='completed',
                 completed_at=datetime.utcnow(),
-                # Maturity scores
+                # Maturity scores - extract from domain_scores structure
                 overall_maturity_score=maturity.get('overall_maturity_score', 0),
                 maturity_level=str(maturity.get('maturity_level', 'Unknown')),
-                implementation_score=maturity.get('implementation_score', 0),
-                build_deployment_score=maturity.get('build_deployment_score', 0),
-                verification_score=maturity.get('test_verification_score', 0),
-                information_gathering_score=maturity.get('information_gathering_score', 0),
+                implementation_score=technology_score,  # Technology maps to implementation
+                build_deployment_score=process_score,   # Process maps to build/deployment
+                verification_score=0,  # Not in current structure
+                information_gathering_score=0,  # Not in current structure
                 # Metrics
                 total_repositories=project_data.get('repository_count', 0),
                 repositories_analyzed=project_data.get('repository_count', 0),
@@ -147,6 +152,147 @@ class WorkspaceIntelligenceDB:
             
         except Exception as e:
             logger.error(f"Error saving project analysis: {e}")
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def save_unified_analysis(
+        db: Session,
+        repository_tree_id: str,
+        organization_name: str,
+        user_id: str,
+        analysis_result: Dict
+    ) -> ProjectAnalysis:
+        """
+        Save unified workspace analysis as ONE record with project breakdowns
+        
+        This creates a single analysis record containing organization-wide metrics
+        with embedded project_analyses array for drill-down capability.
+        
+        Args:
+            db: Database session
+            repository_tree_id: ID of the repository tree
+            organization_name: Organization name
+            user_id: User ID performing analysis
+            analysis_result: Complete analysis result from WorkspaceAnalyzer
+        
+        Returns:
+            Created ProjectAnalysis record with analysis_scope='unified'
+        """
+        try:
+            org_metrics = analysis_result.get('organization_metrics', {})
+            project_analyses = analysis_result.get('project_analyses', [])
+            summary = analysis_result.get('summary', {})
+            
+            # Calculate aggregated metrics
+            total_repos = sum(p.get('repository_count', 0) for p in project_analyses)
+            total_workflows = sum(p.get('workflow_count', 0) for p in project_analyses)
+            
+            # Aggregate all findings across projects
+            all_findings = []
+            for project in project_analyses:
+                all_findings.extend(project.get('all_findings', []))
+            
+            findings_count = {
+                'critical': len([f for f in all_findings if f.get('severity') == 'critical']),
+                'high': len([f for f in all_findings if f.get('severity') == 'high']),
+                'medium': len([f for f in all_findings if f.get('severity') == 'medium']),
+                'low': len([f for f in all_findings if f.get('severity') == 'low']),
+            }
+            
+            # Calculate average DSOMM scores across projects
+            def _average_score(projects, score_key):
+                scores = [p.get('maturity', {}).get(f"{score_key}_score", 0) for p in projects if p.get('maturity')]
+                return round(sum(scores) / len(scores), 2) if scores else 0
+            
+            # Aggregate detected practices across all projects
+            def _aggregate_practices(projects):
+                """Combine practices from all projects"""
+                aggregated = {
+                    'total_repos': total_repos,
+                    'repos_with_workflows': sum(1 for p in projects if p.get('workflow_count', 0) > 0),
+                    'uses_centralized_workflows': any(p.get('detected_practices', {}).get('uses_centralized_workflows') for p in projects),
+                    'sast_tools': list(set(tool for p in projects for tool in p.get('detected_practices', {}).get('sast_tools', []))),
+                    'sca_tools': list(set(tool for p in projects for tool in p.get('detected_practices', {}).get('sca_tools', []))),
+                    'dast_tools': list(set(tool for p in projects for tool in p.get('detected_practices', {}).get('dast_tools', []))),
+                    'secret_scanning_tools': list(set(tool for p in projects for tool in p.get('detected_practices', {}).get('secret_scanning_tools', []))),
+                    'container_scanning_tools': list(set(tool for p in projects for tool in p.get('detected_practices', {}).get('container_scanning_tools', []))),
+                    'branch_protection_enabled': any(p.get('detected_practices', {}).get('branch_protection_enabled') for p in projects),
+                    'has_codeowners': any(p.get('detected_practices', {}).get('has_codeowners') for p in projects),
+                    'required_reviews': max((p.get('detected_practices', {}).get('required_reviews', 0) for p in projects), default=0),
+                    'signed_commits_required': any(p.get('detected_practices', {}).get('signed_commits_required') for p in projects),
+                    'required_status_checks': any(p.get('detected_practices', {}).get('required_status_checks') for p in projects),
+                    'has_pr_workflows': any(p.get('detected_practices', {}).get('has_pr_workflows') for p in projects),
+                    'has_precommit_hooks': any(p.get('detected_practices', {}).get('has_precommit_hooks') for p in projects),
+                    'precommit_hooks': list(set(hook for p in projects for hook in p.get('detected_practices', {}).get('precommit_hooks', [])))
+                }
+                return aggregated
+            
+            # Create single unified analysis record
+            analysis = ProjectAnalysis(
+                project_name=f"{organization_name} - Unified Workspace",
+                organization_name=organization_name,
+                repository_tree_id=repository_tree_id,
+                user_id=user_id,
+                
+                # Mark as unified analysis
+                analysis_scope='unified',
+                
+                # Organization-level metrics
+                overall_maturity_score=org_metrics.get('overall_maturity', 0),
+                maturity_level=str(org_metrics.get('maturity_level', 'Unknown')),
+                
+                # Average DSOMM scores across all projects
+                implementation_score=_average_score(project_analyses, 'implementation'),
+                build_deployment_score=_average_score(project_analyses, 'build_deployment'),
+                verification_score=_average_score(project_analyses, 'test_verification'),
+                information_gathering_score=_average_score(project_analyses, 'information_gathering'),
+                
+                # Totals
+                total_repositories=total_repos,
+                repositories_analyzed=total_repos,
+                total_workflows=total_workflows,
+                
+                # Aggregated findings
+                critical_findings=findings_count['critical'],
+                high_findings=findings_count['high'],
+                medium_findings=findings_count['medium'],
+                low_findings=findings_count['low'],
+                
+                # Store complete analysis with project breakdowns
+                analysis_data={
+                    'organization_metrics': org_metrics,
+                    'project_analyses': project_analyses,  # Array of per-folder analyses
+                    'centralized_workflows': analysis_result.get('centralized_workflows', {}),
+                    'workflow_dependencies': analysis_result.get('workflow_dependencies', {}),
+                    'insights': analysis_result.get('insights', []),
+                    'summary': summary
+                },
+                
+                # Aggregated practices
+                detected_practices=_aggregate_practices(project_analyses),
+                
+                # Analysis config
+                analysis_config={
+                    'analysis_type': 'unified_workspace',
+                    'fetch_github_data': True,
+                    'total_projects': len(project_analyses)
+                },
+                
+                # Status
+                status='completed',
+                completed_at=datetime.utcnow()
+            )
+            
+            db.add(analysis)
+            await db.commit()
+            await db.refresh(analysis)
+            
+            logger.info(f"✅ Saved unified analysis {analysis.id} for {organization_name} ({len(project_analyses)} projects)")
+            return analysis
+            
+        except Exception as e:
+            logger.error(f"❌ Error saving unified analysis: {e}")
             await db.rollback()
             raise
 

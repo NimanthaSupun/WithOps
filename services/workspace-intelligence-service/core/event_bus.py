@@ -213,7 +213,10 @@ class EventBus:
         maturity_score: float,
         total_repositories: int,
         total_workflows: int,
-        findings_count: Dict[str, int]
+        findings_count: Dict[str, int],
+        project_name: Optional[str] = None,
+        folder_path: Optional[str] = None,
+        analysis_scope: str = "unified"
     ):
         """Publish workspace analysis completed event"""
         return await self.publish({
@@ -227,7 +230,10 @@ class EventBus:
                 "maturity_score": maturity_score,
                 "total_repositories": total_repositories,
                 "total_workflows": total_workflows,
-                "findings_count": findings_count
+                "findings_count": findings_count,
+                "project_name": project_name,
+                "folder_path": folder_path,
+                "analysis_scope": analysis_scope
             }
         })
     
@@ -255,7 +261,8 @@ class EventBus:
         project_id: str,
         project_name: str,
         organization_name: str,
-        maturity_scores: Dict[str, float]
+        maturity_scores: Dict[str, float],
+        user_id: Optional[str] = None
     ):
         """Publish individual project analysis completed event"""
         return await self.publish({
@@ -265,7 +272,8 @@ class EventBus:
                 "project_id": project_id,
                 "project_name": project_name,
                 "organization_name": organization_name,
-                "maturity_scores": maturity_scores
+                "maturity_scores": maturity_scores,
+                "user_id": user_id
             }
         })
 
