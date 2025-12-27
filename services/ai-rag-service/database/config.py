@@ -14,11 +14,11 @@ class DatabaseConfig:
     """Database configuration and connection management"""
     
     def __init__(self):
-        self.host = os.getenv("SUPABASE_DB_HOST", "aws-0-ap-southeast-1.pooler.supabase.com")
-        self.port = int(os.getenv("SUPABASE_DB_PORT", "6543"))
+        self.host = os.getenv("SUPABASE_DB_HOST", "aws-0-ap-south-1.pooler.supabase.com")
+        self.port = int(os.getenv("SUPABASE_DB_PORT", "5432"))
         self.database = os.getenv("SUPABASE_DB_NAME", "postgres")
-        self.user = os.getenv("SUPABASE_DB_USER", "postgres.gzgumwdvhmxyhmmxibzv")
-        self.password = os.getenv("SUPABASE_DB_PASSWORD", "")
+        self.user = os.getenv("SUPABASE_DB_USER", "postgres.fcmcsbmsntmpeyjltqbi")
+        self.password = os.getenv("SUPABASE_DB_PASSWORD", "5m19NTF6y0x1fJgr")
         self._pool: Optional[asyncpg.Pool] = None
     
     async def initialize(self):
