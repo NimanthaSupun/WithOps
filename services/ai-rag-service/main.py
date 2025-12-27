@@ -11,13 +11,14 @@ import sys
 import asyncio
 import os
 
-from api.routes import chat, indexing, health
+from api.routes import chat, indexing, health, conversations
 from core.embeddings import EmbeddingService
 from core.vector_store import VectorStore
 from core.event_bus import event_bus
 from core.auto_indexer import AutoIndexer
 from core.conversation_store import conversation_store
 from core.security import PermissionService
+from database.config import db_config
 import redis.asyncio as redis
 
 # Configure logging
@@ -55,6 +56,10 @@ async def lifespan(app: FastAPI):
         
         # Initialize conversation store
         await conversation_store.connect()
+        
+        # Initialize database connection pool
+        logger.info("Initializing database connection pool...")
+        await db_config.initialize()
         
         # Initialize permission service
         permission_service = PermissionService(redis_client)
@@ -104,6 +109,7 @@ async def lifespan(app: FastAPI):
         logger.info("🛑 Shutting down AI RAG Service...")
         await conversation_store.disconnect()
         await event_bus.disconnect()
+        await db_config.close()
         if vector_store_instance:
             await vector_store_instance.close()
         logger.info("✅ Cleanup complete")
@@ -131,6 +137,7 @@ app.add_middleware(
 app.include_router(health.router, tags=["Health"])
 app.include_router(chat.router, prefix="/api/rag", tags=["Chat"])
 app.include_router(indexing.router, prefix="/api/rag", tags=["Indexing"])
+app.include_router(conversations.router, prefix="/api", tags=["Conversations"])
 
 
 @app.get("/")
@@ -143,7 +150,8 @@ async def root():
         "endpoints": {
             "health": "/health",
             "chat": "/api/rag/chat",
-            "index": "/api/rag/index"
+            "index": "/api/rag/index",
+            "conversations": "/api/conversations"
         }
     }
 
