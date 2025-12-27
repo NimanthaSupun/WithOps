@@ -216,3 +216,45 @@ class PermissionService:
 
 # Global instances
 security_service = SecurityService()
+
+
+async def verify_token(token: str) -> dict:
+    """
+    FastAPI dependency for JWT token verification
+    
+    Args:
+        token: JWT token string
+        
+    Returns:
+        Dict with user_id and other claims
+        
+    Raises:
+        HTTPException: If token is invalid
+    """
+    from fastapi import HTTPException, Header
+    
+    try:
+        # Extract token from Authorization header
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authorization token")
+        
+        # Remove "Bearer " prefix if present
+        if token.startswith("Bearer "):
+            token = token[7:]
+        
+        # Validate token using security service
+        payload = security_service.validate_token(token)
+        
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        return {
+            "user_id": payload.get("sub"),
+            "email": payload.get("email"),
+            "org_id": payload.get("org_id")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token verification error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Token verification failed")

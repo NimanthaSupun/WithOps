@@ -2,7 +2,7 @@
 API Routes for Chat Conversation Management
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from typing import List, Optional
 from uuid import UUID
 import logging
@@ -23,7 +23,7 @@ router = APIRouter()
 @router.post("/conversations", response_model=Conversation)
 async def create_conversation(
     data: ConversationCreate,
-    user_data: dict = Depends(verify_token)
+    authorization: str = Header(...)
 ):
     """
     Create a new chat conversation
@@ -32,8 +32,11 @@ async def create_conversation(
     - Each analysis can have multiple conversations
     """
     try:
+        # Get user info from token
+        user_info = await verify_token(authorization)
+        
         # Ensure user_id matches token
-        if data.user_id != user_data["user_id"]:
+        if data.user_id != user_info["user_id"]:
             raise HTTPException(status_code=403, detail="User ID mismatch")
         
         conversation = await ConversationOperations.create_conversation(data)
@@ -46,10 +49,10 @@ async def create_conversation(
 
 @router.get("/conversations", response_model=List[Conversation])
 async def list_conversations(
+    authorization: str = Header(...),
     analysis_id: Optional[UUID] = Query(None, description="Filter by analysis ID"),
     organization_name: Optional[str] = Query(None, description="Filter by organization"),
-    limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
-    user_data: dict = Depends(verify_token)
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of results")
 ):
     """
     List conversations for the authenticated user
@@ -59,7 +62,8 @@ async def list_conversations(
     - Returns most recently updated conversations first
     """
     try:
-        user_id = user_data["user_id"]
+        user_info = await verify_token(authorization)
+        user_id = user_info["user_id"]
         conversations = await ConversationOperations.list_conversations(
             user_id=user_id,
             analysis_id=analysis_id,
@@ -76,7 +80,7 @@ async def list_conversations(
 @router.get("/conversations/{conversation_id}", response_model=Conversation)
 async def get_conversation(
     conversation_id: UUID,
-    user_data: dict = Depends(verify_token)
+    authorization: str = Header(...)
 ):
     """
     Get a specific conversation by ID
@@ -85,7 +89,8 @@ async def get_conversation(
     - Use GET /conversations/{id}/messages to get messages
     """
     try:
-        user_id = user_data["user_id"]
+        user_info = await verify_token(authorization)
+        user_id = user_info["user_id"]
         conversation = await ConversationOperations.get_conversation(
             conversation_id=conversation_id,
             user_id=user_id
@@ -105,8 +110,8 @@ async def get_conversation(
 @router.get("/conversations/{conversation_id}/messages", response_model=ConversationWithMessages)
 async def get_conversation_with_messages(
     conversation_id: UUID,
-    limit: int = Query(100, ge=1, le=500, description="Maximum number of messages"),
-    user_data: dict = Depends(verify_token)
+    authorization: str = Header(...),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of messages")
 ):
     """
     Get a conversation with all its messages
@@ -115,7 +120,8 @@ async def get_conversation_with_messages(
     - Messages ordered by creation time (oldest first)
     """
     try:
-        user_id = user_data["user_id"]
+        user_info = await verify_token(authorization)
+        user_id = user_info["user_id"]
         conversation = await MessageOperations.get_conversation_with_messages(
             conversation_id=conversation_id,
             user_id=user_id,
@@ -138,7 +144,7 @@ async def get_conversation_with_messages(
 async def update_conversation(
     conversation_id: UUID,
     data: ConversationUpdate,
-    user_data: dict = Depends(verify_token)
+    authorization: str = Header(...)
 ):
     """
     Update a conversation (rename or soft delete)
@@ -147,7 +153,8 @@ async def update_conversation(
     - Can set is_active to false (soft delete)
     """
     try:
-        user_id = user_data["user_id"]
+        user_info = await verify_token(authorization)
+        user_id = user_info["user_id"]
         conversation = await ConversationOperations.update_conversation(
             conversation_id=conversation_id,
             user_id=user_id,
@@ -169,7 +176,7 @@ async def update_conversation(
 @router.delete("/conversations/{conversation_id}")
 async def delete_conversation(
     conversation_id: UUID,
-    user_data: dict = Depends(verify_token)
+    authorization: str = Header(...)
 ):
     """
     Delete a conversation (soft delete)
@@ -178,7 +185,8 @@ async def delete_conversation(
     - Messages are preserved but conversation won't appear in list
     """
     try:
-        user_id = user_data["user_id"]
+        user_info = await verify_token(authorization)
+        user_id = user_info["user_id"]
         success = await ConversationOperations.delete_conversation(
             conversation_id=conversation_id,
             user_id=user_id
