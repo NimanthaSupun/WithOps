@@ -6,13 +6,15 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import logging
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from core.embeddings import EmbeddingService
 from core.vector_store import VectorStore
 from core.rag_engine import RAGEngine
 from core.security import security_service, PermissionService
 from core.conversation_store import conversation_store
+from database.operations import ConversationOperations, MessageOperations
+from database.models import ConversationCreate, MessageCreate
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +30,12 @@ class ChatRequest(BaseModel):
     """Request model for chat queries"""
     question: str
     org_name: str  # Required for permission check
-    project_name: Optional[str] = None  # NEW - For folder-level filtering
-    folder_path: Optional[str] = None   # NEW - For folder isolation
-    analysis_scope: Optional[str] = None  # NEW - unified/folder/project
-    analysis_id: Optional[str] = None   # NEW - Specific analysis version
-    conversation_id: Optional[str] = None
+    project_name: Optional[str] = None  # For folder-level filtering
+    folder_path: Optional[str] = None   # For folder isolation
+    analysis_scope: Optional[str] = None  # unified/folder/project
+    analysis_id: Optional[str] = None   # Specific analysis version
+    conversation_id: Optional[str] = None  # Existing conversation ID (UUID)
+    auto_create_conversation: bool = True  # Auto-create if conversation_id not provided
     filters: Optional[Dict[str, Any]] = None
 
 
@@ -126,10 +129,61 @@ async def chat(
         # 5. Initialize RAG engine
         rag_engine = RAGEngine(embedding_service, vector_store)
         
-        # 6. Get or create conversation ID
-        conversation_id = request.conversation_id or str(uuid4())
+        # 6. Handle conversation management
+        conversation_id = None
+        conversation_uuid = None
         
-        # 7. Get conversation history from Redis
+        # If conversation_id provided, validate it exists
+        if request.conversation_id:
+            try:
+                conversation_uuid = UUID(request.conversation_id)
+                # Verify conversation exists and belongs to user
+                existing_conv = await ConversationOperations.get_conversation(
+                    conversation_uuid, user_id
+                )
+                if not existing_conv:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Conversation not found or access denied"
+                    )
+                conversation_id = request.conversation_id
+                logger.info(f"Using existing conversation: {conversation_id}")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid conversation_id format")
+        
+        # Auto-create conversation if needed
+        elif request.auto_create_conversation and request.analysis_id:
+            try:
+                analysis_uuid = UUID(request.analysis_id)
+                # Generate conversation title from first question
+                title = request.question[:50] + ("..." if len(request.question) > 50 else "")
+                
+                conv_create = ConversationCreate(
+                    user_id=user_id,
+                    organization_name=request.org_name,
+                    analysis_id=analysis_uuid,
+                    analysis_scope=request.analysis_scope or "unified",
+                    project_name=request.project_name,
+                    folder_path=request.folder_path,
+                    title=title
+                )
+                
+                new_conv = await ConversationOperations.create_conversation(conv_create)
+                conversation_id = str(new_conv.id)
+                conversation_uuid = new_conv.id
+                logger.info(f"✅ Auto-created conversation: {conversation_id}")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid analysis_id format")
+            except Exception as e:
+                logger.warning(f"Failed to auto-create conversation: {str(e)}")
+                # Fall back to temporary conversation ID
+                conversation_id = str(uuid4())
+        else:
+            # Temporary conversation (Redis only, not persisted)
+            conversation_id = str(uuid4())
+            logger.info(f"Using temporary conversation: {conversation_id}")
+        
+        # 7. Get conversation history from Redis (for context)
         conversation_history = await conversation_store.get_conversation(
             user_id, conversation_id
         )
@@ -142,7 +196,9 @@ async def chat(
             conversation_history=conversation_history if conversation_history else None
         )
         
-        # 9. Store conversation turns in Redis
+        # 9. Store messages in both Redis (cache) and Database (permanent)
+        
+        # Store in Redis for quick access
         await conversation_store.add_message(
             user_id=user_id,
             conversation_id=conversation_id,
@@ -162,6 +218,35 @@ async def chat(
                 "model": result.get("model")
             }
         )
+        
+        # Store in Database if we have a valid conversation UUID
+        if conversation_uuid:
+            try:
+                # Store user message
+                await MessageOperations.create_message(MessageCreate(
+                    conversation_id=conversation_uuid,
+                    role="user",
+                    content=request.question,
+                    metadata={"filters": filters}
+                ))
+                
+                # Store assistant message
+                await MessageOperations.create_message(MessageCreate(
+                    conversation_id=conversation_uuid,
+                    role="assistant",
+                    content=result["answer"],
+                    sources=result.get("sources", []),
+                    metadata={
+                        "confidence": result.get("confidence"),
+                        "contexts_used": result.get("contexts_used"),
+                        "model": result.get("model"),
+                        "tokens_used": result.get("tokens_used")
+                    }
+                ))
+                logger.info(f"💾 Persisted messages to database for conversation {conversation_id}")
+            except Exception as e:
+                logger.warning(f"Failed to persist messages to database: {str(e)}")
+                # Don't fail the request if database storage fails
         
         logger.info(f"✅ Chat response generated for user {user_id}, conversation {conversation_id}")
         
