@@ -242,14 +242,14 @@ async def verify_token(token: str) -> dict:
         if token.startswith("Bearer "):
             token = token[7:]
         
-        # Validate token using security service
-        payload = security_service.validate_token(token)
+        # Verify token using security service
+        payload = security_service.verify_token(token)
         
         if not payload:
             raise HTTPException(status_code=401, detail="Invalid token")
         
         return {
-            "user_id": payload.get("sub"),
+            "user_id": payload.get("user_id"),
             "email": payload.get("email"),
             "org_id": payload.get("org_id")
         }

@@ -282,9 +282,8 @@
 			transition:fly={{ y: 50, duration: 300, easing: cubicOut }}
 		>
 			<!-- Sidebar - Conversation List -->
-			{#if showSidebar}
-				<aside class="sidebar" transition:fly={{ x: -300, duration: 250 }}>
-					<div class="sidebar-header">
+			<aside class="sidebar" class:hidden={!showSidebar}>
+				<div class="sidebar-header">
 						<h3>💬 Conversations</h3>
 						<button class="btn-new" on:click={createNewConversation} title="New Chat" aria-label="New Chat">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -360,7 +359,6 @@
 						{/if}
 					</div>
 				</aside>
-			{/if}
 			
 			<!-- Main Chat Area -->
 			<main class="chat-main">
@@ -634,6 +632,15 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+		transform: translateX(0);
+		opacity: 1;
+	}
+	
+	.sidebar.hidden {
+		transform: translateX(-100%);
+		opacity: 0;
+		pointer-events: none;
 	}
 	
 	.sidebar-header {
@@ -676,7 +683,26 @@
 	.conversations-list {
 		flex: 1;
 		overflow-y: auto;
+		overflow-x: hidden;
 		padding: 12px;
+		min-height: 0; /* Important for flex scrolling */
+	}
+	
+	.conversations-list::-webkit-scrollbar {
+		width: 6px;
+	}
+	
+	.conversations-list::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	
+	.conversations-list::-webkit-scrollbar-thumb {
+		background: #cbd5e1;
+		border-radius: 10px;
+	}
+	
+	.conversations-list::-webkit-scrollbar-thumb:hover {
+		background: #94a3b8;
 	}
 	
 	.conversation-item {
@@ -807,6 +833,8 @@
 		display: flex;
 		flex-direction: column;
 		background: #fafafa;
+		min-height: 0; /* Important for flex scrolling */
+		height: 100%;
 	}
 	
 	/* Header */
@@ -907,8 +935,30 @@
 	.messages-area {
 		flex: 1;
 		overflow-y: auto;
+		overflow-x: hidden;
 		padding: 24px;
 		scroll-behavior: smooth;
+		min-height: 0; /* Important for flex scrolling */
+		position: relative;
+	}
+	
+	.messages-area::-webkit-scrollbar {
+		width: 10px;
+	}
+	
+	.messages-area::-webkit-scrollbar-track {
+		background: #f3f4f6;
+		border-radius: 10px;
+	}
+	
+	.messages-area::-webkit-scrollbar-thumb {
+		background: #cbd5e1;
+		border-radius: 10px;
+		border: 2px solid #f3f4f6;
+	}
+	
+	.messages-area::-webkit-scrollbar-thumb:hover {
+		background: #94a3b8;
 	}
 	
 	/* Empty State */
@@ -1001,6 +1051,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 24px;
+		padding-bottom: 20px; /* Extra space at bottom for better scroll */
+		min-height: min-content;
 	}
 	
 	.message-wrapper {
