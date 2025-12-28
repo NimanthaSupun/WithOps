@@ -249,7 +249,17 @@ class MessageOperations:
                 limit,
                 offset
             )
-            return [Message(**dict(row)) for row in rows]
+            # Parse JSON fields back to dicts
+            messages = []
+            for row in rows:
+                row_dict = dict(row)
+                # Parse sources and metadata from JSON strings to dicts
+                if row_dict.get('sources') and isinstance(row_dict['sources'], str):
+                    row_dict['sources'] = json.loads(row_dict['sources'])
+                if row_dict.get('metadata') and isinstance(row_dict['metadata'], str):
+                    row_dict['metadata'] = json.loads(row_dict['metadata'])
+                messages.append(Message(**row_dict))
+            return messages
         finally:
             await db_config.release_connection(conn)
     

@@ -1,51 +1,6 @@
-﻿🚀 Using cached workspace data for instant display
-12.D0Ff3F2H.js:3 ✅ Loaded 4 available repositories
-:8000/api/workspace-intelligence/analysis/WithOps-Com:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-12.D0Ff3F2H.js:1 ℹ️ No existing analysis found, showing analysis options...
-12.D0Ff3F2H.js:1 ✅ Unified analysis started: Object
-11.A0sMj4GG.js:2 🚀 Intelligence Page Initialized
-11.A0sMj4GG.js:2 📍 Org param: WithOps-Com
-11.A0sMj4GG.js:2 🌐 API Base URL: http://localhost:8000
-11.A0sMj4GG.js:2 🔐 Has auth token: true
-11.A0sMj4GG.js:2 🔑 Token exists: true
-11.A0sMj4GG.js:2 📡 Fetching analysis for org: WithOps-Com
-11.A0sMj4GG.js:2 🔍 Intelligence page mounted for org: WithOps-Com
-11.A0sMj4GG.js:2 🔑 Token exists: true
-11.A0sMj4GG.js:2 📡 Fetching analysis for org: WithOps-Com
-11.A0sMj4GG.js:2 📊 API Response status: 200
-11.A0sMj4GG.js:2 ✅ Analysis data received: Object
-11.A0sMj4GG.js:2 📊 API Response status: 200
-11.A0sMj4GG.js:2 ✅ Analysis data received: Object
-11.A0sMj4GG.js:2 📋 Detailed analysis response: Object
-11.A0sMj4GG.js:2 📂 Found 2 project breakdowns
-11.A0sMj4GG.js:2 📦 Final analysisData: Object
-11.A0sMj4GG.js:2 🔍 Is Unified Analysis: true
-11.A0sMj4GG.js:2 📊 Repositories count: 1
-11.A0sMj4GG.js:2 🔍 Findings count: 6
-11.A0sMj4GG.js:2 ✅ Loading complete. Error: null
-11.A0sMj4GG.js:2 📋 Detailed analysis response: Object
-11.A0sMj4GG.js:2 📂 Found 2 project breakdowns
-11.A0sMj4GG.js:2 📦 Final analysisData: Object
-11.A0sMj4GG.js:2 🔍 Is Unified Analysis: true
-11.A0sMj4GG.js:2 📊 Repositories count: 1
-11.A0sMj4GG.js:2 🔍 Findings count: 6
-11.A0sMj4GG.js:2 ✅ Loading complete. Error: null
-:9108/api/conversations?analysis_id=de383646-fdfa-4bc8-b3ad-71caeeae0446&organization_name=WithOps-Com&limit=50:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-11.A0sMj4GG.js:1 Failed to load conversations: Error: Failed to list conversations: Internal Server Error
-    at Object.listConversations (11.A0sMj4GG.js:1:4288)
-    at async Er (11.A0sMj4GG.js:1:13919)
-    at async Nt (11.A0sMj4GG.js:1:13879)
-Er @ 11.A0sMj4GG.js:1Understand this error
+﻿✅ Loading complete. Error: null
 intelligence:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-:9108/api/conversations?analysis_id=de383646-fdfa-4bc8-b3ad-71caeeae0446&organization_name=WithOps-Com&limit=50:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-11.A0sMj4GG.js:1 Failed to load conversations: Error: Failed to list conversations: Internal Server Error
-    at Object.listConversations (11.A0sMj4GG.js:1:4288)
-    at async Er (11.A0sMj4GG.js:1:13919)
-    at async hr (11.A0sMj4GG.js:1:15742)
-Er @ 11.A0sMj4GG.js:1Understand this error
-:9108/api/conversations?analysis_id=de383646-fdfa-4bc8-b3ad-71caeeae0446&organization_name=WithOps-Com&limit=50:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-11.A0sMj4GG.js:1 Failed to load conversations: Error: Failed to list conversations: Internal Server Error
-    at Object.listConversations (11.A0sMj4GG.js:1:4288)
-    at async Er (11.A0sMj4GG.js:1:13919)
-    at async Nt (11.A0sMj4GG.js:1:13879)
-Er @ 11.A0sMj4GG.js:1Understand this error
+:9108/api/conversations/5a07cd9a-d7a8-4bca-896c-347d1d1b40d6/messages?limit=100:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+11.BzJhsDpY.js:1 Failed to load conversation: Error: Failed to get conversation messages: Internal Server Error
+    at Object.getConversationWithMessages (11.BzJhsDpY.js:1:4733)
+    at async tr (11.BzJhsDpY.js:1:14263)
