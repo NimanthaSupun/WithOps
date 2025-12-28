@@ -222,7 +222,15 @@ class MessageOperations:
             await ConversationOperations.increment_message_count(data.conversation_id)
             
             logger.info(f"✅ Created message in conversation {data.conversation_id}")
-            return Message(**dict(row))
+            
+            # Parse JSON fields back to dicts for the Message object
+            row_dict = dict(row)
+            if row_dict.get('sources') and isinstance(row_dict['sources'], str):
+                row_dict['sources'] = json.loads(row_dict['sources'])
+            if row_dict.get('metadata') and isinstance(row_dict['metadata'], str):
+                row_dict['metadata'] = json.loads(row_dict['metadata'])
+            
+            return Message(**row_dict)
         except Exception as e:
             logger.error(f"❌ Error creating message: {str(e)}")
             raise
