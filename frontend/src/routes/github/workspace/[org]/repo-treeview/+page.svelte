@@ -57,6 +57,10 @@
     // Repository Tree ID for analysis
     let currentRepositoryTreeId = $state(null);
     
+    // Past analysis state
+    let hasPastAnalysis = $state(false);
+    let checkingAnalysis = $state(false);
+    
     // Statistics
     let statistics = $state({
         totalFolders: 0,
@@ -75,6 +79,7 @@
         
         await loadRepoTreeData();
         await loadAvailableRepositories();
+        await checkForPastAnalysis();
     });
     
     function toggleTheme() {
@@ -656,6 +661,47 @@
         await triggerFolderAnalysis();
     }
     
+    // Check if past analysis exists (for button display)
+    async function checkForPastAnalysis() {
+        try {
+            checkingAnalysis = true;
+            const token = localStorage.getItem('auth_token') || 
+                         sessionStorage.getItem('auth_token') || 
+                         localStorage.getItem('github_token');
+            
+            if (!token) {
+                hasPastAnalysis = false;
+                return;
+            }
+            
+            const response = await fetch(`http://localhost:8000/api/workspace-intelligence/analysis/${orgName}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                hasPastAnalysis = result && (result.analyses?.length > 0 || result.analysis);
+                console.log('✅ Past analysis check:', hasPastAnalysis);
+            } else {
+                hasPastAnalysis = false;
+            }
+        } catch (error) {
+            console.error('❌ Error checking for past analysis:', error);
+            hasPastAnalysis = false;
+        } finally {
+            checkingAnalysis = false;
+        }
+    }
+    
+    // Navigate directly to intelligence dashboard
+    function navigateToDashboard() {
+        goto(`/github/workspace/${orgName}/intelligence`);
+    }
+    
     // Check if analysis exists and navigate to intelligence page
     async function checkAndNavigateToIntelligence() {
         try {
@@ -835,6 +881,23 @@
                         </div>
                     </div>
                 </button>
+
+                {#if hasPastAnalysis}
+                <button 
+                    onclick={navigateToDashboard}
+                    class="action-button dashboard"
+                >
+                    <div class="button-content">
+                        <svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <div class="button-text">
+                            <span class="button-label">Intelligence Dashboard</span>
+                            <span class="button-desc">View past analysis</span>
+                        </div>
+                    </div>
+                </button>
+                {/if}
 
                 <button 
                     onclick={openNewFolderModal}
@@ -2148,6 +2211,24 @@
                     0 0 0 1px rgba(147, 51, 234, 0.1);
     }
 
+    .action-button.dashboard {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.15) 0%, 
+            rgba(37, 99, 235, 0.1) 100%
+        );
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .action-button.dashboard:hover {
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.25) 0%, 
+            rgba(37, 99, 235, 0.15) 100%
+        );
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25), 
+                    0 0 0 1px rgba(59, 130, 246, 0.1);
+    }
+
     .action-button.new-folder {
         background: linear-gradient(135deg, 
             rgba(74, 158, 255, 0.15) 0%, 
@@ -2201,6 +2282,10 @@
 
     .action-button.intelligence .button-icon {
         color: #C084FC;
+    }
+
+    .action-button.dashboard .button-icon {
+        color: #60A5FA;
     }
 
     .action-button.new-folder .button-icon {
