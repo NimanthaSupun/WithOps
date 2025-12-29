@@ -820,3 +820,4 @@ When contributing to the microservices:
 ---
 
 **Last Updated**: November 27, 2025
+docker exec withops-ollama ollama pull nomic-embed-text

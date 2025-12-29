@@ -44,8 +44,10 @@ services:
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
+      - ./infra/ollama/init-models.sh:/init-models.sh
     environment:
       - OLLAMA_HOST=0.0.0.0
+    entrypoint: ["/bin/bash", "/init-models.sh"]
     # Uncomment if you have GPU support
     # deploy:
     #   resources:
