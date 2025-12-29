@@ -51,10 +51,9 @@ class AnalysisChunker:
             findings_summary = analysis_data.get("findings_summary", {})
             repositories = analysis_data.get("repositories", [])
             
-            # Skip if no meaningful data
-            overall_score = analysis.get("overall_maturity_score", 0)
-            if not analysis or overall_score == 0:
-                logger.warning("⚠️ Analysis has no maturity scores or data to index (score=0, likely no repositories)")
+            # Skip only if there's literally no data at all
+            if not analysis and not findings and not repositories and not maturity_scores:
+                logger.warning("⚠️ Analysis has no data to index")
                 return chunks
             
             # Chunk 1: Overall project maturity

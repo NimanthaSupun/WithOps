@@ -328,7 +328,7 @@ class AutoIndexer:
                         **chunk["metadata"],  # Spread metadata fields
                         "content": chunk["content"],  # Add content field
                         "user_id": user_id,  # User isolation
-                        "org_name": org_name,  # Organization
+                        "organization": org_name,  # Organization (note: analysis uses "organization" not "org_name")
                         "project_name": project_name,  # Project name (if folder analysis)
                         "folder_path": folder_path,  # Folder path (if folder analysis)
                         "analysis_id": analysis_id,  # Analysis ID for tracking
@@ -340,7 +340,7 @@ class AutoIndexer:
                         collection_name=self.vector_store.analysis_collection,
                         point_id=str(uuid.uuid4()),
                         vector=embedding,
-                        payload=chunk["metadata"]
+                        payload=payload  # Use the complete payload, not just chunk["metadata"]
                     )
                     indexed_count += 1
                 
