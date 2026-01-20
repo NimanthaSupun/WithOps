@@ -469,10 +469,11 @@ features:
 <section class="features-section" id="features">
 	<div class="features-container">
 		<header class="section-header">
-			<h2 class="section-title">Everything After Code</h2>
+			<h2 class="section-title">Complete DevSecOps Platform</h2>
 			<p class="section-description">
-				Intelligent AI-driven security automation that empowers development teams to ship code
-				faster, safer, and smarter
+				Comprehensive security automation and intelligent monitoring for modern development
+				workflows. From threat modeling to real-time collaboration, we've got your entire security
+				pipeline covered.
 			</p>
 		</header>
 
