@@ -427,29 +427,34 @@
 					</marker>
 				</defs>
 
-				<!-- Main flow path - 3D ribbon effect -->
+				<!-- Professional flow path with complementary colors -->
+				<!-- Purple accent line -->
 				<path
 					d="M 100,450 Q 200,350 350,400 T 650,500 T 950,400 T 1200,500"
-					stroke="url(#flowGradient)"
-					stroke-width="80"
+					class="flow-path-purple"
+					stroke-width="3"
 					fill="none"
 					opacity="0.4"
+					stroke-dasharray="10,5"
 				/>
 
+				<!-- Main cyan path -->
 				<path
 					d="M 100,450 Q 200,350 350,400 T 650,500 T 950,400 T 1200,500"
 					class="flow-path-main"
-					stroke-width="60"
+					stroke-width="2.5"
 					fill="none"
 					opacity="0.8"
 				/>
 
+				<!-- Pink accent dots -->
 				<path
 					d="M 100,450 Q 200,350 350,400 T 650,500 T 950,400 T 1200,500"
-					class="flow-path-bright"
-					stroke-width="40"
+					class="flow-path-pink"
+					stroke-width="1.5"
 					fill="none"
-					opacity="1"
+					opacity="0.6"
+					stroke-dasharray="2,8"
 				/>
 
 				<!-- Step 1: Connect GitHub Account -->
@@ -1557,10 +1562,15 @@
 
 	.workflow-svg .flow-path-main {
 		stroke: #00d9ff;
+		filter: drop-shadow(0 0 3px rgba(0, 217, 255, 0.5));
 	}
 
-	.workflow-svg .flow-path-bright {
-		stroke: #00d9ff;
+	.workflow-svg .flow-path-purple {
+		stroke: #8b5cf6;
+	}
+
+	.workflow-svg .flow-path-pink {
+		stroke: #ec4899;
 	}
 
 	.workflow-svg .platform-shadow {
@@ -1857,10 +1867,6 @@
 	}
 
 	.dashboard-container.light .workflow-svg .flow-path-main {
-		stroke: #00d9ff;
-	}
-
-	.dashboard-container.light .workflow-svg .flow-path-bright {
 		stroke: #00d9ff;
 	}
 
