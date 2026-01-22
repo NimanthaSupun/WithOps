@@ -300,9 +300,19 @@
 					<!-- Theme Toggle -->
 					<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 						{#if darkMode}
-							☀️
+							<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+								<path
+									d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"
+								/>
+							</svg>
 						{:else}
-							🌙
+							<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+								<path
+									fill-rule="evenodd"
+									d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"
+									clip-rule="evenodd"
+								/>
+							</svg>
 						{/if}
 					</button>
 
@@ -1145,12 +1155,9 @@
 	.theme-toggle {
 		width: 48px;
 		height: 48px;
-		border: 2px solid rgba(0, 217, 255, 0.4);
 		border-radius: 50%;
 		background: #ffffff;
-		backdrop-filter: blur(10px);
-		color: #000000;
-		font-size: 1.3rem;
+		border: 2px solid rgba(0, 217, 255, 0.4);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1158,22 +1165,17 @@
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		box-shadow:
 			0 4px 6px rgba(0, 0, 0, 0.1),
-			0 1px 3px rgba(0, 0, 0, 0.08),
-			inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+			0 1px 3px rgba(0, 0, 0, 0.08);
 		flex-shrink: 0;
 	}
 
 	.theme-toggle:hover {
 		background: #00d9ff;
 		border-color: #00d9ff;
-		color: #000000;
+		transform: translateY(-3px);
 		box-shadow:
 			0 8px 16px rgba(0, 217, 255, 0.25),
-			0 4px 8px rgba(0, 217, 255, 0.15),
-			0 0 0 1px rgba(0, 217, 255, 0.5),
-			0 0 20px rgba(0, 217, 255, 0.3),
-			inset 0 1px 0 rgba(255, 255, 255, 0.2);
-		transform: translateY(-3px);
+			0 0 20px rgba(0, 217, 255, 0.3);
 	}
 
 	.theme-toggle:active {
@@ -1182,24 +1184,23 @@
 
 	.dashboard-container.light .theme-toggle {
 		background: #ffffff;
-		border-color: rgba(0, 217, 255, 0.4);
-		color: #000000;
 		box-shadow:
 			0 4px 6px rgba(0, 0, 0, 0.08),
-			0 1px 3px rgba(0, 0, 0, 0.05),
-			inset 0 0 0 1px rgba(0, 217, 255, 0.1);
+			0 1px 3px rgba(0, 0, 0, 0.05);
 	}
 
 	.dashboard-container.light .theme-toggle:hover {
 		background: #00d9ff;
-		border-color: #00d9ff;
-		color: #000000;
 		box-shadow:
 			0 8px 16px rgba(0, 217, 255, 0.2),
-			0 4px 8px rgba(0, 217, 255, 0.12),
-			0 0 0 1px rgba(0, 217, 255, 0.5),
-			0 0 20px rgba(0, 217, 255, 0.25),
-			inset 0 1px 0 rgba(255, 255, 255, 0.3);
+			0 0 20px rgba(0, 217, 255, 0.25);
+		transform: translateY(-3px);
+	}
+
+	.theme-icon {
+		width: 20px;
+		height: 20px;
+		color: #000000;
 	}
 
 	/* User Profile */

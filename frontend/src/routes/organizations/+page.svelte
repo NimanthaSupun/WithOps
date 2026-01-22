@@ -722,14 +722,24 @@
 
 				<button onclick={toggleTheme} class="theme-toggle-button">
 					{#if darkMode}
-						☀️
+						<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+							<path
+								d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"
+							/>
+						</svg>
 					{:else}
-						🌙
+						<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
+							<path
+								fill-rule="evenodd"
+								d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"
+								clip-rule="evenodd"
+							/>
+						</svg>
 					{/if}
 				</button>
 			</div>
 
-			<!-- Main Header Content - Left: Title, Right: Actions -->
+			<!-- Main Header Content -->
 			<div class="header-main">
 				<div class="header-left">
 					<div class="header-icon">
@@ -1482,25 +1492,11 @@
 	}
 
 	.page-glow-1 {
-		position: absolute;
-		top: -10%;
-		left: -5%;
-		width: 800px;
-		height: 800px;
-		background: radial-gradient(circle, rgba(0, 217, 255, 0.12) 0%, transparent 70%);
-		border-radius: 50%;
-		animation: float-glow 20s ease-in-out infinite;
+		display: none;
 	}
 
 	.page-glow-2 {
-		position: absolute;
-		bottom: -10%;
-		right: -5%;
-		width: 700px;
-		height: 700px;
-		background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-		border-radius: 50%;
-		animation: float-glow 25s ease-in-out infinite reverse;
+		display: none;
 	}
 
 	.github-pattern {
@@ -1629,24 +1625,32 @@
 	.theme-toggle-button {
 		width: 48px;
 		height: 48px;
+		border-radius: 50%;
+		background: #ffffff;
+		border: 2px solid rgba(0, 217, 255, 0.4);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(0, 217, 255, 0.1);
-		backdrop-filter: blur(20px);
-		border: 2px solid rgba(0, 217, 255, 0.3);
-		border-radius: 50%;
-		font-size: 1.2rem;
-		color: var(--primary-color);
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		box-shadow:
+			0 4px 6px rgba(0, 0, 0, 0.1),
+			0 1px 3px rgba(0, 0, 0, 0.08);
 	}
 
 	.theme-toggle-button:hover {
-		background: rgba(0, 217, 255, 0.2);
-		border-color: var(--primary-color);
-		transform: translateY(-1px);
-		box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+		background: #00d9ff;
+		border-color: #00d9ff;
+		transform: translateY(-3px);
+		box-shadow:
+			0 8px 16px rgba(0, 217, 255, 0.25),
+			0 0 20px rgba(0, 217, 255, 0.3);
+	}
+
+	.theme-icon {
+		width: 20px;
+		height: 20px;
+		color: #000000;
 	}
 
 	/* Header Icon */
@@ -1656,11 +1660,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--purple-primary) 100%);
+		background: var(--cyan-primary);
 		border-radius: 16px;
-		box-shadow:
-			var(--shadow-md),
-			0 0 20px rgba(0, 217, 255, 0.3);
+		box-shadow: var(--shadow-md);
 		flex-shrink: 0;
 	}
 
@@ -1674,15 +1676,7 @@
 		font-size: 2.5rem;
 		font-weight: 800;
 		margin: 0 0 0.5rem 0;
-		background: linear-gradient(
-			135deg,
-			var(--cyan-primary) 0%,
-			var(--purple-primary) 50%,
-			var(--pink-primary) 100%
-		);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		color: var(--text-primary);
 		letter-spacing: -0.02em;
 		line-height: 1.2;
 	}
@@ -1797,7 +1791,7 @@
 	   INVITATIONS BANNER
 	   ============================================ */
 	.invitations-banner {
-		background: linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+		background: rgba(0, 217, 255, 0.05);
 		backdrop-filter: blur(20px);
 		border: 1px solid var(--border-medium);
 		border-radius: 20px;
@@ -1816,13 +1810,13 @@
 	.invitations-icon {
 		width: 56px;
 		height: 56px;
-		background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--purple-primary) 100%);
+		background: var(--cyan-primary);
 		border-radius: 14px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		box-shadow: var(--shadow-glow);
+		box-shadow: var(--shadow-md);
 	}
 
 	.invitations-icon svg {
@@ -2037,7 +2031,7 @@
 		left: -100%;
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
+		background: rgba(0, 217, 255, 0.08);
 		animation: shimmer 3s ease-in-out infinite;
 	}
 
@@ -2105,7 +2099,8 @@
 		left: 10%;
 		width: 80%;
 		height: 3px;
-		background: linear-gradient(90deg, transparent, var(--cyan-primary), transparent);
+		background: var(--cyan-primary);
+		opacity: 0.5;
 		transform: translateY(-50%);
 		animation: scan-sweep 2s ease-in-out infinite;
 	}
@@ -2314,7 +2309,7 @@
 
 	/* GitHub Connection State */
 	.github-connection-state {
-		background: linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+		background: rgba(0, 217, 255, 0.05);
 		border: 2px solid var(--border-medium);
 	}
 
@@ -2349,12 +2344,12 @@
 		right: 8px;
 		width: 42px;
 		height: 42px;
-		background: linear-gradient(135deg, var(--cyan-primary) 0%, var(--purple-primary) 100%);
+		background: var(--cyan-primary);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 6px 20px rgba(0, 217, 255, 0.5);
+		box-shadow: 0 6px 20px rgba(0, 217, 255, 0.3);
 		animation: pulse-badge 2s ease-in-out infinite;
 	}
 
@@ -2656,7 +2651,7 @@
 		left: -100%;
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
+		background: rgba(0, 217, 255, 0.08);
 		transition: left 0.6s;
 	}
 
@@ -2712,16 +2707,7 @@
 	}
 
 	.avatar-glow {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 110px;
-		height: 110px;
-		background: radial-gradient(circle, rgba(0, 217, 255, 0.4) 0%, transparent 70%);
-		border-radius: 50%;
-		animation: avatar-pulse 3s ease-in-out infinite;
-		pointer-events: none;
+		display: none;
 	}
 
 	@keyframes avatar-pulse {
@@ -2858,23 +2844,18 @@
 	.stat-skeleton {
 		width: 50px;
 		height: 20px;
-		background: linear-gradient(
-			90deg,
-			rgba(136, 136, 136, 0.1) 25%,
-			rgba(136, 136, 136, 0.2) 50%,
-			rgba(136, 136, 136, 0.1) 75%
-		);
-		background-size: 200% 100%;
+		background: rgba(136, 136, 136, 0.15);
 		border-radius: 6px;
-		animation: skeleton-shimmer 1.5s ease-in-out infinite;
+		animation: skeleton-pulse 1.5s ease-in-out infinite;
 	}
 
-	@keyframes skeleton-shimmer {
-		0% {
-			background-position: 200% 0;
-		}
+	@keyframes skeleton-pulse {
+		0%,
 		100% {
-			background-position: -200% 0;
+			opacity: 0.5;
+		}
+		50% {
+			opacity: 1;
 		}
 	}
 
@@ -3013,8 +2994,8 @@
 
 	/* Section Divider */
 	.section-divider {
-		height: 2px;
-		background: linear-gradient(to right, transparent, var(--border-medium), transparent);
+		height: 1px;
+		background: var(--border-medium);
 		margin: 4rem 0 3rem;
 	}
 

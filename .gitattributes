@@ -10,7 +10,6 @@
 # Mark sensitive files as binary to prevent accidental commits
 .env binary
 .env.* binary
-!.env.example text
 
 # Ensure line endings are consistent
 *.py text eol=lf
