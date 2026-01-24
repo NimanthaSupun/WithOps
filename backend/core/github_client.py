@@ -56,6 +56,9 @@ class GitHubClient:
         self.github_oauth_client_id = os.getenv('GITHUB_OAUTH_CLIENT_ID')
         self.github_oauth_client_secret = os.getenv('GITHUB_OAUTH_CLIENT_SECRET')
         
+        # Frontend URL for OAuth redirects (dynamic for local/production)
+        self.frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        
         # Optimized HTTP client for ultra-fast responses
         self.http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(5.0, connect=2.0, read=4.0),  # Even faster timeouts
@@ -89,7 +92,7 @@ class GitHubClient:
         """
         from urllib.parse import quote
         
-        redirect_uri = "http://localhost:5173/github/organizations"
+        redirect_uri = f"{self.frontend_url}/github/organizations"
         
         params = {
             "client_id": self.github_oauth_client_id,

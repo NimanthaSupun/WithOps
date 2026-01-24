@@ -106,14 +106,15 @@ services:
         strip_path: false
 
   # AI RAG Service - Conversational AI for DevSecOps Intelligence
-  # Routes /api/rag/* directly to ai-rag-service:8008/api/rag/*
-  # Handles chat queries, auto-indexing, and RAG-powered insights
+  # Routes /api/rag/* and /api/conversations/* directly to ai-rag-service:8008
+  # Handles chat queries, auto-indexing, conversations, and RAG-powered insights
   - name: ai-rag-service
     url: http://ai-rag-service:8008
     routes:
       - name: ai-rag-routes
         paths:
           - /api/rag
+          - /api/conversations
         strip_path: false
 
   # OLD COMMENT - GitHub Service now directly exposed above
@@ -164,6 +165,7 @@ plugins:
         - http://localhost:5173
         - http://localhost:3000
         - https://*.withops.com
+        - https://app.withops.com
       methods:
         - GET
         - POST

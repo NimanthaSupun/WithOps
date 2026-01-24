@@ -45,10 +45,11 @@ export const aiChatMessages = writable([]);
 class AIThreatService {
 	constructor() {
 		// Use absolute URL for API calls to avoid SvelteKit SSR issues
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 		this.apiBase =
 			typeof window !== 'undefined'
-				? 'http://localhost:8000/api/ai-threats'
-				: 'http://localhost:8000/api/ai-threats';
+				? `${API_BASE_URL}/api/ai-threats`
+				: `${API_BASE_URL}/api/ai-threats`;
 		this.analysisQueue = new Map();
 		this.debounceTimers = new Map();
 		this.isHealthy = false;

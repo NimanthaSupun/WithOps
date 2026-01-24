@@ -23,6 +23,14 @@ RUN pip install --upgrade pip && \
 # Copy backend code
 COPY backend/ .
 
+# Create keys directory and copy private keys
+# These will be available for both local and production
+RUN mkdir -p /app/config/keys
+COPY backend/config/keys/*.pem /app/config/keys/
+
+# Set proper permissions for private keys
+RUN chmod 600 /app/config/keys/*.pem
+
 # Expose FastAPI port (change if needed)
 EXPOSE 8000
 

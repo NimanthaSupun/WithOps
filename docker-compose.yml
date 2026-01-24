@@ -153,9 +153,13 @@ services:
       - ENABLE_METRICS=true
       - ENABLE_TRACING=true
       - GITHUB_SERVICE_URL=http://github-service:8002
+      - ENVIRONMENT=${ENVIRONMENT:-local}
+      # Dynamic private key path based on environment
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME:-withops-devsecops-platform-local.2026-01-22.private-key.pem}
     restart: unless-stopped
-    # Uncomment and set volumes if you want to persist logs or mount code
-    # volumes:
+    # Mount keys directory for easy updates without rebuilding
+    volumes:
+      - ./backend/config/keys:/app/config/keys:ro
     #   - ./backend/logs:/app/logs
     #   - ./backend:/app
 
@@ -197,9 +201,13 @@ services:
       - ENABLE_METRICS=true
       - ENABLE_TRACING=true
       - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
-    restart: unless-stopped
+      - ENVIRONMENT=${ENVIRONMENT:-local}
+      # Dynamic private key path based on environment
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME:-withops-devsecops-platform-local.2026-01-22.private-key.pem}
+    # Mount keys directory for easy updates without rebuilding
     volumes:
-      - ./backend/github-app-private-key.pem:/app/github-app-private-key.pem:ro
+      - ./backend/config/keys:/app/config/keys:ro
+    restart: unless-stopped
 
   # GitHub Service Worker - Background worker for async refresh jobs
   github-service-worker:
@@ -216,10 +224,13 @@ services:
       - REDIS_URL=redis://redis:6379
       - ENABLE_METRICS=true
       - ENABLE_TRACING=true
+      - ENVIRONMENT=${ENVIRONMENT:-local}
+      # Dynamic private key path based on environment
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME:-withops-devsecops-platform-local.2026-01-22.private-key.pem}
       - OTLP_ENDPOINT=http://jaeger:4318/v1/traces
     restart: unless-stopped
     volumes:
-      - ./backend/github-app-private-key.pem:/app/github-app-private-key.pem:ro
+      - ./backend/config/keys:/app/config/keys:ro
     command: python worker.py
 
   # Threat Modeling Service - Microservice for threat modeling and STRIDE analysis
@@ -361,13 +372,18 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_WS_BASE_URL=http://localhost:9100
+        - VITE_AUTH0_DOMAIN=dev-sabxychpf6paj41u.us.auth0.com
+        - VITE_AUTH0_CLIENT_ID=KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7
+        - VITE_AUTH0_CALLBACK_URL=http://localhost:5173/callback
+        - VITE_AUTH0_AUDIENCE=https://api.withops.com
     container_name: withops-frontend
     ports:
       - "5173:3000"
     depends_on:
       - kong
-    environment:
-      - VITE_API_URL=http://localhost:8000 # Points to Kong gateway
     restart: unless-stopped
     # Uncomment and set volumes if you want hot-reload in dev
     # volumes:

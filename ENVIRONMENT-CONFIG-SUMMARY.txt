@@ -1,0 +1,128 @@
+===============================================================================
+  PRIVATE KEYS & ENVIRONMENT CONFIGURATION - SUMMARY
+===============================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 PRIVATE KEYS LOCATION (Centralized)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ backend/config/keys/
+   ├── withops-devsecops-platform-local.2026-01-22.private-key.pem
+   └── withops-devsecops-platform-production.private-key.pem
+
+⚠️ Both keys moved from root to backend/config/keys/ (centralized location)
+✅ All path references updated in .env files
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 ENVIRONMENT FILES - STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROJECT ROOT
+├── backend/
+│   ├── .env                 ✅ LOCAL DEV - Updated
+│   ├── .env.production      ✅ PRODUCTION - Updated
+│   └── config/keys/         ✅ Private keys location
+│       ├── withops-devsecops-platform-local.2026-01-22.private-key.pem
+│       └── withops-devsecops-platform-production.private-key.pem
+│
+├── frontend/
+│   ├── .env                 ✅ LOCAL DEV - Updated
+│   └── .env.production      ✅ PRODUCTION - Updated
+│
+└── services/
+    ├── github-service/
+    │   ├── .env             ✅ LOCAL DEV - Updated
+    │   └── .env.production  ✅ PRODUCTION - Created
+    │
+    ├── auth-service/
+    │   └── .env             ✅ Uses centralized keys
+    │
+    ├── ai-service/
+    │   └── .env             ✅ No GitHub keys needed
+    │
+    ├── threat-modeling-service/
+    │   └── .env             ✅ No GitHub keys needed
+    │
+    ├── workflow-orchestration-service/
+    │   └── .env             ⚠️ May need GitHub keys
+    │
+    ├── workspace-intelligence-service/
+    │   └── .env             ✅ No GitHub keys needed
+    │
+    ├── collaboration-service/
+    │   └── .env             ✅ No GitHub keys needed
+    │
+    └── ai-rag-service/
+        └── .env             ✅ No GitHub keys needed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔑 PRIVATE KEY PATH REFERENCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+backend/.env (LOCAL):
+  GITHUB_PRIVATE_KEY_PATH=./config/keys/withops-devsecops-platform-local.2026-01-22.private-key.pem
+
+backend/.env.production (PRODUCTION):
+  GITHUB_PRIVATE_KEY_PATH=./config/keys/withops-devsecops-platform-production.private-key.pem
+
+services/github-service/.env (LOCAL):
+  GITHUB_PRIVATE_KEY_PATH=../../backend/config/keys/withops-devsecops-platform-local.2026-01-22.private-key.pem
+
+services/github-service/.env.production (PRODUCTION):
+  GITHUB_PRIVATE_KEY_PATH=../../backend/config/keys/withops-devsecops-platform-production.private-key.pem
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 GITHUB APP CREDENTIALS SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LOCAL DEVELOPMENT (localhost:5173):
+  GitHub App ID: 1510017
+  Client ID: Iv23liNShwrj2EuW2VkT
+  OAuth Client ID: Ov23liwyM2h7DYnNUw9g
+  Private Key: withops-devsecops-platform-local.2026-01-22.private-key.pem
+
+PRODUCTION (app.withops.com):
+  GitHub App ID: 2710627
+  Client ID: Iv23liO0msKfq5HsEJrx
+  OAuth Client ID: Ov23liHD06jkBjt320fW
+  Private Key: withops-devsecops-platform-production.private-key.pem
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐳 DOCKER DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For Docker/Container deployments:
+
+1. Mount the keys directory as a volume:
+   volumes:
+     - ./backend/config/keys:/app/config/keys:ro
+
+2. Or copy keys in Dockerfile:
+   COPY backend/config/keys /app/config/keys
+
+3. Set environment variable in docker-compose.yml:
+   environment:
+     - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/withops-devsecops-platform-production.private-key.pem
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ WHAT WAS UPDATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ Moved private keys from root to backend/config/keys/
+2. ✅ Updated backend/.env with correct local key path
+3. ✅ Updated backend/.env.production with correct production key path
+4. ✅ Updated services/github-service/.env with relative path to keys
+5. ✅ Created services/github-service/.env.production
+6. ✅ All microservices use centralized key location
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 SECURITY BEST PRACTICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ backend/config/keys/ is in .gitignore
+✅ All .env files are in .gitignore
+✅ Use environment variables in production (don't commit real secrets)
+✅ Restrict file permissions on private keys (chmod 600 on Linux/Mac)
+⚠️ Never commit private keys or .env files to version control
+
+===============================================================================

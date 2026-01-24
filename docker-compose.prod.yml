@@ -1,0 +1,98 @@
+# Production Docker Compose Configuration
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # Frontend with production build arguments
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_BASE_URL=${PROD_API_BASE_URL:-https://api.withops.com}
+        - VITE_WS_BASE_URL=${PROD_WS_BASE_URL:-wss://events.withops.com}
+        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+        - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID}
+        - VITE_AUTH0_CALLBACK_URL=${PROD_AUTH0_CALLBACK_URL:-https://app.withops.com/callback}
+        - VITE_AUTH0_AUDIENCE=${PROD_AUTH0_AUDIENCE:-https://api.withops.com}
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000" # Production port
+    restart: always
+
+  # Kong with production CORS settings
+  kong:
+    environment:
+      KONG_LOG_LEVEL: "warn" # Less verbose logging in production
+    restart: always
+
+  # Backend with production settings
+  backend:
+    environment:
+      - ENVIRONMENT=production
+      - FRONTEND_URL=${PROD_FRONTEND_URL:-https://app.withops.com}
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME_PROD:-withops-devsecops-platform.private-key.pem}
+    restart: always
+
+  # All microservices - production restart policy
+  github-service:
+    restart: always
+
+  threat-modeling-service:
+    restart: always
+
+  workspace-intelligence-service:
+    restart: always
+
+  workflow-orchestration-service:
+    restart: always
+
+  collaboration-service:
+    restart: always
+
+  auth-service:
+    restart: always
+
+  ai-service:
+    restart: always
+
+  ai-rag-service:
+    restart: always
+
+  # Infrastructure services
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 2gb --maxmemory-policy allkeys-lru
+
+  ollama:
+    restart: always
+
+  qdrant:
+    restart: always
+
+  # Monitoring stack
+  prometheus:
+    restart: always
+
+  grafana:
+    restart: always
+    environment:
+      - GF_SERVER_ROOT_URL=${PROD_GRAFANA_URL:-https://monitoring.withops.com}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+
+  jaeger:
+    restart: always
+
+  loki:
+    restart: always
+
+# Production environment variables to set:
+#
+# PROD_API_BASE_URL=https://api.withops.com
+# PROD_WS_BASE_URL=wss://events.withops.com
+# PROD_FRONTEND_URL=https://app.withops.com
+# PROD_AUTH0_CLIENT_ID=your-prod-auth0-client-id
+# PROD_AUTH0_CALLBACK_URL=https://app.withops.com/callback
+# PROD_AUTH0_AUDIENCE=https://api.withops.com
+# GITHUB_PRIVATE_KEY_NAME_PROD=withops-production.private-key.pem
+# GRAFANA_ADMIN_PASSWORD=secure-password

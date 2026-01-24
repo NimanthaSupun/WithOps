@@ -1,0 +1,277 @@
+===============================================================================
+  WITHOPS DEVSECOPS PLATFORM - DEPLOYMENT CHECKLIST
+  Production Deployment: app.withops.com
+===============================================================================
+
+📋 CODE CHANGES COMPLETED:
+✅ 1. Updated frontend/.env.production with production URLs
+✅ 2. Modified frontend/src/lib/auth.js - dynamic callback URL
+✅ 3. Modified frontend/src/lib/github.js - dynamic API base URL
+✅ 4. Fixed WebSocket URLs to use environment variables
+✅ 5. Updated backend/main.py - added production CORS origins
+
+===============================================================================
+🔧 REQUIRED CONFIGURATION CHANGES
+===============================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. AUTH0 DASHBOARD CONFIGURATION (CRITICAL!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 Login: https://manage.auth0.com
+📱 Application ID: KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7
+
+Go to: Applications → Your App → Settings
+
+1️⃣ Allowed Callback URLs:
+   Add these URLs (comma-separated):
+   
+   https://app.withops.com/callback,
+   http://localhost:5173/callback
+
+2️⃣ Allowed Logout URLs:
+   Add these URLs:
+   
+   https://app.withops.com,
+   http://localhost:5173
+
+3️⃣ Allowed Web Origins:
+   Add these URLs:
+   
+   https://app.withops.com,
+   http://localhost:5173
+
+4️⃣ Allowed Origins (CORS):
+   Add these URLs:
+   
+   https://app.withops.com,
+   http://localhost:5173
+
+⚠️ IMPORTANT: Click "Save Changes" at the bottom!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. GITHUB APP CONFIGURATION (CRITICAL!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANT: GitHub does NOT allow multiple callback URLs!
+✅ SOLUTION: Create separate GitHub Apps for Development & Production
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT SETUP (Keep for Development):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GitHub App: WithOps-DevSecOps-Platform
+✅ Homepage URL: http://localhost:5173
+✅ Callback URL: http://localhost:5173/github/organizations
+✅ Setup URL: http://localhost:5173/github/installation
+✅ Client ID: Iv23liNShwrj2EuW2VkT
+
+👉 This is used for: npm run dev (local development)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE NEW PRODUCTION GITHUB APP:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 Go to: https://github.com/settings/apps
+📝 Click: "New GitHub App"
+
+1️⃣ Basic Information:
+   App Name: WithOps-DevSecOps-Platform-Production
+   Description: DevSecOps Platform for GitHub Organizations (Production)
+   Homepage URL: https://app.withops.com
+
+2️⃣ Callback Settings:
+   Callback URL: https://app.withops.com/github/organizations
+   Setup URL: https://app.withops.com/github/installation
+   Webhook URL: https://api.withops.com/webhooks/github
+   
+3️⃣ Permissions (Copy from your development app):
+   Repository permissions:
+   - Contents: Read & Write
+   - Metadata: Read-only
+   - Workflows: Read & Write
+   - Actions: Read & Write
+   - Pull requests: Read & Write
+   
+   Organization permissions:
+   - Members: Read-only
+   - Administration: Read-only
+
+4️⃣ After Creation - Save These:
+   📝 App ID: _____________ (save this!)
+   📝 Client ID: _____________ (save this!)
+   📝 Client Secret: Generate and save
+   📝 Private Key: Generate, download, and save
+
+5️⃣ Update .env.production:
+   VITE_GITHUB_APP_CLIENT_ID=<Your-New-Production-Client-ID>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. GITHUB OAUTH APP CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANT: GitHub OAuth also does NOT allow multiple callback URLs!
+✅ SOLUTION: Create separate OAuth Apps for Development & Production
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT SETUP (Keep for Development):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OAuth App: WithOps DevSecOps (Development)
+✅ Homepage URL: http://localhost:5173
+✅ Authorization callback URL: http://localhost:5173/github/organizations
+✅ Client ID: Ov23liwyM2h7DYnNUw9g
+
+👉 This is used for: npm run dev (local development)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREATE NEW PRODUCTION OAUTH APP:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 Go to: https://github.com/settings/developers
+📝 Click: "New OAuth App"
+
+1️⃣ Application Settings:
+   Application name: WithOps DevSecOps Production
+   Homepage URL: https://app.withops.com
+   Authorization callback URL: https://app.withops.com/github/organizations
+
+2️⃣ After Creation - Save These:
+   📝 Client ID: _____________ (save this!)
+   📝 Client Secret: Generate and save
+
+3️⃣ Update .env.production:
+   VITE_GITHUB_CLIENT_ID=<Your-New-Production-OAuth-Client-ID>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. PRODUCTION ENVIRONMENT VARIABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 Set these in your hosting platform (Vercel/Netlify/AWS/etc.):
+
+FRONTEND ENVIRONMENT VARIABLES:
+VITE_AUTH0_DOMAIN=dev-sabxychpf6paj41u.us.auth0.com
+VITE_AUTH0_CLIENT_ID=KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7
+VITE_AUTH0_CALLBACK_URL=https://app.withops.com/callback
+VITE_AUTH0_AUDIENCE=https://api.withops.com
+VITE_API_BASE_URL=https://api.withops.com
+VITE_GITHUB_CALLBACK_URL=https://app.withops.com/github/organizations
+VITE_GITHUB_INSTALLATION_CALLBACK_URL=https://app.withops.com/github/installation
+VITE_GITHUB_CLIENT_ID=Ov23liwyM2h7DYnNUw9g
+VITE_GITHUB_APP_CLIENT_ID=Iv23liNShwrj2EuW2VkT
+VITE_GITHUB_REDIRECT_URI=https://app.withops.com/github
+VITE_LIVEBLOCKS_PUBLIC_KEY=pk_dev_asiuZyeN_iumtKOgCfdTPF1NRCa-sPhgItKhzCGQO-2M2nHkxnUkcki0m4Cp_n38
+
+BACKEND ENVIRONMENT VARIABLES:
+(Make sure these match your production backend deployment)
+AUTH0_DOMAIN=dev-sabxychpf6paj41u.us.auth0.com
+AUTH0_API_AUDIENCE=https://api.withops.com
+GITHUB_APP_NAME=WithOps-DevSecOps-Platform
+CORS_ORIGINS=https://app.withops.com,https://withops.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. BUILD & DEPLOY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 FRONTEND BUILD:
+cd frontend
+npm install
+npm run build
+
+📦 BACKEND DEPLOYMENT:
+- Ensure all microservices have the correct CORS_ORIGINS environment variable
+- Update docker-compose.yml if needed for production
+- Deploy backend services with production configuration
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. DNS & SSL CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 Verify DNS Records:
+- app.withops.com → Frontend hosting (Vercel/Netlify/CloudFront)
+- api.withops.com → Backend API (EC2/ECS/Lambda)
+
+🔒 SSL Certificates:
+- Ensure HTTPS is enabled for both domains
+- Verify WebSocket connections work with wss:// protocol
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. TESTING CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test on https://app.withops.com:
+
+✅ Authentication:
+   □ Sign up with new account
+   □ Login with existing account  
+   □ Logout and re-login
+   □ Token refresh after expiration
+
+✅ GitHub Integration:
+   □ Connect GitHub account
+   □ Discover organizations
+   □ Install GitHub App on organization
+   □ View repositories and workflows
+   □ Refresh workspace data
+
+✅ WebSocket Real-time Updates:
+   □ Real-time notifications appear
+   □ GitHub refresh events work
+   □ Threat modeling updates arrive
+   □ Connection auto-reconnects
+
+✅ API Calls:
+   □ All API endpoints respond correctly
+   □ CORS headers allow requests
+   □ Error messages are clear
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Auth0 Login Fails:
+   → Check Auth0 dashboard callback URLs
+   → Verify VITE_AUTH0_CALLBACK_URL matches
+   → Check browser console for errors
+
+❌ GitHub App Installation Fails:
+   → Verify GitHub App callback URL
+   → Check VITE_GITHUB_INSTALLATION_CALLBACK_URL
+   → Ensure GitHub App has correct permissions
+
+❌ API Calls Fail (CORS):
+   → Verify backend CORS_ORIGINS includes production URL
+   → Check Kong gateway configuration
+   → Verify api.withops.com points to backend
+
+❌ WebSocket Connection Fails:
+   → Check VITE_API_BASE_URL is set correctly
+   → Verify wss:// protocol is used for HTTPS
+   → Check backend WebSocket endpoint is accessible
+   → Ensure no firewall blocking WebSocket connections
+
+❌ Environment Variables Not Working:
+   → Verify .env.production is being used
+   → Check build process loads correct env file
+   → Restart deployment after env var changes
+
+===============================================================================
+📝 SUMMARY
+===============================================================================
+
+✅ LOCAL DEVELOPMENT: Works with localhost URLs
+✅ PRODUCTION: Works with app.withops.com and api.withops.com
+
+🔑 KEY CHANGES:
+1. Dynamic callback URLs based on window.location.origin
+2. Environment-based API base URL (VITE_API_BASE_URL)
+3. Dynamic WebSocket protocol detection (ws:// vs wss://)
+4. Production CORS origins in backend
+
+🚨 CRITICAL STEPS:
+1. Update Auth0 allowed URLs (MUST DO FIRST!)
+2. Update GitHub App callback URLs
+3. Set production environment variables
+4. Test authentication flow end-to-end
+
+===============================================================================

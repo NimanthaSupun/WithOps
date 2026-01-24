@@ -4,6 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { isDarkMode } from '$lib/stores.js';
 
+	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 	// State variables
 	let loading = $state(true);
 	let error = $state(null);
@@ -59,7 +61,7 @@
 			const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
 			if (!authToken) return;
 
-			const response = await fetch(`http://localhost:8000/api/github/workspace/${orgName}`, {
+const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, {
 				headers: {
 					Authorization: `Bearer ${authToken}`
 				}
@@ -87,7 +89,7 @@
 				throw new Error('Authentication required. Please log in.');
 			}
 
-			const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
+			const response = await fetch(`${API_BASE_URL}/api/threat-modeling/models`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${authToken}`
@@ -124,7 +126,7 @@
 				return;
 			}
 
-			const response = await fetch(`http://localhost:8000/api/threat-modeling/dashboard`, {
+			const response = await fetch(`${API_BASE_URL}/api/threat-modeling/dashboard`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${authToken}`
@@ -174,7 +176,7 @@
 				}
 			};
 
-			const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
+			const response = await fetch(`/api/threat-modeling/models`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -249,7 +251,7 @@
 			}
 
 			const response = await fetch(
-				`http://localhost:8000/api/threat-modeling/models/${modelToDelete.id}`,
+				`${API_BASE_URL}/api/threat-modeling/models/${modelToDelete.id}`,
 				{
 					method: 'DELETE',
 					headers: {
@@ -326,7 +328,7 @@
 				throw new Error('Authentication required. Please log in.');
 			}
 
-			const response = await fetch(`http://localhost:8000/api/threat-modeling/models`, {
+			const response = await fetch(`/api/threat-modeling/models`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

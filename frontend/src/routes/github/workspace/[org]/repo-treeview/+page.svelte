@@ -6,6 +6,8 @@
 	import { repositoryTreeClient } from '$lib/repositoryTree.js';
 	import { isDarkMode } from '$lib/stores.js';
 
+	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 	let orgName = $state('');
 	let loading = $state(false);
 	let error = $state(null);
@@ -516,7 +518,7 @@
 			}
 
 			const response = await fetch(
-				'http://localhost:8000/api/workspace-intelligence/analyze-folder',
+				`${API_BASE_URL}/api/workspace-intelligence/analyze-folder`,
 				{
 					method: 'POST',
 					headers: {
@@ -625,7 +627,7 @@
 			}
 
 			const response = await fetch(
-				'http://localhost:8000/api/workspace-intelligence/analyze-workspace-unified',
+				`${API_BASE_URL}/api/workspace-intelligence/analyze-workspace-unified`,
 				{
 					method: 'POST',
 					headers: {
@@ -691,7 +693,7 @@
 			}
 
 			const response = await fetch(
-				`http://localhost:8000/api/workspace-intelligence/analysis/${orgName}`,
+				`${API_BASE_URL}/api/workspace-intelligence/analysis/${orgName}`,
 				{
 					method: 'GET',
 					headers: {
@@ -737,7 +739,7 @@
 
 			// Check if there's existing analysis data
 			const response = await fetch(
-				`http://localhost:8000/api/workspace-intelligence/analysis/${orgName}`,
+				`${API_BASE_URL}/api/workspace-intelligence/analysis/${orgName}`,
 				{
 					method: 'GET',
 					headers: {

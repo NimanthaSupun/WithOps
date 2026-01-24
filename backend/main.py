@@ -412,6 +412,8 @@ origins = [
     "http://127.0.0.1:5173",  # Alternative localhost format
     "http://127.0.0.1:5174",  # Alternative localhost format
     "http://127.0.0.1:5175",  # Alternative localhost format
+    "https://app.withops.com",  # Production frontend
+    "https://withops.com",  # Production domain (if used)
 ]
 
 app.add_middleware(

@@ -11,7 +11,10 @@ class GitHubOrganizationClient {
 	 */
 
 	constructor() {
-		this.baseUrl = 'http://localhost:8000/api/github';
+		// Use environment variable for API base URL, with fallback to localhost
+		this.baseUrl = import.meta.env.VITE_API_BASE_URL
+			? `${import.meta.env.VITE_API_BASE_URL}/api/github`
+			: 'http://localhost:8000/api/github';
 		this.cache = new Map(); // In-memory cache for speed
 		this.persistentCache = new Map(); // Persistent cache with localStorage
 		this.cacheExpiry = 30 * 1000; // 30 seconds for ultra-fast repo updates
@@ -1487,7 +1490,13 @@ class GitHubOrganizationClient {
 		}
 
 		try {
-			const wsUrl = `ws://localhost:8000/ws/${encodeURIComponent(userId)}`;
+			// Use environment variable for WebSocket URL with dynamic protocol detection
+			const wsProtocol =
+				typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+			const wsHost = apiBase.replace(/^https?:\/\//, '');
+			const wsUrl = `${wsProtocol}//${wsHost}/ws/${encodeURIComponent(userId)}`;
+			console.log('🔌 Connecting to WebSocket:', wsUrl);
 			this.wsConnection = new WebSocket(wsUrl);
 
 			this.wsConnection.onopen = () => {

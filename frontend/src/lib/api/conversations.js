@@ -3,7 +3,9 @@
  * Manages chat conversations with CRUD operations
  */
 
-const BASE_URL = 'http://localhost:9108/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
+	? `${import.meta.env.VITE_API_BASE_URL}/api`
+	: 'http://localhost:8000/api';
 
 export const conversationsAPI = {
 	/**
