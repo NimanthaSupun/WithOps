@@ -166,6 +166,7 @@ plugins:
         - http://localhost:3000
         - https://*.withops.com
         - https://app.withops.com
+        - https://api.withops.com
       methods:
         - GET
         - POST
