@@ -11,6 +11,13 @@ export async function getAuthClient() {
 				? `${window.location.origin}/callback`
 				: 'http://localhost:5173/callback');
 
+		console.log('🔐 Creating Auth0 client with:', {
+			domain: import.meta.env.VITE_AUTH0_DOMAIN,
+			clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+			callbackUrl,
+			audience: import.meta.env.VITE_AUTH0_AUDIENCE
+		});
+
 		client = await createAuth0Client({
 			domain: import.meta.env.VITE_AUTH0_DOMAIN,
 			clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
@@ -22,4 +29,10 @@ export async function getAuthClient() {
 		});
 	}
 	return client;
+}
+
+// Clear the cached client (call this after logout)
+export function clearAuthClient() {
+	console.log('🔓 Clearing Auth0 client cache');
+	client = null;
 }

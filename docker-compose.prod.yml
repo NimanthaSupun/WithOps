@@ -10,8 +10,8 @@ services:
       args:
         - VITE_API_BASE_URL=${PROD_API_BASE_URL:-https://api.withops.com}
         - VITE_WS_BASE_URL=${PROD_WS_BASE_URL:-wss://events.withops.com}
-        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
-        - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID}
+        - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN:-dev-sabxychpf6paj41u.us.auth0.com}
+        - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID:-KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7}
         - VITE_AUTH0_CALLBACK_URL=${PROD_AUTH0_CALLBACK_URL:-https://app.withops.com/callback}
         - VITE_AUTH0_AUDIENCE=${PROD_AUTH0_AUDIENCE:-https://api.withops.com}
     environment:
@@ -76,8 +76,7 @@ services:
 
   grafana:
     restart: always
-    ports:
-      - "3001:3000" # Use different external port in production to avoid conflict
+
     environment:
       - GF_SERVER_ROOT_URL=${PROD_GRAFANA_URL:-https://monitoring.withops.com}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}

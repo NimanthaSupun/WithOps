@@ -182,6 +182,9 @@
 	async function logout() {
 		const client = await getAuthClient();
 		await client.logout({ returnTo: window.location.origin });
+		// Clear the cached client after logout to force re-initialization on next login
+		const { clearAuthClient } = await import('$lib/auth');
+		clearAuthClient();
 	}
 
 	async function connectToGitHub() {

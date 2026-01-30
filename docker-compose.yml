@@ -17,8 +17,8 @@ services:
       KONG_PROXY_READ_TIMEOUT: 180000
       KONG_PROXY_WRITE_TIMEOUT: 180000
     ports:
-      - "8000:8000" # Proxy port (main API gateway)
-      - "8001:8001" # Admin API
+      - "9000:8000" # Proxy port (main API gateway) - using 9000 to avoid Windows reserved ports
+      - "9001:8001" # Admin API - using 9001 to avoid Windows reserved ports
     volumes:
       - ./infra/kong/kong.yml:/usr/local/kong/declarative/kong.yml:ro
     restart: unless-stopped
@@ -90,7 +90,7 @@ services:
     image: grafana/grafana:latest
     container_name: withops-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000" # Changed to 3001 to free up 3000 for frontend in production
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -172,7 +172,7 @@ services:
     env_file:
       - services/ai-service/.env
     ports:
-      - "8101:8001"
+      - "9101:8001" # Using 9101 (8101 blocked by Windows reserved range)
     depends_on:
       - ollama
     restart: unless-stopped
@@ -373,7 +373,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_API_BASE_URL=http://localhost:9000
         - VITE_WS_BASE_URL=http://localhost:9100
         - VITE_AUTH0_DOMAIN=dev-sabxychpf6paj41u.us.auth0.com
         - VITE_AUTH0_CLIENT_ID=KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7
