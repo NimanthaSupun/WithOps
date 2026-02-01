@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: withops
+  labels:
+    name: withops
+    environment: development
