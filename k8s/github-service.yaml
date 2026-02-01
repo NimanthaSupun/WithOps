@@ -5,13 +5,13 @@ metadata:
   namespace: withops
 type: Opaque
 stringData:
-  # Add your actual secrets here or use external secret management
-  SUPABASE_URL: "your-supabase-url"
-  SUPABASE_ANON_KEY: "your-anon-key"
-  SUPABASE_SERVICE_ROLE_KEY: "your-service-role-key"
-  GITHUB_APP_ID: "your-github-app-id"
-  GITHUB_CLIENT_ID: "your-github-client-id"
-  GITHUB_CLIENT_SECRET: "your-github-client-secret"
+  SUPABASE_URL: "https://fcmcsbmsntmpeyjltqbi.supabase.co"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTMyNTksImV4cCI6MjA2NzI4OTI1OX0.hYdwkcoiMuKPY4GbGRHnKdTB1FpJzcIYcgbZ6BqW7nA"
+  SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9zZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTcxMzI1OSwiZXhwIjoyMDY3Mjg5MjU5fQ.GB8WzUj8yf-R1xUUVXmCd5mZwK_BUAAvlB1IYwvLzhA"
+  GITHUB_APP_ID: "1510017"
+  GITHUB_CLIENT_ID: "Iv23liNShwrj2EuW2VkT"
+  GITHUB_CLIENT_SECRET: "f71a73c55a90ddcd6235bb568d08f56f17a639c2"
+  DATABASE_URL: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
 ---
 apiVersion: apps/v1
 kind: Deployment
