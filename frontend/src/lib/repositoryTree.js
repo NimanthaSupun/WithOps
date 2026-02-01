@@ -11,7 +11,7 @@
  * - Future: OWASP DSOMM compliance tracking
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
 class RepositoryTreeClient {
 	constructor() {
@@ -42,7 +42,7 @@ class RepositoryTreeClient {
 		try {
 			console.log(`📦 Fetching repository tree for organization: ${orgName}`);
 
-			const response = await fetch(`${this.baseUrl}/repository-tree/${orgName}`, {
+			const response = await fetch(`${this.baseUrl}/api/repository-tree/${orgName}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ class RepositoryTreeClient {
 				workflows: this._countNodesByType(treeData, 'workflow')
 			});
 
-			const response = await fetch(`${this.baseUrl}/repository-tree/save`, {
+			const response = await fetch(`${this.baseUrl}/api/repository-tree/save`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ class RepositoryTreeClient {
 		try {
 			console.log(`🗑️ Deleting repository tree for organization: ${orgName}`);
 
-			const response = await fetch(`${this.baseUrl}/repository-tree/${orgName}`, {
+			const response = await fetch(`${this.baseUrl}/api/repository-tree/${orgName}`, {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ class RepositoryTreeClient {
 		try {
 			console.log(`📊 Fetching repository tree statistics for: ${orgName}`);
 
-			const response = await fetch(`${this.baseUrl}/repository-tree/${orgName}/statistics`, {
+			const response = await fetch(`${this.baseUrl}/api/repository-tree/${orgName}/statistics`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',

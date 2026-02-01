@@ -8,7 +8,7 @@
  * @returns {string} The API base URL (e.g., http://localhost:8000 or https://api.withops.com)
  */
 export function getApiBaseUrl() {
-	return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+	return import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 }
 
 /**

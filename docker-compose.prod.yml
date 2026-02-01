@@ -9,7 +9,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         - VITE_API_BASE_URL=${PROD_API_BASE_URL:-https://api.withops.com}
-        - VITE_WS_BASE_URL=${PROD_WS_BASE_URL:-wss://events.withops.com}
+        - VITE_WS_BASE_URL=${PROD_WS_BASE_URL:-api.withops.com}
         - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN:-dev-sabxychpf6paj41u.us.auth0.com}
         - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID:-KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7}
         - VITE_AUTH0_CALLBACK_URL=${PROD_AUTH0_CALLBACK_URL:-https://app.withops.com/callback}

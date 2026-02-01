@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { isDarkMode } from '$lib/stores.js';
 
-	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
 	// State variables
 	let loading = $state(true);
@@ -176,7 +176,7 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 				}
 			};
 
-			const response = await fetch(`/api/threat-modeling/models`, {
+			const response = await fetch(`${API_BASE_URL}/api/threat-modeling/models`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -328,7 +328,7 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 				throw new Error('Authentication required. Please log in.');
 			}
 
-			const response = await fetch(`/api/threat-modeling/models`, {
+			const response = await fetch(`${API_BASE_URL}/api/threat-modeling/models`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

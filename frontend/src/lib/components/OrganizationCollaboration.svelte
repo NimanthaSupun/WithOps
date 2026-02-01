@@ -4,6 +4,8 @@
     import { writable } from 'svelte/store';
     import { getAuthClient } from '$lib/auth.js';
     
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+    
     export let isOpen = false;
     export let currentUser = null;
     
@@ -50,7 +52,7 @@
             const authClient = await getAuthClient();
             const token = await authClient.getTokenSilently();
             
-            const response = await fetch(`/api/collaboration/organization/${organization}/members`, {
+            const response = await fetch(`${API_BASE_URL}/api/collaboration/organization/${organization}/members`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -103,7 +105,7 @@
                 message: inviteMessage || undefined
             };
             
-            const response = await fetch('/api/collaboration/invite', {
+            const response = await fetch(`${API_BASE_URL}/api/collaboration/invite`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

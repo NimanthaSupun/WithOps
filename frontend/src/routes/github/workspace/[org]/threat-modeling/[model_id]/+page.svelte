@@ -6,7 +6,7 @@
 	import { tick } from 'svelte';
 	import * as d3 from 'd3';
 
-	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
 	// Import collaboration components and stores
 	import CollaborationLayer from '$lib/components/CollaborationLayer.svelte';
@@ -3682,7 +3682,7 @@
 
 			// Send to async Claude API endpoint with user_id parameter
 			const response = await fetch(
-				`/api/ai/claude/analyze-threats-async?user_id=${encodeURIComponent(userId)}`,
+				`${API_BASE_URL}/api/ai/claude/analyze-threats-async?user_id=${encodeURIComponent(userId)}`,
 				{
 					method: 'POST',
 					headers: {

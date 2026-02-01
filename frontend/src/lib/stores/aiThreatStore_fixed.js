@@ -43,7 +43,7 @@ export const aiChatMessages = writable([]);
 class AIThreatService {
 	constructor() {
 		// Use absolute URL for API calls to avoid SvelteKit SSR issues
-		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 		this.apiBase =
 			typeof window !== 'undefined'
 				? `${API_BASE_URL}/api/ai-threats`

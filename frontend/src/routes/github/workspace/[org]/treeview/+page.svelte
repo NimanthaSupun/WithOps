@@ -5,6 +5,8 @@
     import { githubClient } from '$lib/github.js';
     import TreeNode from './TreeNode.svelte';
     
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+    
     let orgName = '';
     let loading = false;
     let error = null;
@@ -1336,7 +1338,7 @@ jobs:
     // Real GitHub Actions integration - simplified
     async function triggerGitHubActions(workflow) {
         // Check if we have a GitHub App installation first
-        const response = await fetch(`/api/github/workspace/${orgName}/actions/trigger`, {
+        const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}/actions/trigger`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1374,7 +1376,7 @@ jobs:
         
         while (attempts < maxAttempts) {
             try {
-                const statusResponse = await fetch(`/api/workflows/status/${executionId}`, {
+                const statusResponse = await fetch(`${API_BASE_URL}/api/workflows/status/${executionId}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                     }
@@ -1424,7 +1426,7 @@ jobs:
     async function pollWorkflowStatus(workflowId, executionId, maxAttempts = 30) {
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             try {
-                const response = await fetch(`/api/workflows/status/${executionId}`, {
+                const response = await fetch(`${API_BASE_URL}/api/workflows/status/${executionId}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                     }
@@ -1767,7 +1769,7 @@ jobs:
     async function deleteRealWorkflowRun(run) {
         try {
             // Delete from real systems first
-            const deleteResponse = await fetch(`/api/workflows/runs/${run.id}`, {
+            const deleteResponse = await fetch(`${API_BASE_URL}/api/workflows/runs/${run.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`

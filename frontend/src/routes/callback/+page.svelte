@@ -35,7 +35,7 @@
 			authState.clearAuthState();
 
 			// Send the access token to FastAPI backend
-			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 			const response = await fetch(`${apiBase}/api/auth/callback`, {
 				method: 'POST',
 				headers: {

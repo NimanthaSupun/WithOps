@@ -4,7 +4,7 @@
  */
 
 // Use Kong gateway for API calls (same as other services)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 const RAG_API_URL = `${API_BASE_URL}/api/rag`;
 
 /**
