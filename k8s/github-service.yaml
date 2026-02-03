@@ -22,7 +22,7 @@ metadata:
     app: github-service
     tier: application
 spec:
-  replicas: 2 # Run 2 instances for availability
+  replicas: 1 # Run 1 instance to save memory
   selector:
     matchLabels:
       app: github-service

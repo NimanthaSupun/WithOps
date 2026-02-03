@@ -1,115 +1,58 @@
-﻿https://app.withops.com/github/workspace/WithOps-Com/threat-modeling
-
-
-Xt.onerror @ 16.C_GrbMgC.js:11Understand this error
-16.C_GrbMgC.js:11 🔌 WebSocket disconnected
-16.C_GrbMgC.js:11 🔄 Reconnecting in 8000ms (attempt 3/5)
-16.C_GrbMgC.js:11 🤖 Starting async AI threat analysis...
-16.C_GrbMgC.js:11 🔄 Preparing AI analysis data...
-16.C_GrbMgC.js:11 📊 Analysis type: comprehensive (8 components, 3 connections)
-16.C_GrbMgC.js:11 📸 Creating AI-optimized canvas image...
-16.C_GrbMgC.js:11 ✅ AI-optimized image created: {width: 3977, height: 1626, dataSize: 342000, components: 8}
-16.C_GrbMgC.js:11 📸 Diagram image generated for AI analysis
-16.C_GrbMgC.js:11 🔍 Categorizing 3 user threats for STRIDE framework
-16.C_GrbMgC.js:11 ✅ Threat categorization complete: Spoofing: 1, Tampering: 0, Repudiation: 1, Information Disclosure: 1, Denial of Service: 0, Elevation of Privilege: 0
-CD_F4f0W.js:1  POST https://app.withops.com/api/ai/claude/analyze-threats-async?user_id=google-oauth2%7C104809585699210919063 404 (Not Found)
-window.fetch @ CD_F4f0W.js:1
-$l @ 16.C_GrbMgC.js:11
-await in $l
-(anonymous) @ 16.C_GrbMgC.js:24
-(anonymous) @ CX8zMvRi.js:1
-We @ CX8zMvRi.js:1
-a @ CX8zMvRi.js:1Understand this error
-16.C_GrbMgC.js:11 ❌ AI analysis failed: Error: HTTP 404
-    at $l (16.C_GrbMgC.js:11:66802)
-$l @ 16.C_GrbMgC.js:11
-await in $l
-(anonymous) @ 16.C_GrbMgC.js:24
-(anonymous) @ CX8zMvRi.js:1
-We @ CX8zMvRi.js:1
-a @ CX8zMvRi.js:1Understand this error
-16.C_GrbMgC.js:11 Uncaught (in promise) Error: HTTP 404
-    at $l (16.C_GrbMgC.js:11:66802)
-$l @ 16.C_GrbMgC.js:11
-await in $l
-(anonymous) @ 16.C_GrbMgC.js:24
-(anonymous) @ CX8zMvRi.js:1
-We @ CX8zMvRi.js:1
-a @ CX8zMvRi.js:1Understand this error
-threat-modeling/a15e1e33-69c3-40ee-8c62-21e7109631fa:1 The resource https://app.withops.com/_app/immutable/assets/app.DgN0K2tc.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.Understand this warning
-16.C_GrbMgC.js:11 🔌 Connecting to WebSocket: wss://wss://events.withops.com/ws/google-oauth2%7C104809585699210919063
-16.C_GrbMgC.js:24 🔍 aiAnalysisResult changed: {isNull: true, isUndefined: false, exists: false, hasStructuredAnalysis: false, currentView: 'welcome', …}
-16.C_GrbMgC.js:11 WebSocket connection to 'wss://wss//events.withops.com/ws/google-oauth2%7C104809585699210919063' failed: 
-_l @ 16.C_GrbMgC.js:11Understand this error
-16.C_GrbMgC.js:11 ❌ WebSocket error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
-Xt.onerror @ 16.C_GrbMgC.js:11Understand this error
-16.C_GrbMgC.js:11 🔌 WebSocket disconnected
-
-
-📊 Loading threat modeling dashboard for WithOps-Com...
-15.BD0zqR7n.js:2 ✅ Dashboard data loaded
-CD_F4f0W.js:1  POST https://app.withops.com/api/threat-modeling/models 404 (Not Found)
-window.fetch @ CD_F4f0W.js:1
-De @ 15.BD0zqR7n.js:2
-_t @ CX8zMvRi.js:1Understand this error
-15.BD0zqR7n.js:2 Failed to create threat model: Error: HTTP 404: <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="../../icons/excellence_17274210.png" type="image/png" />
-		<link rel="apple-touch-icon" href="../../icons/excellence_17274210.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta
-			name="description"
-			content="WithOps DevSecOps Platform - AI-powered security automation and continuous integration platform"
-		/>
-		<meta name="theme-color" content="#00d9ff" />
-		<title>WithOps - DevSecOps Platform</title>
-		
-		<link href="../../_app/immutable/assets/app.DgN0K2tc.css" rel="stylesheet"><!--[--><!--[--><style>
-			body {
-				background-color: {darkMode ? '#111827' : '#f9fafb'};
-				color: {darkMode ? '#f3f4f6' : '#111827'};
-				transition: background-color 0.3s ease, color 0.3s ease;
-			}
-		</style><!--]--><!--]-->
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents"><!--[--><!--[--><!----><div><!----><h1>404</h1> <p>Not Found</p><!----><!----></div><!----><!--]--> <!--[!--><!--]--><!--]-->
-			
-			<script>
-				{
-					__sveltekit_1fu22dx = {
-						base: new URL("../..", location).pathname.slice(0, -1)
-					};
-
-					const element = document.currentScript.parentElement;
-
-					Promise.all([
-						import("../../_app/immutable/entry/start.BPFzWWit.js"),
-						import("../../_app/immutable/entry/app.sA0cm5PC.js")
-					]).then(([kit, app]) => {
-						kit.start(app, element, {
-							node_ids: [0, 1],
-							data: [null,null],
-							form: null,
-							error: {message:"Not Found"},
-							status: 404
-						});
-					});
-				}
-			</script>
-		</div>
-	</body>
-</html>
-
-    at HTMLButtonElement.De [as __click] (15.BD0zqR7n.js:2:9317)
-De @ 15.BD0zqR7n.js:2
-await in De
-_t @ CX8zMvRi.js:1Understand this error
-16.C_GrbMgC.js:11 🔌 Connecting to WebSocket: wss://wss://events.withops.com/ws/google-oauth2%7C104809585699210919063
-16.C_GrbMgC.js:11 WebSocket connection to 'wss://wss//events.withops.com/ws/google-oauth2%7C104809585699210919063' failed: 
-_l @ 16.C_GrbMgC.js:11Understand this error
-16.C_GrbMgC.js:11 ❌ WebSocket error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
-Xt.onerror @ 16.C_GrbMgC.js:11Understand this error
-16.C_GrbMgC.js:11 🔌 WebSocket disconnected
+﻿🌐 Making request to: http://localhost:9000/api/github/my-organizations
+:9000/api/github/my-organizations:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+T4bQ3cst.js:2 ❌ Request failed for http://localhost:9000/api/github/my-organizations: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.getMyOrganizations (T4bQ3cst.js:1:12444)
+    at async p.getMyActiveOrganizations (T4bQ3cst.js:1:13153)
+    at async je (19.DfSnSLfI.js:2:11859)
+    at async 19.DfSnSLfI.js:2:10316
+makeRequest @ T4bQ3cst.js:2Understand this error
+T4bQ3cst.js:1 ❌ User organizations fetch error: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.getMyOrganizations (T4bQ3cst.js:1:12444)
+    at async p.getMyActiveOrganizations (T4bQ3cst.js:1:13153)
+    at async je (19.DfSnSLfI.js:2:11859)
+    at async 19.DfSnSLfI.js:2:10316
+getMyOrganizations @ T4bQ3cst.js:1Understand this error
+19.DfSnSLfI.js:2 ❌ Error loading organizations: Error: Failed to fetch
+    at je (19.DfSnSLfI.js:2:12929)
+    at async 19.DfSnSLfI.js:2:10316
+je @ 19.DfSnSLfI.js:2Understand this error
+T4bQ3cst.js:2 🌐 Making request to: http://localhost:9000/api/github/organizations/discover
+:9000/api/github/organizations/discover:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+T4bQ3cst.js:2 ❌ Request failed for http://localhost:9000/api/github/organizations/discover: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.startOrganizationDiscovery (T4bQ3cst.js:1:4567)
+makeRequest @ T4bQ3cst.js:2Understand this error
+T4bQ3cst.js:1 ❌ Organization discovery error: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.startOrganizationDiscovery (T4bQ3cst.js:1:4567)
+startOrganizationDiscovery @ T4bQ3cst.js:1Understand this error
+4.BQA4HPvN.js:3 ✅ User authenticated on dashboard: Nimantha Ariyarathne
+4.BQA4HPvN.js:3 👤 User profile data: Object
+4.BQA4HPvN.js:3 🖼️ Profile picture URL: https://lh3.googleusercontent.com/a/ACg8ocI84H1N9JkkcMVMAlotEWol_5a-C7W6s5DmNHTlMcFZNDv25Es=s96-c
+:9000/api/auth/dashboard:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+4.BQA4HPvN.js:3 Failed to load dashboard data: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at he (4.BQA4HPvN.js:3:13990)
+    at async 4.BQA4HPvN.js:3:13769
+he @ 4.BQA4HPvN.js:3Understand this error
+T4bQ3cst.js:2 🌐 Making request to: http://localhost:9000/api/github/connect/start
+:9000/api/github/connect/start:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+T4bQ3cst.js:2 ❌ Request failed for http://localhost:9000/api/github/connect/start: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.startGitHubConnection (T4bQ3cst.js:1:3323)
+    at async HTMLButtonElement.fe [as __click] (4.BQA4HPvN.js:3:14864)
+makeRequest @ T4bQ3cst.js:2Understand this error
+T4bQ3cst.js:1 ❌ GitHub connection start error: TypeError: Failed to fetch
+    at window.fetch (Do3M3AmW.js:1:1746)
+    at p.makeRequest (T4bQ3cst.js:2:9753)
+    at async p.startGitHubConnection (T4bQ3cst.js:1:3323)
+    at async HTMLButtonElement.fe [as __click] (4.BQA4HPvN.js:3:14864)
+startGitHubConnection @ T4bQ3cst.js:1Understand this error
+4.BQA4HPvN.js:3 Failed to start GitHub connection: Failed to fetch

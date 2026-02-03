@@ -1,0 +1,295 @@
+# Auth Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: withops
+  labels:
+    app: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: withops-auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8006
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8006
+      targetPort: 8006
+  selector:
+    app: auth-service
+---
+# Threat Modeling Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threat-modeling-service
+  namespace: withops
+  labels:
+    app: threat-modeling-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threat-modeling-service
+  template:
+    metadata:
+      labels:
+        app: threat-modeling-service
+    spec:
+      containers:
+        - name: threat-modeling-service
+          image: withops-threat-modeling-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8003
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: AI_SERVICE_URL
+              value: "http://ai-service:8001"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: threat-modeling-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8003
+      targetPort: 8003
+  selector:
+    app: threat-modeling-service
+---
+# Workspace Intelligence Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace-intelligence-service
+  namespace: withops
+  labels:
+    app: workspace-intelligence-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workspace-intelligence-service
+  template:
+    metadata:
+      labels:
+        app: workspace-intelligence-service
+    spec:
+      containers:
+        - name: workspace-intelligence-service
+          image: withops-workspace-intelligence-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8004
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: GITHUB_SERVICE_URL
+              value: "http://github-service:8002"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workspace-intelligence-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+  selector:
+    app: workspace-intelligence-service
+---
+# Collaboration Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collaboration-service
+  namespace: withops
+  labels:
+    app: collaboration-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: collaboration-service
+  template:
+    metadata:
+      labels:
+        app: collaboration-service
+    spec:
+      containers:
+        - name: collaboration-service
+          image: withops-collaboration-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8105
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: collaboration-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8105
+      targetPort: 8105
+  selector:
+    app: collaboration-service
+---
+# Workflow Orchestration Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-orchestration-service
+  namespace: withops
+  labels:
+    app: workflow-orchestration-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workflow-orchestration-service
+  template:
+    metadata:
+      labels:
+        app: workflow-orchestration-service
+    spec:
+      containers:
+        - name: workflow-orchestration-service
+          image: withops-workflow-orchestration-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8007
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: GITHUB_SERVICE_URL
+              value: "http://github-service:8002"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-orchestration-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8007
+      targetPort: 8007
+  selector:
+    app: workflow-orchestration-service
+---
+# AI RAG Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-rag-service
+  namespace: withops
+  labels:
+    app: ai-rag-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-rag-service
+  template:
+    metadata:
+      labels:
+        app: ai-rag-service
+    spec:
+      containers:
+        - name: ai-rag-service
+          image: withops-ai-rag-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8108
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: QDRANT_URL
+              value: "http://qdrant:6333"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-rag-service
+  namespace: withops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8108
+      targetPort: 8108
+  selector:
+    app: ai-rag-service
