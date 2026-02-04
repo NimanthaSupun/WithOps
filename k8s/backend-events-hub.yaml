@@ -67,9 +67,9 @@ metadata:
   labels:
     app: backend
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
-    - port: 8000
+    - port: 9100
       targetPort: 8000
       protocol: TCP
       name: http

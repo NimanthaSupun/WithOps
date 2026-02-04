@@ -75,6 +75,12 @@ spec:
               value: "redis://redis:6379"
             - name: AI_SERVICE_URL
               value: "http://ai-service:8001"
+            - name: DATABASE_URL
+              value: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+            - name: ENABLE_METRICS
+              value: "true"
+            - name: ENABLE_TRACING
+              value: "true"
           resources:
             requests:
               memory: "512Mi"
@@ -125,6 +131,12 @@ spec:
               value: "redis://redis:6379"
             - name: GITHUB_SERVICE_URL
               value: "http://github-service:8002"
+            - name: DATABASE_URL
+              value: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+            - name: ENABLE_METRICS
+              value: "true"
+            - name: ENABLE_TRACING
+              value: "true"
           resources:
             requests:
               memory: "512Mi"
@@ -267,12 +279,30 @@ spec:
           image: withops-ai-rag-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8108
+            - containerPort: 8008
           env:
             - name: REDIS_URL
               value: "redis://redis:6379"
-            - name: QDRANT_URL
-              value: "http://qdrant:6333"
+            - name: QDRANT_HOST
+              value: "qdrant"
+            - name: QDRANT_PORT
+              value: "6333"
+            - name: OLLAMA_URL
+              value: "http://ollama:11434"
+            - name: DATABASE_URL
+              value: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+            - name: AUTH0_DOMAIN
+              value: "dev-sabxychpf6paj41u.us.auth0.com"
+            - name: AUTH0_AUDIENCE
+              value: "https://api.withops.com"
+            - name: WORKSPACE_INTELLIGENCE_SERVICE_URL
+              value: "http://workspace-intelligence-service:8004"
+            - name: GITHUB_SERVICE_URL
+              value: "http://github-service:8002"
+            - name: ENABLE_METRICS
+              value: "true"
+            - name: ENABLE_TRACING
+              value: "true"
           resources:
             requests:
               memory: "512Mi"
@@ -289,7 +319,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8108
-      targetPort: 8108
+    - port: 8008
+      targetPort: 8008
   selector:
     app: ai-rag-service
