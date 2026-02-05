@@ -35,8 +35,6 @@ spec:
               value: "http://ollama:11434"
             - name: ENABLE_METRICS
               value: "true"
-            - name: OTLP_ENDPOINT
-              value: "http://jaeger:4318/v1/traces"
           resources:
             requests:
               memory: "1Gi"

@@ -29,14 +29,14 @@ spec:
           env:
             - name: REDIS_URL
               value: "redis://redis:6379"
+            - name: REDIS_URL
+              value: "redis://redis:6379"
             - name: ENABLE_METRICS
               value: "true"
             - name: ENABLE_TRACING
-              value: "true"
+              value: "false"
             - name: GITHUB_SERVICE_URL
               value: "http://github-service:8002"
-            - name: OTLP_ENDPOINT
-              value: "http://jaeger:4318/v1/traces"
             - name: ENVIRONMENT
               value: "production"
           resources:

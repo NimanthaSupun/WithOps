@@ -23,8 +23,8 @@ spec:
               echo "🚀 Starting Ollama service..."
               ollama serve &
               echo "⏳ Waiting for Ollama to be ready..."
-              sleep 10
               echo "📦 Checking for nomic-embed-text model..."
+              sleep 10
               if ! ollama list | grep -q "nomic-embed-text"; then
                 echo "📥 Pulling nomic-embed-text model..."
                 ollama pull nomic-embed-text
@@ -57,7 +57,20 @@ spec:
               mountPath: /root/.ollama
       volumes:
         - name: ollama-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: ollama-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+  namespace: withops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
@@ -113,7 +126,20 @@ spec:
               mountPath: /qdrant/storage
       volumes:
         - name: qdrant-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: qdrant-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qdrant-pvc
+  namespace: withops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 apiVersion: v1
 kind: Service

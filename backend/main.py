@@ -39,12 +39,14 @@ resource = Resource.create(attributes={
 trace.set_tracer_provider(TracerProvider(resource=resource))
 
 # Use OTLP HTTP exporter (more reliable than Jaeger Thrift)
-otlp_exporter = OTLPSpanExporter(
-    endpoint=os.getenv("OTLP_ENDPOINT", "http://jaeger:4318/v1/traces"),
-)
-trace.get_tracer_provider().add_span_processor(
-    BatchSpanProcessor(otlp_exporter)
-)
+# Only initialize if tracing is enabled
+if os.getenv("ENABLE_TRACING", "false").lower() == "true":
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=os.getenv("OTLP_ENDPOINT", "http://jaeger:4318/v1/traces"),
+    )
+    trace.get_tracer_provider().add_span_processor(
+        BatchSpanProcessor(otlp_exporter)
+    )
 
 # Prometheus metrics
 REQUEST_COUNT = Counter(
