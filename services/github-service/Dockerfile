@@ -23,8 +23,9 @@ COPY backend/config/keys/*.pem /app/config/keys/
 # Set proper permissions for private keys
 RUN chmod 600 /app/config/keys/*.pem
 
-# Update the private key path to use absolute path in container
-ENV GITHUB_PRIVATE_KEY_PATH=/app/config/keys/withops-devsecops-platform-local.2026-01-22.private-key.pem
+# Note: GITHUB_PRIVATE_KEY_PATH is set via environment variable in K8s
+# Local: /app/config/keys/withops-devsecops-platform-local.2026-01-22.private-key.pem
+# Production: /app/config/keys/withops-devsecops-platform-production.private-key.pem
 
 # Expose port
 EXPOSE 8002
