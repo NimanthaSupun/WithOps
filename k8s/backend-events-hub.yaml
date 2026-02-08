@@ -27,18 +27,59 @@ spec:
             - containerPort: 8000
               name: http
           env:
+            # Redis Configuration
             - name: REDIS_URL
               value: "redis://redis:6379"
-            - name: REDIS_URL
-              value: "redis://redis:6379"
+            # Monitoring
             - name: ENABLE_METRICS
               value: "true"
             - name: ENABLE_TRACING
               value: "false"
+            # Service URLs
             - name: GITHUB_SERVICE_URL
               value: "http://github-service:8002"
+            - name: FRONTEND_URL
+              value: "https://app.withops.com"
+            # Environment
             - name: ENVIRONMENT
               value: "production"
+            # Auth0 Configuration
+            - name: AUTH0_DOMAIN
+              value: "dev-sabxychpf6paj41u.us.auth0.com"
+            - name: AUTH0_API_AUDIENCE
+              value: "https://api.withops.com"
+            # CORS Origins
+            - name: CORS_ORIGINS
+              value: "https://app.withops.com,https://withops.com"
+            # Supabase Configuration
+            - name: SUPABASE_URL
+              value: "https://fcmcsbmsntmpeyjltqbi.supabase.co"
+            - name: SUPABASE_ANON_KEY
+              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTMyNTksImV4cCI6MjA2NzI4OTI1OX0.hYdwkcoiMuKPY4GbGRHnKdTB1FpJzcIYcgbZ6BqW7nA"
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9zZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTcxMzI1OSwiZXhwIjoyMDY3Mjg5MjU5fQ.GB8WzUj8yf-R1xUUVXmCd5mZwK_BUAAvlB1IYwvLzhA"
+            - name: SUPABASE_DATABASE_URL
+              value: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+            - name: DATABASE_ENCRYPTION_KEY
+              value: "6VFNM3kaPxOVcX6QyZ2m6QFH5CrBLu1-qfaTOJcv2B8"
+            # GitHub App Configuration - PRODUCTION
+            - name: GITHUB_APP_ID
+              value: "2710627"
+            - name: GITHUB_APP_CLIENT_ID
+              value: "Iv23liO0msKfq5HsEJrx"
+            - name: GITHUB_APP_CLIENT_SECRET
+              value: "7a872666551f4cac553823a4560d5afd82066f83"
+            - name: GITHUB_APP_NAME
+              value: "WithOps-DevSecOps-Platform"
+            - name: GITHUB_PRIVATE_KEY_PATH
+              value: "./config/keys/withops-devsecops-platform-production.private-key.pem"
+            - name: GITHUB_PRIVATE_KEY_NAME
+              value: "withops-devsecops-platform-production.private-key.pem"
+            # GitHub OAuth Configuration
+            - name: GITHUB_OAUTH_CLIENT_ID
+              value: "Ov23liwyM2h7DYnNUw9g"
+            - name: GITHUB_OAUTH_CLIENT_SECRET
+              value: "014e0b6f4062df35e8c6a82226aa3092e1df1082"
           resources:
             requests:
               memory: "512Mi"

@@ -1,103 +1,127 @@
 ===========================================
-WithOps Kubernetes Deployment Guide
+WithOps Kubernetes Production Deployment
 ===========================================
 
-WHY KUBERNETES?
----------------
-✅ Auto-scaling: Automatically scale services based on CPU/memory
-✅ Self-healing: Restart failed containers automatically
-✅ Load balancing: Distribute traffic across multiple instances
-✅ Zero-downtime deployments: Update services without stopping
-✅ Resource management: Set CPU/memory limits per service
-✅ Production-ready: Industry standard for microservices
+OVERVIEW
+--------
+Deploy the WithOps DevSecOps Platform to Kubernetes for production.
+For local development, use Docker Compose instead (simpler and faster).
 
-SETUP STEPS
+PREREQUISITES
+-------------
+✅ Kubernetes cluster running (local or cloud)
+✅ kubectl installed and configured
+✅ Docker installed for building images
+✅ Domain names configured (app.withops.com, api.withops.com)
+
+QUICK START
 -----------
 
-1. Enable Kubernetes in Docker Desktop:
-   - Open Docker Desktop
-   - Go to Settings → Kubernetes
-   - Check "Enable Kubernetes"
-   - Click "Apply & Restart"
-   - Wait 2-3 minutes for Kubernetes to start
+1. Build Production Images:
+   > .\BUILD-PRODUCTION-IMAGES.ps1
 
-2. Verify Kubernetes is running:
-   > kubectl cluster-info
-   > kubectl get nodes
+2. Deploy to Kubernetes:
+   > kubectl apply -f namespace.yaml
+   > kubectl apply -f redis.yaml
+   > kubectl apply -f qdrant.yaml
+   > kubectl apply -f ollama.yaml
+   > kubectl apply -f monitoring.yaml
+   > kubectl apply -f backend-events-hub.yaml
+   > kubectl apply -f auth-service.yaml
+   > kubectl apply -f github-service.yaml
+   > kubectl apply -f ai-service.yaml
+   > kubectl apply -f threat-modeling-service.yaml
+   > kubectl apply -f collaboration-service.yaml
+   > kubectl apply -f workspace-intelligence-service.yaml
+   > kubectl apply -f workflow-orchestration-service.yaml
+   > kubectl apply -f ai-rag-service.yaml
+   > kubectl apply -f frontend.yaml
+   > kubectl apply -f kong-gateway.yaml
 
-3. Update secrets in k8s/github-service.yaml:
-   - Replace "your-supabase-url" with actual values
-   - Replace "your-github-app-id" with actual values
+   Or deploy all at once:
+   > kubectl apply -f .
 
-4. Deploy to Kubernetes:
-   > .\k8s\deploy.ps1
+3. Check Status:
+   > kubectl get pods -n withops
+   > kubectl get svc -n withops
 
-WHAT GETS DEPLOYED?
--------------------
-✅ Redis (1 pod) - Caching & Pub/Sub
-✅ Kong Gateway (2 pods) - API Gateway with load balancing
-✅ GitHub Service (2-10 pods) - Auto-scales based on load
-✅ AI Service (2-15 pods) - Auto-scales based on load
-✅ Prometheus - Metrics collection
-✅ Grafana - Dashboards (http://localhost:3001)
-✅ Jaeger - Distributed tracing (http://localhost:16686)
+SERVICES DEPLOYED
+-----------------
+✅ Frontend - SvelteKit app at app.withops.com
+✅ Backend - FastAPI Events Hub (WebSocket + Event Bus)
+✅ Auth Service - Authentication and authorization
+✅ Redis - Caching and session storage
+✅ Qdrant - Vector database for RAG (AI embeddings)
+✅ Ollama - Embedding model 'nomic-embed-text' (768d)
+✅ GitHub Service - GitHub integration microservice
+✅ AI Service - Claude API integration for AI/ML
+✅ Threat Modeling Service - Security threat analysis
+✅ Collaboration Service - Team collaboration and invites
+✅ Workspace Intelligence Service - Workspace analysis and maturity scoring
+✅ Workflow Orchestration Service - CI/CD workflow management
+✅ AI RAG Service - Conversational AI with RAG
+✅ Kong Gateway - API routing and CORS
+✅ Redis - Caching and Pub/Sub
+✅ Prometheus + Grafana - Monitoring
 
-AUTO-SCALING EXAMPLE
---------------------
-GitHub Service:
-- Minimum: 2 pods (always running)
-- Maximum: 10 pods
-- Scales up when CPU > 70% or Memory > 80%
-- Scales down when usage decreases
+ARCHITECTURE
+------------
+Frontend (app.withops.com)
+    ↓
+Kong Gateway (api.withops.com)
+    ├→ /api/auth/* → Auth Service (8006)
+    ├→ /api/github/* → GitHub Service (8002)
+    ├→ /api/ai/* → AI Service (8001)
+    ├→ /api/threat-modeling/* → Threat Modeling Service (8003)
+    ├→ /api/collaboration/* → Collaboration Service (8105)
+    ├→ /api/workspace-intelligence/* → Workspace Intelligence Service (8004)
+    ├→ /api/repository-tree/* → Workspace Intelligence Service (8004)
+    ├→ /api/workflows/* → Workflow Orchestration Service (8007)
+    ├→ /api/project-tree/* → Workflow Orchestration Service (8007)
+    ├→ /api/canvas/* → Workflow Orchestration Service (8007)
+    ├→ /api/security/* → Workflow Orchestration Service (8007)
+    ├→ /api/rag/* → AI RAG Service (8008)
+    └→ /api/conversations/* → AI RAG Service (8008)
 
-AI Service:
-- Minimum: 2 pods
-- Maximum: 15 pods (AI needs more capacity)
-- Scales up when CPU > 75%
+Backend (9100) → WebSocket /ws/{user_id} for real-time events
 
 USEFUL COMMANDS
 ---------------
 
-View all services:
-> kubectl get all -n withops
-
-View pods:
-> kubectl get pods -n withops
-
 View logs:
-> kubectl logs -f <pod-name> -n withops
+> kubectl logs -f deployment/backend -n withops
+> kubectl logs -f deployment/frontend -n withops
 
-View auto-scaling status:
-> kubectl get hpa -n withops
+Port forward for testing:
+> kubectl port-forward svc/frontend 3000:5173 -n withops
+> kubectl port-forward svc/kong 8000:9000 -n withops
 
-See resource usage:
-> kubectl top pods -n withops
+Scale services:
+> kubectl scale deployment/github-service --replicas=3 -n withops
 
-Scale manually:
-> kubectl scale deployment github-service --replicas=5 -n withops
-
-Delete everything:
+Delete all:
 > kubectl delete namespace withops
 
-Port-forward to a service:
-> kubectl port-forward svc/prometheus 9090:9090 -n withops
+CHECK HEALTH
+------------
+> kubectl get pods -n withops
+> kubectl top pods -n withops
+> kubectl describe pod <pod-name> -n withops
 
-Execute command in pod:
+TROUBLESHOOTING
+---------------
+If pods not starting:
+> kubectl describe pod <pod-name> -n withops
+> kubectl logs <pod-name> -n withops
+
+If connection issues:
+> kubectl get endpoints -n withops
 > kubectl exec -it <pod-name> -n withops -- /bin/sh
 
-DIFFERENCES FROM DOCKER COMPOSE
---------------------------------
-
-Docker Compose:
-- Single machine only
-- Manual scaling
-- No self-healing
-- Good for development
-
-Kubernetes:
-- Multi-node clusters
-- Auto-scaling
-- Self-healing
+DOCUMENTATION
+-------------
+For detailed deployment guide, see:
+→ PRODUCTION-DEPLOYMENT.md
 - Production-ready
 - Better resource management
 - Built-in service discovery

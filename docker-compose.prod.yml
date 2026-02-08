@@ -28,6 +28,8 @@ services:
 
   # Backend with production settings
   backend:
+    env_file:
+      - backend/.env.production
     environment:
       - ENVIRONMENT=production
       - FRONTEND_URL=${PROD_FRONTEND_URL:-https://app.withops.com}

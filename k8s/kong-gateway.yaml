@@ -7,13 +7,12 @@ data:
   kong.yml: |
     _format_version: "3.0"
 
-    # Kong Gateway Configuration for WithOps Microservices
-    # This routes requests from the API Gateway to the appropriate backend service
+    # Kong Gateway Configuration for WithOps Production
+    # Routes requests to all 8 microservices
 
     services:
-      # Authentication Service (extracted microservice)
+      # Auth Service - Authentication and authorization
       # Routes /api/auth/* to auth-service:8006/api/auth/*
-      # Handles user authentication, JWT validation, and user profile management
       - name: auth-service
         url: http://auth-service:8006
         routes:
@@ -22,25 +21,28 @@ data:
               - /api/auth
             strip_path: false
 
-      # Backend/Monolith Service (Events Hub - WebSocket only)
-      # Now only handles WebSocket connections and real-time events
-      # All REST API routes moved to dedicated microservices
-      - name: backend-monolith
-        url: http://backend:8000
+      # GitHub Service - GitHub integration
+      # Routes /api/github/* to github-service:8002/api/github/*
+      - name: github-service
+        url: http://github-service:8002
         routes:
-          # All REST routes removed - backend is now Events Hub only
-          # WebSocket connections handled directly (not through Kong)
-          # - AI routes → ai-service
-          # - Auth routes → auth-service
-          # - GitHub routes → github-service
-          # - Threat modeling → threat-modeling-service
-          # - Collaboration → collaboration-service
-          # - Workspace intelligence → workspace-intelligence-service
-          # - Workflow orchestration → workflow-orchestration-service
+          - name: github-routes
+            paths:
+              - /api/github
+            strip_path: false
 
-      # Threat Modeling Service (extracted microservice)
+      # AI Service - AI/ML operations with Claude
+      # Routes /api/ai/* to ai-service:8001/api/ai/*
+      - name: ai-service
+        url: http://ai-service:8001
+        routes:
+          - name: ai-routes
+            paths:
+              - /api/ai
+            strip_path: false
+
+      # Threat Modeling Service - Security threat analysis
       # Routes /api/threat-modeling/* to threat-modeling-service:8003/api/v1/*
-      # Example: /api/threat-modeling/models -> http://threat-modeling-service:8003/api/v1/models
       - name: threat-modeling-service
         url: http://threat-modeling-service:8003/api/v1
         routes:
@@ -49,21 +51,8 @@ data:
               - /api/threat-modeling
             strip_path: true
 
-      # GitHub Service (extracted microservice)
-      # Routes /api/github/* directly to github-service:8002/api/github/*
-      # Handles installations, organizations, workspace data, actions, workflows
-      # Architecture: Frontend → Kong → GitHub-Service (autonomous with Auth0, database, cache)
-      - name: github-service
-        url: http://github-service:8002
-        routes:
-          - name: github-service-routes
-            paths:
-              - /api/github
-            strip_path: false
-
-      # Collaboration Service (extracted microservice)
-      # Routes /api/collaboration/* to collaboration-service
-      # Handles organization member listing, collaboration invites, and session management
+      # Collaboration Service - Team collaboration and invites
+      # Routes /api/collaboration/* to collaboration-service:8105/api/collaboration/*
       - name: collaboration-service
         url: http://collaboration-service:8105
         routes:
@@ -72,9 +61,8 @@ data:
               - /api/collaboration
             strip_path: false
 
-      # Workspace Intelligence Service (extracted microservice)
-      # Routes /api/workspace-intelligence/* and /api/repository-tree/*
-      # Handles workspace analysis, DevSecOps maturity scoring, and repository tree management
+      # Workspace Intelligence Service - Workspace analysis and maturity scoring
+      # Routes /api/workspace-intelligence/* and /api/repository-tree/* to workspace-intelligence-service:8004
       - name: workspace-intelligence-service
         url: http://workspace-intelligence-service:8004
         routes:
@@ -84,9 +72,8 @@ data:
               - /api/repository-tree
             strip_path: false
 
-      # Workflow Orchestration Service (extracted microservice)
+      # Workflow Orchestration Service - CI/CD workflow management
       # Routes /api/workflows/*, /api/project-tree/*, /api/canvas/*, /api/security/*
-      # Handles CI/CD workflow orchestration, execution monitoring, security scanning, and visual design
       - name: workflow-orchestration-service
         url: http://workflow-orchestration-service:8007
         routes:
@@ -95,26 +82,11 @@ data:
               - /api/workflows
               - /api/project-tree
               - /api/canvas
-            strip_path: false
-          - name: workflow-security-routes
-            paths:
               - /api/security
             strip_path: false
 
-      # AI Service - Microservice for AI/ML operations
-      # Routes /api/ai/* directly to ai-service:8001/api/ai/*
-      # Handles PR descriptions, workflow generation, and Claude threat analysis
-      - name: ai-service
-        url: http://ai-service:8001
-        routes:
-          - name: ai-routes
-            paths:
-              - /api/ai
-            strip_path: false
-
-      # AI RAG Service - Conversational AI for DevSecOps Intelligence
-      # Routes /api/rag/* and /api/conversations/* directly to ai-rag-service:8008
-      # Handles chat queries, auto-indexing, conversations, and RAG-powered insights
+      # AI RAG Service - Conversational AI with RAG
+      # Routes /api/rag/* and /api/conversations/* to ai-rag-service:8008
       - name: ai-rag-service
         url: http://ai-rag-service:8008
         routes:

@@ -1,1 +1,25 @@
-﻿
+﻿# 1. Build images (they're automatically available to Kubernetes)
+.\k8s\BUILD-PRODUCTION-IMAGES.ps1
+
+# 2. Deploy to Kubernetes
+kubectl apply -f k8s/
+
+# 3. Check status
+kubectl get pods -n withops
+
+kubectl get pods -n withops              # See all pods
+kubectl get svc -n withops               # See all services
+kubectl get deployments -n withops      # See all deployments
+
+kubectl logs -f deployment/frontend -n withops
+kubectl logs frontend-abc123 -n withops  # Specific pod
+
+kubectl scale deployment/github-service --replicas=3 -n withops
+
+# Rebuild image
+docker build -t withops-frontend:latest .
+
+# Restart deployment to use new image
+kubectl rollout restart deployment/frontend -n withops
+
+kubectl delete namespace withops
