@@ -35,13 +35,26 @@ class VectorStore:
         try:
             self.client = QdrantClient(
                 host=self.qdrant_host,
-                port=self.qdrant_port
+                port=self.qdrant_port,
+                timeout=30
             )
             
             logger.info(f"✅ Connected to Qdrant at {self.qdrant_host}:{self.qdrant_port}")
             
-            # Create collections if they don't exist
-            await self._create_collections()
+            # Create collections if they don't exist (with retry)
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    await self._create_collections()
+                    break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        import asyncio
+                        wait_time = 5 * (attempt + 1)
+                        logger.warning(f"Qdrant collection creation attempt {attempt + 1} failed: {e}. Retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        raise
             
         except Exception as e:
             logger.error(f"Failed to initialize Qdrant: {str(e)}")

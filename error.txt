@@ -1,1 +1,172 @@
-﻿
+﻿ 2026-02-12 04:58:52,700 - core.embeddings - INFO - ✅ Embedding service initialized with model: nomic-embed-text
+withops-ai-rag-service  | 2026-02-12 04:58:52,700 - core.embeddings - INFO -    Ollama host: http://ollama:11434
+withops-ai-rag-service  | 2026-02-12 04:58:52,700 - main - INFO - Initializing Qdrant Vector Store...
+withops-ai-rag-service  | 2026-02-12 04:58:52,710 - core.vector_store - INFO - ✅ Connected to Qdrant at qdrant:6333
+withops-ai-rag-service  | 2026-02-12 04:58:53,446 - httpx - INFO - HTTP Request: GET http://qdrant:6333/collections "HTTP/1.1 200 OK"
+withops-ai-rag-service  | 2026-02-12 04:58:58,455 - core.vector_store - ERROR - Error creating collections: timed out
+withops-ai-rag-service  | 2026-02-12 04:58:58,455 - core.vector_store - ERROR - Failed to initialize Qdrant: timed out
+withops-ai-rag-service  | 2026-02-12 04:58:58,455 - main - ERROR - ❌ Error during startup: timed out
+withops-ai-rag-service  | 2026-02-12 04:58:58,455 - main - INFO - 🛑 Shutting down AI RAG Service...
+withops-ai-rag-service  | 2026-02-12 04:58:58,455 - core.conversation_store - INFO - ConversationStore disconnected from Redis
+withops-ai-rag-service  | 2026-02-12 04:58:58,580 - database.config - INFO - Database pool closed
+withops-ai-rag-service  | 2026-02-12 04:58:58,580 - core.vector_store - INFO - Qdrant client closed
+withops-ai-rag-service  | 2026-02-12 04:58:58,580 - main - INFO - ✅ Cleanup complete
+withops-ai-rag-service  | ERROR:    Traceback (most recent call last):
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 66, in map_httpcore_exceptions
+withops-ai-rag-service  |     yield
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 228, in handle_request
+withops-ai-rag-service  |     resp = self._pool.handle_request(req)
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+withops-ai-rag-service  |     raise exc from None
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+withops-ai-rag-service  |     response = connection.handle_request(
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+withops-ai-rag-service  |     return self._connection.handle_request(request)
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 136, in handle_request
+withops-ai-rag-service  |     raise exc
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 106, in handle_request
+withops-ai-rag-service  |     ) = self._receive_response_headers(**kwargs)
+withops-ai-rag-service  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 177, in _receive_response_headers
+withops-ai-rag-service  |     event = self._receive_event(timeout=timeout)
+withops-ai-rag-service  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 217, in _receive_event
+withops-ai-rag-service  |     data = self._network_stream.read(
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/sync.py", line 126, in read
+withops-ai-rag-service  |     with map_exceptions(exc_map):
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+withops-ai-rag-service  |     self.gen.throw(typ, value, traceback)
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+withops-ai-rag-service  |     raise to_exc(exc) from exc
+withops-ai-rag-service  | httpcore.ReadTimeout: timed out
+withops-ai-rag-service  |
+withops-ai-rag-service  | The above exception was the direct cause of the following exception:
+withops-ai-rag-service  |
+withops-ai-rag-service  | Traceback (most recent call last):
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api_client.py", line 101, in send_inner
+withops-ai-rag-service  |     response = self._client.send(request)
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 901, in send
+withops-ai-rag-service  |     response = self._send_handling_auth(
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 929, in _send_handling_auth
+withops-ai-rag-service  |     response = self._send_handling_redirects(
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 966, in _send_handling_redirects
+withops-ai-rag-service  |     response = self._send_single_request(request)
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1002, in _send_single_request
+withops-ai-rag-service  |     response = transport.handle_request(request)
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 227, in handle_request
+withops-ai-rag-service  |     with map_httpcore_exceptions():
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+withops-ai-rag-service  |     self.gen.throw(typ, value, traceback)
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 83, in map_httpcore_exceptions
+withops-ai-rag-service  |     raise mapped_exc(message) from exc
+withops-ai-rag-service  | httpx.ReadTimeout: timed out
+withops-ai-rag-service  |
+withops-ai-rag-service  | During handling of the above exception, another exception occurred:
+withops-ai-rag-service  |
+withops-ai-rag-service  | Traceback (most recent call last):
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 738, in lifespan
+withops-ai-rag-service  |     async with self.lifespan_context(app) as maybe_state:
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/contextlib.py", line 210, in __aenter__
+withops-ai-rag-service  |     return await anext(self.gen)
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/app/main.py", line 74, in lifespan
+withops-ai-rag-service  |     await vector_store_instance.initialize()
+withops-ai-rag-service  |   File "/app/core/vector_store.py", line 44, in initialize
+withops-ai-rag-service  |     await self._create_collections()
+withops-ai-rag-service  |   File "/app/core/vector_store.py", line 65, in _create_collections
+withops-ai-rag-service  |     self.client.create_collection(
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/qdrant_client.py", line 1671, in create_collection
+withops-ai-rag-service  |     return self._client.create_collection(
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/qdrant_remote.py", line 2161, in create_collection
+withops-ai-rag-service  |     result: Optional[bool] = self.http.collections_api.create_collection(
+withops-ai-rag-service  |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api/collections_api.py", line 1118, in create_collection
+withops-ai-rag-service  |     return self._build_for_create_collection(
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api/collections_api.py", line 96, in _build_for_create_collection
+withops-ai-rag-service  |     return self.api_client.request(
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api_client.py", line 74, in request
+withops-ai-rag-service  |     return self.send(request, type_)
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api_client.py", line 91, in send
+withops-ai-rag-service  |     response = self.middleware(request, self.send_inner)
+withops-ai-rag-service  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api_client.py", line 200, in __call__
+withops-ai-rag-service  |     return call_next(request)
+withops-ai-rag-service  |            ^^^^^^^^^^^^^^^^^^
+withops-ai-rag-service  |   File "/usr/local/lib/python3.11/site-packages/qdrant_client/http/api_client.py", line 103, in send_inner
+withops-ai-rag-service  |     raise ResponseHandlingException(e)
+withops-ai-rag-service  | qdrant_client.http.exceptions.ResponseHandlingException: timed out
+withops-ai-rag-service  |
+withops-ai-rag-service  | ERROR:    Application startup failed. Exiting.
+
+✅ Loading complete. Error: null
+/github/workspace/WithOps-Com/intelligence:1 Access to fetch at 'https://api.withops.com/api/conversations?analysis_id=8d1d5272-c78e-4b94-8eea-ec3d3cb9d089&organization_name=WithOps-Com&limit=50' from origin 'https://app.withops.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+DndWYfUg.js:1  GET https://api.withops.com/api/conversations?analysis_id=8d1d5272-c78e-4b94-8eea-ec3d3cb9d089&organization_name=WithOps-Com&limit=50 net::ERR_FAILED 502 (Bad Gateway)
+window.fetch @ DndWYfUg.js:1
+listConversations @ 11.DkVFY8SK.js:1
+L @ 11.DkVFY8SK.js:2
+aa @ 11.DkVFY8SK.js:2
+(anonymous) @ 11.DkVFY8SK.js:2
+Ve @ CX8zMvRi.js:1
+Ct @ CX8zMvRi.js:1
+Bn @ CX8zMvRi.js:1
+Mt @ CX8zMvRi.js:1Understand this error
+11.DkVFY8SK.js:2 Failed to load conversations: TypeError: Failed to fetch
+    at window.fetch (DndWYfUg.js:1:1746)
+    at Object.listConversations (11.DkVFY8SK.js:1:4133)
+    at L (11.DkVFY8SK.js:2:8177)
+    at aa (11.DkVFY8SK.js:2:8136)
+    at 11.DkVFY8SK.js:2:7940
+    at Ve (CX8zMvRi.js:1:12741)
+    at Ct (CX8zMvRi.js:1:13677)
+    at Bn (CX8zMvRi.js:1:14129)
+    at Mt (CX8zMvRi.js:1:13986)
+L @ 11.DkVFY8SK.js:2
+await in L
+aa @ 11.DkVFY8SK.js:2
+(anonymous) @ 11.DkVFY8SK.js:2
+Ve @ CX8zMvRi.js:1
+Ct @ CX8zMvRi.js:1
+Bn @ CX8zMvRi.js:1
+Mt @ CX8zMvRi.js:1Understand this error
+/github/workspace/WithOps-Com/intelligence:1 Access to fetch at 'https://api.withops.com/api/conversations?analysis_id=8d1d5272-c78e-4b94-8eea-ec3d3cb9d089&organization_name=WithOps-Com&limit=50' from origin 'https://app.withops.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+DndWYfUg.js:1  GET https://api.withops.com/api/conversations?analysis_id=8d1d5272-c78e-4b94-8eea-ec3d3cb9d089&organization_name=WithOps-Com&limit=50 net::ERR_FAILED 502 (Bad Gateway)
+window.fetch @ DndWYfUg.js:1
+listConversations @ 11.DkVFY8SK.js:1
+L @ 11.DkVFY8SK.js:2
+aa @ 11.DkVFY8SK.js:2
+(anonymous) @ 11.DkVFY8SK.js:2
+Ve @ CX8zMvRi.js:1
+Ct @ CX8zMvRi.js:1
+Bn @ CX8zMvRi.js:1
+Mt @ CX8zMvRi.js:1Understand this error
+11.DkVFY8SK.js:2 Failed to load conversations: TypeError: Failed to fetch
+    at window.fetch (DndWYfUg.js:1:1746)
+    at Object.listConversations (11.DkVFY8SK.js:1:4133)
+    at L (11.DkVFY8SK.js:2:8177)
+    at aa (11.DkVFY8SK.js:2:8136)
+    at 11.DkVFY8SK.js:2:7940
+    at Ve (CX8zMvRi.js:1:12741)
+    at Ct (CX8zMvRi.js:1:13677)
+    at Bn (CX8zMvRi.js:1:14129)
+    at Mt (CX8zMvRi.js:1:13986)
+L @ 11.DkVFY8SK.js:2
+await in L
+aa @ 11.DkVFY8SK.js:2
+(anonymous) @ 11.DkVFY8SK.js:2
+Ve @ CX8zMvRi.js:1
+Ct @ CX8zMvRi.js:1
+Bn @ CX8zMvRi.js:1
+Mt @ CX8zMvRi.js:1Understand this error
