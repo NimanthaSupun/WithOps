@@ -318,6 +318,8 @@ services:
     container_name: withops-ai-rag-service
     env_file:
       - services/ai-rag-service/.env
+    environment:
+      - REDIS_URL=redis://redis:6379
     ports:
       - "9108:8008"
     depends_on:

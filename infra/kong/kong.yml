@@ -164,9 +164,9 @@ plugins:
       origins:
         - http://localhost:5173
         - http://localhost:3000
-        - https://*.withops.com
         - https://app.withops.com
         - https://api.withops.com
+        - https://withops.com
       methods:
         - GET
         - POST
@@ -178,8 +178,15 @@ plugins:
         - Accept
         - Authorization
         - Content-Type
+        - X-Requested-With
+        - X-Request-ID
+        - Cache-Control
+        - Pragma
+        - Origin
+        - Referer
       credentials: true
       max_age: 3600
+      preflight_continue: false
 
   - name: rate-limiting
     config:
