@@ -1,3 +1,4 @@
+
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -7,6 +8,23 @@
 	let isAuthenticated = false;
 	let user = null;
 	let typedCode = '';
+	let yamlBody;
+	let lineCount = 0;
+
+	// Spotlight effect for cards
+	function spotlight(node) {
+		const handleMouseMove = (e) => {
+			const { left, top } = node.getBoundingClientRect();
+			node.style.setProperty('--mouse-x', `${e.clientX - left}px`);
+			node.style.setProperty('--mouse-y', `${e.clientY - top}px`);
+		};
+		node.addEventListener('mousemove', handleMouseMove);
+		return {
+			destroy() {
+				node.removeEventListener('mousemove', handleMouseMove);
+			}
+		};
+	}
 
 	const yamlCode = `# WithOps DevSecOps Platform - Complete Architecture Specification
 apiVersion: v1
@@ -281,31 +299,31 @@ features:
 					const [, indent, key, value] = keyValueMatch;
 					let coloredValue = value;
 
-					// Quoted strings (white)
+					// Quoted strings (light gray)
 					if (value.includes('"')) {
-						coloredValue = value.replace(/"([^"]*)"/g, '<span style="color: #FFFFFF;">"$1"</span>');
+						coloredValue = value.replace(/"([^"]*)"/g, '<span style="color: #e2e8f0;">"$1"</span>');
 					}
-					// Numbers (bright cyan)
+					// Numbers (bright blue)
 					else if (value.trim().match(/^\d+$/)) {
-						coloredValue = ` <span style="color: #00D9FF;">${value.trim()}</span>`;
+						coloredValue = ` <span style="color: #60a5fa;">${value.trim()}</span>`;
 					}
-					// Boolean values (bright cyan)
+					// Boolean values (bright blue)
 					else if (value.trim().match(/^(true|false|active|yes|no)$/i)) {
-						coloredValue = ` <span style="color: #00D9FF;">${value.trim()}</span>`;
+						coloredValue = ` <span style="color: #60a5fa;">${value.trim()}</span>`;
 					}
-					// URLs (bright cyan)
+					// URLs (bright blue)
 					else if (value.includes('http')) {
 						coloredValue = value.replace(
 							/(https?:\/\/[^\s,"]+)/g,
-							'<span style="color: #00D9FF;">$1</span>'
+							'<span style="color: #60a5fa;">$1</span>'
 						);
 					}
-					// Other string values (light gray)
+					// Other string values (muted gray)
 					else if (value.trim()) {
-						coloredValue = ` <span style="color: #B8B8B8;">${value.trim()}</span>`;
+						coloredValue = ` <span style="color: #94a3b8;">${value.trim()}</span>`;
 					}
 
-					return `${indent}<span style="color: #00D9FF;">${key}</span><span style="color: #FFFFFF;">:</span>${coloredValue}`;
+					return `${indent}<span style="color: #60a5fa;">${key}</span><span style="color: #f1f5f9;">:</span>${coloredValue}`;
 				}
 
 				// Array items with dash
@@ -366,220 +384,730 @@ features:
 			console.error('Auth check failed:', error);
 		}
 
-		// Typing animation effect with VS Code-style syntax highlighting
-		let index = 0;
-		const interval = setInterval(() => {
-			if (index <= yamlCode.length) {
-				const currentCode = yamlCode.slice(0, index);
-				typedCode = highlightYAML(currentCode);
-				index += 3; // Faster typing
-			} else {
-				// Restart animation after pause
-				setTimeout(() => {
-					typedCode = '';
-					index = 0;
-				}, 4000);
-			}
-		}, 15); // Smoother animation
+		// Typing animation - character by character at AI-agent speed
+		const lines = yamlCode.split('\n');
+		const highlighted = lines.map((l) => highlightYAML(l));
+		let lineIdx = 0;
+		let charIdx = 0;
+		let completedLines = [];
+		let paused = false;
+		let pauseTimer = null;
+		const CHARS_PER_TICK = 2;
+		const TICK_MS = 22; // natural AI typing feel
+		const LINE_PAUSE = 60; // brief pause between lines (ms)
+		const RESTART_PAUSE = 3000; // pause before restart (ms)
 
-		return () => clearInterval(interval);
+		const interval = setInterval(() => {
+			if (paused) return;
+
+			if (lineIdx >= lines.length) {
+				// All done — pause then restart
+				paused = true;
+				pauseTimer = setTimeout(() => {
+					lineIdx = 0;
+					charIdx = 0;
+					completedLines = [];
+					typedCode = '';
+					paused = false;
+					if (yamlBody) yamlBody.scrollTop = 0;
+				}, RESTART_PAUSE);
+				return;
+			}
+
+			const currentLine = lines[lineIdx];
+			charIdx = Math.min(charIdx + CHARS_PER_TICK, currentLine.length);
+
+			if (charIdx >= currentLine.length) {
+				// Line finished — use pre-highlighted version
+				completedLines.push(highlighted[lineIdx]);
+				typedCode = completedLines.join('\n');
+				lineCount = completedLines.length;
+				lineIdx++;
+				charIdx = 0;
+				// Brief pause between lines for natural feel
+				paused = true;
+				setTimeout(() => {
+					paused = false;
+				}, LINE_PAUSE);
+			} else {
+				// Partially typed line
+				const partial = highlightYAML(currentLine.slice(0, charIdx));
+				typedCode = [...completedLines, partial].join('\n');
+			}
+
+			// Auto-scroll
+			if (yamlBody) yamlBody.scrollTop = yamlBody.scrollHeight;
+		}, TICK_MS);
+
+		return () => {
+			clearInterval(interval);
+			if (pauseTimer) clearTimeout(pauseTimer);
+		};
 	});
+	function reveal(node, options = {}) {
+		const { threshold = 0.15, delay = 0, direction = 'up' } = options;
+		const dirMap = {
+			up: 'reveal-up',
+			down: 'reveal-down',
+			left: 'reveal-left',
+			right: 'reveal-right',
+			scale: 'reveal-scale',
+			none: 'reveal-fade'
+		};
+		node.classList.add('reveal', dirMap[direction] || 'reveal-up');
+		if (delay) node.style.transitionDelay = `${delay}ms`;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						node.classList.add('revealed');
+						observer.unobserve(node);
+					}
+				});
+			},
+			{ threshold }
+		);
+		observer.observe(node);
+		return { destroy() { observer.disconnect(); } };
+	}
 </script>
 
 <!-- Navigation Bar -->
 <nav class="navbar">
 	<div class="nav-container">
 		<div class="nav-brand">
-			<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+			<div class="nav-brand-icon">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+			</div>
 			<span class="brand-name">WithOps</span>
 		</div>
 		<div class="nav-menu">
-			<a href="#home" class="nav-link active">Home</a>
-			<a href="#features" class="nav-link">Features</a>
+			<a href="#home" class="nav-link">Product</a>
 			<a href="#security" class="nav-link">Security</a>
 			<a href="#analytics" class="nav-link">Analytics</a>
 			<a href="#docs" class="nav-link">Docs</a>
-			<a href="#contact" class="nav-link">Contact</a>
+			<a href="#contact" class="nav-link">Pricing</a>
 		</div>
 		<div class="nav-actions">
 			{#if isAuthenticated}
 				<span class="user-welcome">Welcome, {user?.name}</span>
 				<button class="nav-btn-primary" on:click={() => goto('/dashboard')}>Dashboard</button>
 			{:else}
-				<button class="nav-btn-secondary" on:click={handleSignIn}>Sign In</button>
-				<button class="nav-btn-primary" on:click={handleGetStarted}>Get Started</button>
+				<button class="nav-btn-secondary" on:click={handleSignIn}>Login</button>
+				<button class="nav-btn-primary" on:click={handleGetStarted}>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+						><path
+							d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+						/></svg
+					>
+					Connect GitHub
+				</button>
 			{/if}
 		</div>
 	</div>
 </nav>
 
-<!-- Hero Section with 3D Layered Background -->
-<main class="hero-dashboard" id="home">
-	<!-- YAML Code Background with Typing Effect (Full Width) -->
-	<div class="yaml-background">
-		<div class="yaml-gradient"></div>
-
-		<!-- Main YAML Display (Positioned Right) -->
-		<div class="yaml-display">
-			<pre class="yaml-pre"><code class="yaml-code"
-					>{@html typedCode}<span class="cursor"></span></code
-				></pre>
-		</div>
-
-		<!-- Scanline Effect -->
-		<div class="scanline"></div>
-
-		<!-- Grid Overlay -->
-		<div class="grid-overlay"></div>
-
-		<!-- Atmospheric Effects -->
-		<div class="fog-layer fog-layer-1"></div>
-		<div class="fog-layer fog-layer-2"></div>
-		<div class="light-rays"></div>
+<!-- Hero Section -->
+<section class="hero" id="home">
+	<!-- Background -->
+	<div class="hero-bg">
+		<div class="hero-bg-base"></div>
+		<div class="hero-bg-grid"></div>
 	</div>
 
-	<!-- Hero Content (Left Aligned) -->
-	<div class="hero-content">
-		<!-- Main Heading -->
-		<h1 class="main-title">
-			<span class="title-highlight">WithOps</span>
-			<span class="title-subtitle">DevSecOps Platform</span>
-		</h1>
+	<div class="hero-container">
+		<!-- Left: Text Content -->
+		<div class="hero-left" use:reveal={{ direction: 'left', threshold: 0.1 }}>
+			<h1 class="hero-title">
+							AI for<br />
+			<span class="hero-title-accent">Secure CI/CD Pipelines</span>
+			</h1>
 
-		<!-- Description -->
-		<p class="hero-description">
-			Advanced security automation and continuous integration platform with AI-powered threat
-			detection and real-time monitoring capabilities.
-		</p>
-
-		<!-- CTA Buttons -->
-		<div class="cta-buttons">
-			{#if isAuthenticated}
-				<button class="btn-primary" on:click={() => goto('/dashboard')}>Go to Dashboard</button>
-				<button class="btn-secondary">Learn More</button>
-			{:else}
-				<button class="btn-primary" on:click={handleGetStarted}>Get Started</button>
-				<button class="btn-secondary" on:click={handleSignIn}>Sign In</button>
-			{/if}
-		</div>
-	</div>
-</main>
-
-<!-- Features Section -->
-<section class="features-section" id="features">
-	<div class="features-container">
-		<header class="section-header">
-			<h2 class="section-title">Complete DevSecOps Platform</h2>
-			<p class="section-description">
-				Comprehensive security automation and intelligent monitoring for modern development
-				workflows. From threat modeling to real-time collaboration, we've got your entire security
-				pipeline covered.
+			<p class="hero-description">
+				Automatically assess DevSecOps maturity, detect security tool gaps, and perform AI-driven threat modeling grounded in industry standards like OWASP DSOMM.
 			</p>
-		</header>
 
-		<div class="features-grid">
-			<div class="feature-card">
-				<div class="feature-number">01</div>
-				<h3>AI-Powered Security Analysis</h3>
-				<p>
-					Advanced threat detection using GPT-4 and custom ML models. Automatically identify
-					vulnerabilities, assess risks, and get instant remediation suggestions with 99.9%
-					accuracy.
-				</p>
-				<ul class="feature-list">
-					<li>Conversational AI assistant for DevSecOps guidance</li>
-					<li>Automated vulnerability detection & code analysis</li>
-					<li>Real-time security recommendations</li>
-				</ul>
+			<div class="hero-buttons">
+				{#if isAuthenticated}
+					<button class="btn-primary" on:click={() => goto('/dashboard')}>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+							><path
+								d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+							/></svg
+						>
+						Go to Dashboard
+					</button>
+				{:else}
+					<button class="btn-primary" on:click={handleGetStarted}>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+							><path
+								d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+							/></svg
+						>
+						Connect GitHub Organization
+					</button>
+					<button class="btn-secondary" on:click={handleSignIn}>
+						<!--  -->
+						SIGN IN
+					</button>
+				{/if}
 			</div>
+		</div>
 
-			<div class="feature-card">
-				<div class="feature-number">02</div>
-				<h3>Threat Modeling & Risk Assessment</h3>
-				<p>
-					Automated STRIDE threat analysis with intelligent attack surface mapping. Generate
-					comprehensive threat models and strategic mitigation recommendations aligned with OWASP
-					Top 10.
-				</p>
-				<ul class="feature-list">
-					<li>STRIDE framework implementation</li>
-					<li>Attack vector visualization with dependency graphs</li>
-					<li>Dynamic risk scoring & prioritization</li>
-				</ul>
-			</div>
-
-			<div class="feature-card">
-				<div class="feature-number">03</div>
-				<h3>GitHub Integration & Automation</h3>
-				<p>
-					Seamless GitHub integration with automated PR analysis, workflow monitoring, and
-					dependency tracking. Security scanning with inline code comments and suggestions.
-				</p>
-				<ul class="feature-list">
-					<li>Automated pull request security analysis</li>
-					<li>Real-time GitHub Actions monitoring</li>
-					<li>Intelligent dependency vulnerability alerts</li>
-				</ul>
-			</div>
-
-			<div class="feature-card">
-				<div class="feature-number">04</div>
-				<h3>Workspace Intelligence</h3>
-				<p>
-					Deep semantic code analysis with pattern detection and best practice enforcement. Track
-					technical debt and get DevSecOps maturity scoring across your entire codebase.
-				</p>
-				<ul class="feature-list">
-					<li>Repository structure analysis & insights</li>
-					<li>Code quality metrics & trend analysis</li>
-					<li>Security posture assessment</li>
-				</ul>
-			</div>
-
-			<div class="feature-card">
-				<div class="feature-number">05</div>
-				<h3>Real-Time Collaboration</h3>
-				<p>
-					Enterprise-grade authentication with Auth0, role-based access control, and real-time
-					WebSocket communication for distributed teams working on security initiatives.
-				</p>
-				<ul class="feature-list">
-					<li>Multi-factor authentication & SSO</li>
-					<li>Team workspace sharing & collaboration</li>
-					<li>Live notifications & activity tracking</li>
-				</ul>
-			</div>
-
-			<div class="feature-card">
-				<div class="feature-number">06</div>
-				<h3>Comprehensive Monitoring</h3>
-				<p>
-					Full observability stack with Prometheus, Grafana, and Jaeger. Distributed tracing,
-					metrics collection, and real-time dashboards for all microservices.
-				</p>
-				<ul class="feature-list">
-					<li>Distributed tracing with OpenTelemetry</li>
-					<li>Custom metrics & alerting</li>
-					<li>Real-time performance dashboards</li>
-				</ul>
+		<!-- Right: YAML Animation -->
+		<div class="hero-right" use:reveal={{ direction: 'right', delay: 300, threshold: 0.1 }}>
+			<div class="yaml-panel-container">
+				<div class="yaml-panel">
+							<div class="yaml-panel-header">
+								<div class="yaml-dots">
+									<div class="dot dot-red"></div>
+									<div class="dot dot-yellow"></div>
+									<div class="dot dot-green"></div>
+								</div>
+								<div class="yaml-breadcrumbs">
+									<span class="breadcrumb-item">withops</span>
+									<span class="breadcrumb-separator">/</span>
+									<span class="breadcrumb-item">pipelines</span>
+									<span class="breadcrumb-separator">/</span>
+									<span class="breadcrumb-item active">secure-deploy.yml</span>
+								</div>
+								<div class="yaml-actions-ui">
+									<button class="yaml-copy-btn">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+										Copy
+									</button>
+								</div>
+								<div class="yaml-tabs">
+									<div class="yaml-tab yaml-tab-active">YAML</div>
+									<div class="yaml-tab">Output</div>
+								</div>
+							</div>
+					<div class="yaml-panel-body" bind:this={yamlBody}>
+						<div class="yaml-line-numbers">
+							{#each Array(lineCount + 1) as _, i}
+								<span>{i + 1}</span>
+							{/each}
+						</div>
+						<pre class="yaml-pre"><code class="yaml-code"
+								>{@html typedCode}<span class="cursor"></span></code
+							></pre>
+					</div>
+					<div class="yaml-status-bar">
+						<span>YAML</span>
+						<span>UTF-8</span>
+						<span>Ln {lineCount + 1}</span>
+						<span>WithOps Platform</span>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
 </section>
 
+<!-- Trust Section -->
+<section class="trust-section" use:reveal={{ direction: 'up' }}>
+	<div class="container">
+		<p class="trust-label">Trusted by Modern Engineering Teams</p>
+		<div class="trust-logos">
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff"
+						><path
+							d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+						/></svg
+					>
+				</div>
+				<span class="trust-logo-name">GitHub</span>
+			</div>
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#2496ED"
+						><path
+							d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"
+						/></svg
+					>
+				</div>
+				<span class="trust-logo-name">Docker</span>
+			</div>
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 32 32" fill="#326CE5"
+						><path
+							d="M16 0L4.3 3.7c-.5.2-.8.6-.9 1l-2.7 12c-.1.5.1 1 .4 1.4L11 28.5c.3.5.8.8 1.4.8h9.6c.6 0 1.1-.3 1.4-.8l9.1-10.4c.3-.4.4-.9.4-1.4l-2.7-12c-.1-.4-.4-.8-.9-1L16 0zm0 4.6l9.1 2.9-.6 2.6-8.5-2.7-8.5 2.7-.6-2.6 9.1-2.9zm13 11.5l-8.5 9.7v-2.3l6.3-7.2 2.2-.2zm-15.6 11l-8.5-9.7 2.2.2 6.3 7.2v2.3zm1.1-12.2l3.4 3.4-3.4 3.4-3.4-3.4 3.4-3.4zM3 13.9l2.4-.4.8 3.5-2.8.5-.4-3.6zm23.7-3.1l2.4-.4-.4 3.6-2.8-.5.8-2.7zm.8 6.2l2.8.5.4 3.6-2.4.4-.8-4.5zm-24.4-.5l2.8-.5-.8 3.5-2.4.4.4-3.4zm10.2-12l2.7-.8 1.1 4.8-3.1.9-.7-4.9zm5.4 0l2.7.8-.7 4.9-3.1-.9 1.1-4.8z"
+						/></svg
+					>
+				</div>
+				<span class="trust-logo-name">Kubernetes</span>
+			</div>
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#844FBA"
+						><path d="M1.44 0v7.575l6.561 3.79V3.787L1.44 0zm14.559 0v7.575l6.561 3.79V3.787L15.999 0zM8.72 4.197v7.575l6.561 3.79V7.987l-6.561-3.79zM1.44 8.965v7.575l6.561 3.79v-7.575l-6.561-3.79zm14.559 8.965v7.575l6.561 3.79v-7.575l-6.561-3.79z" /></svg
+					>
+				</div>
+				<span class="trust-logo-name">Terraform</span>
+			</div>
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#FF9900"
+						><path d="M12 21a9 9 0 0 1-5.1-1.6c-.4-.3-.3-.5.1-.3 1.3.8 2.7 1.2 4.2 1.2 4.4 0 8.1-3.2 8.7-7.5.1-.4.2-.3.3-.1.6 4.3-1.6 8-8.2 8.3zm8.3-9.5c-.1.2-.2.2-.3.1-.3-.6-.8-1.1-1.4-1.4-.4-.3-.6-.4-.5-.6.1-.2.4-.2.9.1.8.4 1.4 1 1.7 1.8h-.4zm-5.6 1c-.1.2-.2.2-.3.1-.3-.6-.8-1.1-1.4-1.4-.4-.3-.6-.4-.5-.6.1-.2.4-.2.9.1.8.4 1.4 1 1.7 1.8h-.4zm-5.8 4.2h-.1c-1.2 0-2-.8-2-2 0-1.1.8-2 2-2 1.2 0 2 .8 2 2 0 1.2-.8 2-2 2zm0-3c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1zm-4.7 0h-.1c-1.2 0-2-.8-2-2 0-1.1.8-2 2-2 1.2 0 2 .8 2 2 0 1.2-.8 2-2 2zm0-3c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1zm14.5-1.5h-.1c-.6 0-1.1-.4-1.1-1 0-.6.5-1 1.1-1 .6 0 1.1.4 1.1 1s-.5 1-1.1 1z" /></svg
+					>
+				</div>
+				<span class="trust-logo-name">AWS</span>
+			</div>
+			<div class="trust-logo">
+				<div class="trust-logo-box">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="#FC6D26"
+						><path
+							d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 01-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 014.82 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0118.6 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.51L23 13.45a.84.84 0 01-.35.94z"
+						/></svg
+					>
+				</div>
+				<span class="trust-logo-name">GitLab</span>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Problem Section -->
+<section class="problem-section" id="security">
+	<div class="problem-bg-grid"></div>
+	<div class="relative container">
+		<div class="section-header" use:reveal={{ direction: 'up' }}>
+			<p class="section-overline">The Problem</p>
+			<h2 class="section-title">Most CI/CD Pipelines Lack<br />Security Visibility</h2>
+			<p class="section-subtitle">
+				Without automated analysis, organizations remain blind to critical security gaps
+			</p>
+		</div>
+		<div class="problem-grid" use:reveal={{ direction: 'up', delay: 200 }}>
+			<!-- Problem 1: Coverage -->
+			<div class="problem-card" use:spotlight>
+				<div class="problem-header-row">
+					<div class="problem-icon problem-icon-red">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+					</div>
+					<div class="problem-badge">HIGH RISK</div>
+				</div>
+				<h3>Critical Visibility Gaps</h3>
+				<p>Organizations remain blind to risk: **70% miss SAST**, **85% lack DAST**, and **55% have incomplete SCA** configurations.</p>
+				<div class="problem-data-box">
+					<div class="data-row"><span>SAST_CORE</span> <span class="data-status status-null">NULL</span></div>
+					<div class="data-row"><span>DAST_PROD</span> <span class="data-status status-null">NULL</span></div>
+					<div class="data-row"><span>SCA_DEP</span> <span class="data-status status-fail">FAILED</span></div>
+				</div>
+			</div>
+
+			<!-- Problem 2: Inconsistency -->
+			<div class="problem-card">
+				<div class="problem-header-row">
+					<div class="problem-icon problem-icon-amber">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+					</div>
+					<div class="problem-badge badge-amber">MISMATCH</div>
+				</div>
+				<h3>Fragmented Workflow Policies</h3>
+				<p>Different teams implement varying security standards, creating holes in branch protection and code review processes.</p>
+				<div class="problem-data-box">
+					<div class="data-row"><span>BR_PROT</span> <span class="data-status">BYPASSED</span></div>
+					<div class="data-row"><span>REQ_REV</span> <span class="data-status">DISABLED</span></div>
+					<div class="data-row"><span>CI_VAL</span> <span class="data-status status-fail">FAILING</span></div>
+				</div>
+			</div>
+
+			<!-- Problem 3: Maturity -->
+			<div class="problem-card">
+				<div class="problem-header-row">
+					<div class="problem-icon problem-icon-red">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+					</div>
+					<div class="problem-badge">STAGNANT</div>
+				</div>
+				<h3>Stagnant Security Maturity</h3>
+				<p>Most teams lack a structured roadmap for reaching higher **OWASP DSOMM** levels, with no baseline to measure improvements.</p>
+				<div class="problem-data-box">
+					<div class="maturity-bar-container">
+						<div class="m-bar m-active"></div>
+						<div class="m-bar"></div>
+						<div class="m-bar"></div>
+						<div class="m-bar"></div>
+					</div>
+					<div class="maturity-label">BASELINE: LEVEL 1</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Solution Section -->
+<section class="solution-section" id="analytics">
+	<div class="container">
+		<div class="section-header" use:reveal={{ direction: 'up' }}>
+			<div class="section-badge section-badge-blue">
+				<span>The Solution</span>
+			</div>
+			<h2 class="section-title">One Unified Platform for<br />DevSecOps Intelligence</h2>
+			<p class="section-subtitle">
+				Comprehensive security visibility and AI-driven insights for your entire CI/CD pipeline
+			</p>
+		</div>
+		<div class="solution-list">
+			{#each [{ title: 'Workflow & Security Analysis', desc: 'Detect centralized reusable workflows and verify integration of SAST (CodeQL/SonarQube), DAST (ZAP/Burp), and SCA tools (Snyk/Dependabot).', highlights: ['Centralized Workflow Detection', 'Branch Protection Validation', 'SAST/DAST/SCA Verification', 'Automated Tool Recommendations'], gradient: 'blue-cyan' }, { title: 'DSOMM Maturity Assessment', desc: 'Automatically map security practices to the five dimensions of the OWASP DSOMM framework with a prioritized roadmap for improvement.', highlights: ['Dynamic Maturity Scoring', '5-Dimension Assessment', 'Gap Analysis & Roadmapping', 'Executive Security Reporting'], gradient: 'green-cyan' }, { title: 'AI-Powered Threat Modeling', desc: 'Utilize Claude Vision API to analyze architecture diagrams on an interactive canvas with STRIDE, LINDDUN, and CIA Triad frameworks.', highlights: ['Vision-based Architecture Analysis', 'STRIDE/LINDDUN Frameworks', 'Fact-grounded RAG fixes (Qdrant)', 'Automated Attack Vector Mapping'], gradient: 'amber-red' }] as feature, idx}
+				<div
+					class="solution-row"
+					class:solution-row-reverse={idx % 2 === 1}
+					use:reveal={{ direction: idx % 2 === 0 ? 'left' : 'right', delay: 100 }}
+				>
+					<div class="solution-text">
+						<div class="solution-icon-box solution-gradient-{feature.gradient}">
+							{#if idx === 0}
+								<svg
+									width="28"
+									height="28"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="white"
+									stroke-width="2"
+									><line x1="6" y1="3" x2="6" y2="15" /><circle cx="18" cy="6" r="3" /><circle
+										cx="6"
+										cy="18"
+										r="3"
+									/><path d="M18 9a9 9 0 0 1-9 9" /></svg
+								>
+							{:else if idx === 1}
+								<svg
+									width="28"
+									height="28"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="white"
+									stroke-width="2"
+									><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline
+										points="17 6 23 6 23 12"
+									/></svg
+								>
+							{:else}
+								<svg
+									width="28"
+									height="28"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="white"
+									stroke-width="2"
+									><path
+										d="M12 2a8 8 0 0 1 8 8c0 5.4-8 12-8 12S4 15.4 4 10a8 8 0 0 1 8-8z"
+									/><circle cx="12" cy="10" r="3" /></svg
+								>
+							{/if}
+						</div>
+						<h3>{feature.title}</h3>
+						<p>{feature.desc}</p>
+						<ul class="check-list">
+							{#each feature.highlights as h}
+								<li>
+									<svg
+										width="18"
+										height="18"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="#10B981"
+										stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
+									>
+									<span>{h}</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+					<div class="solution-visual">
+						<div class="solution-visual-glow solution-gradient-{feature.gradient}"></div>
+						<div class="solution-mockup">
+							<div class="mockup-chrome">
+								<div class="mockup-dots">
+									<span class="dot dot-red"></span>
+									<span class="dot dot-yellow"></span>
+									<span class="dot dot-green"></span>
+								</div>
+								<div class="mockup-url">
+									withops.ai/{idx === 0 ? 'workflow' : idx === 1 ? 'maturity' : 'threat'}
+								</div>
+							</div>
+							<div class="mockup-body technical-view">
+								{#if idx === 0}
+									<!-- Workflow Intelligence: Technical Audit View -->
+									<div class="audit-log">
+										<div class="log-header">SEC-SCAN CORE v2.4.0</div>
+										<div class="log-content">
+											<div class="log-entry"><span class="timestamp">[14:22:01]</span> <span class="action">SCANNING</span> .github/workflows/main.yml</div>
+											<div class="log-entry info"><span class="timestamp">[14:22:03]</span> <span class="tool">SONARQUBE:</span> <span class="res">PASSED (0.12s)</span></div>
+											<div class="log-entry warn"><span class="timestamp">[14:22:04]</span> <span class="tool">SNYK:</span> <span class="res">2 VULNERABILITIES DETECTED</span></div>
+											<div class="log-entry info"><span class="timestamp">[14:22:05]</span> <span class="tool">DEP-CHECK:</span> <span class="res">UP TO DATE</span></div>
+											<div class="log-cursor">_</div>
+										</div>
+									</div>
+								{:else if idx === 1}
+									<!-- DSOMM: Maturity Matrix View -->
+									<div class="maturity-matrix">
+										<div class="matrix-grid">
+											{#each Array(20) as _, i}
+												<div class="matrix-cell" class:cell-active={i < 12}></div>
+											{/each}
+										</div>
+										<div class="matrix-stats">
+											<div class="stat-group">
+												<div class="stat-label">TOTAL COVERAGE</div>
+												<div class="stat-val">68.4%</div>
+											</div>
+											<div class="stat-group">
+												<div class="stat-label">DSOMM LEVEL</div>
+												<div class="stat-val val-active">III</div>
+											</div>
+										</div>
+									</div>
+								{:else}
+									<!-- Threat Modeling: Blueprint View -->
+									<div class="blueprint-view">
+										<div class="blueprint-canvas">
+											<div class="bp-box">LB:NGINX</div>
+											<div class="bp-line"></div>
+											<div class="bp-box bp-active">SRV:FASTAPI</div>
+											<div class="bp-line"></div>
+											<div class="bp-box">DB:POSTGRES</div>
+											
+											<!-- Technical annotations -->
+											<div class="bp-label top-right">TRUST BRUNDARY [EXT/INT]</div>
+											<div class="bp-label bottom-left">STRIDE ANALYSIS ACTIVE</div>
+										</div>
+									</div>
+								{/if}
+							</div>
+						</div>
+					</div>
+				</div>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-section" id="docs">
+	<div class="how-bg-grid"></div>
+	<div class="relative container">
+		<div class="section-header" use:reveal={{ direction: 'up' }}>
+			<h2 class="section-title">How It Works</h2>
+			<p class="section-subtitle">Get from zero to full security visibility in under 5 minutes</p>
+		</div>
+		<div class="steps-wrapper">
+			<!-- Animated connecting line -->
+			<div class="steps-connector">
+				<div class="steps-connector-track"></div>
+				<div
+					class="steps-connector-progress"
+					use:reveal={{ direction: 'none', threshold: 0.3 }}
+				></div>
+			</div>
+			<div class="steps-grid">
+				<!-- Step 1 -->
+				<div
+					class="step-card step-card-purple"
+					use:reveal={{ direction: 'up', delay: 0, threshold: 0.2 }}
+				>
+					<div class="step-header">
+						<div class="step-number step-number-purple">01</div>
+						<div class="step-icon step-icon-purple">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+						</div>
+					</div>
+					<h4>Connect Hub</h4>
+					<p>Technical handshaking via Auth0 and GitHub OAuth. Sub-millisecond credential securement.</p>
+					<div class="step-visual">
+						<div class="code-line">AUTH0: OAUTH2_TOKEN_SUCCESS</div>
+						<div class="code-line">HANDSHAKE: WITH_OPS_V3</div>
+					</div>
+				</div>
+
+				<!-- Step 2 -->
+				<div
+					class="step-card step-card-blue"
+					use:reveal={{ direction: 'up', delay: 150, threshold: 0.2 }}
+				>
+					<div class="step-header">
+						<div class="step-number step-number-blue">02</div>
+						<div class="step-icon step-icon-blue">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+						</div>
+					</div>
+					<h4>Recursive Analysis</h4>
+					<p>Automated traversal of CI/CD structures. Deep tool detection via signature matching.</p>
+					<div class="step-visual v-blue">
+						<div class="scan-tree">
+							<div class="tree-node">./workflows</div>
+							<div class="tree-node depth-1">-- main.yml (SAST)</div>
+							<div class="tree-node depth-1">-- prod.yml (DAST)</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 3 -->
+				<div
+					class="step-card step-card-amber"
+					use:reveal={{ direction: 'up', delay: 300, threshold: 0.2 }}
+				>
+					<div class="step-header">
+						<div class="step-number step-number-amber">03</div>
+						<div class="step-icon step-icon-amber">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+						</div>
+					</div>
+					<h4>Neural Evaluation</h4>
+					<p>RAG-enhanced risk assessments grounded in Qdrant vector database intelligence.</p>
+					<div class="step-visual v-amber">
+						<div class="eval-grid">
+							<div class="grid-dot active"></div>
+							<div class="grid-dot"></div>
+							<div class="grid-dot active"></div>
+							<div class="grid-dot"></div>
+						</div>
+						<div class="eval-text">P(THREAT) = 0.084</div>
+					</div>
+				</div>
+
+				<!-- Step 4 -->
+				<div
+					class="step-card step-card-green"
+					use:reveal={{ direction: 'up', delay: 450, threshold: 0.2 }}
+				>
+					<div class="step-header">
+						<div class="step-number step-number-green">04</div>
+						<div class="step-icon step-icon-green">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+						</div>
+					</div>
+					<h4>Maturity Scaling</h4>
+					<p>Finalized DSOMM roadmap with prioritized remediation and executive reporting.</p>
+					<div class="step-visual v-green">
+						<div class="report-bar"></div>
+						<div class="report-bar w-70"></div>
+						<div class="report-bar w-40"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Why Choose WithOps (Bento Grid) -->
+<section class="why-section" id="why">
+	<div class="container">
+		<div class="section-header" use:reveal={{ direction: 'up' }}>
+			<p class="section-overline">Platform Strength</p>
+			<h2 class="section-title">Why Choose WithOps</h2>
+			<p class="section-subtitle">A sophisticated engine designed for high-scale security automation</p>
+		</div>
+
+		<div class="bento-grid">
+			<!-- Large Feature: AI Core -->
+			<div class="bento-item bento-large" use:reveal={{ direction: 'up' }} use:spotlight>
+				<div class="bento-content">
+					<div class="bento-tag">Hybrid AI Core</div>
+					<h3>Multi-Model Intelligence</h3>
+					<p>Engineered with Claude 3.5 Vision for architecture analysis and Ollama for local inference. Our RAG system uses Qdrant vector embeddings to ensure every security fix is fact-grounded in industry best practices.</p>
+					<div class="bento-visual">
+						<div class="ai-signal-lines">
+							{#each Array(5) as _}
+								<div class="ai-line"></div>
+							{/each}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Feature: DSOMM -->
+			<div class="bento-item bento-medium" use:reveal={{ direction: 'up', delay: 100 }} use:spotlight>
+				<div class="bento-content">
+					<div class="bento-tag">Compliance</div>
+					<h3>OWASP DSOMM Standard</h3>
+					<p>Quantify your DevSecOps journey. Native mapping to the complete DSOMM framework ensures your security posture is industry-validated and measurable.</p>
+					<div class="maturity-meter">
+						<div class="meter-bar"></div>
+						<div class="meter-value">Level 4</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Feature: Real-time -->
+			<div class="bento-item bento-medium" use:reveal={{ direction: 'up', delay: 200 }} use:spotlight>
+				<div class="bento-content">
+					<div class="bento-tag">Observability</div>
+					<h3>Full-Stack Monitoring</h3>
+					<p>Technical transparency through Prometheus & Grafana. We use Jaeger distributed tracing to monitor requests across all 8 microservices, ensuring sub-millisecond reliability.</p>
+					<div class="live-indicator-tray">
+						<div class="pulse-dot"></div>
+						<span class="live-text">DISTRIBUTED TRACING ACTIVE</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Feature: GitHub Native -->
+			<div class="bento-item bento-wide" use:reveal={{ direction: 'up', delay: 300 }} use:spotlight>
+				<div class="bento-content bento-content-row">
+					<div class="bento-text-side">
+						<div class="bento-tag">Centralization</div>
+						<h3>Reusable Workflow Adoption</h3>
+						<p>We don't just find bugs; we promote architecture. WithOps automatically detects and converts fragmented CI steps into centralized, reusable GitHub workflows for enterprise-wide consistency.</p>
+					</div>
+					<div class="github-visual-mini">
+						<svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="final-cta" id="contact">
+	<div class="final-cta-bg"></div>
+	<div class="final-cta-grid-bg"></div>
+	<div
+		class="final-cta-inner relative container"
+		use:reveal={{ direction: 'scale', threshold: 0.2 }}
+	>
+		<h2>
+			Start Measuring Your<br /><span class="final-cta-accent">DevSecOps Maturity</span><br />Today
+		</h2>
+		<p>
+			Join forward-thinking teams already securing their CI/CD pipelines with AI-powered
+			intelligence
+		</p>
+		<div class="hero-buttons final-cta-buttons">
+			{#if isAuthenticated}
+				<button class="btn-primary" on:click={() => goto('/dashboard')}>Go to Dashboard</button>
+			{:else}
+				<button class="btn-primary" on:click={handleGetStarted}>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+						><path
+							d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+						/></svg
+					>
+					Connect GitHub Organization
+				</button>
+				<button class="btn-secondary" on:click={handleSignIn}>Request Demo</button>
+			{/if}
+		</div>
+		<div class="trust-indicators"></div>
+	</div>
+</section>
+
 <!-- Footer -->
 <footer class="footer">
-	<div class="footer-container">
-		<div class="footer-content">
+	<div class="container">
+		<div class="footer-grid">
 			<div class="footer-brand">
 				<div class="footer-logo">
 					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
-					<span class="brand-name">WithOps</span>
+					<span class="brand-name footer-brand-name">WithOps</span>
 				</div>
-				<p class="brand-description">
-					Next-generation DevSecOps platform empowering modern development teams with AI-powered
-					security, intelligent automation, and comprehensive monitoring.
-				</p>
+				<p class="footer-desc">AI-powered DevSecOps intelligence for modern engineering teams</p>
 				<div class="footer-social">
 					<a
 						href="https://github.com"
@@ -587,21 +1115,9 @@ features:
 						target="_blank"
 						rel="noopener noreferrer"
 						aria-label="GitHub"
-						><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+						><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
 							><path
 								d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-							/></svg
-						></a
-					>
-					<a
-						href="https://linkedin.com"
-						class="social-link"
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label="LinkedIn"
-						><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
-							><path
-								d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
 							/></svg
 						></a
 					>
@@ -611,313 +1127,627 @@ features:
 						target="_blank"
 						rel="noopener noreferrer"
 						aria-label="Twitter"
-						><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+						><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
 							><path
 								d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
 							/></svg
 						></a
 					>
+					<a
+						href="https://linkedin.com"
+						class="social-link"
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="LinkedIn"
+						><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+							><path
+								d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+							/></svg
+						></a
+					>
 				</div>
 			</div>
-
-			<div class="footer-links">
-				<div class="link-group">
-					<h4>Platform</h4>
-					<a href="#security">AI Security Analysis</a>
-					<a href="#threat">Threat Modeling</a>
-					<a href="#github">GitHub Integration</a>
-					<a href="#intelligence">Workspace Intelligence</a>
+			{#each [{ title: 'Product', links: ['Features', 'Security', 'Analytics', 'Pricing', 'Changelog'] }, { title: 'Resources', links: ['Documentation', 'API Reference', 'Guides', 'Blog', 'Community'] }, { title: 'Company', links: ['About', 'Careers', 'Contact', 'Partners', 'Press Kit'] }, { title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'Security', 'Compliance', 'GDPR'] }] as group}
+				<div class="footer-link-col">
+					<h4>{group.title}</h4>
+					{#each group.links as link}
+						<a href="#{link.toLowerCase().replace(/ /g, '-')}">{link}</a>
+					{/each}
 				</div>
-
-				<div class="link-group">
-					<h4>Resources</h4>
-					<a href="#docs">Documentation</a>
-					<a href="#api">API Reference</a>
-					<a href="#guides">Getting Started</a>
-					<a href="#support">Support Center</a>
-				</div>
-
-				<div class="link-group">
-					<h4>Company</h4>
-					<a href="#about">About Us</a>
-					<a href="#blog">Blog</a>
-					<a href="#careers">Careers</a>
-					<a href="#contact">Contact</a>
-				</div>
-			</div>
+			{/each}
 		</div>
-
-		<div class="footer-divider"></div>
-
 		<div class="footer-bottom">
-			<p class="copyright">&copy; 2026 WithOps Platform. All rights reserved.</p>
-			<div class="footer-legal">
-				<a href="#privacy">Privacy Policy</a>
-				<span class="separator">•</span>
-				<a href="#terms">Terms of Service</a>
-				<span class="separator">•</span>
-				<a href="#security">Security</a>
+			<span>&copy; 2026 WithOps. All rights reserved.</span>
+			<div class="footer-bottom-links">
+				<a href="#status">Status</a>
+				<a href="#privacy">Privacy</a>
+				<a href="#terms">Terms</a>
 			</div>
 		</div>
 	</div>
 </footer>
 
 <style>
+	/* ===== BASE ===== */
 	* {
 		margin: 0;
 		padding: 0;
 		box-sizing: border-box;
 	}
+	:global(body) {
+		font-family:
+			'Inter',
+			-apple-system,
+			BlinkMacSystemFont,
+			'Segoe UI',
+			sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		background: #010101;
+		color: #e2e8f0;
+		scroll-behavior: smooth;
+		position: relative;
+	}
+	.container {
+		max-width: 1400px;
+		margin: 0 auto;
+		padding: 0 2rem;
+	}
+	.relative {
+		position: relative;
+	}
 
-	/* Navigation Bar */
+	/* ===== NAVBAR ===== */
 	.navbar {
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
 		z-index: 1000;
-		background: rgba(0, 0, 0, 0.95);
+		background: rgba(13, 15, 20, 0.7);
 		backdrop-filter: blur(20px);
-		border-bottom: 1px solid rgba(0, 217, 255, 0.3);
-		padding: 1rem 0;
+		-webkit-backdrop-filter: blur(20px);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		padding: 0 0;
 		transition: all 0.3s ease;
 	}
-
 	.nav-container {
-		max-width: 1200px;
+		max-width: 1400px;
 		margin: 0 auto;
+		padding: 0.75rem 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 0 2rem;
 	}
-
 	.nav-brand {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.625rem;
 		cursor: pointer;
-		transition: transform 0.3s ease;
+		text-decoration: none;
 	}
-
-	.nav-brand:hover {
-		transform: translateY(-1px);
+	.nav-brand-icon {
+		width: 32px;
+		height: 32px;
 	}
-
 	.brand-icon {
-		width: 48px;
-		height: 48px;
-		filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
-		transition: filter 0.3s ease;
+		width: 32px;
+		height: 32px;
 	}
-
-	.nav-brand:hover .brand-icon {
-		filter: drop-shadow(0 0 15px rgba(0, 217, 255, 0.7));
-	}
-
 	.brand-name {
-		font-size: 1.5rem;
+		font-size: 1.2rem;
 		font-weight: 700;
-		color: #ffffff;
+		color: #f1f5f9;
 		letter-spacing: -0.02em;
 	}
-
-	.user-welcome {
-		color: #b8b8b8;
-		margin-right: 1rem;
-		font-size: 0.9rem;
-	}
-
 	.nav-menu {
 		display: flex;
 		gap: 2rem;
 		align-items: center;
 	}
-
 	.nav-link {
-		color: #b8b8b8;
+		color: #94a3b8;
 		text-decoration: none;
+		font-size: 0.875rem;
 		font-weight: 500;
-		transition: color 0.3s ease;
+		transition: color 0.15s;
 		position: relative;
 	}
-
-	.nav-link:hover,
-	.nav-link.active {
-		color: #00d9ff;
+	.nav-link:hover {
+		color: #f1f5f9;
 	}
-
 	.nav-link::after {
 		content: '';
 		position: absolute;
-		bottom: -5px;
+		bottom: -4px;
 		left: 0;
 		width: 0;
 		height: 2px;
-		background: #00d9ff;
-		transition: width 0.3s ease;
+		background: #3b82f6;
+		border-radius: 1px;
+		transition: width 0.2s ease;
 	}
-
-	.nav-link:hover::after,
-	.nav-link.active::after {
+	.nav-link:hover::after {
 		width: 100%;
 	}
-
 	.nav-actions {
 		display: flex;
 		gap: 1rem;
 		align-items: center;
 	}
-
-	.nav-btn-secondary,
-	.nav-btn-primary {
-		padding: 0.5rem 1.2rem;
-		border: none;
-		border-radius: 6px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		text-decoration: none;
+	.user-welcome {
+		color: #94a3b8;
+		font-size: 0.875rem;
+		margin-right: 0.5rem;
 	}
-
 	.nav-btn-secondary {
 		background: transparent;
-		color: #00d9ff;
-		border: 1px solid rgba(0, 217, 255, 0.4);
-		border-radius: 8px;
+		color: #cbd5e1;
+		border: 1px solid #2d3748;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		padding: 0.5rem 1.125rem;
+		border-radius: 6px;
+		transition: all 0.15s;
 	}
-
 	.nav-btn-secondary:hover {
-		background: rgba(0, 217, 255, 0.1);
-		color: #00d9ff;
-		border-color: #00d9ff;
+		color: #f1f5f9;
+		border-color: #475569;
+		background: rgba(255, 255, 255, 0.05);
 	}
-
 	.nav-btn-primary {
-		background: #ffffff;
-		color: #000000;
+		background: #3b82f6;
+		color: white;
+		border: none;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.8125rem;
 		font-weight: 600;
-		border-radius: 8px;
+		padding: 0.5rem 1.25rem;
+		border-radius: 6px;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		transition: all 0.15s ease;
+		box-shadow: none;
 	}
-
 	.nav-btn-primary:hover {
+		background: #2563eb;
+		box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
 		transform: translateY(-1px);
-		box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
-		background: #00d9ff;
-		color: #000000;
 	}
 
-	/* Hero Dashboard with 3D Layered Background */
-	.hero-dashboard {
+	/* ===== HERO ===== */
+	.hero {
 		position: relative;
 		min-height: 100vh;
 		overflow: hidden;
-		background: #000000;
+		padding: 7rem 0 5rem;
 		display: flex;
 		align-items: center;
-		justify-content: flex-start;
-		padding-top: 128px;
-		padding-bottom: 80px;
-		padding-left: 280px;
-		padding-right: 200px;
-
-		/* Strong 3D perspective */
-		perspective: 2000px;
-		perspective-origin: center center;
-		transform-style: preserve-3d;
+		background: #010101;
+		/* Localized accent diffusion - tightly contained to maintain deep black backdrop */
+		background-image: 
+			radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 35%),
+			radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.03) 0%, transparent 30%);
 	}
-
-	/* YAML Background - Full Width with 3D Effect */
-	.yaml-background {
+	.hero-bg {
 		position: absolute;
 		inset: 0;
-		overflow: hidden;
-		transform-style: preserve-3d;
 	}
-
-	.yaml-gradient {
+	.hero-bg-base {
 		position: absolute;
 		inset: 0;
-		background: #000000;
+		background: transparent;
 	}
-
-	/* Main YAML Display - Deep inside the panel */
-	.yaml-display {
+	.hero-bg-grid {
+		display: none;
+	}
+	/* Floating gradient orbs */
+	.hero-orb {
 		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		display: flex;
+		border-radius: 50%;
+		filter: blur(60px);
+		pointer-events: none;
+		opacity: 0.5;
+	}
+	.hero-orb-1 {
+		width: 600px;
+		height: 600px;
+		top: -10%;
+		right: -10%;
+		background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+		animation: orbFloat1 25s ease-in-out infinite;
+	}
+	.hero-orb-2 {
+		width: 500px;
+		height: 500px;
+		bottom: -10%;
+		left: -10%;
+		background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+		animation: orbFloat2 30s ease-in-out infinite;
+	}
+	.hero-orb-3 {
+		width: 400px;
+		height: 400px;
+		top: 40%;
+		left: 20%;
+		background: radial-gradient(circle, rgba(14, 165, 233, 0.04) 0%, transparent 70%);
+		animation: orbFloat3 20s ease-in-out infinite;
+	}
+	@keyframes orbFloat1 {
+		0%, 100% { transform: translate(0, 0) scale(1); }
+		33% { transform: translate(30px, -20px) scale(1.05); }
+		66% { transform: translate(-15px, 15px) scale(0.95); }
+	}
+	@keyframes orbFloat2 {
+		0%, 100% { transform: translate(0, 0) scale(1); }
+		33% { transform: translate(-25px, 20px) scale(1.08); }
+		66% { transform: translate(20px, -10px) scale(0.97); }
+	}
+	@keyframes orbFloat3 {
+		0%, 100% { transform: translate(0, 0); }
+		50% { transform: translate(20px, -25px); }
+	}
+	.hero-container {
+		position: relative;
+		z-index: 2;
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 0 3rem;
+		display: grid;
+		grid-template-columns: 4.5fr 7.5fr;
+		gap: 3rem;
 		align-items: center;
-		justify-content: flex-end;
-		padding-right: 18%;
-
-		/* Push deep inside - behind the text */
-		transform: translateZ(-300px) scale(1.15);
-		transform-style: preserve-3d;
-		z-index: 1;
 	}
 
-	.yaml-pre {
-		width: 100%;
-		max-width: 55rem;
-		margin: 0;
-		padding: 0;
-		text-align: left;
-		font-family: 'Consolas', 'Courier New', monospace;
-		font-size: 0.9rem;
+	/* Hero Left */
+	.hero-left {
+		position: relative;
+		z-index: 5;
+	}
+	.hero-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.625rem;
+		background: rgba(59, 130, 246, 0.08);
+		border: 1px solid rgba(59, 130, 246, 0.2);
+		border-radius: 9999px;
+		padding: 0.5rem 1.125rem;
+		margin-bottom: 2rem;
+	}
+	.badge-dot {
+		width: 8px;
+		height: 8px;
+		background: #22c55e;
+		border-radius: 50%;
+		animation: pulse 2s infinite;
+	}
+	.badge-text {
+		font-size: 0.75rem;
+		color: #94a3b8;
+		font-weight: 500;
+		letter-spacing: 0.01em;
+	}
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.hero-title {
+		font-size: clamp(2.5rem, 5vw, 4rem);
+		font-weight: 700;
+		color: #ffffff;
+		line-height: 1.05;
+		margin-bottom: 1.5rem;
+		letter-spacing: -0.04em;
+	}
+	.hero-title-accent {
+		color: #3b82f6;
+		display: block;
+	}
+	.hero-description {
+		font-size: 1.125rem;
+		color: #94a3b8;
 		line-height: 1.6;
+		margin-bottom: 2.5rem;
+		max-width: 480px;
+		letter-spacing: -0.01em;
+	}
+	.hero-buttons {
+		display: flex;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-bottom: 3rem;
+	}
+
+	/* Buttons */
+	.btn-primary {
+		background: #3b82f6;
+		color: white;
+		border: none;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		padding: 0.75rem 1.75rem;
+		border-radius: 6px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.625rem;
+		transition: all 0.15s ease;
+		box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2);
+		letter-spacing: -0.01em;
+		position: relative;
+		overflow: hidden;
+	}
+	.btn-primary::before {
+		display: none;
+	}
+	.btn-primary:hover {
+		background: #2563eb;
+		box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+		transform: translateY(-1px);
+	}
+	.btn-primary:active {
+		transform: translateY(0);
+		background: #1d4ed8;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+	}
+	.btn-secondary {
+		background: transparent;
+		color: #cbd5e1;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		padding: 0.75rem 1.75rem;
+		border-radius: 6px;
+		border: 1px solid #2d3748;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.625rem;
+		transition: all 0.15s ease;
+		letter-spacing: -0.01em;
+	}
+	.btn-secondary:hover {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: #475569;
+		color: #f1f5f9;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+	.btn-secondary:active {
+		transform: translateY(0);
+	}
+	.btn-sm {
+		padding: 0.5625rem 1.125rem;
+		font-size: 0.8125rem;
+	}
+
+	/* Hero Stats */
+	.hero-stats {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid #1e2330;
+	}
+	.hero-stat {
+		display: flex;
+		flex-direction: column;
+	}
+	.stat-value {
+		display: block;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #f1f5f9;
+		margin-bottom: 0.25rem;
+		letter-spacing: -0.02em;
+	}
+	.stat-label {
+		display: block;
+		font-size: 0.8rem;
+		color: #64748b;
+	}
+
+	/* Hero Right - YAML Panel */
+	.hero-right {
+		position: relative;
+		z-index: 3;
+		perspective: 2000px;
+	}
+	.yaml-panel-container {
+		position: relative;
+		transform: rotateY(-18deg) rotateX(8deg) rotateZ(2deg);
+		transform-style: preserve-3d;
+		transition: transform 0.8s cubic-bezier(0.2, 0, 0.2, 1);
+	}
+	.hero-right:hover .yaml-panel-container {
+		transform: rotateY(-8deg) rotateX(4deg) rotateZ(0deg);
+	}
+	.yaml-panel {
+		background: #0d0f14;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 
+			-20px 20px 60px rgba(0, 0, 0, 0.5),
+			-5px 5px 20px rgba(59, 130, 246, 0.1);
+		position: relative;
+		backface-visibility: hidden;
+	}
+	.yaml-panel::before {
+		content: '';
+		position: absolute;
+		top: -1px;
+		left: -1px;
+		right: -1px;
+		height: 3px;
+		background: #3b82f6;
+		border-radius: 12px 12px 0 0;
+		z-index: 10;
+	}
+	@keyframes shimmerBorder {
+		0% { background-position: 0% 0%; }
+		100% { background-position: 200% 0%; }
+	}
+	.yaml-panel-header {
+		display: flex;
+		align-items: center;
+		padding: 0.625rem 1rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		background: #11141d;
+		gap: 1.5rem;
+	}
+	.yaml-breadcrumbs {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.7rem;
+		color: #475569;
+	}
+	.breadcrumb-item.active {
+		color: #94a3b8;
+	}
+	.breadcrumb-separator {
+		color: #334155;
+	}
+	.yaml-dots {
+		display: flex;
+		gap: 6px;
+		flex-shrink: 0;
+	}
+	.yaml-actions-ui {
+		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.yaml-copy-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		color: #64748b;
+		font-size: 0.65rem;
+		padding: 0.25rem 0.625rem;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.yaml-copy-btn:hover {
+		background: rgba(255, 255, 255, 0.08);
+		color: #f1f5f9;
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+	/* Tab bar */
+	.yaml-tabs {
+		display: flex;
+		gap: 0.25rem;
+	}
+	.yaml-tab {
+		color: #475569;
+		font-size: 0.65rem;
+		font-weight: 500;
+		padding: 0.2rem 0.6rem;
+		border-radius: 4px;
+		cursor: default;
+		transition: all 0.2s;
+	}
+	.yaml-tab-active {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.05);
+	}
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+	}
+	.dot-red {
+		background: #eb5757;
+	}
+	.dot-yellow {
+		background: #f2c94c;
+	}
+	.dot-green {
+		background: #27ae60;
+	}
+	.yaml-panel-title {
+		color: #475569;
+		font-size: 0.75rem;
+		font-family: 'Consolas', 'SF Mono', 'Fira Code', monospace;
+		letter-spacing: 0.02em;
+	}
+	.yaml-panel-body {
+		display: flex;
+		max-height: 520px;
+		overflow-y: hidden; /* Stop manual scrolling */
+		padding: 1rem 0;
+		background: #0d0f14;
+	}
+	.yaml-panel-body::-webkit-scrollbar {
+		display: none; /* Chrome/Safari */
+	}
+	/* Line numbers gutter */
+	.yaml-line-numbers {
+		display: flex;
+		flex-direction: column;
+		padding: 1rem 0;
+		padding-left: 1rem;
+		padding-right: 0.75rem;
+		border-right: 1px solid rgba(255, 255, 255, 0.04);
+		user-select: none;
+		flex-shrink: 0;
+		min-width: 32px;
+		text-align: right;
+	}
+	.yaml-line-numbers span {
+		font-family: 'Consolas', 'SF Mono', 'Fira Code', monospace;
+		font-size: 0.7rem;
+		line-height: 1.65;
+		color: #334155;
+		height: calc(0.75rem * 1.65);
+	}
+	.yaml-pre {
+		margin: 0;
+		padding: 1rem 1rem;
+		font-family: 'Consolas', 'SF Mono', 'Fira Code', monospace;
+		font-size: 0.75rem;
+		line-height: 1.65;
 		white-space: pre-wrap;
 		word-wrap: break-word;
-		overflow-x: hidden;
-		overflow-y: hidden;
-		opacity: 0.75;
+		color: #cbd5e1;
 		user-select: none;
-		color: #d4d4d4;
-		position: relative;
 		background: transparent;
-		/* Vertical indentation guide lines at meaningful levels */
-		background-image:
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-		background-size: 100% 100%;
-		background-position:
-			2ch 0,
-			4ch 0,
-			6ch 0,
-			8ch 0,
-			10ch 0;
-		background-repeat: no-repeat;
+		flex: 1;
+		min-width: 0;
 	}
-
 	.yaml-code {
-		color: #d4d4d4;
-		font-family: 'Consolas', 'Courier New', monospace;
-		font-weight: 400;
-		letter-spacing: 0;
-		font-size: 0.9rem;
+		font-family: inherit;
+		font-size: inherit;
 	}
-
-	/* YAML Syntax Highlighting - Allow inline styles to override */
 	.yaml-code span {
 		font-family: inherit;
 	}
-
 	.cursor {
 		display: inline-block;
-		width: 8px;
-		height: 20px;
-		background-color: #ffffff;
-		margin-left: 2px;
-		animation: blink 1s infinite;
+		width: 7px;
+		height: 15px;
+		background: #f9fafb;
+		margin-left: 1px;
 		vertical-align: text-bottom;
+		animation: blink 1s infinite;
 	}
-
 	@keyframes blink {
 		0%,
 		50% {
@@ -929,737 +1759,1347 @@ features:
 		}
 	}
 
-	/* Scanline Effect */
-	.scanline {
+	/* YAML Status Bar */
+	.yaml-status-bar {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		padding: 0.375rem 1rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.04);
+		background: rgba(0, 0, 0, 0.2);
+		font-family: 'Consolas', 'SF Mono', 'Fira Code', monospace;
+		font-size: 0.65rem;
+		color: #475569;
+	}
+
+	/* Floating Annotations */
+	.yaml-annotation {
 		position: absolute;
-		inset: 0;
-		background: linear-gradient(to bottom, transparent, rgba(0, 217, 255, 0.05), transparent);
-		height: 200px;
-		animation: scan 8s linear infinite;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.3rem 0.625rem;
+		border-radius: 6px;
+		font-size: 0.65rem;
+		font-weight: 500;
+		color: #0A3364;
+		background: rgba(239, 251, 255, 0.95);
+		border: 1px solid rgba(10, 51, 100, 0.12);
 		pointer-events: none;
+		z-index: 5;
+	}
+	.yaml-annotation-top {
+		top: 30%;
+		right: -14px;
+		transform: translateX(50%);
+		color: #059669;
+		border-color: rgba(5, 150, 105, 0.2);
+	}
+	.yaml-annotation-bottom {
+		bottom: 20%;
+		right: -14px;
+		transform: translateX(50%);
+		color: #d97706;
+		border-color: rgba(217, 119, 6, 0.2);
 	}
 
-	@keyframes scan {
-		0% {
-			transform: translateY(-100%);
-		}
-		100% {
-			transform: translateY(100vh);
-		}
-	}
-
-	/* Grid Overlay */
-	.grid-overlay {
+	.floating-badge {
 		position: absolute;
-		inset: 0;
-		opacity: 0.03;
-		pointer-events: none;
-		background-image:
-			linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-		background-size: 50px 50px;
+		top: -12px;
+		right: -12px;
+		background: rgba(255, 255, 255, 0.95);
+		border: 1px solid rgba(10, 51, 100, 0.12);
+		border-radius: 10px;
+		padding: 0.5rem 0.75rem;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		box-shadow: 0 4px 12px rgba(7, 24, 43, 0.1);
 	}
-
-	/* Atmospheric Fog Layers */
-	.fog-layer {
-		position: absolute;
-		inset: 0;
-		pointer-events: none !important;
-		opacity: 0.15;
-		z-index: 1;
-	}
-
-	.fog-layer-1 {
-		background: radial-gradient(ellipse at 30% 50%, rgba(0, 217, 255, 0.15) 0%, transparent 50%);
-		transform: translateZ(-200px) scale(1.1);
-		animation: fogDrift1 20s ease-in-out infinite alternate;
-	}
-
-	.fog-layer-2 {
-		background: radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
-		transform: translateZ(-250px) scale(1.15);
-		animation: fogDrift2 25s ease-in-out infinite alternate;
-	}
-
-	@keyframes fogDrift1 {
-		0% {
-			transform: translateZ(-200px) scale(1.1) translateX(0);
-		}
-		100% {
-			transform: translateZ(-200px) scale(1.1) translateX(50px);
-		}
-	}
-
-	@keyframes fogDrift2 {
-		0% {
-			transform: translateZ(-250px) scale(1.15) translateX(0);
-		}
-		100% {
-			transform: translateZ(-250px) scale(1.15) translateX(-40px);
-		}
-	}
-
-	/* Light Rays Effect */
-	.light-rays {
-		position: absolute;
-		inset: 0;
-		pointer-events: none !important;
-		background: radial-gradient(ellipse at 80% 20%, rgba(0, 217, 255, 0.1) 0%, transparent 40%);
-		transform: translateZ(-150px);
-		opacity: 0.6;
-		animation: lightPulse 8s ease-in-out infinite;
-		z-index: 1;
-	}
-
-	@keyframes lightPulse {
+	@keyframes floatBadge {
 		0%,
 		100% {
-			opacity: 0.4;
+			transform: translate(0, 0);
 		}
 		50% {
-			opacity: 0.7;
+			transform: translate(8px, -8px);
 		}
 	}
 
-	/* Hero Content - Front Layer (Text on surface) */
-	.hero-content {
+	/* ===== TRUST ===== */
+	.trust-section {
+		padding: 3.5rem 0;
+		background: #010101;
+		border-top: 1px solid rgba(255, 255, 255, 0.02);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.02);
 		position: relative;
-		z-index: 100;
-		max-width: 650px;
-		margin: 0;
-		text-align: left;
-
-		/* Bring text to front surface */
-		transform: translateZ(200px);
-		transform-style: preserve-3d;
+	}
+	.trust-section::before,
+	.trust-section::after {
+		display: none;
+	}
+	.trust-label {
+		text-align: center;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		color: #64748b;
+		margin-bottom: 1.5rem;
+		font-weight: 600;
+	}
+	.trust-logos {
+		display: grid;
+		grid-template-columns: repeat(6, 1fr);
+		gap: 2rem;
+		align-items: center;
+		justify-items: center;
+	}
+	.trust-logo {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		opacity: 0.6;
+		transition: opacity 0.3s;
+		cursor: default;
+	}
+	.trust-logo:hover {
+		opacity: 1;
+	}
+	.trust-logo-box {
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+		background: #13161c;
+		border: 1px solid #1e2330;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s ease;
+	}
+	.trust-logo:hover .trust-logo-box {
+		border-color: #3b82f6;
+		box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+		transform: translateY(-2px);
+	}
+	.trust-logo-name {
+		color: #64748b;
+		font-size: 0.7rem;
 	}
 
-	/* Main Title */
-	.main-title {
-		font-size: clamp(2.5rem, 6vw, 4.5rem);
-		font-weight: 700;
-		line-height: 1.2;
+	/* ===== PROBLEM SECTION BASE ===== */
+	.problem-section {
+		padding: 10rem 0 8rem;
+		position: relative;
+		overflow: hidden;
+		background: #010101;
+	}
+	.problem-bg-grid {
+		display: none;
+	}
+	.section-header {
+		text-align: center;
+		margin-bottom: 4rem;
+	}
+	.section-overline {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.16em;
+		color: #3b82f6;
+		font-weight: 600;
+		margin-bottom: 0.75rem;
+	}
+	.section-badge {
+		display: inline-block;
+		border-radius: 9999px;
+		padding: 0.375rem 1rem;
+		font-size: 0.8rem;
+		font-weight: 500;
 		margin-bottom: 1.5rem;
+	}
+	.section-badge-red {
+		background: rgba(239, 68, 68, 0.08);
+		border: 1px solid rgba(239, 68, 68, 0.15);
+		color: #dc2626;
+	}
+	.section-badge-blue {
+		background: rgba(0, 173, 228, 0.08);
+		border: 1px solid rgba(0, 173, 228, 0.2);
+		color: #00ADE4;
+	}
+	.section-title {
+		font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+		font-weight: 700;
+		color: #f1f5f9;
+		margin-bottom: 1rem;
+		line-height: 1.2;
+		letter-spacing: -0.02em;
+	}
+	.section-subtitle {
+		font-size: 1rem;
+		color: #94a3b8;
+		max-width: 600px;
+		margin: 0 auto;
+		line-height: 1.7;
+		letter-spacing: -0.01em;
+	}
+	.problem-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1.5rem;
+		margin-top: 3rem;
+	}
+	.problem-card {
+		background: #0d0f14;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 16px;
+		padding: 2.25rem;
+		position: relative;
+		overflow: hidden;
+		transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+		display: flex;
+		flex-direction: column;
+	}
+	.problem-card:hover {
+		border-color: rgba(239, 68, 68, 0.2);
+		transform: translateY(-5px);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+	}
+	.problem-header-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: 1.5rem;
+	}
+	.problem-badge {
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 0.6rem;
+		font-weight: 800;
+		padding: 0.25rem 0.6rem;
+		border-radius: 4px;
+		background: rgba(239, 68, 68, 0.1);
+		color: #ef4444;
+		border: 1px solid rgba(239, 68, 68, 0.2);
+		letter-spacing: 0.05em;
+	}
+	.badge-amber {
+		background: rgba(245, 158, 11, 0.1);
+		color: #f59e0b;
+		border-color: rgba(245, 158, 11, 0.2);
+	}
+	.problem-icon {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.3s ease;
+	}
+	.problem-icon-red { background: rgba(239, 68, 68, 0.05); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.1); }
+	.problem-icon-amber { background: rgba(245, 158, 11, 0.05); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.1); }
+
+	.problem-card h3 {
+		color: #f1f5f9;
+		font-size: 1.15rem;
+		font-weight: 700;
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+	.problem-card p {
+		color: #94a3b8;
+		font-size: 0.95rem;
+		line-height: 1.6;
+		margin-bottom: 2rem;
+		flex-grow: 1;
+	}
+
+	/* Diagnostic Data Box */
+	.problem-data-box {
+		background: #080a0f;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		padding: 1.25rem;
+		font-family: 'JetBrains Mono', monospace;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	.data-row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.65rem;
+		color: #475569;
+	}
+	.data-status {
+		color: #f87171;
+		font-weight: 700;
+	}
+	.status-null { color: #475569; }
+	.status-fail { color: #ef4444; text-decoration: underline; }
+
+	.maturity-bar-container {
+		display: flex;
+		gap: 4px;
+		height: 4px;
+		margin-bottom: 0.5rem;
+	}
+	.m-bar {
+		flex: 1;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 2px;
+	}
+	.m-bar.m-active { background: #ef4444; opacity: 0.6; }
+	.maturity-label {
+		font-size: 0.6rem;
+		color: #475569;
+		text-align: right;
+		font-weight: 700;
+	}
+
+	/* ===== SOLUTION ===== */
+	.solution-section {
+		padding: 8rem 0;
+		background: #010101;
+		position: relative;
+		background-image: radial-gradient(circle at center, #050814 0%, #010101 60%);
+	}
+	.solution-section::before {
+		display: none;
+	}
+	.solution-list {
+		display: flex;
+		flex-direction: column;
+		gap: 6rem;
+	}
+	.solution-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 3rem;
+		align-items: center;
+	}
+	.solution-row-reverse .solution-text {
+		order: 2;
+	}
+	.solution-row-reverse .solution-visual {
+		order: 1;
+	}
+	.solution-icon-box {
+		width: 56px;
+		height: 56px;
+		border-radius: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 1.5rem;
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+	.solution-icon-box:hover {
+		transform: scale(1.05);
+	}
+	.solution-gradient-blue-cyan {
+		background: linear-gradient(135deg, #00ADE4 0%, #0278D5 100%);
+		box-shadow: 0 4px 14px rgba(0, 173, 228, 0.25);
+	}
+	.solution-gradient-green-cyan {
+		background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+		box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+	}
+	.solution-gradient-amber-red {
+		background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+		box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+	}
+	.solution-text h3 {
+		color: #f1f5f9;
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+	.solution-text p {
+		color: #94a3b8;
+		font-size: 0.9375rem;
+		line-height: 1.75;
+		margin-bottom: 1.5rem;
+	}
+	.check-list {
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	.check-list li {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		color: #cbd5e1;
+		font-size: 0.9375rem;
+	}
+	.check-list li svg {
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	.solution-visual {
+		position: relative;
+	}
+	.solution-visual-glow {
+		display: none;
+	}
+	.solution-mockup {
+		position: relative;
+		background: #13161c;
+		border: 1px solid #1e2330;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+		transition: all 0.2s ease;
+	}
+	.solution-mockup:hover {
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+		transform: translateY(-2px);
+	}
+	.mockup-chrome {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	}
+	.mockup-dots {
+		display: flex;
+		gap: 6px;
+	}
+	.mockup-url {
+		flex: 1;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 6px;
+		padding: 0.25rem 0.75rem;
+		color: #94a3b8;
+		font-size: 0.7rem;
+		font-family: 'Inter', sans-serif;
+	}
+	.mockup-body {
+		padding: 1.25rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 	}
-
-	.title-highlight {
-		color: #ffffff;
-		font-size: 1em;
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
+	.mockup-line {
+		height: 8px;
+		border-radius: 4px;
+	}
+	.mockup-body.technical-view {
+		padding: 1.5rem;
+		background: #080a0f;
+		font-family: 'JetBrains Mono', 'Fira Code', monospace;
 	}
 
-	.title-subtitle {
-		color: #00d9ff;
-		font-size: 0.6em;
-		font-weight: 700;
-		letter-spacing: 0.05em;
-		opacity: 1;
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
-	}
-
-	/* Legacy heading styles for compatibility */
-
-	/* Description */
-	.hero-description {
-		font-size: 1.2rem;
-		color: #b8b8b8;
-		line-height: 1.7;
-		margin-bottom: 3rem;
-		max-width: 500px;
-		text-align: left;
-		font-weight: 400;
-	}
-
-	/* CTA Buttons */
-	.cta-buttons {
+	/* --- Technical Audit Log --- */
+	.audit-log {
 		display: flex;
-		gap: 1.5rem;
-		justify-content: flex-start;
-		flex-wrap: wrap;
-		position: relative;
-		z-index: 10;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
-
-	.btn-primary,
-	.btn-secondary {
-		padding: 1.2rem 2.5rem;
-		border: none;
-		border-radius: 10px;
-		font-size: 1.1rem;
-		font-weight: 600;
-		cursor: pointer !important;
-		transition: all 0.3s ease;
-		text-decoration: none;
-		display: inline-block;
-		position: relative;
-		z-index: 10;
-		pointer-events: auto;
+	.log-header {
+		font-size: 0.65rem;
+		color: #475569;
+		letter-spacing: 0.05em;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		padding-bottom: 0.5rem;
+		margin-bottom: 0.25rem;
 	}
-
-	.btn-primary {
-		background: #ffffff;
-		color: #000000;
-		font-weight: 600;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
-		border-radius: 8px;
+	.log-content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
 	}
-
-	.btn-primary:hover {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	.btn-secondary {
-		background: rgba(0, 0, 0, 0.3);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		border-radius: 8px;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.4),
-			0 0 20px rgba(0, 217, 255, 0.2);
-	}
-
-	.btn-secondary:hover {
-		background: #00d9ff;
-		color: #000000;
-		font-weight: 600;
-		transform: translateY(-3px);
-		border-color: #00d9ff;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	/* CTA Button (legacy) */
-
-	/* Responsive adjustments */
-	@media (min-width: 768px) {
-		.hero-description {
-			font-size: 1.5rem;
-		}
-
-		.yaml-pre {
-			font-size: 1rem;
-		}
-	}
-
-	/* Features Section */
-	.features-section {
-		background: #000000;
-		padding: 8rem 0;
-		position: relative;
-	}
-
-	.features-container {
-		max-width: 1400px;
-		margin: 0 auto;
-		padding: 0 2rem;
-	}
-
-	.section-header {
-		text-align: center;
-		margin-bottom: 5rem;
-	}
-
-	.section-title {
-		font-size: clamp(2.5rem, 5vw, 3.5rem);
-		font-weight: 700;
-		color: #00d9ff;
-		margin-bottom: 1.5rem;
-		letter-spacing: -0.02em;
-	}
-
-	.section-description {
-		font-size: 1.3rem;
-		color: #b8b8b8;
-		max-width: 800px;
-		margin: 0 auto;
-		line-height: 1.7;
-		font-weight: 400;
-	}
-
-	.features-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-		gap: 2.5rem;
-		margin-top: 4rem;
-	}
-
-	.feature-card {
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		padding: 2.5rem;
-		transition: all 0.4s ease;
-		position: relative;
+	.log-entry {
+		font-size: 0.7rem;
+		color: #94a3b8;
+		white-space: nowrap;
 		overflow: hidden;
 	}
-
-	.feature-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
-		transition: left 0.6s;
+	.log-entry .timestamp { color: #475569; margin-right: 0.5rem; }
+	.log-entry .action { color: #3b82f6; font-weight: 700; }
+	.log-entry.info .tool { color: #e2e8f0; }
+	.log-entry.info .res { color: #10b981; }
+	.log-entry.warn .tool { color: #f87171; }
+	.log-entry.warn .res { color: #ef4444; font-weight: 700; }
+	.log-cursor {
+		width: 6px;
+		height: 12px;
+		background: #3b82f6;
+		animation: blink 1s step-end infinite;
+		margin-top: 0.25rem;
 	}
+	@keyframes blink { 50% { opacity: 0; } }
 
-	.feature-card:hover::before {
-		left: 100%;
-	}
-
-	.feature-card:hover {
-		transform: translateY(-5px);
-		border-color: rgba(0, 217, 255, 0.5);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.15);
-		background: rgba(0, 0, 0, 0.6);
-	}
-
-	.feature-number {
-		font-size: 0.9rem;
-		font-weight: 700;
-		color: #00d9ff;
-		margin-bottom: 1.5rem;
-		letter-spacing: 0.1em;
-	}
-
-	.feature-card h3 {
-		color: #ffffff;
-		font-size: 1.5rem;
-		font-weight: 600;
-		margin-bottom: 1rem;
-		line-height: 1.3;
-	}
-
-	.feature-card p {
-		color: #b8b8b8;
-		line-height: 1.7;
-		margin-bottom: 1.5rem;
-		font-size: 1rem;
-	}
-
-	.feature-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.feature-list li {
-		color: #b8b8b8;
-		padding: 0.5rem 0;
-		padding-left: 1.5rem;
-		position: relative;
-		font-size: 0.95rem;
-		line-height: 1.6;
-	}
-
-	.feature-list li::before {
-		content: '→';
-		position: absolute;
-		left: 0;
-		color: #00d9ff;
-		font-weight: 700;
-	}
-
-	/* Responsive Design */
-	@media (max-width: 1024px) {
-	}
-
-	@media (max-width: 768px) {
-		.feature-card {
-			padding: 1.5rem;
-		}
-
-		.feature-number {
-			width: 45px;
-			height: 45px;
-			font-size: 0.85rem;
-		}
-
-		.feature-card h3 {
-			font-size: 1.25rem;
-		}
-	}
-
-	/* Footer */
-	.footer {
-		background: #000000;
-		border-top: 1px solid rgba(0, 217, 255, 0.2);
-		padding: 4rem 0 2rem;
-		position: relative;
-	}
-
-	.footer::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 1px;
-		background: linear-gradient(90deg, transparent 0%, #00d9ff 50%, transparent 100%);
-		opacity: 0.5;
-	}
-
-	.footer-container {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0 2rem;
-	}
-
-	.footer-content {
-		display: grid;
-		grid-template-columns: 1.5fr 2fr;
-		gap: 4rem;
-		margin-bottom: 3rem;
-	}
-
-	.footer-brand {
+	/* --- Maturity Matrix --- */
+	.maturity-matrix {
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
 	}
+	.matrix-grid {
+		display: grid;
+		grid-template-columns: repeat(10, 1fr);
+		gap: 4px;
+	}
+	.matrix-cell {
+		aspect-ratio: 1;
+		background: rgba(255, 255, 255, 0.03);
+		border-radius: 2px;
+	}
+	.matrix-cell.cell-active {
+		background: #10b981;
+		opacity: 0.4;
+	}
+	.matrix-stats {
+		display: flex;
+		gap: 2rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		padding-top: 1rem;
+	}
+	.stat-group .stat-label {
+		font-size: 0.55rem;
+		color: #475569;
+		font-weight: 700;
+		margin-bottom: 0.25rem;
+	}
+	.stat-group .stat-val {
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: #e2e8f0;
+	}
+	.stat-group .val-active { color: #10b981; }
 
+	/* --- Architecture Blueprint --- */
+	.blueprint-view {
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.blueprint-canvas {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		position: relative;
+	}
+	.bp-box {
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		padding: 0.5rem 1rem;
+		font-size: 0.65rem;
+		color: #94a3b8;
+		background: rgba(255, 255, 255, 0.02);
+		width: 140px;
+		text-align: center;
+	}
+	.bp-box.bp-active {
+		border-color: #3b82f6;
+		color: #3b82f6;
+		background: rgba(59, 130, 246, 0.05);
+	}
+	.bp-line {
+		width: 1px;
+		height: 12px;
+		background: rgba(255, 255, 255, 0.1);
+	}
+	.bp-label {
+		position: absolute;
+		font-size: 0.5rem;
+		color: #475569;
+		letter-spacing: 0.1em;
+	}
+	.bp-label.top-right { top: 0; right: 0; }
+	.bp-label.bottom-left { bottom: 0; left: 0; }
+
+	/* ===== HOW IT WORKS ===== */
+	.how-section {
+		padding: 10rem 0;
+		position: relative;
+		overflow: hidden;
+		background: #010101;
+		background-image: radial-gradient(ellipse at 50% 100%, #060912 0%, #010101 70%);
+	}
+	.how-section::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 1px;
+		height: 100px;
+		background: linear-gradient(to bottom, #3b82f6, transparent);
+	}
+	.how-bg-grid {
+		display: none;
+	}
+	.steps-wrapper {
+		position: relative;
+		margin-top: 4rem;
+	}
+
+	/* Animated connecting line */
+	.steps-connector {
+		display: none;
+		position: absolute;
+		top: 28px;
+		left: 8%;
+		right: 8%;
+		height: 2px;
+		z-index: 1;
+	}
+	@media (min-width: 769px) {
+		.steps-connector {
+			display: block;
+		}
+	}
+	.steps-connector-track {
+		position: absolute;
+		inset: 0;
+		background: rgba(10, 51, 100, 0.08);
+		border-radius: 2px;
+	}
+	.steps-connector-progress {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 0;
+		background: linear-gradient(90deg, #00ADE4, #3DC7F6, #0278D5);
+		border-radius: 2px;
+		transition: none;
+	}
+	.steps-connector-progress.revealed {
+		width: 100% !important;
+		transition: width 1.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+	}
+
+	.steps-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1.25rem;
+		position: relative;
+		z-index: 2;
+	}
+
+	/* Step cards */
+	.step-card {
+		background: #13161c;
+		border: 1px solid #1e2330;
+		border-radius: 12px;
+		padding: 1.75rem 1.5rem;
+		transition: all 0.2s ease;
+		position: relative;
+	}
+	.step-card::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 1.5rem;
+		right: 1.5rem;
+		height: 2px;
+		background: transparent;
+		transition: background 0.2s ease;
+		border-radius: 2px;
+	}
+	.step-card:hover {
+		background: #1a1e27;
+		transform: translateY(-3px);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+		border-color: #282e3d;
+	}
+	.step-card:hover::after {
+		background: #3b82f6;
+	}
+
+	/* Step header row: number + icon */
+	.step-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.25rem;
+	}
+	.step-number {
+		font-size: 2rem;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		color: rgba(255, 255, 255, 0.05);
+		line-height: 1;
+	}
+	/* Colored step numbers */
+	.step-number-purple {
+		color: rgba(167, 139, 250, 0.25);
+	}
+	.step-number-blue {
+		color: rgba(96, 165, 250, 0.25);
+	}
+	.step-number-amber {
+		color: rgba(251, 191, 36, 0.25);
+	}
+	.step-number-green {
+		color: rgba(52, 211, 153, 0.25);
+	}
+
+	/* Step icons */
+	.step-icon {
+		width: 40px;
+		height: 40px;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.step-icon-purple {
+		background: rgba(167, 139, 250, 0.1);
+		color: #a78bfa;
+	}
+	.step-icon-blue {
+		background: rgba(96, 165, 250, 0.1);
+		color: #60a5fa;
+	}
+	.step-icon-amber {
+		background: rgba(251, 191, 36, 0.1);
+		color: #fbbf24;
+	}
+	.step-icon-green {
+		background: rgba(52, 211, 153, 0.1);
+		color: #34d399;
+	}
+
+	.step-card h4 {
+		color: #f1f5f9;
+		font-size: 1.05rem;
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+		letter-spacing: -0.01em;
+	}
+	.step-card p {
+		color: #64748b;
+		font-size: 0.85rem;
+		line-height: 1.6;
+		margin-bottom: 1.5rem;
+	}
+
+	/* Technical Step Visuals */
+	.step-visual {
+		background: #080a0f;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 8px;
+		padding: 1rem;
+		font-family: 'JetBrains Mono', monospace;
+		height: 100px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.4rem;
+		overflow: hidden;
+	}
+	.code-line {
+		font-size: 0.6rem;
+		color: #a78bfa;
+		white-space: nowrap;
+	}
+	.scan-tree {
+		font-size: 0.6rem;
+		color: #60a5fa;
+	}
+	.tree-node.depth-1 {
+		padding-left: 1rem;
+		color: #94a3b8;
+	}
+	.eval-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 4px;
+		width: 40px;
+	}
+	.grid-dot {
+		width: 4px;
+		height: 4px;
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 50%;
+	}
+	.grid-dot.active {
+		background: #fbbf24;
+		box-shadow: 0 0 8px #fbbf24;
+	}
+	.eval-text {
+		font-size: 0.7rem;
+		color: #fbbf24;
+		font-weight: 700;
+		margin-top: 0.5rem;
+	}
+	.report-bar {
+		height: 4px;
+		background: rgba(52, 211, 153, 0.2);
+		border-radius: 2px;
+		width: 100%;
+	}
+	.report-bar.w-70 { width: 70%; }
+	.report-bar.w-40 { width: 40%; }
+
+	/* Section Accents - Floating Orbs */
+	.step-icon-ring {
+		display: none;
+	}
+	.step-icon-pulse {
+		display: none;
+	}
+	.step-num {
+		display: none;
+	}
+	.step-status {
+		display: none;
+	}
+
+	/* ===== WHY CHOOSE WITH OPS (BENTO GRID) ===== */
+	.why-section {
+		padding: 8rem 0;
+		background: #010101;
+		position: relative;
+	}
+	.bento-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		grid-template-rows: auto auto;
+		gap: 1.5rem;
+		margin-top: 3rem;
+	}
+	.bento-item {
+		background: #0d0f14;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 20px;
+		padding: 2.5rem;
+		position: relative;
+		overflow: hidden;
+		transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+		display: flex;
+		flex-direction: column;
+	}
+	.bento-item:hover {
+		border-color: rgba(59, 130, 246, 0.3);
+		transform: translateY(-5px);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+	}
+	.bento-large {
+		grid-column: span 2;
+		grid-row: span 1;
+	}
+	.bento-medium {
+		grid-column: span 1;
+		grid-row: span 1;
+	}
+	.bento-wide {
+		grid-column: span 3;
+		grid-row: span 1;
+	}
+	.bento-tag {
+		display: inline-block;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: #3b82f6;
+		margin-bottom: 1rem;
+	}
+	.bento-content h3 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #ffffff;
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+	.bento-content p {
+		font-size: 0.95rem;
+		color: #94a3b8;
+		line-height: 1.6;
+		max-width: 500px;
+	}
+	.bento-content-row {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		height: 100%;
+	}
+	
+	/* Visual Elements in Bento */
+	.bento-visual {
+		margin-top: auto;
+		padding-top: 2rem;
+		height: 100px;
+		display: flex;
+		align-items: flex-end;
+	}
+	.ai-signal-lines {
+		display: flex;
+		gap: 0.5rem;
+		align-items: flex-end;
+	}
+	.ai-line {
+		width: 4px;
+		background: linear-gradient(to top, #3b82f6, transparent);
+		border-radius: 2px;
+		animation: aiPulse var(--d, 2s) ease-in-out infinite;
+	}
+	.ai-line:nth-child(1) { height: 40px; --d: 1.5s; }
+	.ai-line:nth-child(2) { height: 70px; --d: 2.2s; }
+	.ai-line:nth-child(3) { height: 50px; --d: 1.8s; }
+	.ai-line:nth-child(4) { height: 90px; --d: 2.5s; }
+	.ai-line:nth-child(5) { height: 60px; --d: 2s; }
+	@keyframes aiPulse {
+		0%, 100% { opacity: 0.3; transform: scaleY(0.8); }
+		50% { opacity: 1; transform: scaleY(1.2); }
+	}
+
+	.maturity-meter {
+		margin-top: auto;
+		padding-top: 2rem;
+	}
+	.meter-bar {
+		height: 6px;
+		background: #1e2330;
+		border-radius: 3px;
+		position: relative;
+		overflow: hidden;
+	}
+	.meter-bar::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0;
+		height: 100%;
+		width: 75%;
+		background: linear-gradient(90deg, #3b82f6, #60a5fa);
+	}
+	.meter-value {
+		font-size: 0.8rem;
+		color: #60a5fa;
+		font-weight: 700;
+		margin-top: 0.5rem;
+	}
+
+	.live-indicator-tray {
+		margin-top: auto;
+		padding-top: 2rem;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.pulse-dot {
+		width: 8px;
+		height: 8px;
+		background: #ef4444;
+		border-radius: 50%;
+		box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+		animation: wifiPulse 2s infinite;
+	}
+	.live-text {
+		font-size: 0.7rem;
+		font-family: monospace;
+		color: #d1d5db;
+		letter-spacing: 0.05em;
+	}
+	@keyframes wifiPulse {
+		0% { transform: scale(1); opacity: 1; }
+		100% { transform: scale(2.5); opacity: 0; }
+	}
+
+	.github-visual-mini {
+		opacity: 0.1;
+		transform: rotate(15deg) scale(1.5);
+	}
+
+	/* ===== FINAL CTA ===== */
+	.final-cta {
+		padding: 10rem 0;
+		position: relative;
+		overflow: hidden;
+		background: #010101;
+		background-image: radial-gradient(circle at center, #070a18 0%, #010101 70%);
+	}
+	.final-cta-bg {
+		display: none;
+	}
+	.final-cta-grid-bg {
+		display: none;
+	}
+	/* CTA floating orbs */
+	.cta-orb {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(50px);
+		pointer-events: none;
+	}
+	.cta-orb-1 {
+		width: 300px;
+		height: 300px;
+		top: 10%;
+		left: 5%;
+		background: radial-gradient(circle, rgba(0, 173, 228, 0.15) 0%, transparent 70%);
+		animation: orbFloat1 16s ease-in-out infinite;
+	}
+	.cta-orb-2 {
+		width: 250px;
+		height: 250px;
+		bottom: 10%;
+		right: 5%;
+		background: radial-gradient(circle, rgba(61, 199, 246, 0.12) 0%, transparent 70%);
+		animation: orbFloat2 20s ease-in-out infinite;
+	}
+	.final-cta-inner {
+		text-align: center;
+		z-index: 2;
+	}
+	.final-cta-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
+		background: rgba(59, 130, 246, 0.1);
+		border: 1px solid rgba(59, 130, 246, 0.2);
+		border-radius: 9999px;
+		padding: 0.625rem 1.25rem;
+		margin-bottom: 2rem;
+	}
+	.final-cta h2 {
+		font-size: clamp(2rem, 4vw, 2.75rem);
+		font-weight: 700;
+		color: #ffffff;
+		line-height: 1.2;
+		margin-bottom: 1.25rem;
+		letter-spacing: -0.02em;
+	}
+	.final-cta-accent {
+		color: #60b5f6;
+	}
+	.final-cta p {
+		font-size: 1.0625rem;
+		color: #94a3b8;
+		margin-bottom: 2rem;
+		max-width: 560px;
+		margin-left: auto;
+		margin-right: auto;
+		letter-spacing: -0.01em;
+		line-height: 1.7;
+	}
+	.final-cta-buttons {
+		justify-content: center;
+		margin-bottom: 2.5rem;
+	}
+	.final-cta .btn-secondary {
+		color: #cbd5e1;
+		border-color: rgba(203, 213, 225, 0.25);
+		background: transparent;
+	}
+	.final-cta .btn-secondary:hover {
+		color: #ffffff;
+		border-color: rgba(255, 255, 255, 0.4);
+		background: rgba(255, 255, 255, 0.08);
+	}
+	.trust-indicators {
+		display: flex;
+		justify-content: center;
+		gap: 2rem;
+		flex-wrap: wrap;
+	}
+	.trust-check {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: #94a3b8;
+		font-size: 0.85rem;
+	}
+	.trust-check-icon {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: rgba(16, 185, 129, 0.2);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* ===== FOOTER ===== */
+	.footer {
+		background: #000000;
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		padding: 3.5rem 0 2rem;
+		position: relative;
+	}
+	.footer::before {
+		display: none;
+	}
+	.footer-grid {
+		display: grid;
+		grid-template-columns: 1.5fr repeat(4, 1fr);
+		gap: 3rem;
+		margin-bottom: 3rem;
+	}
+	.footer-brand {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
 	.footer-logo {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
 	}
-
-	.footer-brand .brand-icon {
-		width: 40px;
-		height: 40px;
-		filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.4));
-		transition: filter 0.3s ease;
+	.footer-brand-name {
+		color: #ffffff !important;
 	}
-
-	.footer-brand .brand-icon:hover {
-		filter: drop-shadow(0 0 12px rgba(0, 217, 255, 0.6));
-	}
-
-	.footer-brand .brand-name {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #ffffff;
-		letter-spacing: -0.02em;
-	}
-
-	.brand-description {
-		color: #b8b8b8;
+	.footer-desc {
+		color: #94a3b8;
+		font-size: 0.875rem;
 		line-height: 1.6;
-		font-size: 0.95rem;
-		max-width: 350px;
+		max-width: 280px;
 	}
-
 	.footer-social {
 		display: flex;
-		gap: 0.75rem;
+		gap: 0.5rem;
 	}
-
 	.social-link {
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.1);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
-		color: #b8b8b8;
+		color: #94a3b8;
 		text-decoration: none;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
-		transition: all 0.3s ease;
+		transition: all 0.15s;
 	}
-
 	.social-link:hover {
-		color: #00d9ff;
-		border-color: #00d9ff;
-		background: rgba(0, 217, 255, 0.1);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 217, 255, 0.2);
-	}
-
-	.footer-links {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 2.5rem;
-	}
-
-	.link-group h4 {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.2);
 		color: #ffffff;
-		margin-bottom: 1.25rem;
+		transform: translateY(-2px);
+	}
+	.footer-link-col h4 {
+		color: #ffffff;
+		font-size: 0.8125rem;
 		font-weight: 600;
-		font-size: 0.95rem;
-		letter-spacing: 0.05em;
 		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		margin-bottom: 1rem;
 	}
-
-	.link-group a {
-		color: #b8b8b8;
-		text-decoration: none;
+	.footer-link-col a {
 		display: block;
-		margin-bottom: 0.75rem;
-		font-size: 0.95rem;
-		transition: all 0.2s ease;
-		position: relative;
-		padding-left: 0;
+		color: #94a3b8;
+		text-decoration: none;
+		font-size: 0.85rem;
+		margin-bottom: 0.625rem;
+		transition: color 0.15s ease;
 	}
-
-	.link-group a::before {
-		content: '';
-		position: absolute;
-		left: -12px;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 0;
-		height: 1px;
-		background: #00d9ff;
-		transition: width 0.2s ease;
+	.footer-link-col a:hover {
+		color: #ffffff;
 	}
-
-	.link-group a:hover {
-		color: #00d9ff;
-		padding-left: 16px;
-	}
-
-	.link-group a:hover::before {
-		width: 8px;
-	}
-
-	.footer-divider {
-		height: 1px;
-		background: rgba(255, 255, 255, 0.05);
-		margin: 2rem 0;
-	}
-
 	.footer-bottom {
+		padding-top: 2rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		color: #666;
-		font-size: 0.9rem;
-		flex-wrap: wrap;
-		gap: 1rem;
+		color: #64748b;
+		font-size: 0.8125rem;
 	}
-
-	.copyright {
-		color: #666;
-	}
-
-	.footer-legal {
+	.footer-bottom-links {
 		display: flex;
-		align-items: center;
-		gap: 0.75rem;
+		gap: 1.5rem;
 	}
-
-	.footer-legal a {
-		color: #888;
+	.footer-bottom-links a {
+		color: #64748b;
 		text-decoration: none;
-		transition: color 0.2s ease;
+		transition: color 0.15s;
+	}
+	.footer-bottom-links a:hover {
+		color: #ffffff;
 	}
 
-	.footer-legal a:hover {
-		color: #00d9ff;
-	}
-
-	.footer-legal .separator {
-		color: #444;
-	}
-
-	/* Responsive Design */
-	@media (max-width: 768px) {
-		.nav-container {
-			padding: 0 1rem;
-			flex-wrap: wrap;
+	/* ===== RESPONSIVE ===== */
+	@media (max-width: 1024px) {
+		.hero-container {
+			grid-template-columns: 1fr;
+			gap: 3rem;
 		}
+		.hero-left {
+			text-align: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		.hero-description {
+			max-width: 100%;
+		}
+		.hero-buttons {
+			justify-content: center;
+		}
+		.hero-right {
+			max-width: 560px;
+			margin: 0 auto;
+		}
+		.yaml-annotation {
+			display: none;
+		}
+		.solution-row,
+		.solution-row-reverse {
+			grid-template-columns: 1fr;
+		}
+		.solution-row-reverse .solution-text {
+			order: 1;
+		}
+		.solution-row-reverse .solution-visual {
+			order: 2;
+		}
+	}
 
+	@media (max-width: 768px) {
 		.nav-menu {
 			display: none;
 		}
-
-		.nav-actions {
-			gap: 0.5rem;
+		.hero {
+			padding: 6rem 0 3rem;
 		}
-
-		.user-welcome {
+		.hero-title {
+			font-size: clamp(1.75rem, 7vw, 2.5rem);
+		}
+		.hero-stats {
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1rem;
+		}
+		.yaml-tab:not(.yaml-tab-active) {
 			display: none;
 		}
-
-		.hero-dashboard {
-			padding: 100px 24px 60px 24px;
-			justify-content: center;
-		}
-
-		.yaml-display {
-			width: 100%;
-			padding-left: 0;
-			justify-content: center;
-			transform: translateZ(-50px) rotateY(0deg);
-		}
-
-		.yaml-pre {
-			font-size: 0.7rem;
-			line-height: 1.4;
-			opacity: 0.4;
-			padding: 0;
-		}
-
-		.hero-content {
-			max-width: 100%;
-			text-align: center;
-			transform: translateZ(20px);
-		}
-
-		.main-title {
-			font-size: clamp(2rem, 10vw, 3rem);
-		}
-
-		.hero-description {
-			text-align: center;
-			max-width: 100%;
-			font-size: 1rem;
-		}
-
-		.cta-buttons {
-			justify-content: center;
-			flex-direction: column;
-			align-items: center;
-		}
-
-		.btn-primary,
-		.btn-secondary {
-			width: 100%;
-			max-width: 280px;
-		}
-
-		.features-grid {
+		.problem-grid {
 			grid-template-columns: 1fr;
-			gap: 1.5rem;
 		}
-
-		.footer {
-			padding: 3rem 0 1.5rem;
-		}
-
-		.footer-content {
-			grid-template-columns: 1fr;
-			gap: 2.5rem;
-		}
-
-		.footer-brand {
-			text-align: center;
-			align-items: center;
-		}
-
-		.brand-description {
-			max-width: 100%;
-		}
-
-		.footer-social {
-			justify-content: center;
-		}
-
-		.footer-links {
-			grid-template-columns: 1fr;
+		.steps-grid {
+			grid-template-columns: 1fr 1fr;
 			gap: 2rem;
-			text-align: center;
 		}
-
-		.link-group a::before {
-			display: none;
+		.comparison-header,
+		.comparison-row {
+			grid-template-columns: 1.2fr 0.9fr 0.9fr;
 		}
-
-		.link-group a:hover {
-			padding-left: 0;
+		.footer-grid {
+			grid-template-columns: 1fr 1fr;
+			gap: 2rem;
 		}
-
 		.footer-bottom {
 			flex-direction: column;
-			gap: 1rem;
 			text-align: center;
+			gap: 1rem;
 		}
-
-		.footer-legal {
-			flex-wrap: wrap;
-			justify-content: center;
+		.trust-logos {
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 
 	@media (max-width: 480px) {
-		.navbar {
-			padding: 0.5rem 0;
+		.hero-buttons {
+			flex-direction: column;
+			align-items: stretch;
 		}
-
-		.nav-container {
-			padding: 0 0.5rem;
+		.hero-stats {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+			text-align: center;
 		}
-
-		.nav-actions {
-			gap: 0.25rem;
+		.steps-grid {
+			grid-template-columns: 1fr;
 		}
-
-		.nav-btn-secondary,
-		.nav-btn-primary {
-			padding: 0.4rem 0.8rem;
-			font-size: 0.85rem;
+		.comparison-header,
+		.comparison-row {
+			grid-template-columns: 1fr;
+			gap: 0.5rem;
 		}
-
-		.brand-name {
-			font-size: 1rem;
+		.comp-col-center {
+			justify-content: flex-start;
 		}
-
-		.brand-icon {
-			width: 24px;
-			height: 24px;
+		.footer-grid {
+			grid-template-columns: 1fr;
 		}
-
-		.hero-description {
-			font-size: 0.9rem;
-			line-height: 1.5;
-		}
-
-		.section-title {
-			font-size: clamp(1.8rem, 8vw, 2.5rem);
-		}
-
-		.section-description {
-			font-size: 1rem;
-		}
-
-		.features-container {
-			padding: 0 1rem;
-		}
-	}
-
-	/* Tablet optimizations */
-	@media (min-width: 481px) and (max-width: 768px) {
-		.features-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-	}
-
-	/* Large screen optimizations */
-	@media (min-width: 1200px) {
-		.features-grid {
+		.trust-logos {
 			grid-template-columns: repeat(3, 1fr);
-			max-width: 1400px;
-			margin: 3rem auto 0;
+			gap: 1rem;
 		}
+		.final-cta-buttons {
+			flex-direction: column;
+			align-items: center;
+		}
+	}
 
-		.hero-description {
-			font-size: 1.4rem;
-			max-width: 700px;
+	/* ===== SCROLL REVEAL ANIMATIONS ===== */
+	.reveal {
+		opacity: 0;
+		transition:
+			opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+			transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+		will-change: opacity, transform;
+	}
+	.reveal-up {
+		transform: translateY(40px);
+	}
+	.reveal-down {
+		transform: translateY(-40px);
+	}
+	.reveal-left {
+		transform: translateX(-50px);
+	}
+	.reveal-right {
+		transform: translateX(50px);
+	}
+	.reveal-scale {
+		transform: scale(0.92);
+	}
+	.reveal-fade {
+		transform: none;
+	}
+	.revealed {
+		opacity: 1 !important;
+		transform: none !important;
+	}
+
+	/* Stagger children inside revealed grids */
+	:global(.revealed .problem-card),
+	:global(.revealed .trust-logo) {
+		animation: staggerIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+	}
+	:global(.revealed .problem-card:nth-child(1)),
+	:global(.revealed .trust-logo:nth-child(1)) {
+		animation-delay: 0ms;
+	}
+	:global(.revealed .problem-card:nth-child(2)),
+	:global(.revealed .trust-logo:nth-child(2)) {
+		animation-delay: 100ms;
+	}
+	:global(.revealed .problem-card:nth-child(3)),
+	:global(.revealed .trust-logo:nth-child(3)) {
+		animation-delay: 200ms;
+	}
+	:global(.revealed .trust-logo:nth-child(4)) {
+		animation-delay: 300ms;
+	}
+	:global(.revealed .trust-logo:nth-child(5)) {
+		animation-delay: 400ms;
+	}
+	:global(.revealed .trust-logo:nth-child(6)) {
+		animation-delay: 500ms;
+	}
+
+	@keyframes staggerIn {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
 		}
 	}
 </style>
