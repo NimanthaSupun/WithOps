@@ -631,11 +631,12 @@ features:
 			</div>
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<svg width="24" height="24" viewBox="0 0 32 32" fill="#326CE5"
-						><path
-							d="M16 0L4.3 3.7c-.5.2-.8.6-.9 1l-2.7 12c-.1.5.1 1 .4 1.4L11 28.5c.3.5.8.8 1.4.8h9.6c.6 0 1.1-.3 1.4-.8l9.1-10.4c.3-.4.4-.9.4-1.4l-2.7-12c-.1-.4-.4-.8-.9-1L16 0zm0 4.6l9.1 2.9-.6 2.6-8.5-2.7-8.5 2.7-.6-2.6 9.1-2.9zm13 11.5l-8.5 9.7v-2.3l6.3-7.2 2.2-.2zm-15.6 11l-8.5-9.7 2.2.2 6.3 7.2v2.3zm1.1-12.2l3.4 3.4-3.4 3.4-3.4-3.4 3.4-3.4zM3 13.9l2.4-.4.8 3.5-2.8.5-.4-3.6zm23.7-3.1l2.4-.4-.4 3.6-2.8-.5.8-2.7zm.8 6.2l2.8.5.4 3.6-2.4.4-.8-4.5zm-24.4-.5l2.8-.5-.8 3.5-2.4.4.4-3.4zm10.2-12l2.7-.8 1.1 4.8-3.1.9-.7-4.9zm5.4 0l2.7.8-.7 4.9-3.1-.9 1.1-4.8z"
-						/></svg
-					>
+					<svg width="24" height="24" viewBox="0 0 256 250" xmlns="http://www.w3.org/2000/svg">
+						<path fill="#326CE5" d="M128 0L238.85 41.52V171.79L128 250L17.15 171.79V41.52L128 0Z"/>
+						<path fill="#FFFFFF" d="M128 20.31L217.49 53.05V156.4L128 221.28L38.51 156.4V53.05L128 20.31Z"/>
+						<path fill="#326CE5" d="M128 36.21L197.64 61.64V146.47L128 205.51L58.36 146.47V61.64L128 36.21Z"/>
+						<path fill="#FFFFFF" d="M128 65.04L170.62 81.24V130.67L128 165.65L85.38 130.67V81.24L128 65.04Z"/>
+					</svg>
 				</div>
 				<span class="trust-logo-name">Kubernetes</span>
 			</div>
@@ -649,11 +650,13 @@ features:
 			</div>
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="#FF9900"
-						><path d="M12 21a9 9 0 0 1-5.1-1.6c-.4-.3-.3-.5.1-.3 1.3.8 2.7 1.2 4.2 1.2 4.4 0 8.1-3.2 8.7-7.5.1-.4.2-.3.3-.1.6 4.3-1.6 8-8.2 8.3zm8.3-9.5c-.1.2-.2.2-.3.1-.3-.6-.8-1.1-1.4-1.4-.4-.3-.6-.4-.5-.6.1-.2.4-.2.9.1.8.4 1.4 1 1.7 1.8h-.4zm-5.6 1c-.1.2-.2.2-.3.1-.3-.6-.8-1.1-1.4-1.4-.4-.3-.6-.4-.5-.6.1-.2.4-.2.9.1.8.4 1.4 1 1.7 1.8h-.4zm-5.8 4.2h-.1c-1.2 0-2-.8-2-2 0-1.1.8-2 2-2 1.2 0 2 .8 2 2 0 1.2-.8 2-2 2zm0-3c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1zm-4.7 0h-.1c-1.2 0-2-.8-2-2 0-1.1.8-2 2-2 1.2 0 2 .8 2 2 0 1.2-.8 2-2 2zm0-3c-.6 0-1 .4-1 1s.4 1 1 1 1-.4 1-1-.4-1-1-1zm14.5-1.5h-.1c-.6 0-1.1-.4-1.1-1 0-.6.5-1 1.1-1 .6 0 1.1.4 1.1 1s-.5 1-1.1 1z" /></svg
-					>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ADEF"/>
+						<path d="M12 7L2 12L12 17L22 12L12 7Z" fill="#00ADEF" fill-opacity="0.6"/>
+						<path d="M12 12L2 17L12 22L22 17L12 12Z" fill="#00ADEF" fill-opacity="0.3"/>
+					</svg>
 				</div>
-				<span class="trust-logo-name">AWS</span>
+				<span class="trust-logo-name">Harness</span>
 			</div>
 			<div class="trust-logo">
 				<div class="trust-logo-box">
@@ -1396,11 +1399,16 @@ features:
 		z-index: 2;
 		max-width: 1440px;
 		margin: 0 auto;
-		padding: 0 3rem;
+		padding: 0 1.5rem;
 		display: grid;
 		grid-template-columns: 4.5fr 7.5fr;
 		gap: 3rem;
 		align-items: center;
+	}
+	@media (min-width: 769px) {
+		.hero-container {
+			padding: 0 3rem;
+		}
 	}
 
 	/* Hero Left */
@@ -1950,20 +1958,22 @@ features:
 		margin-top: 3rem;
 	}
 	.problem-card {
-		background: #0d0f14;
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: 16px;
+		background: #050505;
+		border: 1px solid rgba(255, 255, 255, 0.04);
+		border-radius: 12px;
 		padding: 2.25rem;
 		position: relative;
 		overflow: hidden;
-		transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+		transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 		display: flex;
 		flex-direction: column;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	}
 	.problem-card:hover {
-		border-color: rgba(239, 68, 68, 0.2);
-		transform: translateY(-5px);
-		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+		border-color: rgba(255, 255, 255, 0.1);
+		transform: translateY(-3px);
+		background: #080808;
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
 	}
 	.problem-header-row {
 		display: flex;
@@ -2016,9 +2026,9 @@ features:
 
 	/* Diagnostic Data Box */
 	.problem-data-box {
-		background: #080a0f;
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: 12px;
+		background: #000000;
+		border: 1px solid rgba(255, 255, 255, 0.03);
+		border-radius: 8px;
 		padding: 1.25rem;
 		font-family: 'JetBrains Mono', monospace;
 		display: flex;
@@ -2155,8 +2165,9 @@ features:
 		transition: all 0.2s ease;
 	}
 	.solution-mockup:hover {
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 		transform: translateY(-2px);
+		border-color: rgba(255, 255, 255, 0.1);
 	}
 	.mockup-chrome {
 		display: flex;
@@ -2565,7 +2576,6 @@ features:
 	.bento-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		grid-template-rows: auto auto;
 		gap: 1.5rem;
 		margin-top: 3rem;
 	}
@@ -2925,10 +2935,10 @@ features:
 	@media (max-width: 1024px) {
 		.hero-container {
 			grid-template-columns: 1fr;
-			gap: 3rem;
+			gap: 4rem;
+			text-align: center;
 		}
 		.hero-left {
-			text-align: center;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
@@ -2940,8 +2950,11 @@ features:
 			justify-content: center;
 		}
 		.hero-right {
-			max-width: 560px;
-			margin: 0 auto;
+			max-width: 100%;
+			width: 100%;
+		}
+		.yaml-panel-container {
+			transform: none !important;
 		}
 		.yaml-annotation {
 			display: none;
@@ -2949,12 +2962,19 @@ features:
 		.solution-row,
 		.solution-row-reverse {
 			grid-template-columns: 1fr;
+			gap: 2rem;
 		}
 		.solution-row-reverse .solution-text {
 			order: 1;
 		}
 		.solution-row-reverse .solution-visual {
 			order: 2;
+		}
+		.bento-grid {
+			grid-template-columns: 1fr;
+		}
+		.bento-large, .bento-medium, .bento-wide {
+			grid-column: span 1;
 		}
 	}
 
@@ -2963,74 +2983,82 @@ features:
 			display: none;
 		}
 		.hero {
-			padding: 6rem 0 3rem;
+			padding: 5rem 0 3rem;
 		}
 		.hero-title {
-			font-size: clamp(1.75rem, 7vw, 2.5rem);
+			font-size: clamp(2rem, 8vw, 3rem);
 		}
 		.hero-stats {
 			grid-template-columns: repeat(3, 1fr);
 			gap: 1rem;
 		}
-		.yaml-tab:not(.yaml-tab-active) {
+		.yaml-panel-header {
+			gap: 0.5rem;
+			padding: 0.5rem;
+		}
+		.yaml-breadcrumbs, .yaml-tabs {
 			display: none;
+		}
+		.yaml-panel-body {
+			max-height: 400px;
+		}
+		.yaml-pre {
+			font-size: 0.7rem;
+			padding: 1rem 0.5rem;
 		}
 		.problem-grid {
 			grid-template-columns: 1fr;
 		}
 		.steps-grid {
-			grid-template-columns: 1fr 1fr;
-			gap: 2rem;
+			grid-template-columns: 1fr;
+			gap: 1.5rem;
 		}
-		.comparison-header,
-		.comparison-row {
-			grid-template-columns: 1.2fr 0.9fr 0.9fr;
+		.trust-logos {
+			grid-template-columns: repeat(3, 1fr);
+			gap: 1.5rem;
 		}
 		.footer-grid {
 			grid-template-columns: 1fr 1fr;
-			gap: 2rem;
+			gap: 2.5rem;
 		}
 		.footer-bottom {
 			flex-direction: column;
 			text-align: center;
-			gap: 1rem;
-		}
-		.trust-logos {
-			grid-template-columns: repeat(3, 1fr);
+			gap: 1.5rem;
 		}
 	}
 
 	@media (max-width: 480px) {
 		.hero-buttons {
-			flex-direction: column;
-			align-items: stretch;
+			width: 100%;
+		}
+		.btn-primary, .btn-secondary {
+			width: 100%;
+			justify-content: center;
 		}
 		.hero-stats {
 			grid-template-columns: 1fr;
-			gap: 1rem;
-			text-align: center;
+			gap: 1.5rem;
 		}
-		.steps-grid {
-			grid-template-columns: 1fr;
+		.yaml-line-numbers {
+			display: none;
 		}
-		.comparison-header,
-		.comparison-row {
-			grid-template-columns: 1fr;
-			gap: 0.5rem;
+		.yaml-pre {
+			padding-left: 1rem;
 		}
-		.comp-col-center {
-			justify-content: flex-start;
+		.trust-logos {
+			grid-template-columns: repeat(2, 1fr);
 		}
 		.footer-grid {
 			grid-template-columns: 1fr;
 		}
-		.trust-logos {
-			grid-template-columns: repeat(3, 1fr);
-			gap: 1rem;
-		}
 		.final-cta-buttons {
 			flex-direction: column;
-			align-items: center;
+			gap: 1rem;
+		}
+		.final-cta-buttons .btn-primary,
+		.final-cta-buttons .btn-secondary {
+			width: 100%;
 		}
 	}
 
