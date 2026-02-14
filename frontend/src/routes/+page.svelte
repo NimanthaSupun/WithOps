@@ -540,6 +540,16 @@ features:
 		<div class="hero-bg-base"></div>
 		<div class="hero-bg-grid"></div>
 	</div>
+	<!-- 3D Depth layers -->
+	<div class="hero-depth-fog"></div>
+	<div class="hero-vignette"></div>
+	<div class="hero-particles">
+		<div class="particle p1"></div>
+		<div class="particle p2"></div>
+		<div class="particle p3"></div>
+		<div class="particle p4"></div>
+		<div class="particle p5"></div>
+	</div>
 
 	<div class="hero-container">
 		<!-- Left: Text Content -->
@@ -1566,16 +1576,32 @@ features:
 		align-items: center;
 		background: var(--bg-app);
 	}
-	/* Architectural grid backdrop — strong visibility */
+	/* 3D perspective grid floor — vanishing point depth */
 	.hero::before {
 		content: '';
 		position: absolute;
-		inset: 0;
+		bottom: 0;
+		left: -50%;
+		width: 200%;
+		height: 70%;
 		background-image:
-			linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-		background-size: 40px 40px;
-		mask-image: radial-gradient(circle at 70% 40%, black 10%, transparent 70%);
+			linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+		background-size: 20px 20px;
+		transform: perspective(500px) rotateX(65deg);
+		transform-origin: center top;
+		mask-image: linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.8) 0%,
+			rgba(0, 0, 0, 0.3) 40%,
+			transparent 75%
+		);
+		-webkit-mask-image: linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.8) 0%,
+			rgba(0, 0, 0, 0.3) 40%,
+			transparent 75%
+		);
 		pointer-events: none;
 		z-index: 0;
 	}
@@ -1603,6 +1629,117 @@ features:
 	}
 	.hero-bg-grid {
 		display: none;
+	}
+
+	/* Depth fog — atmospheric haze near the floor */
+	.hero-depth-fog {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 40%;
+		background: linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.5) 0%,
+			rgba(0, 0, 0, 0.15) 40%,
+			transparent 100%
+		);
+		pointer-events: none;
+		z-index: 0;
+	}
+
+	/* Vignette — cinematic edge darkening */
+	.hero-vignette {
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(
+			ellipse 70% 60% at 50% 45%,
+			transparent 50%,
+			rgba(0, 0, 0, 0.4) 100%
+		);
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	/* Floating depth particles */
+	.hero-particles {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		z-index: 0;
+		overflow: hidden;
+	}
+	.particle {
+		position: absolute;
+		border-radius: 50%;
+		background: rgba(0, 173, 239, 0.15);
+		filter: blur(1px);
+		animation: particleFloat 20s ease-in-out infinite;
+	}
+	.p1 {
+		width: 3px;
+		height: 3px;
+		top: 25%;
+		left: 15%;
+		opacity: 0.6;
+		animation-duration: 18s;
+	}
+	.p2 {
+		width: 2px;
+		height: 2px;
+		top: 40%;
+		left: 75%;
+		opacity: 0.4;
+		animation-duration: 24s;
+		animation-delay: -5s;
+	}
+	.p3 {
+		width: 4px;
+		height: 4px;
+		top: 60%;
+		left: 45%;
+		opacity: 0.3;
+		filter: blur(2px);
+		animation-duration: 22s;
+		animation-delay: -8s;
+	}
+	.p4 {
+		width: 2px;
+		height: 2px;
+		top: 35%;
+		left: 55%;
+		opacity: 0.5;
+		animation-duration: 26s;
+		animation-delay: -12s;
+	}
+	.p5 {
+		width: 3px;
+		height: 3px;
+		top: 70%;
+		left: 25%;
+		opacity: 0.25;
+		filter: blur(2px);
+		animation-duration: 20s;
+		animation-delay: -3s;
+	}
+	@keyframes particleFloat {
+		0%,
+		100% {
+			transform: translate(0, 0) scale(1);
+			opacity: var(--p-opacity, 0.4);
+		}
+		25% {
+			transform: translate(15px, -20px) scale(1.2);
+			opacity: calc(var(--p-opacity, 0.4) * 1.3);
+		}
+		50% {
+			transform: translate(-10px, -35px) scale(0.8);
+			opacity: calc(var(--p-opacity, 0.4) * 0.7);
+		}
+		75% {
+			transform: translate(20px, -15px) scale(1.1);
+			opacity: var(--p-opacity, 0.4);
+		}
 	}
 
 	.hero-container {
