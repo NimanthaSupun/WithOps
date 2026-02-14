@@ -444,6 +444,27 @@ features:
 			if (pauseTimer) clearTimeout(pauseTimer);
 		};
 	});
+	// Magnetic button logic for luxury interaction
+	function magnetic(node) {
+		const move = (e) => {
+			const rect = node.getBoundingClientRect();
+			const centerX = rect.left + rect.width / 2;
+			const centerY = rect.top + rect.height / 2;
+			const x = (e.clientX - centerX) * 0.35;
+			const y = (e.clientY - centerY) * 0.35;
+			node.style.transform = `translate(${x}px, ${y}px)`;
+		};
+		const reset = () => { node.style.transform = `translate(0, 0)`; };
+		node.addEventListener('mousemove', move);
+		node.addEventListener('mouseleave', reset);
+		return {
+			destroy() {
+				node.removeEventListener('mousemove', move);
+				node.removeEventListener('mouseleave', reset);
+			}
+		};
+	}
+
 	function reveal(node, options = {}) {
 		const { threshold = 0.15, delay = 0, direction = 'up' } = options;
 		const dirMap = {
@@ -538,13 +559,11 @@ features:
 						Go to Dashboard
 					</button>
 				{:else}
-					<button class="btn-primary" on:click={handleGetStarted}>
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
-							><path
-								d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-							/></svg
-						>
-						Connect GitHub Organization
+					<button class="btn-primary" use:magnetic on:click={handleGetStarted}>
+						<span>Get Started</span>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+							<polyline points="9 18 15 12 9 6"></polyline>
+						</svg>
 					</button>
 					<button class="btn-secondary" on:click={handleSignIn}>
 						<!--  -->
@@ -1330,11 +1349,34 @@ features:
 		padding: 7rem 0 5rem;
 		display: flex;
 		align-items: center;
-		background: #010101;
-		/* Localized accent diffusion - tightly contained to maintain deep black backdrop */
+		background: #000000;
+		/* Luxury technical canvas layering */
 		background-image: 
-			radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 35%),
-			radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.03) 0%, transparent 30%);
+			radial-gradient(circle at 80% 20%, rgba(0, 173, 239, 0.05) 0%, transparent 40%),
+			radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 35%);
+	}
+	/* Grid Overlay */
+	.hero::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image: 
+			linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: radial-gradient(circle at center, black, transparent 80%);
+		pointer-events: none;
+		z-index: 1;
+	}
+	/* Matte Noise Texture */
+	.hero::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		opacity: 0.02;
+		background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+		pointer-events: none;
+		z-index: 1;
 	}
 	.hero-bg {
 		position: absolute;
@@ -1756,13 +1798,30 @@ features:
 		vertical-align: text-bottom;
 		animation: blink 1s infinite;
 	}
+	/* Scanning Beam Effect */
+	.yaml-panel-body::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 120px;
+		background: linear-gradient(to bottom, transparent, rgba(0, 173, 239, 0.03), transparent);
+		animation: scanLine 8s linear infinite;
+		pointer-events: none;
+		z-index: 10;
+	}
+	@keyframes scanLine {
+		0% { transform: translateY(-100%); }
+		100% { transform: translateY(500px); }
+	}
 	@keyframes blink {
 		0%,
-		50% {
-			opacity: 1;
-		}
-		51%,
 		100% {
+			opacity: 1;
+			box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+		}
+		51% {
 			opacity: 0;
 		}
 	}
@@ -3065,32 +3124,22 @@ features:
 	/* ===== SCROLL REVEAL ANIMATIONS ===== */
 	.reveal {
 		opacity: 0;
+		filter: blur(10px);
 		transition:
-			opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-			transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-		will-change: opacity, transform;
+			opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+			filter 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+			transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+		will-change: opacity, transform, filter;
 	}
-	.reveal-up {
-		transform: translateY(40px);
-	}
-	.reveal-down {
-		transform: translateY(-40px);
-	}
-	.reveal-left {
-		transform: translateX(-50px);
-	}
-	.reveal-right {
-		transform: translateX(50px);
-	}
-	.reveal-scale {
-		transform: scale(0.92);
-	}
-	.reveal-fade {
-		transform: none;
-	}
+	.reveal-up { transform: translateY(30px); }
+	.reveal-down { transform: translateY(-30px); }
+	.reveal-left { transform: translateX(-30px); }
+	.reveal-right { transform: translateX(30px); }
+	.reveal-scale { transform: scale(0.96); }
 	.revealed {
 		opacity: 1 !important;
 		transform: none !important;
+		filter: blur(0) !important;
 	}
 
 	/* Stagger children inside revealed grids */
