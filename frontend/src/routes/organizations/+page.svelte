@@ -581,7 +581,7 @@
 
 			console.log(`🔄 Retrying stats for ${orgName}...`);
 			const statsResult = await githubClient.getOrganizationStats(orgName);
-			console.log(`� Retry result for ${orgName}:`, statsResult);
+			console.log(` Retry result for ${orgName}:`, statsResult);
 
 			if (statsResult.success) {
 				connectedOrganizations[orgIndex] = {
@@ -692,226 +692,139 @@
 </script>
 
 <svelte:head>
-	<title>GitHub Organizations - WithOps DevSecOps Platform</title>
+	<title>Organizations - WithOps DevSecOps Platform</title>
 </svelte:head>
 
 <div class="organizations-page {darkMode ? 'dark' : 'light'}">
-	<!-- Background Effects -->
-	<div class="page-background">
-		<div class="page-glow-1"></div>
-		<div class="page-glow-2"></div>
-		<div class="github-pattern"></div>
-	</div>
+	<!-- Header Navigation -->
+	<nav class="dashboard-header">
+		<div class="header-content">
+			<a href="/dashboard" class="nav-brand">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+				<span class="brand-name">WithOps</span>
+			</a>
 
-	<div class="page-content">
-		<!-- Professional Header Section -->
-		<div class="page-header">
-			<!-- Top Navigation Bar -->
-			<div class="header-top-bar">
-				<button onclick={() => goto('/dashboard')} class="back-nav-button">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M10 19l-7-7m0 0l7-7m-7 7h18"
-						/>
-					</svg>
-					<span>Back to Dashboard</span>
-				</button>
+			<div class="nav-menu">
+				<a href="/dashboard" class="nav-link">Overview</a>
+				<a href="/organizations" class="nav-link active">Organizations</a>
+			</div>
 
-				<button onclick={toggleTheme} class="theme-toggle-button">
+			<div class="nav-actions">
+				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 					{#if darkMode}
-						<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
-							<path
-								d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
 							/>
 						</svg>
 					{:else}
-						<svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
-							<path
-								fill-rule="evenodd"
-								d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"
-								clip-rule="evenodd"
-							/>
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
 				</button>
 			</div>
-
-			<!-- Main Header Content -->
-			<div class="header-main">
-				<div class="header-left">
-					<div class="header-icon">
-						<svg fill="currentColor" viewBox="0 0 24 24">
-							<path
-								d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-							/>
-						</svg>
-					</div>
-					<div class="header-text">
-						<h1 class="header-title">GitHub Organizations</h1>
-						<p class="header-subtitle">Manage your connected workspaces and repositories</p>
-					</div>
-				</div>
-
-				<div class="header-actions">
-					<button onclick={connectNewOrganization} class="action-button primary-action">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-							/>
-						</svg>
-						<span>Connect Organization</span>
-					</button>
-					<button onclick={refreshOrganizations} class="action-button secondary-action">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-							/>
-						</svg>
-						<span>Refresh</span>
-					</button>
-				</div>
-			</div>
-
-			<!-- Filter Bar - Full Width Below Header -->
-			{#if !loading && !error && connectedOrganizations.length > 0}
-				<div class="filter-bar">
-					<button
-						class="filter-button {filterType === 'all' ? 'active' : ''}"
-						onclick={() => (filterType = 'all')}
-					>
-						<span class="filter-icon">📊</span>
-						<span>All Organizations</span>
-						<span class="filter-count">{connectedOrganizations.length}</span>
-					</button>
-
-					<button
-						class="filter-button {filterType === 'owned' ? 'active' : ''}"
-						onclick={() => (filterType = 'owned')}
-					>
-						<span class="filter-icon">🏆</span>
-						<span>My Installations</span>
-						<span class="filter-count"
-							>{connectedOrganizations.filter((o) => o.installed_by_you).length}</span
-						>
-					</button>
-
-					<button
-						class="filter-button {filterType === 'shared' ? 'active' : ''}"
-						onclick={() => (filterType = 'shared')}
-					>
-						<span class="filter-icon">👥</span>
-						<span>Shared with Me</span>
-						<span class="filter-count"
-							>{connectedOrganizations.filter((o) => o.auto_linked).length}</span
-						>
-					</button>
-				</div>
-			{/if}
 		</div>
+	</nav>
 
-		<!-- Main Content -->
+	<!-- Technical Breadcrumb Bar -->
+	<div class="technical-bar">
+		<div class="breadcrumb">
+			<span class="breadcrumb-item">WithOps</span>
+			<span class="breadcrumb-sep">/</span>
+			<span class="breadcrumb-item active">Organizations</span>
+		</div>
+		<div class="system-status">
+			<div class="status-pulse"></div>
+			NODES: GLOBAL ACTIVE
+		</div>
+	</div>
+
+	<div class="page-content">
 		<main class="page-main">
-			<!-- Pending Invitations Banner -->
+			<header class="view-header">
+				<div class="title-group">
+					<h1>Workspaces</h1>
+					<p>Govern your secure development lifecycle across all managed GitHub organizations.</p>
+				</div>
+				<div class="header-cta">
+					<button onclick={refreshOrganizations} class="btn btn-secondary">
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path
+								d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+							/>
+						</svg>
+						Sync
+					</button>
+					<button onclick={connectNewOrganization} class="btn btn-primary">
+						Authorize New Org
+						<span class="button-arrow">→</span>
+					</button>
+				</div>
+			</header>
+
+			<!-- Notifications / Invites -->
 			{#if pendingInvitations.length > 0}
 				<div class="invitations-banner">
-					<div class="invitations-header">
-						<div class="invitations-icon">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-								/>
-							</svg>
-						</div>
-						<div class="invitations-title-section">
-							<h3>
-								You have {pendingInvitations.length} pending invitation{pendingInvitations.length >
-								1
-									? 's'
-									: ''}
-							</h3>
-							<p>
-								You've been invited to join the following organization{pendingInvitations.length > 1
-									? 's'
-									: ''}
-							</p>
-						</div>
+					<div class="banner-header">
+						<h3>PENDING INVITATIONS ({pendingInvitations.length})</h3>
 					</div>
-					<div class="invitations-list">
+					<div class="invites-list">
 						{#each pendingInvitations as invitation}
-							<div class="invitation-card">
-								<div class="invitation-org">
+							<div class="invite-item">
+								<div class="invite-org-info">
 									<img
 										src={invitation.organization.avatar_url || '/default-org.png'}
-										alt={invitation.organization.name}
-										class="invitation-org-avatar"
+										alt=""
+										class="invite-avatar"
 									/>
-									<div class="invitation-org-info">
-										<span class="invitation-org-name"
+									<div class="invite-details">
+										<span class="invite-name"
 											>{invitation.organization.name || invitation.organization.login}</span
 										>
-										<span class="invitation-meta">
-											Invited by {invitation.invited_by.name || invitation.invited_by.email} as
-											<strong>{invitation.role}</strong>
-										</span>
+										<span class="invite-meta"
+											>Role: {invitation.role} • via {invitation.invited_by.name ||
+												invitation.invited_by.email}</span
+										>
 									</div>
 								</div>
-								<div class="invitation-actions">
+								<div class="org-actions">
 									<button
-										class="btn-accept"
+										class="btn btn-primary"
 										onclick={() =>
 											acceptInvitation(
 												invitation.invite_token,
 												invitation.organization.name || invitation.organization.login
 											)}
-										disabled={isAcceptingInvitation === invitation.invite_token ||
-											isDecliningInvitation === invitation.invite_token}
+										disabled={isAcceptingInvitation === invitation.invite_token}
 									>
-										{#if isAcceptingInvitation === invitation.invite_token}
-											<div class="btn-spinner-small"></div>
-											Joining...
-										{:else}
-											<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
-											Accept
-										{/if}
+										Accept
 									</button>
 									<button
-										class="btn-decline"
+										class="btn btn-outline"
 										onclick={() => declineInvitation(invitation.invite_token)}
-										disabled={isAcceptingInvitation === invitation.invite_token ||
-											isDecliningInvitation === invitation.invite_token}
+										disabled={isDecliningInvitation === invitation.invite_token}
 									>
-										{#if isDecliningInvitation === invitation.invite_token}
-											<div class="btn-spinner-small"></div>
-										{:else}
-											<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M6 18L18 6M6 6l12 12"
-												/>
-											</svg>
-											Decline
-										{/if}
+										Decline
 									</button>
 								</div>
 							</div>
@@ -920,365 +833,143 @@
 				</div>
 			{/if}
 
+			{#if !loading && !error && connectedOrganizations.length > 0}
+				<!-- Sub-navigation Filter -->
+				<div class="filter-nav">
+					<button
+						class="filter-btn {filterType === 'all' ? 'active' : ''}"
+						onclick={() => (filterType = 'all')}
+					>
+						ALL ORGS <span class="count-badge">{connectedOrganizations.length}</span>
+					</button>
+					<button
+						class="filter-btn {filterType === 'owned' ? 'active' : ''}"
+						onclick={() => (filterType = 'owned')}
+					>
+						OWNED <span class="count-badge"
+							>{connectedOrganizations.filter((o) => o.installed_by_you).length}</span
+						>
+					</button>
+					<button
+						class="filter-btn {filterType === 'shared' ? 'active' : ''}"
+						onclick={() => (filterType = 'shared')}
+					>
+						SHARED <span class="count-badge"
+							>{connectedOrganizations.filter((o) => o.auto_linked).length}</span
+						>
+					</button>
+				</div>
+			{/if}
+
 			{#if loading}
-				<!-- Loading State -->
-				<div class="state-card loading-state">
-					<div class="loading-section">
-						<div class="loading-icon">
-							<div class="github-logo">
-								<svg fill="currentColor" viewBox="0 0 24 24">
-									<path
-										d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-									/>
-								</svg>
-							</div>
-							<div class="scanning-animation">
-								<div class="scan-line"></div>
-							</div>
-						</div>
-						<div class="loading-content">
-							<h2 class="loading-title">Loading Organizations</h2>
-							<p class="loading-message">Discovering your GitHub workspaces...</p>
-							<div class="progress-dots">
-								<div class="dot"></div>
-								<div class="dot"></div>
-								<div class="dot"></div>
-							</div>
-						</div>
-					</div>
+				<div class="loader-view">
+					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+					<div class="loader-text">SCANNING INFRASTRUCTURE...</div>
 				</div>
 			{:else if error}
-				<!-- Error State -->
-				<div class="state-card error-state">
-					<div class="error-section">
-						<div class="error-icon">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.958-.833-2.728 0L4.186 14.5c-.77.833.192 2.5 1.732 2.5z"
-								/>
-							</svg>
-						</div>
-						<div class="error-content">
-							<h2 class="error-title">Error Loading Organizations</h2>
-							<p class="error-message">{error}</p>
-							<button onclick={loadConnectedOrganizations} class="retry-button">
-								<svg class="retry-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-									/>
-								</svg>
-								Try Again
-							</button>
-						</div>
-					</div>
+				<div class="loader-view">
+					<p class="error-text">{error}</p>
+					<button onclick={loadConnectedOrganizations} class="btn btn-primary mt-4"
+						>Retry Connection</button
+					>
 				</div>
-			{:else if connectedOrganizations.length === 0}
-				<!-- Empty State - Check if GitHub connection is needed first -->
-				{#if needsGitHubConnection}
-					<!-- GitHub Connection Required Prompt -->
-					<div class="state-card github-connection-state">
-						<div class="github-connect-section">
-							<div class="github-connect-icon">
-								<svg fill="currentColor" viewBox="0 0 24 24">
-									<path
-										d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-									/>
-								</svg>
-								<div class="link-badge">
-									<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-										/>
-									</svg>
-								</div>
-							</div>
-							<div class="github-connect-content">
-								<h3 class="github-connect-title">Connect Your GitHub Account</h3>
-								<p class="github-connect-description">
-									{githubConnectionMessage ||
-										'You logged in without GitHub. Connect your GitHub account to access organizations where your team has already installed the WithOps App.'}
-								</p>
-								<div class="github-connect-info">
-									<div class="info-item">
-										<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-											/>
-										</svg>
-										<span>Auto-link to existing team installations</span>
-									</div>
-									<div class="info-item">
-										<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-											/>
-										</svg>
-										<span>Access your organization's repositories</span>
-									</div>
-									<div class="info-item">
-										<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-											/>
-										</svg>
-										<span>No need to reinstall the GitHub App</span>
-									</div>
-								</div>
-								<button
-									onclick={connectGitHubAccount}
-									class="github-connect-button"
-									disabled={isConnectingGitHub}
-								>
-									{#if isConnectingGitHub}
-										<div class="button-spinner"></div>
-										<span>Connecting...</span>
-									{:else}
-										<svg fill="currentColor" viewBox="0 0 24 24" class="button-icon">
-											<path
-												d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-											/>
-										</svg>
-										<span>Connect GitHub Account</span>
-										<div class="button-arrow">→</div>
-									{/if}
-								</button>
-							</div>
-						</div>
+			{:else if connectedOrganizations.length === 0 && !needsGitHubConnection}
+				<div class="loader-view">
+					<p>No active organizations found.</p>
+					<button onclick={connectNewOrganization} class="btn btn-primary mt-4"
+						>Connect GitHub</button
+					>
+				</div>
+			{:else if needsGitHubConnection}
+				<div class="invitations-banner">
+					<div class="banner-header">
+						<h3>GITHUB CONNECTION REQUIRED</h3>
 					</div>
-				{:else}
-					<!-- Regular Empty State -->
-					<div class="state-card empty-state">
-						<div class="empty-section">
-							<div class="empty-icon">
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-									/>
-								</svg>
-							</div>
-							<div class="empty-content">
-								<h3 class="empty-title">No Organizations Connected</h3>
-								<p class="empty-description">
-									Connect your first GitHub organization to get started with DevSecOps workflows and
-									security scanning.
-								</p>
-								<button onclick={connectNewOrganization} class="connect-button">
-									<div class="button-icon">
-										<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M13 10V3L4 14h7v7l9-11h-7z"
-											/>
-										</svg>
-									</div>
-									<span>Connect to GitHub</span>
-									<div class="button-arrow">→</div>
-								</button>
-							</div>
-						</div>
-					</div>
-				{/if}
+					<p class="mb-4">
+						{githubConnectionMessage || 'Bridge your account to access team installations.'}
+					</p>
+					<button
+						onclick={connectGitHubAccount}
+						class="btn btn-primary"
+						disabled={isConnectingGitHub}
+					>
+						{isConnectingGitHub ? 'Redirecting...' : 'Link GitHub Account'}
+					</button>
+				</div>
 			{:else}
-				<!-- Organizations Grid -->
-				<div class="organizations-grid">
+				<!-- Grid -->
+				<div class="org-grid">
 					{#each connectedOrganizations.filter((org) => {
 						if (filterType === 'owned') return org.installed_by_you;
 						if (filterType === 'shared') return org.auto_linked;
 						return true;
 					}) as org}
-						<div class="org-card {org.status === 'connected' ? 'connected' : 'disconnected'}">
-							<!-- Organization Header -->
-							<div class="org-card-header">
-								<div class="org-info">
-									<div class="org-avatar">
-										<img src={org.avatar_url} alt="{org.login} avatar" />
-										<div class="avatar-glow"></div>
-									</div>
-									<div class="org-details">
-										<h3 class="org-name">{org.login}</h3>
-										<div class="org-status">
-											{#if org.status === 'connected'}
-												<div class="status-badge connected-badge">
-													<div class="badge-icon">✅</div>
-													<span>Connected</span>
-												</div>
-
-												<!-- Owner/Shared Badge -->
-												{#if org.installed_by_you}
-													<div class="status-badge owner-badge">
-														<div class="badge-icon">🏆</div>
-														<span>Owner</span>
-													</div>
-												{:else if org.auto_linked}
-													<div class="status-badge shared-badge">
-														<div class="badge-icon">👥</div>
-														<span>Shared Access</span>
-													</div>
-												{/if}
-											{:else}
-												<div class="status-badge pending-badge">
-													<div class="badge-icon">⏳</div>
-													<span>Pending</span>
-												</div>
-											{/if}
-										</div>
+						<div class="org-card">
+							<div class="org-card-top">
+								<img src={org.avatar_url} alt="" class="org-avatar" />
+								<div class="org-meta">
+									<h3 class="org-name">{org.login}</h3>
+									<div class="status-tag {org.status === 'connected' ? 'connected' : 'pending'}">
+										<div class="tag-dot"></div>
+										{org.status === 'connected' ? 'VERIFIED' : 'PENDING'}
 									</div>
 								</div>
 							</div>
 
-							<!-- Statistics -->
-							<div class="org-stats">
-								<div class="stat-item">
-									<div class="stat-label">Repositories</div>
-									<div class="stat-value">
-										{#if org.loading_details}
-											<div class="stat-skeleton"></div>
-										{:else if org.error_loading}
-											<span class="stat-error">—</span>
-										{:else}
-											{org.repositories_count ?? '—'}
-										{/if}
-									</div>
+							<div class="org-stats-row">
+								<div class="stat-box">
+									<span class="stat-label">Repos</span>
+									<span class="stat-value"
+										>{org.loading_details ? '...' : (org.repositories_count ?? 0)}</span
+									>
 								</div>
-								<div class="stat-item">
-									<div class="stat-label">Workflows</div>
-									<div class="stat-value">
-										{#if org.loading_details}
-											<div class="stat-skeleton"></div>
-										{:else if org.error_loading}
-											<span class="stat-error">—</span>
-										{:else}
-											{org.workflows_count ?? '—'}
-										{/if}
-									</div>
+								<div class="stat-box">
+									<span class="stat-label">Flows</span>
+									<span class="stat-value"
+										>{org.loading_details ? '...' : (org.workflows_count ?? 0)}</span
+									>
 								</div>
-								<div class="stat-item">
-									<div class="stat-label">Team Size</div>
-									<div class="stat-value">
-										{#if org.installation?.linked_user_count}
-											{org.installation.linked_user_count + 1} members
-										{:else if org.installed_by_you}
-											1 member
-										{:else}
-											—
-										{/if}
-									</div>
-								</div>
-								<div class="stat-item full-width">
-									<div class="stat-label">Last verified</div>
-									<div class="stat-value">
-										{#if org.last_verified}
-											{new Date(org.last_verified).toLocaleString()}
-										{:else if org.last_synced}
-											{new Date(org.last_synced).toLocaleDateString()}
-										{:else}
-											Never
-										{/if}
-									</div>
+								<div class="stat-box">
+									<span class="stat-label">Tier</span>
+									<span class="stat-value">{org.installed_by_you ? 'Admin' : 'Member'}</span>
 								</div>
 							</div>
 
-							<!-- Actions -->
 							<div class="org-actions">
 								{#if org.app_installed && org.status === 'connected'}
 									<button
 										onclick={() => viewOrganizationWorkspace(org.login)}
-										onmouseenter={() => githubClient.preloadOrganizationWorkspace(org.login)}
-										class="org-button workspace-button"
+										class="btn btn-primary btn-full"
 									>
-										<div class="button-icon">
-											<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M13 10V3L4 14h7v7l9-11h-7z"
-												/>
-											</svg>
-										</div>
-										<span>View Workspace</span>
-										<div class="button-arrow">→</div>
+										<span>Open Workspace</span>
+										<span class="button-arrow">→</span>
 									</button>
-
 									{#if org.installed_by_you}
 										<button
 											onclick={() => goto(`/organizations/${org.login}/team`)}
-											class="org-button team-button"
-											title="Manage team members and invitations"
+											class="btn btn-outline"
+											title="Settings"
+											aria-label="Organization settings"
 										>
-											<div class="button-icon">
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-													/>
-												</svg>
-											</div>
-											<span>Manage Team</span>
+											<svg
+												width="14"
+												height="14"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+											</svg>
 										</button>
 									{/if}
 								{:else}
 									<button
 										onclick={() => generateInstallationUrl(org.login, org.id)}
-										class="org-button install-button"
+										class="btn btn-secondary btn-full"
 									>
-										<div class="button-icon">
-											<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-												/>
-											</svg>
-										</div>
-										<span>Install App</span>
-										<div class="button-arrow">→</div>
-									</button>
-								{/if}
-
-								{#if org.error_loading}
-									<button
-										onclick={() => retryLoadDetails(org.login)}
-										class="org-button retry-button"
-										title="Retry loading details"
-									>
-										<div class="button-icon">
-											<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-												/>
-											</svg>
-										</div>
-										<span>Retry</span>
+										<span>Authorize Access</span>
+										<span class="button-arrow">→</span>
 									</button>
 								{/if}
 							</div>
@@ -1286,95 +977,34 @@
 					{/each}
 				</div>
 
-				<!-- Discovered Organizations Section (from OAuth discovery) -->
 				{#if discoveredOrganizations.length > 0}
-					<div class="section-divider"></div>
-
-					<div class="section-header">
-						<h2 class="section-title">Select Organization to Connect</h2>
-						<p class="section-description">
-							Choose an organization from your GitHub account to install the DevSecOps app
-						</p>
+					<div class="view-header border-border mt-12 border-b pb-4">
+						<div class="title-group">
+							<h2 class="text-lg font-bold">Discoverable Hubs</h2>
+							<p>Select a hub from your GitHub profile to integrate with WithOps.</p>
+						</div>
 					</div>
-
-					<div class="organizations-grid">
-						{#each discoveredOrganizations as org}
-							<div class="org-card {org.status === 'connected' ? 'connected' : 'available'}">
-								<!-- Organization Header -->
-								<div class="org-card-header">
-									<div class="org-info">
-										<div class="org-avatar">
-											<img src={org.avatar_url} alt="{org.login} avatar" />
-											<div class="avatar-glow"></div>
-										</div>
-										<div class="org-details">
-											<h3 class="org-name">{org.login}</h3>
-											<div class="org-status">
-												{#if org.app_installed}
-													<div class="status-badge connected-badge">
-														<div class="badge-icon">✅</div>
-														<span>Connected</span>
-													</div>
-												{:else}
-													<div class="status-badge available-badge">
-														<div class="badge-icon">📦</div>
-														<span>Available</span>
-													</div>
-												{/if}
-											</div>
+					<div class="org-grid mt-6">
+						{#each discoveredOrganizations.filter((o) => !o.app_installed) as org}
+							<div class="org-card">
+								<div class="org-card-top">
+									<img src={org.avatar_url} alt="" class="org-avatar" />
+									<div class="org-meta">
+										<h3 class="org-name">{org.login}</h3>
+										<div class="status-tag pending">
+											<div class="tag-dot"></div>
+											UNLINKED
 										</div>
 									</div>
 								</div>
-
-								<!-- Statistics Placeholder -->
-								<div class="org-stats">
-									<div class="stat-item">
-										<div class="stat-label">GitHub Organization</div>
-										<div class="stat-value">
-											<a href={org.html_url} target="_blank" class="org-link">View on GitHub →</a>
-										</div>
-									</div>
-								</div>
-
-								<!-- Actions -->
 								<div class="org-actions">
-									{#if org.app_installed && org.status === 'connected'}
-										<button
-											onclick={() => viewOrganizationWorkspace(org.login)}
-											class="org-button workspace-button"
-										>
-											<div class="button-icon">
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M13 10V3L4 14h7v7l9-11h-7z"
-													/>
-												</svg>
-											</div>
-											<span>View Workspace</span>
-											<div class="button-arrow">→</div>
-										</button>
-									{:else}
-										<button
-											onclick={() => generateInstallationUrl(org.login, org.id)}
-											class="org-button install-button"
-										>
-											<div class="button-icon">
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-													/>
-												</svg>
-											</div>
-											<span>Install App</span>
-											<div class="button-arrow">→</div>
-										</button>
-									{/if}
+									<button
+										onclick={() => generateInstallationUrl(org.login, org.id)}
+										class="btn btn-secondary btn-full"
+									>
+										<span>Initialize Hub</span>
+										<span class="button-arrow">→</span>
+									</button>
 								</div>
 							</div>
 						{/each}
@@ -1387,1754 +1017,574 @@
 
 <style>
 	/* ============================================
-	   PROFESSIONAL UI/UX DESIGN SYSTEM
-	   ============================================ */
+       PROFESSIONAL DESIGN SYSTEM (MATTE ENGINEERING)
+       ============================================ */
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--nav-height: 64px;
+	}
 
-	/* ============================================
-	   PROFESSIONAL DESIGN SYSTEM - MATCHING DASHBOARD
-	   ============================================ */
+	.organizations-page.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--error: #ef4444;
+		--card-shadow: none;
+	}
+
+	.organizations-page.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+		--card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+	}
+
 	.organizations-page {
-		/* Core Background Colors */
-		--bg-primary: #000000;
-		--bg-secondary: #0a0a0a;
-		--bg-card: rgba(255, 255, 255, 0.05);
-		--bg-card-hover: rgba(255, 255, 255, 0.08);
-
-		/* Text Colors */
-		--text-primary: #ffffff;
-		--text-secondary: #b8b8b8;
-		--text-muted: #888888;
-
-		/* Brand Accent Colors - Matching Design Pattern */
-		--primary-color: #00d9ff;
-		--accent-color: #00d9ff;
-		--cyan-primary: #00d9ff;
-		--cyan-secondary: #00b8d4;
-		--cyan-light: #33e3ff;
-		--purple-primary: #8b5cf6;
-		--pink-primary: #ec4899;
-		--green-success: #10b981;
-		--orange-warning: #f59e0b;
-		--red-error: #ef4444;
-
-		/* Border Colors */
-		--border-color: rgba(0, 217, 255, 0.3);
-		--border-subtle: rgba(0, 217, 255, 0.15);
-		--border-medium: rgba(0, 217, 255, 0.3);
-		--border-strong: rgba(0, 217, 255, 0.5);
-
-		/* Glass Morphism Effects */
-		--glass-bg: rgba(0, 0, 0, 0.4);
-		--glass-border: rgba(0, 217, 255, 0.2);
-
-		/* Professional Shadows - Matching Design */
-		--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-		--shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3);
-		--shadow-lg: 0 15px 35px rgba(0, 217, 255, 0.4), 0 8px 20px rgba(0, 0, 0, 0.6);
-		--shadow-glow: 0 0 20px rgba(0, 217, 255, 0.3);
-		--shadow-glow-strong: 0 4px 15px rgba(0, 217, 255, 0.3);
-
 		min-height: 100vh;
-		background: var(--bg-primary);
-		font-family:
-			'Inter',
-			-apple-system,
-			BlinkMacSystemFont,
-			'Segoe UI',
-			Roboto,
-			sans-serif;
+		background: var(--bg-app);
+		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.3s ease;
 		position: relative;
 		overflow-x: hidden;
 	}
 
-	.organizations-page.light {
-		/* Light Mode Backgrounds */
-		--bg-primary: #ffffff;
-		--bg-secondary: #f8fafc;
-		--bg-card: rgba(0, 217, 255, 0.05);
-		--bg-card-hover: rgba(0, 217, 255, 0.1);
-
-		/* Light Mode Text */
-		--text-primary: #1a1a1a;
-		--text-secondary: #666666;
-		--text-muted: #999999;
-
-		/* Light Mode Borders */
-		--border-color: rgba(0, 217, 255, 0.4);
-		--border-subtle: rgba(0, 217, 255, 0.2);
-		--border-medium: rgba(0, 217, 255, 0.35);
-		--border-strong: rgba(0, 217, 255, 0.6);
-
-		/* Light Mode Glass */
-		--glass-bg: rgba(255, 255, 255, 0.95);
-		--glass-border: rgba(0, 217, 255, 0.15);
-
-		/* Light Mode Shadows */
-		--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-		--shadow-md: 0 8px 25px rgba(0, 217, 255, 0.3), 0 4px 12px rgba(0, 217, 255, 0.15);
-		--shadow-lg: 0 12px 32px rgba(0, 217, 255, 0.4), 0 6px 16px rgba(0, 217, 255, 0.25);
-		--shadow-glow: 0 0 20px rgba(0, 217, 255, 0.2);
-		--shadow-glow-strong: 0 4px 15px rgba(0, 217, 255, 0.25);
-	}
-
-	/* ============================================
-	   BACKGROUND EFFECTS
-	   ============================================ */
-	.page-background {
+	/* Architectural Backdrop */
+	.organizations-page::before {
+		content: '';
 		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
 		pointer-events: none;
 		z-index: 0;
-		overflow: hidden;
+		opacity: 0.5;
 	}
 
-	.page-glow-1 {
-		display: none;
-	}
-
-	.page-glow-2 {
-		display: none;
-	}
-
-	.github-pattern {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-image:
-			radial-gradient(circle at 20% 30%, rgba(0, 217, 255, 0.03) 1px, transparent 1px),
-			radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
-		background-size: 60px 60px;
-		animation: pattern-shift 30s linear infinite;
-	}
-
-	@keyframes float-glow {
-		0%,
-		100% {
-			transform: translate(0, 0) scale(1);
-			opacity: 0.6;
-		}
-		50% {
-			transform: translate(30px, -30px) scale(1.1);
-			opacity: 0.8;
-		}
-	}
-
-	@keyframes pattern-shift {
-		0% {
-			background-position: 0 0;
-		}
-		100% {
-			background-position: 60px 60px;
-		}
-	}
-
-	/* ============================================
-	   PAGE LAYOUT
-	   ============================================ */
 	.page-content {
 		position: relative;
-		z-index: 1;
+		z-index: 10;
+		padding-bottom: 5rem;
+	}
+
+	/* Header Navigation */
+	.dashboard-header {
+		height: var(--nav-height);
+		background: rgba(var(--bg-app), 0.8);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+	}
+
+	.header-content {
+		max-width: 1440px;
 		width: 100%;
-		max-width: 100%;
-		margin: 0;
-		padding: 2rem 4rem;
-		min-height: 100vh;
-	}
-
-	/* ============================================
-	   PROFESSIONAL HEADER SECTION
-	   ============================================ */
-	.page-header {
-		margin-bottom: 2.5rem;
-	}
-
-	/* Top Navigation Bar */
-	.header-top-bar {
+		margin: 0 auto;
+		padding: 0 2rem;
 		display: flex;
+		align-items: center;
 		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 2rem;
-		padding-bottom: 1rem;
-		border-bottom: 1px solid var(--border-subtle);
 	}
 
-	/* Main Header - Left Right Layout */
-	.header-main {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 2rem;
-		margin-bottom: 2rem;
-		flex-wrap: wrap;
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.header-text {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.back-nav-button {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		padding: 0.875rem 1.5rem;
-		background: var(--bg-card);
-		backdrop-filter: blur(20px);
-		border: 1px solid var(--border-subtle);
-		border-radius: 8px;
-		color: var(--text-secondary);
-		font-size: 0.95rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.back-nav-button svg {
-		width: 18px;
-		height: 18px;
-		transition: transform 0.3s ease;
-	}
-
-	.back-nav-button:hover {
-		background: var(--bg-card-hover);
-		border-color: var(--primary-color);
-		color: var(--primary-color);
-		transform: translateY(-1px);
-		box-shadow: var(--shadow-glow-strong);
-	}
-
-	.back-nav-button:hover svg {
-		transform: translateX(-3px);
-	}
-
-	.theme-toggle-button {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		background: #ffffff;
-		border: 2px solid rgba(0, 217, 255, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-		box-shadow:
-			0 4px 6px rgba(0, 0, 0, 0.1),
-			0 1px 3px rgba(0, 0, 0, 0.08);
-	}
-
-	.theme-toggle-button:hover {
-		background: #00d9ff;
-		border-color: #00d9ff;
-		transform: translateY(-3px);
-		box-shadow:
-			0 8px 16px rgba(0, 217, 255, 0.25),
-			0 0 20px rgba(0, 217, 255, 0.3);
-	}
-
-	.theme-icon {
-		width: 20px;
-		height: 20px;
-		color: #000000;
-	}
-
-	/* Header Icon */
-	.header-icon {
-		width: 64px;
-		height: 64px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--cyan-primary);
-		border-radius: 16px;
-		box-shadow: var(--shadow-md);
-		flex-shrink: 0;
-	}
-
-	.header-icon svg {
-		width: 36px;
-		height: 36px;
-		color: white;
-	}
-
-	.header-title {
-		font-size: 2.5rem;
-		font-weight: 800;
-		margin: 0 0 0.5rem 0;
-		color: var(--text-primary);
-		letter-spacing: -0.02em;
-		line-height: 1.2;
-	}
-
-	.header-subtitle {
-		font-size: 1.1rem;
-		color: var(--text-secondary);
-		margin: 0;
-		font-weight: 400;
-	}
-
-	/* Action Buttons */
-	.header-actions {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-
-	.action-button {
+	.nav-brand {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 1rem 2rem;
-		border: none;
-		border-radius: 14px;
-		font-size: 1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.action-button svg {
-		width: 20px;
-		height: 20px;
-		transition: transform 0.3s ease;
-	}
-
-	.action-button::before {
-		content: '';
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		width: 0;
-		height: 0;
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.2);
-		transform: translate(-50%, -50%);
-		transition:
-			width 0.6s,
-			height 0.6s;
-	}
-
-	.action-button:hover::before {
-		width: 300px;
-		height: 300px;
-	}
-
-	.primary-action {
-		background: #ffffff;
-		color: #000000;
-		box-shadow: var(--shadow-md);
-		font-weight: 600;
-		border-radius: 8px;
-	}
-
-	.primary-action:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.primary-action:hover svg {
-		transform: rotate(90deg);
-	}
-
-	.secondary-action {
-		background: rgba(0, 0, 0, 0.3);
-		backdrop-filter: blur(20px);
-		color: var(--primary-color);
-		border: 2px solid var(--primary-color);
-		border-radius: 8px;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.4),
-			0 0 20px rgba(0, 217, 255, 0.2);
-	}
-
-	.organizations-page.light .secondary-action {
-		background: rgba(255, 255, 255, 0.9);
-		border-color: var(--primary-color);
-	}
-
-	.secondary-action:hover {
-		background: var(--primary-color);
-		color: #000000;
-		font-weight: 600;
-		transform: translateY(-3px);
-		border-color: var(--primary-color);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	.secondary-action:hover svg {
-		transform: rotate(180deg);
-	}
-
-	/* ============================================
-	   INVITATIONS BANNER
-	   ============================================ */
-	.invitations-banner {
-		background: rgba(0, 217, 255, 0.05);
-		backdrop-filter: blur(20px);
-		border: 1px solid var(--border-medium);
-		border-radius: 20px;
-		padding: 2rem;
-		margin-bottom: 2rem;
-		box-shadow: var(--shadow-md);
-	}
-
-	.invitations-header {
-		display: flex;
-		align-items: flex-start;
-		gap: 1.25rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.invitations-icon {
-		width: 56px;
-		height: 56px;
-		background: var(--cyan-primary);
-		border-radius: 14px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		box-shadow: var(--shadow-md);
-	}
-
-	.invitations-icon svg {
-		width: 28px;
-		height: 28px;
-		color: white;
-	}
-
-	.invitations-title-section h3 {
-		margin: 0 0 0.5rem;
-		font-size: 1.25rem;
-		font-weight: 700;
+		text-decoration: none;
 		color: var(--text-primary);
 	}
 
-	.invitations-title-section p {
-		margin: 0;
+	.brand-icon {
+		width: 28px;
+		height: 28px;
+	}
+	.brand-name {
+		font-weight: 700;
 		font-size: 1rem;
-		color: var(--text-secondary);
+		letter-spacing: -0.02em;
 	}
 
-	.invitations-list {
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
+	}
+	.nav-link {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
+	}
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--text-primary);
+	}
+
+	.nav-actions {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	.theme-toggle {
+		background: none;
+		border: none;
+		color: var(--text-secondary);
+		cursor: pointer;
+		padding: 0.5rem;
+		border-radius: 6px;
+		transition: all 0.2s;
+	}
+	.theme-toggle:hover {
+		background: var(--border);
+		color: var(--text-primary);
+	}
+	.theme-icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* Technical Bar */
+	.technical-bar {
+		background: var(--bg-surface);
+		border-bottom: 1px solid var(--border);
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		height: 40px;
+	}
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	.breadcrumb-sep {
+		color: var(--border);
+	}
+	.breadcrumb-item.active {
+		color: var(--accent);
+	}
+
+	.system-status {
+		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--success);
+		opacity: 0.8;
+	}
+	.status-pulse {
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		animation: blink 2s infinite;
+	}
+	@keyframes blink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
+	}
+
+	/* Main Content Layout */
+	.page-main {
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 3rem 2rem;
+	}
+
+	.view-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 3rem;
+	}
+
+	.title-group h1 {
+		font-size: 1.75rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		margin-bottom: 0.5rem;
+	}
+	.title-group p {
+		color: var(--text-secondary);
+		font-size: 0.9375rem;
+		max-width: 500px;
+		line-height: 1.5;
+	}
+
+	.header-cta {
+		display: flex;
+		gap: 0.75rem;
+	}
+
+	/* Specialized Filters */
+	.filter-nav {
+		display: flex;
+		gap: 0.25rem;
+		background: var(--bg-surface-alt);
+		padding: 0.25rem;
+		border-radius: 8px;
+		border: 1px solid var(--border);
+		margin-bottom: 2rem;
+		width: fit-content;
+	}
+
+	.filter-btn {
+		background: none;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 6px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--text-secondary);
+		cursor: pointer;
+		transition: all 0.2s;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.filter-btn:hover {
+		color: var(--text-primary);
+	}
+	.filter-btn.active {
+		background: var(--bg-surface);
+		color: var(--accent);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.count-badge {
+		font-size: 0.65rem;
+		background: var(--border);
+		color: var(--text-muted);
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+	}
+
+	/* Organization Grid & Cards */
+	.org-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+		gap: 1.5rem;
+	}
+
+	.org-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 2rem;
+		transition: all 0.2s var(--ease-premium);
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.invitation-card {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		background: var(--glass-bg);
-		backdrop-filter: blur(20px);
-		border: 1px solid var(--glass-border);
-		border-radius: 16px;
-		padding: 1.25rem 1.5rem;
 		gap: 1.5rem;
-		flex-wrap: wrap;
-		transition: all 0.3s ease;
+		position: relative;
+		overflow: hidden;
+		box-shadow: var(--card-shadow);
 	}
 
-	.invitation-card:hover {
-		border-color: var(--cyan-primary);
-		transform: translateX(4px);
-		box-shadow: var(--shadow-md);
+	.org-card:hover {
+		border-color: var(--border-focus);
+		transform: translateY(-2px);
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 	}
 
-	.invitation-org {
+	.org-card-top {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
 	}
 
-	.invitation-org-avatar {
+	.org-avatar {
 		width: 48px;
 		height: 48px;
-		border-radius: 12px;
-		object-fit: cover;
-		border: 2px solid var(--border-subtle);
+		border-radius: 8px;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		padding: 2px;
 	}
 
-	.invitation-org-info {
+	.org-meta {
+		flex: 1;
+	}
+	.org-name {
+		font-weight: 700;
+		font-size: 1rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.status-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.status-tag.connected {
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.1);
+		opacity: 0.9;
+	}
+	.status-tag.pending {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+		opacity: 0.7;
+	}
+	.tag-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
+	.org-stats-row {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+		padding: 1rem 0;
+		border-top: 1px solid var(--border);
+		border-bottom: 1px solid var(--border);
+	}
+
+	.stat-box {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 	}
-
-	.invitation-org-name {
-		font-weight: 700;
-		color: var(--text-primary);
-		font-size: 1.05rem;
-	}
-
-	.invitation-meta {
-		font-size: 0.875rem;
+	.stat-label {
+		font-size: 0.65rem;
 		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
-
-	.invitation-meta strong {
-		color: var(--cyan-primary);
-		text-transform: capitalize;
+	.stat-value {
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
 		font-weight: 600;
+		color: var(--text-primary);
 	}
 
-	.invitation-actions {
+	.org-actions {
 		display: flex;
-		gap: 0.75rem;
-	}
-
-	.btn-accept {
-		display: flex;
-		align-items: center;
 		gap: 0.5rem;
-		padding: 0.875rem 1.5rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow: var(--shadow-md);
 	}
 
-	.btn-accept:hover:not(:disabled) {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.btn-accept:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.btn-accept svg {
-		width: 18px;
-		height: 18px;
-	}
-
-	.organizations-page.light .btn-accept {
-		background: var(--primary-color);
-	}
-
-	.organizations-page.light .btn-accept:hover:not(:disabled) {
-		background: var(--cyan-light);
-	}
-
-	.btn-decline {
-		display: flex;
+	/* Buttons */
+	.btn {
+		display: inline-flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.5rem;
-		padding: 0.875rem 1.25rem;
-		background: rgba(0, 0, 0, 0.3);
-		color: var(--red-error);
-		border: 2px solid var(--red-error);
+		padding: 0.8125rem 1.25rem;
 		border-radius: 8px;
+		font-size: 0.8125rem;
 		font-weight: 600;
-		font-size: 0.95rem;
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		white-space: nowrap;
 	}
 
-	.btn-decline:hover:not(:disabled) {
-		background: var(--red-error);
-		color: #ffffff;
-		transform: translateY(-2px);
-		box-shadow:
-			0 15px 35px rgba(239, 68, 68, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
+	.btn:hover:not(:disabled) {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
 	}
 
-	.btn-decline:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+	.btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+	}
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
 	}
 
-	.btn-decline svg {
-		width: 18px;
-		height: 18px;
+	.btn-outline {
+		background: transparent;
+		border-color: var(--border);
+		color: var(--text-secondary);
 	}
 
-	.btn-spinner-small {
-		width: 16px;
-		height: 16px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
+	.btn-outline:hover:not(:disabled) {
+		border-color: var(--border-focus);
+		color: var(--text-primary);
+		background: var(--bg-surface-alt);
 	}
 
+	.button-arrow {
+		font-size: 1.1rem;
+		transition: transform 0.2s var(--ease-premium);
+	}
+
+	.btn:hover .button-arrow {
+		transform: translateX(4px);
+	}
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
 		}
 	}
 
-	/* ============================================
-	   MAIN CONTENT AREA
-	   ============================================ */
-	.page-main {
-		margin-bottom: 2rem;
-	}
-
-	/* ============================================
-	   STATE CARDS (Loading/Error/Empty)
-	   ============================================ */
-	.state-card {
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(30px);
-		border: 1px solid var(--border-subtle);
-		border-radius: 12px;
-		padding: 4rem 3rem;
-		text-align: center;
-		box-shadow: var(--shadow-md);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.organizations-page.light .state-card {
-		background: rgba(255, 255, 255, 0.95);
-		border: 1px solid var(--border-subtle);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-	}
-
-	.state-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
+	.btn-full {
 		width: 100%;
-		height: 100%;
-		background: rgba(0, 217, 255, 0.08);
-		animation: shimmer 3s ease-in-out infinite;
 	}
 
-	@keyframes shimmer {
-		0% {
-			left: -100%;
-		}
-		100% {
-			left: 100%;
-		}
-	}
-
-	/* Loading State */
-	.loading-section {
+	/* Loader */
+	.loader-view {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 2.5rem;
-	}
-
-	.loading-icon {
-		position: relative;
-		width: 140px;
-		height: 140px;
-	}
-
-	.github-logo {
-		width: 100px;
-		height: 100px;
-		color: var(--cyan-primary);
-		margin: 0 auto;
-	}
-
-	.github-logo svg {
-		width: 100%;
-		height: 100%;
-		filter: drop-shadow(0 0 25px currentColor);
-		animation: pulse-logo 2s ease-in-out infinite;
-	}
-
-	@keyframes pulse-logo {
-		0%,
-		100% {
-			opacity: 0.8;
-		}
-		50% {
-			opacity: 1;
-		}
-	}
-
-	.scanning-animation {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		border: 3px solid var(--cyan-primary);
-		border-radius: 50%;
-		animation: scan-pulse 2s ease-in-out infinite;
-	}
-
-	.scan-line {
-		position: absolute;
-		top: 50%;
-		left: 10%;
-		width: 80%;
-		height: 3px;
-		background: var(--cyan-primary);
-		opacity: 0.5;
-		transform: translateY(-50%);
-		animation: scan-sweep 2s ease-in-out infinite;
-	}
-
-	@keyframes scan-pulse {
-		0%,
-		100% {
-			opacity: 0.4;
-			transform: scale(1);
-		}
-		50% {
-			opacity: 1;
-			transform: scale(1.15);
-		}
-	}
-
-	@keyframes scan-sweep {
-		0%,
-		100% {
-			opacity: 0;
-		}
-		50% {
-			opacity: 1;
-		}
-	}
-
-	.loading-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.25rem;
-	}
-
-	.loading-title {
-		font-size: 2.5rem;
-		font-weight: 800;
-		color: var(--text-primary);
-		margin: 0;
-	}
-
-	.loading-message {
-		font-size: 1.2rem;
-		color: var(--text-secondary);
-		margin: 0;
-	}
-
-	.progress-dots {
-		display: flex;
-		gap: 0.75rem;
-		margin-top: 1rem;
-	}
-
-	.dot {
-		width: 12px;
-		height: 12px;
-		background: var(--cyan-primary);
-		border-radius: 50%;
-		animation: dot-bounce 1.4s ease-in-out infinite;
-	}
-
-	.dot:nth-child(2) {
-		animation-delay: 0.2s;
-	}
-	.dot:nth-child(3) {
-		animation-delay: 0.4s;
-	}
-
-	@keyframes dot-bounce {
-		0%,
-		80%,
-		100% {
-			transform: scale(1);
-			opacity: 0.5;
-		}
-		40% {
-			transform: scale(1.4);
-			opacity: 1;
-		}
-	}
-
-	/* Error State */
-	.error-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 2.5rem;
-	}
-
-	.error-icon {
-		width: 120px;
-		height: 120px;
-		color: var(--red-error);
-		background: rgba(239, 68, 68, 0.1);
-		border-radius: 50%;
-		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
-	}
-
-	.error-icon svg {
-		width: 60px;
-		height: 60px;
-	}
-
-	.error-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.5rem;
-		max-width: 600px;
-	}
-
-	.error-title {
-		font-size: 2.5rem;
-		font-weight: 800;
-		color: var(--text-primary);
-		margin: 0;
-	}
-
-	.error-message {
-		font-size: 1.15rem;
-		color: var(--red-error);
-		margin: 0;
-		line-height: 1.7;
-	}
-
-	.retry-button {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1.2rem 2rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow: var(--shadow-md);
-	}
-
-	.retry-button:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.organizations-page.light .retry-button {
-		background: var(--primary-color);
-	}
-
-	.organizations-page.light .retry-button:hover {
-		background: var(--cyan-light);
-	}
-
-	.retry-icon {
-		width: 20px;
-		height: 20px;
-	}
-
-	/* Empty State */
-	.empty-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 2.5rem;
-	}
-
-	.empty-icon {
-		width: 140px;
-		height: 140px;
-		background: rgba(136, 136, 136, 0.08);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--text-muted);
-		border: 2px dashed var(--border-subtle);
-	}
-
-	.empty-icon svg {
-		width: 70px;
-		height: 70px;
-	}
-
-	.empty-content {
-		max-width: 700px;
-	}
-
-	.empty-title {
-		font-size: 2.5rem;
-		font-weight: 800;
-		color: var(--text-primary);
-		margin: 0 0 1rem 0;
-	}
-
-	.empty-description {
-		font-size: 1.2rem;
-		color: var(--text-secondary);
-		line-height: 1.7;
-		margin: 0 0 2rem 0;
-	}
-
-	/* GitHub Connection State */
-	.github-connection-state {
-		background: rgba(0, 217, 255, 0.05);
-		border: 2px solid var(--border-medium);
-	}
-
-	.github-connect-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 2.5rem;
-		max-width: 700px;
-		margin: 0 auto;
-	}
-
-	.github-connect-icon {
-		position: relative;
-		width: 140px;
-		height: 140px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.github-connect-icon > svg {
-		width: 90px;
-		height: 90px;
-		color: var(--cyan-primary);
-		filter: drop-shadow(0 0 35px rgba(0, 217, 255, 0.5));
-	}
-
-	.link-badge {
-		position: absolute;
-		bottom: 8px;
-		right: 8px;
-		width: 42px;
-		height: 42px;
-		background: var(--cyan-primary);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 6px 20px rgba(0, 217, 255, 0.3);
-		animation: pulse-badge 2s ease-in-out infinite;
-	}
-
-	.link-badge svg {
-		width: 22px;
-		height: 22px;
-		color: white;
-	}
-
-	@keyframes pulse-badge {
-		0%,
-		100% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.12);
-		}
-	}
-
-	.github-connect-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.75rem;
+		padding: 10rem 2rem;
 		text-align: center;
 	}
 
-	.github-connect-title {
-		font-size: 2.25rem;
-		font-weight: 800;
-		color: var(--text-primary);
-		margin: 0;
-	}
-
-	.github-connect-description {
-		font-size: 1.2rem;
-		color: var(--text-secondary);
-		line-height: 1.8;
-		margin: 0;
-		max-width: 600px;
-	}
-
-	.github-connect-info {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 2rem;
-		background: rgba(0, 217, 255, 0.05);
-		border-radius: 18px;
-		border: 1px solid var(--border-subtle);
-		width: 100%;
-	}
-
-	.info-item {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		color: var(--text-secondary);
-		font-size: 1rem;
-		font-weight: 500;
-	}
-
-	.info-item svg {
-		width: 24px;
-		height: 24px;
-		color: var(--green-success);
-		flex-shrink: 0;
-	}
-
-	.github-connect-button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1.2rem 2rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-		box-shadow: var(--shadow-md);
-	}
-
-	.github-connect-button .button-icon {
-		width: 26px;
-		height: 26px;
-	}
-
-	.github-connect-button:hover:not(:disabled) {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.github-connect-button .button-arrow {
-		font-size: 1.25rem;
-		transition: transform 0.3s ease;
-	}
-
-	.github-connect-button:hover .button-arrow {
-		transform: translateX(5px);
-	}
-
-	.github-connect-button:disabled {
-		opacity: 0.65;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.organizations-page.light .github-connect-button {
-		background: var(--primary-color);
-	}
-
-	.organizations-page.light .github-connect-button:hover:not(:disabled) {
-		background: var(--cyan-light);
-	}
-
-	.button-spinner {
-		width: 22px;
-		height: 22px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	.connect-button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1.2rem 2rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-		box-shadow: var(--shadow-md);
-	}
-
-	.connect-button:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.connect-button .button-arrow {
-		font-size: 1.25rem;
-		transition: transform 0.3s ease;
-	}
-
-	.connect-button:hover .button-arrow {
-		transform: translateX(5px);
-	}
-
-	.organizations-page.light .connect-button {
-		background: var(--primary-color);
-	}
-
-	.organizations-page.light .connect-button:hover {
-		background: var(--cyan-light);
-	}
-
-	.button-icon {
-		width: 24px;
-		height: 24px;
-		transition: transform 0.3s ease;
-	}
-
-	.button-arrow {
-		font-size: 1.3rem;
-		font-weight: 700;
-		transition: transform 0.3s ease;
-	}
-
-	/* ============================================
-	   FILTER BAR - FULL WIDTH
-	   ============================================ */
-	.filter-bar {
-		display: flex;
-		gap: 1rem;
-		padding: 1.5rem;
-		background: rgba(0, 217, 255, 0.04);
-		backdrop-filter: blur(10px);
-		border: 1px solid var(--border-subtle);
-		border-radius: 12px;
-		justify-content: center;
-		flex-wrap: wrap;
-		margin-bottom: 2rem;
-	}
-
-	.organizations-page.light .filter-bar {
-		background: rgba(0, 217, 255, 0.06);
-	}
-
-	.filter-button {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.875rem 1.75rem;
-		background: rgba(0, 0, 0, 0.3);
-		backdrop-filter: blur(20px);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 8px;
-		color: var(--text-secondary);
-		font-size: 1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.organizations-page.light .filter-button {
-		background: rgba(255, 255, 255, 0.8);
-		border-color: rgba(0, 217, 255, 0.2);
-	}
-
-	.filter-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-		color: var(--primary-color);
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-glow-strong);
-	}
-
-	.filter-button.active {
-		background: #ffffff;
-		border-color: transparent;
-		color: #000000;
-		box-shadow: var(--shadow-md);
-	}
-
-	.organizations-page.light .filter-button.active {
-		background: var(--primary-color);
-		color: #000000;
-	}
-
-	.filter-icon {
-		font-size: 1.2rem;
-	}
-
-	.filter-count {
-		padding: 0.25rem 0.65rem;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 8px;
-		font-size: 0.875rem;
-		font-weight: 700;
-	}
-
-	.filter-button.active .filter-count {
-		background: rgba(255, 255, 255, 0.3);
-	}
-
-	/* ============================================
-	   ORGANIZATIONS GRID
-	   ============================================ */
-	.organizations-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
-		gap: 2rem;
-	}
-
-	/* ============================================
-	   ORGANIZATION CARDS - PROFESSIONAL REDESIGN
-	   ============================================ */
-	.org-card {
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(30px);
-		border: 1px solid var(--border-subtle);
-		border-radius: 12px;
-		padding: 2.5rem;
-		transition: all 0.4s ease;
-		position: relative;
-		overflow: hidden;
-		box-shadow: var(--shadow-md);
-	}
-
-	.organizations-page.light .org-card {
-		background: rgba(255, 255, 255, 0.95);
-		border: 1px solid var(--border-subtle);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-	}
-
-	.org-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: rgba(0, 217, 255, 0.08);
-		transition: left 0.6s;
-	}
-
-	.org-card:hover::before {
-		left: 100%;
-	}
-
-	.org-card:hover {
-		transform: translateY(-5px);
-		border-color: rgba(0, 217, 255, 0.5);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.15);
-		background: rgba(0, 0, 0, 0.6);
-	}
-
-	.organizations-page.light .org-card:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.12);
-	}
-
-	.org-card.connected {
-		border-color: rgba(0, 217, 255, 0.2);
-	}
-
-	.org-card.connected:hover {
-		border-color: rgba(0, 217, 255, 0.5);
-	}
-
-	/* Organization Card Header */
-	.org-card-header {
-		margin-bottom: 2rem;
-	}
-
-	.org-info {
-		display: flex;
-		align-items: center;
-		gap: 1.25rem;
-	}
-
-	.org-avatar {
-		position: relative;
-		width: 80px;
-		height: 80px;
-		flex-shrink: 0;
-	}
-
-	.org-avatar img {
-		width: 100%;
-		height: 100%;
-		border-radius: 18px;
-		border: 3px solid var(--border-medium);
-		object-fit: cover;
-	}
-
-	.avatar-glow {
-		display: none;
-	}
-
-	@keyframes avatar-pulse {
-		0%,
-		100% {
-			opacity: 0.4;
-			transform: translate(-50%, -50%) scale(1);
-		}
-		50% {
-			opacity: 0.7;
-			transform: translate(-50%, -50%) scale(1.15);
-		}
-	}
-
-	.org-details {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.org-name {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		margin: 0 0 0.875rem 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.org-status {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		flex-wrap: wrap;
-	}
-
-	/* Professional Status Badges - Matching Design Pattern */
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		backdrop-filter: blur(10px);
-		transition: all 0.3s ease;
-	}
-
-	.connected-badge {
-		background: rgba(0, 217, 255, 0.1);
-		color: var(--primary-color);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-	}
-
-	.organizations-page.light .connected-badge {
-		background: rgba(0, 217, 255, 0.08);
-		color: #00a0c0;
-	}
-
-	.pending-badge {
-		background: rgba(184, 184, 184, 0.1);
-		color: var(--text-secondary);
-		border: 1px solid rgba(184, 184, 184, 0.3);
-	}
-
-	.organizations-page.light .pending-badge {
-		background: rgba(100, 100, 100, 0.08);
-		color: #666666;
-	}
-
-	.available-badge {
-		background: rgba(0, 217, 255, 0.1);
-		color: var(--primary-color);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-	}
-
-	.owner-badge {
-		background: rgba(245, 158, 11, 0.1);
-		color: var(--orange-warning);
-		border: 1px solid rgba(245, 158, 11, 0.3);
-	}
-
-	.shared-badge {
-		background: rgba(139, 92, 246, 0.1);
-		color: var(--purple-primary);
-		border: 1px solid rgba(139, 92, 246, 0.3);
-	}
-
-	.badge-icon {
-		font-size: 1rem;
-	}
-
-	/* Statistics Section - Professional Design */
-	.org-stats {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 1.25rem;
-		margin-bottom: 2rem;
-		padding: 1.75rem;
-		background: rgba(0, 217, 255, 0.04);
-		backdrop-filter: blur(10px);
-		border: 1px solid var(--border-subtle);
-		border-radius: 16px;
-	}
-
-	.stat-item {
-		display: flex;
-		flex-direction: column;
-		gap: 0.625rem;
-	}
-
-	.stat-item.full-width {
-		grid-column: 1 / -1;
-		border-top: 1px solid var(--border-subtle);
-		padding-top: 1rem;
-		margin-top: 0.5rem;
-	}
-
-	.stat-label {
-		font-size: 0.875rem;
-		color: var(--text-muted);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.stat-value {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: var(--text-primary);
-	}
-
-	.stat-skeleton {
-		width: 50px;
-		height: 20px;
-		background: rgba(136, 136, 136, 0.15);
-		border-radius: 6px;
-		animation: skeleton-pulse 1.5s ease-in-out infinite;
-	}
-
-	@keyframes skeleton-pulse {
+	.loader-icon {
+		width: 48px;
+		height: 48px;
+		margin-bottom: 1.5rem;
+		animation: pulse 2s infinite;
+	}
+	@keyframes pulse {
 		0%,
 		100% {
 			opacity: 0.5;
+			transform: scale(0.95);
 		}
 		50% {
 			opacity: 1;
+			transform: scale(1);
 		}
 	}
-
-	.stat-error {
-		color: var(--red-error);
-		font-size: 1rem;
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
 	}
 
-	.org-link {
-		color: var(--cyan-primary);
-		text-decoration: none;
-		font-size: 0.95rem;
-		font-weight: 600;
-		transition: opacity 0.2s;
-	}
-
-	.org-link:hover {
-		opacity: 0.8;
-		text-decoration: underline;
-	}
-
-	/* Organization Actions - Professional Buttons */
-	.org-actions {
+	/* Banner / Notifications */
+	.invitations-banner {
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--accent);
+		border-radius: 12px;
+		padding: 1.25rem;
+		margin-bottom: 2rem;
 		display: flex;
-		gap: 1rem;
-		flex-wrap: wrap;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
 
-	/* Organization Action Buttons - Matching Design Pattern */
-	.org-button {
+	.banner-header h3 {
+		font-size: 0.9375rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.invites-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	.invite-item {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		padding: 0.75rem 1rem;
+		border-radius: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+	}
+
+	.invite-org-info {
+		display: flex;
+		align-items: center;
 		gap: 0.75rem;
-		padding: 1.2rem 2rem;
-		border: none;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-		flex: 1;
-		min-width: 0;
 	}
-
-	.org-button .button-icon {
-		width: 20px;
-		height: 20px;
-		flex-shrink: 0;
+	.invite-avatar {
+		width: 32px;
+		height: 32px;
+		border-radius: 4px;
 	}
-
-	.org-button .button-arrow {
-		font-size: 1.25rem;
-		transition: transform 0.3s ease;
+	.invite-details {
+		display: flex;
+		flex-direction: column;
 	}
-
-	.org-button:hover .button-arrow {
-		transform: translateX(5px);
+	.invite-name {
+		font-weight: 600;
+		font-size: 0.8125rem;
 	}
-
-	.workspace-button {
-		background: #ffffff;
-		color: #000000;
-		box-shadow: var(--shadow-md);
-	}
-
-	.workspace-button:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.organizations-page.light .workspace-button {
-		background: var(--primary-color);
-		color: #000000;
-		box-shadow: var(--shadow-md);
-	}
-
-	.organizations-page.light .workspace-button:hover {
-		background: var(--cyan-light);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.team-button {
-		background: rgba(0, 0, 0, 0.3);
-		color: var(--primary-color);
-		border: 2px solid var(--primary-color);
-		flex: 0 0 auto;
-		min-width: auto;
-	}
-
-	.organizations-page.light .team-button {
-		background: rgba(255, 255, 255, 0.9);
-		border-color: var(--primary-color);
-	}
-
-	.team-button:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.install-button {
-		background: rgba(0, 0, 0, 0.3);
-		color: var(--primary-color);
-		border: 2px solid var(--primary-color);
-	}
-
-	.install-button:hover {
-		background: var(--primary-color);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.retry-button {
-		background: rgba(245, 158, 11, 0.1);
-		color: var(--orange-warning);
-		border: 2px solid var(--orange-warning);
-		flex: 0 0 auto;
-		min-width: auto;
-	}
-
-	.retry-button:hover {
-		background: var(--orange-warning);
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(245, 158, 11, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	/* Section Divider */
-	.section-divider {
-		height: 1px;
-		background: var(--border-medium);
-		margin: 4rem 0 3rem;
-	}
-
-	.section-header {
-		text-align: center;
-		margin-bottom: 2.5rem;
-	}
-
-	.section-title {
-		font-size: 2rem;
-		font-weight: 800;
-		color: var(--text-primary);
-		margin-bottom: 0.75rem;
-	}
-
-	.section-description {
-		font-size: 1.15rem;
+	.invite-meta {
+		font-size: 0.7rem;
 		color: var(--text-secondary);
-	}
-
-	/* ============================================
-	   RESPONSIVE DESIGN
-	   ============================================ */
-	@media (max-width: 1200px) {
-		.organizations-grid {
-			grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-		}
 	}
 
 	@media (max-width: 768px) {
 		.page-content {
-			padding: 1.5rem;
-		}
-
-		.header-main {
-			flex-direction: column;
-			align-items: stretch;
-		}
-
-		.header-left {
-			flex-direction: column;
-			align-items: center;
-			text-align: center;
-		}
-
-		.header-title {
-			font-size: 2rem;
-		}
-
-		.header-subtitle {
-			font-size: 1rem;
-		}
-
-		.header-actions {
-			flex-direction: column;
-			width: 100%;
-		}
-
-		.action-button {
-			width: 100%;
-			justify-content: center;
-		}
-
-		.filter-bar {
-			flex-direction: column;
-		}
-
-		.filter-button {
-			width: 100%;
-			justify-content: center;
-		}
-
-		.organizations-grid {
-			grid-template-columns: 1fr;
-			gap: 1.5rem;
-		}
-
-		.org-stats {
-			grid-template-columns: 1fr;
-		}
-
-		.org-actions {
-			flex-direction: column;
-		}
-
-		.org-button {
-			flex: 1;
-		}
-
-		.state-card {
-			padding: 2.5rem 1.5rem;
-		}
-	}
-
-	@media (max-width: 480px) {
-		.page-content {
 			padding: 1rem;
 		}
-
-		.header-icon {
-			width: 60px;
-			height: 60px;
-		}
-
-		.header-icon svg {
-			width: 36px;
-			height: 36px;
-		}
-
-		.header-title {
-			font-size: 2rem;
-		}
-
-		.org-card {
-			padding: 1.5rem;
-		}
-
-		.org-avatar {
-			width: 60px;
-			height: 60px;
-		}
-
-		.org-name {
-			font-size: 1.25rem;
-		}
-
-		.invitation-card {
+		.view-header {
 			flex-direction: column;
-			align-items: stretch;
+			align-items: flex-start;
+			gap: 1.5rem;
 		}
-
-		.invitation-actions {
-			width: 100%;
-			justify-content: stretch;
+		.nav-menu {
+			display: none;
 		}
-
-		.btn-accept,
-		.btn-decline {
-			flex: 1;
+		.org-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
