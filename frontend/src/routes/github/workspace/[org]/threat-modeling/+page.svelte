@@ -61,7 +61,7 @@
 			const authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
 			if (!authToken) return;
 
-const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, {
+			const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, {
 				headers: {
 					Authorization: `Bearer ${authToken}`
 				}
@@ -377,324 +377,260 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 	<title>Threat Modeling - {orgName} - WithOps</title>
 </svelte:head>
 
-<div class="threat-modeling-container {darkMode ? 'dark' : 'light'}">
-	<!-- Top Navigation Bar -->
-	<nav class="top-navbar">
-		<div class="navbar-content">
-			<!-- Left: Brand & Breadcrumb -->
-			<div class="navbar-left">
-				<div class="brand-section">
-					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
-					<div class="brand-text">
-						<span class="brand-name">WithOps</span>
-						<span class="brand-subtitle">Threat Modeling</span>
-					</div>
-				</div>
+<div class="threat-page {darkMode ? 'dark' : 'light'}">
+	<!-- Header Navigation -->
+	<nav class="dashboard-header">
+		<div class="header-content">
+			<a href="/dashboard" class="nav-brand">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+				<span class="brand-name">WithOps</span>
+			</a>
 
-				<!-- Breadcrumb -->
-				<nav class="breadcrumb">
-					<a href="/dashboard" class="breadcrumb-link">Dashboard</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/organizations" class="breadcrumb-link">Organizations</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/github/workspace/{orgName}" class="breadcrumb-link">{orgName}</a>
-					<span class="breadcrumb-separator">/</span>
-					<span class="breadcrumb-current">Threat Modeling</span>
-				</nav>
+			<div class="nav-menu">
+				<a href="/dashboard" class="nav-link">Overview</a>
+				<a href="/organizations" class="nav-link">Organizations</a>
+				<a href="/github/workspace/{orgName}" class="nav-link">{orgName}</a>
+				<a href="/github/workspace/{orgName}/threat-modeling" class="nav-link active"
+					>Threat Modeling</a
+				>
 			</div>
 
-			<!--todo:-- Right: Theme Toggle -->
-			<!-- <div class="navbar-right">
-                <button 
-                    onclick={toggleTheme}
-                    class="theme-toggle"
-                    title="Toggle theme"
-                >
-                    {#if darkMode}
-                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
-                        </svg>
-                    {:else}
-                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 24 24">
-                            <path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clip-rule="evenodd"/>
-                        </svg>
-                    {/if}
-                </button>
-            </div> -->
+			<div class="nav-actions">
+				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
+					{#if darkMode}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
+						</svg>
+					{:else}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+						</svg>
+					{/if}
+				</button>
+			</div>
 		</div>
 	</nav>
 
-	<!-- Main Layout: Sidebar + Content -->
-	<div class="main-layout">
-		<!-- Left Sidebar -->
-		<aside class="left-sidebar">
-			<!-- Back Button -->
-			<a href="/github/workspace/{orgName}" class="back-button">
-				<svg class="back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 19l-7-7m0 0l7-7m-7 7h18"
-					/>
+	<!-- Technical Breadcrumb Bar -->
+	<div class="technical-bar">
+		<div class="breadcrumb">
+			<span class="breadcrumb-item">WithOps</span>
+			<span class="breadcrumb-sep">/</span>
+			<span class="breadcrumb-item">{orgName}</span>
+			<span class="breadcrumb-sep">/</span>
+			<span class="breadcrumb-item active">Threat Modeling</span>
+		</div>
+		<div class="system-status">
+			<div class="status-pulse"></div>
+			THREAT ENGINE: ACTIVE
+		</div>
+	</div>
+
+	<div class="page-layout">
+		<!-- Sidebar -->
+		<aside class="sidebar">
+			<button
+				onclick={() => goto(`/github/workspace/${orgName}`)}
+				class="btn btn-outline btn-full btn-sm"
+			>
+				<svg
+					width="14"
+					height="14"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 				</svg>
-				<span>Back to Workspace</span>
-			</a>
+				Back to Workspace
+			</button>
 
-			<!-- Statistics Section -->
+			<!-- Stats -->
 			<div class="sidebar-section">
-				<h3 class="section-title">OVERVIEW</h3>
-
-				<div class="stat-cards">
-					<!-- Total Models -->
-					<div class="stat-card total-models">
-						<div class="stat-icon">🛡️</div>
-						<div class="stat-content">
-							<div class="stat-value">{dashboardData?.statistics.total_threat_models || 0}</div>
-							<div class="stat-label">Total Models</div>
-						</div>
+				<h4 class="section-label">STATISTICS</h4>
+				<div class="stats-grid">
+					<div class="stat-cell">
+						<span class="stat-val">{dashboardData?.statistics.total_threat_models || 0}</span>
+						<span class="stat-lbl">Models</span>
 					</div>
-
-					<!-- Your Models -->
-					<div class="stat-card your-models">
-						<div class="stat-icon">👤</div>
-						<div class="stat-content">
-							<div class="stat-value">{dashboardData?.statistics.user_threat_models || 0}</div>
-							<div class="stat-label">Your Models</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{dashboardData?.statistics.user_threat_models || 0}</span>
+						<span class="stat-lbl">Yours</span>
 					</div>
-
-					<!-- Assessments -->
-					<div class="stat-card assessments">
-						<div class="stat-icon">📊</div>
-						<div class="stat-content">
-							<div class="stat-value">{dashboardData?.statistics.total_assessments || 0}</div>
-							<div class="stat-label">Assessments</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{dashboardData?.statistics.total_assessments || 0}</span>
+						<span class="stat-lbl">Assessments</span>
 					</div>
-
-					<!-- Recent -->
-					<div class="stat-card recent">
-						<div class="stat-icon">🕒</div>
-						<div class="stat-content">
-							<div class="stat-value">{dashboardData?.statistics.recent_models || 0}</div>
-							<div class="stat-label">Recent (7d)</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{dashboardData?.statistics.recent_models || 0}</span>
+						<span class="stat-lbl">Recent (7d)</span>
 					</div>
 				</div>
 			</div>
 
-			<!-- Action Buttons Section -->
-			<div class="sidebar-actions">
-				<button onclick={openCreateModal} class="action-button create-button">
-					<div class="button-content">
-						<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<!-- Actions -->
+			<div class="sidebar-section">
+				<h4 class="section-label">ACTIONS</h4>
+				<div class="sidebar-actions">
+					<button onclick={openCreateModal} class="btn btn-primary btn-full btn-sm">
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+						</svg>
+						New Model
+					</button>
+					<button
+						onclick={triggerImport}
+						class="btn btn-secondary btn-full btn-sm"
+						disabled={importing}
+					>
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+								d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
 							/>
 						</svg>
-						<div class="button-text">
-							<span class="button-label">Create Threat Model</span>
-							<span class="button-desc">Start new analysis</span>
-						</div>
-					</div>
-				</button>
-
-				<button onclick={triggerImport} class="action-button import-button" disabled={importing}>
-					<div class="button-content">
-						<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-							/>
-						</svg>
-						<div class="button-text">
-							<span class="button-label">
-								{#if importing}
-									Importing...
-								{:else}
-									Import Existing
-								{/if}
-							</span>
-							<span class="button-desc">Upload JSON file</span>
-						</div>
-					</div>
-				</button>
+						{#if importing}Importing...{:else}Import JSON{/if}
+					</button>
+				</div>
 			</div>
 		</aside>
 
-		<!-- Main Content Area -->
-		<main class="main-content">
+		<!-- Main Content -->
+		<main class="page-main">
 			{#if loading}
-				<!-- Loading State -->
-				<div class="loading-state">
-					<div class="loading-spinner"></div>
-					<span class="loading-text">Loading threat models...</span>
+				<div class="center-state">
+					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+					<div class="loader-text">SCANNING THREAT MODELS...</div>
 				</div>
-			{:else if error}
-				<!-- Error State -->
-				<div class="error-state">
-					<svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<p class="error-message">{error}</p>
-					<button onclick={loadThreatModels} class="retry-button"> Try Again </button>
-				</div>
-			{:else if threatModels.length === 0}
-				<!-- Empty State -->
-				<div class="empty-state">
-					<div class="empty-icon">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			{:else}
+				<!-- Content States -->
+				{#if error}
+					<div class="empty-view">
+						<p class="error-text">{error}</p>
+						<button onclick={loadThreatModels} class="btn btn-primary">Retry Connection</button>
+					</div>
+				{:else if threatModels.length === 0}
+					<div class="empty-view">
+						<svg
+							class="empty-icon"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
 								d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
 							/>
 						</svg>
-					</div>
-					<h3 class="empty-title">No threat models yet</h3>
-					<p class="empty-description">
-						Get started by creating your first threat model or importing an existing one.
-					</p>
-					<div class="empty-actions">
-						<button onclick={openCreateModal} class="empty-button primary">
-							<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-								/>
-							</svg>
-							Create Your First Model
-						</button>
-						<button onclick={triggerImport} class="empty-button secondary">
-							<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-								/>
-							</svg>
-							Import Existing
-						</button>
-					</div>
-				</div>
-			{:else}
-				<!-- Threat Models Grid -->
-				<div class="content-header">
-					<h2 class="content-title">Your Threat Models</h2>
-					<span class="content-count"
-						>{threatModels.length} {threatModels.length === 1 ? 'model' : 'models'}</span
-					>
-				</div>
-
-				<div class="models-grid">
-					{#each threatModels as model}
-						<div class="model-card">
-							<div class="model-header">
-								<div class="model-info">
-									<h3 class="model-name">{model.name}</h3>
-									{#if model.description}
-										<p class="model-description">{model.description}</p>
-									{/if}
-								</div>
-
-								<div class="model-badges">
-									<span class="badge methodology-badge {model.methodology.toLowerCase()}">
-										{model.methodology}
-									</span>
-									<span class="badge status-badge {model.status}">
-										{model.status}
-									</span>
-								</div>
-							</div>
-
-							<div class="model-stats">
-								<div class="stat-item">
-									<svg class="stat-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-										/>
-									</svg>
-									<span>{model.element_count || 0} elements</span>
-								</div>
-
-								<div class="stat-item">
-									<svg class="stat-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-										/>
-									</svg>
-									<span>{model.assessment_count || 0} threats</span>
-								</div>
-
-								<div class="stat-item">
-									<svg class="stat-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
-									<span>{formatDate(model.created_at)}</span>
-								</div>
-							</div>
-
-							<div class="model-actions">
-								<button
-									onclick={() => goto(`/github/workspace/${orgName}/threat-modeling/${model.id}`)}
-									class="model-button primary"
-								>
-									<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-										/>
-									</svg>
-									Open Canvas
-								</button>
-
-								<button
-									onclick={() => confirmDeleteThreatModel(model)}
-									class="model-button danger"
-									title="Delete threat model"
-								>
-									<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-										/>
-									</svg>
-									Delete
-								</button>
-							</div>
+						<h3>No threat models yet</h3>
+						<p>Create your first threat model or import an existing one to get started.</p>
+						<div class="empty-actions">
+							<button onclick={openCreateModal} class="btn btn-primary">
+								Create Your First Model
+								<span class="button-arrow">→</span>
+							</button>
+							<button onclick={triggerImport} class="btn btn-secondary">Import JSON</button>
 						</div>
-					{/each}
-				</div>
+					</div>
+				{:else}
+					<!-- Models Grid -->
+					<div class="models-grid">
+						{#each threatModels as model}
+							<div class="model-card">
+								<div class="model-card-top">
+									<div class="model-meta">
+										<h3 class="model-name">{model.name}</h3>
+										{#if model.description}
+											<p class="model-desc">{model.description}</p>
+										{/if}
+									</div>
+									<div class="model-badges">
+										<span class="tag methodology {model.methodology.toLowerCase()}"
+											>{model.methodology}</span
+										>
+										<span class="tag status {model.status}">{model.status}</span>
+									</div>
+								</div>
+
+								<div class="model-stats-row">
+									<div class="m-stat">
+										<span class="m-stat-label">Elements</span>
+										<span class="m-stat-value">{model.element_count || 0}</span>
+									</div>
+									<div class="m-stat">
+										<span class="m-stat-label">Threats</span>
+										<span class="m-stat-value">{model.assessment_count || 0}</span>
+									</div>
+									<div class="m-stat">
+										<span class="m-stat-label">Created</span>
+										<span class="m-stat-value">{formatDate(model.created_at)}</span>
+									</div>
+								</div>
+
+								<div class="model-actions">
+									<button
+										onclick={() => goto(`/github/workspace/${orgName}/threat-modeling/${model.id}`)}
+										class="btn btn-primary btn-full"
+									>
+										<span>Open Canvas</span>
+										<span class="button-arrow">→</span>
+									</button>
+									<button
+										onclick={() => confirmDeleteThreatModel(model)}
+										class="btn btn-outline btn-icon-only"
+										title="Delete threat model"
+										aria-label="Delete threat model"
+									>
+										<svg
+											width="14"
+											height="14"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+										>
+											<path
+												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+											/>
+										</svg>
+									</button>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			{/if}
 		</main>
 	</div>
@@ -702,7 +638,7 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 
 <!-- Notification Toast -->
 {#if showNotificationFlag}
-	<div class="notification {notificationType}">
+	<div class="toast {notificationType}">
 		{notificationMessage}
 	</div>
 {/if}
@@ -726,7 +662,7 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 		tabindex="0"
 	>
 		<div
-			class="modal-container"
+			class="modal-container {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
@@ -735,10 +671,8 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 		>
 			<div class="modal-header">
 				<div>
-					<h3 class="modal-title" style="color: #FFFFFF !important;">Create New Threat Model</h3>
-					<p class="modal-subtitle" style="color: rgba(255, 255, 255, 0.8) !important;">
-						Start your security threat analysis
-					</p>
+					<h3 class="modal-title">Create New Threat Model</h3>
+					<p class="modal-subtitle">Define your security threat analysis scope</p>
 				</div>
 				<button onclick={closeCreateModal} class="modal-close" aria-label="Close modal">
 					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -754,46 +688,31 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 
 			<div class="modal-body">
 				<div class="form-group">
-					<label for="modelName" class="form-label" style="color: #FFFFFF !important;"
-						>Model Name *</label
-					>
+					<label for="modelName" class="form-label">Model Name *</label>
 					<input
 						id="modelName"
 						type="text"
 						bind:value={newModelName}
 						placeholder="e.g., API Security Model"
 						class="form-input"
-						style="color: #FFFFFF !important;"
 						onkeypress={(e) => e.key === 'Enter' && createThreatModel()}
 					/>
 				</div>
 
 				<div class="form-group">
-					<label for="modelDescription" class="form-label" style="color: #FFFFFF !important;"
-						>Description</label
-					>
+					<label for="modelDescription" class="form-label">Description</label>
 					<textarea
 						id="modelDescription"
 						bind:value={newModelDescription}
 						rows="3"
 						placeholder="Brief description of what this threat model covers..."
 						class="form-input"
-						style="color: #FFFFFF !important;"
 					></textarea>
 				</div>
 
 				<div class="form-group">
-					<label for="methodology" class="form-label" style="color: #FFFFFF !important;"
-						>Methodology</label
-					>
-					<select
-						id="methodology"
-						bind:value={newModelMethodology}
-						class="form-input"
-						style={darkMode
-							? 'background: #FFFFFF !important; color: #000000 !important;'
-							: 'background: #FFFFFF !important; color: #000000 !important;'}
-					>
+					<label for="methodology" class="form-label">Methodology</label>
+					<select id="methodology" bind:value={newModelMethodology} class="form-input">
 						<option value="STRIDE"
 							>STRIDE - Spoofing, Tampering, Repudiation, Info Disclosure, DoS, Elevation</option
 						>
@@ -804,11 +723,16 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 				</div>
 
 				<div class="info-box">
-					<svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg
+						class="info-icon"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							stroke-width="2"
 							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 						/>
 					</svg>
@@ -820,45 +744,18 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 			</div>
 
 			<div class="modal-footer">
-				<button onclick={closeCreateModal} class="btn-secondary" disabled={creating}>
-					Cancel
-				</button>
+				<button onclick={closeCreateModal} class="btn btn-secondary" disabled={creating}
+					>Cancel</button
+				>
 				<button
 					onclick={createThreatModel}
 					disabled={creating || !newModelName.trim()}
-					class="btn-primary"
+					class="btn btn-primary"
 				>
 					{#if creating}
-						<svg
-							class="btn-icon animate-spin"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
+						<span class="btn-spinner"></span>
 						Creating...
 					{:else}
-						<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-							/>
-						</svg>
 						Create Model
 					{/if}
 				</button>
@@ -877,7 +774,7 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 		tabindex="0"
 	>
 		<div
-			class="modal-container"
+			class="modal-container {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
@@ -886,10 +783,8 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 		>
 			<div class="modal-header">
 				<div>
-					<h3 class="modal-title" style="color: #FFFFFF !important;">Delete Threat Model</h3>
-					<p class="modal-subtitle" style="color: rgba(255, 255, 255, 0.8) !important;">
-						This action cannot be undone
-					</p>
+					<h3 class="modal-title">Delete Threat Model</h3>
+					<p class="modal-subtitle">This action cannot be undone</p>
 				</div>
 				<button onclick={cancelDelete} class="modal-close" aria-label="Close modal">
 					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -905,12 +800,11 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 
 			<div class="modal-body">
 				<div class="delete-warning">
-					<div class="warning-icon">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<div class="warning-icon-wrap">
+						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
 								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
 							/>
 						</svg>
@@ -921,10 +815,10 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 						<div class="warning-details">
 							<p class="warning-subtitle">This will permanently remove:</p>
 							<ul class="warning-list">
-								<li>• The threat model and all its data</li>
-								<li>• All threat assessments ({modelToDelete.assessment_count || 0} threats)</li>
-								<li>• All canvas diagrams and components</li>
-								<li>• All analysis results and history</li>
+								<li>The threat model and all its data</li>
+								<li>All threat assessments ({modelToDelete.assessment_count || 0} threats)</li>
+								<li>All canvas diagrams and components</li>
+								<li>All analysis results and history</li>
 							</ul>
 						</div>
 					</div>
@@ -932,13 +826,17 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 			</div>
 
 			<div class="modal-footer">
-				<button onclick={cancelDelete} class="btn-secondary"> Cancel </button>
-				<button onclick={deleteThreatModel} class="btn-danger">
-					<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<button onclick={cancelDelete} class="btn btn-secondary">Cancel</button>
+				<button onclick={deleteThreatModel} class="btn btn-danger">
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
 							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
 						/>
 					</svg>
@@ -950,910 +848,616 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 {/if}
 
 <style>
-	/* Root Container */
-	.threat-modeling-container {
+	/* ============================================
+	   PROFESSIONAL DESIGN SYSTEM (MATTE ENGINEERING)
+	   ============================================ */
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--nav-height: 64px;
+	}
+
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	/* ---- Theme Variables ---- */
+	.threat-page.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--error: #ef4444;
+		--card-shadow: none;
+	}
+
+	.threat-page.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+		--card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+	}
+
+	.threat-page {
 		min-height: 100vh;
-		background: var(--bg-primary);
-		transition: background-color 0.3s ease;
-	}
-
-	/* CSS Variables - Light Mode */
-	.threat-modeling-container.light {
-		--bg-primary: #ffffff;
-		--bg-secondary: #f8fafc;
-		--text-primary: #1a1a1a;
-		--text-secondary: #666666;
-		--text-muted: #999999;
-		--border-color: rgba(0, 217, 255, 0.3);
-		--primary-color: #00d9ff;
-		--primary-hover: #00b8d4;
-		--card-bg: rgba(0, 217, 255, 0.05);
-		--success-color: #16a34a;
-		--error-color: #ef4444;
-	}
-
-	/* CSS Variables - Dark Mode */
-	.threat-modeling-container.dark {
-		--bg-primary: #000000;
-		--bg-secondary: #0a0a0a;
-		--text-primary: #ffffff;
-		--text-secondary: #b8b8b8;
-		--text-muted: #888888;
-		--border-color: rgba(0, 217, 255, 0.3);
-		--primary-color: #00d9ff;
-		--primary-hover: #00b8d4;
-		--card-bg: rgba(255, 255, 255, 0.05);
-		--success-color: #22c55e;
-		--error-color: #ef4444;
-	}
-
-	/* Top Navigation Bar */
-	.top-navbar {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		z-index: 1000;
-		background: rgba(0, 0, 0, 0.95);
-		backdrop-filter: blur(20px);
-		border-bottom: 1px solid rgba(0, 217, 255, 0.3);
-		padding: 1rem 2rem;
-		transition: all 0.3s ease;
-	}
-
-	.threat-modeling-container.light .top-navbar {
-		background: rgba(255, 255, 255, 0.95);
-		border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-	}
-
-	.navbar-content {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		max-width: 100%;
-	}
-
-	.navbar-left {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-	}
-
-	.brand-section {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		cursor: pointer;
-		transition: transform 0.3s ease;
-	}
-
-	.brand-section:hover {
-		transform: translateY(-1px);
-	}
-
-	.brand-icon {
-		width: 48px;
-		height: 48px;
-		object-fit: contain;
-		filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
-		transition: filter 0.3s ease;
-	}
-
-	.brand-section:hover .brand-icon {
-		filter: drop-shadow(0 0 15px rgba(0, 217, 255, 0.7));
-	}
-
-	.brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.brand-name {
-		font-size: 1.5rem;
-		font-weight: 700;
+		background: var(--bg-app);
 		color: var(--text-primary);
-		line-height: 1;
-		letter-spacing: -0.02em;
-	}
-
-	.brand-subtitle {
-		font-size: 0.7rem;
-		color: var(--text-secondary);
-		opacity: 0.8;
-		margin-top: 0.2rem;
-		letter-spacing: 0.05em;
-	}
-
-	/* Breadcrumb */
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-	}
-
-	.breadcrumb-link {
-		color: var(--text-secondary);
-		text-decoration: none;
-		transition: color 0.3s ease;
+		font-family: var(--font-sans);
+		transition: background 0.3s ease;
 		position: relative;
+		overflow-x: hidden;
 	}
 
-	.breadcrumb-link:hover {
-		color: var(--primary-color);
-	}
-
-	.breadcrumb-link::after {
+	/* Blueprint Grid Backdrop */
+	.threat-page::before {
 		content: '';
-		position: absolute;
-		bottom: -2px;
-		left: 0;
-		width: 0;
-		height: 2px;
-		background: var(--primary-color);
-		transition: width 0.3s ease;
-	}
-
-	.breadcrumb-link:hover::after {
-		width: 100%;
-	}
-
-	.breadcrumb-separator {
-		color: var(--text-muted);
-	}
-
-	.breadcrumb-current {
-		color: var(--primary-color);
-		font-weight: 600;
-	}
-
-	/* Theme Toggle */
-	.navbar-right {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.theme-toggle {
-		background: transparent;
-		border: 1px solid var(--border-color);
-		color: var(--text-secondary);
-		padding: 0.625rem;
-		border-radius: 8px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.theme-toggle:hover {
-		background: var(--card-bg);
-		border-color: var(--primary-color);
-		color: var(--primary-color);
-		transform: scale(1.05);
-	}
-
-	.theme-icon {
-		width: 20px;
-		height: 20px;
-	}
-
-	/* Main Layout */
-	.main-layout {
-		margin-top: 80px;
-		min-height: calc(100vh - 80px);
-		display: flex;
-	}
-
-	/* Left Sidebar */
-	.left-sidebar {
 		position: fixed;
-		left: 0;
-		top: 80px;
-		width: 280px;
-		height: calc(100vh - 80px);
-		background: rgba(0, 0, 0, 0.95);
-		border-right: 1px solid rgba(0, 217, 255, 0.3);
-		backdrop-filter: blur(20px);
-		padding: 1.5rem;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.5;
+	}
+
+	/* ---- Layout ---- */
+	.page-layout {
+		display: flex;
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 0 2rem;
+		gap: 2rem;
+		position: relative;
+		z-index: 10;
+	}
+
+	/* ---- Sidebar ---- */
+	.sidebar {
+		width: 240px;
+		flex-shrink: 0;
+		padding: 1.5rem 0;
+		position: sticky;
+		top: calc(var(--nav-height) + 40px);
+		height: fit-content;
+		max-height: calc(100vh - var(--nav-height) - 40px);
 		overflow-y: auto;
-		z-index: 900;
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1.25rem;
 	}
 
-	.threat-modeling-container.light .left-sidebar {
-		background: rgba(255, 255, 255, 0.95);
-		border-right: 1px solid rgba(0, 217, 255, 0.2);
-	}
-
-	/* Back Button */
-	.back-button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
-		background: transparent;
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 8px;
-		color: var(--text-primary);
-		text-decoration: none;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 0.9rem;
-		font-weight: 500;
-	}
-
-	.back-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: #00d9ff;
-		transform: translateX(-4px);
-		box-shadow: 0 4px 12px rgba(0, 217, 255, 0.2);
-	}
-
-	.back-icon {
-		width: 18px;
-		height: 18px;
-		color: #00d9ff;
-	}
-
-	/* Sidebar Section */
 	.sidebar-section {
-		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 
-	.section-title {
-		font-size: 0.75rem;
+	.section-label {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
 		font-weight: 700;
+		color: var(--text-muted);
 		letter-spacing: 0.1em;
-		color: var(--text-muted);
-		margin-bottom: 1rem;
 		text-transform: uppercase;
 	}
 
-	/* Statistics Cards */
-	.stat-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem;
 	}
 
-	.stat-card {
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
+	.stat-cell {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
 		border-radius: 8px;
-		padding: 1rem;
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		transition: all 0.3s ease;
-		cursor: default;
-	}
-
-	.stat-card:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.15);
-		border-color: var(--primary-color);
-	}
-
-	.threat-modeling-container.light .stat-card {
-		background: rgba(255, 255, 255, 0.9);
-		border-color: rgba(0, 217, 255, 0.2);
-	}
-
-	.threat-modeling-container.light .stat-card:hover {
-		background: rgba(255, 255, 255, 1);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.12);
-	}
-
-	.stat-icon {
-		font-size: 1.75rem;
-		line-height: 1;
-		flex-shrink: 0;
-	}
-
-	.stat-content {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		flex: 1;
-	}
-
-	.stat-value {
-		font-size: 1.75rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		line-height: 1;
-	}
-
-	.stat-label {
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		font-weight: 600;
-	}
-
-	/* Sidebar Actions */
-	.sidebar-actions {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.action-button {
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-		text-align: left;
-	}
-
-	.action-button:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.15);
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.08);
-	}
-
-	.threat-modeling-container.light .action-button {
-		background: rgba(255, 255, 255, 0.9);
-		border-color: rgba(0, 217, 255, 0.2);
-	}
-
-	.threat-modeling-container.light .action-button:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.12);
-	}
-
-	.action-button:active {
-		transform: translateY(0);
-	}
-
-	.action-button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.button-content {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem 1.25rem;
-		position: relative;
-		z-index: 1;
-	}
-
-	.button-icon {
-		width: 20px;
-		height: 20px;
-		flex-shrink: 0;
-		color: var(--primary-color);
-		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	.action-button:hover .button-icon {
-		transform: scale(1.1);
-	}
-
-	.button-text {
+		padding: 0.625rem 0.75rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.125rem;
-		flex: 1;
 	}
-
-	.button-label {
-		font-size: 0.875rem;
-		font-weight: 600;
+	.stat-val {
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 700;
 		color: var(--text-primary);
-		line-height: 1.2;
 	}
-
-	.button-desc {
-		font-size: 0.75rem;
+	.stat-lbl {
+		font-size: 0.6rem;
 		color: var(--text-muted);
-		line-height: 1.2;
-		opacity: 0.8;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.action-button:hover .button-desc {
-		opacity: 1;
+	.sidebar-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 	}
 
-	/* Main Content */
-	.main-content {
-		margin-left: 280px;
-		flex: 1;
-		padding: 2rem;
-		min-height: calc(100vh - 80px);
+	/* ---- Loading (center-state) ---- */
+	.center-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 6rem 2rem;
+		text-align: center;
+		gap: 1rem;
+	}
+	.loader-icon {
+		width: 40px;
+		height: 40px;
+		animation: pulse 2s ease-in-out infinite;
+	}
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
 	}
 
-	/* Content Header */
-	.content-header {
+	/* ---- Header Navigation ---- */
+	.dashboard-header {
+		height: var(--nav-height);
+		background: rgba(var(--bg-app), 0.8);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+	}
+	.header-content {
+		max-width: 1440px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 2rem;
 	}
-
-	.content-title {
-		font-size: 1.75rem;
-		font-weight: 700;
+	.nav-brand {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		text-decoration: none;
 		color: var(--text-primary);
 	}
-
-	.content-count {
-		font-size: 0.875rem;
-		color: var(--text-muted);
-		background: var(--card-bg);
-		padding: 0.5rem 1rem;
-		border-radius: 20px;
-		border: 1px solid var(--border-color);
+	.brand-icon {
+		width: 28px;
+		height: 28px;
 	}
-
-	/* Loading State */
-	.loading-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 1.5rem;
-		padding: 4rem;
-	}
-
-	.loading-spinner {
-		width: 50px;
-		height: 50px;
-		border: 4px solid rgba(0, 217, 255, 0.2);
-		border-radius: 50%;
-		border-top-color: var(--primary-color);
-		animation: spin 1s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
-	.loading-text {
+	.brand-name {
+		font-weight: 700;
 		font-size: 1rem;
-		color: var(--text-secondary);
+		letter-spacing: -0.02em;
+	}
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
+	}
+	.nav-link {
+		font-size: 0.8125rem;
 		font-weight: 500;
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
+		position: relative;
 	}
-
-	/* Error State */
-	.error-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.5rem;
-		padding: 4rem;
-		text-align: center;
-	}
-
-	.error-icon {
-		width: 64px;
-		height: 64px;
-		color: var(--error-color);
-	}
-
-	.error-message {
-		color: var(--error-color);
-		font-size: 1.1rem;
-		max-width: 500px;
-	}
-
-	.retry-button {
-		padding: 0.75rem 1.5rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
-	}
-
-	.retry-button:hover {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	.threat-modeling-container.light .retry-button {
-		background: #00d9ff;
-		color: #000000;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.25),
-			0 5px 15px rgba(0, 217, 255, 0.15);
-	}
-
-	.threat-modeling-container.light .retry-button:hover {
-		background: #00b8d4;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.35),
-			0 8px 20px rgba(0, 217, 255, 0.25);
-	}
-
-	/* Empty State */
-	.empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.5rem;
-		padding: 4rem;
-		text-align: center;
-	}
-
-	.empty-icon {
-		width: 120px;
-		height: 120px;
-		background: var(--card-bg);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: 1px solid var(--border-color);
-	}
-
-	.empty-icon svg {
-		width: 60px;
-		height: 60px;
-		color: var(--primary-color);
-	}
-
-	.empty-title {
-		font-size: 1.75rem;
-		font-weight: 700;
+	.nav-link:hover,
+	.nav-link.active {
 		color: var(--text-primary);
 	}
-
-	.empty-description {
-		font-size: 1.1rem;
-		color: var(--text-secondary);
-		max-width: 500px;
+	.nav-link.active::after {
+		content: '';
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: var(--accent);
 	}
-
-	.empty-actions {
+	.nav-actions {
 		display: flex;
-		gap: 1rem;
-		margin-top: 1rem;
+		align-items: center;
+		gap: 1.5rem;
+	}
+	.theme-toggle {
+		background: none;
+		border: 1px solid var(--border);
+		color: var(--text-secondary);
+		cursor: pointer;
+		padding: 0.5rem;
+		border-radius: 8px;
+		transition: all 0.15s;
+		display: flex;
+	}
+	.theme-toggle:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		border-color: var(--border-focus);
+	}
+	.theme-icon {
+		width: 18px;
+		height: 18px;
 	}
 
-	.empty-button {
+	/* ---- Technical Bar ---- */
+	.technical-bar {
+		background: var(--bg-surface);
+		border-bottom: 1px solid var(--border);
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		height: 40px;
+	}
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	.breadcrumb-sep {
+		color: var(--border-focus);
+	}
+	.breadcrumb-item.active {
+		color: var(--accent);
+	}
+	.system-status {
+		margin-left: auto;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1rem 2rem;
-		border-radius: 12px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 0.95rem;
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		color: var(--success);
+		opacity: 0.8;
+	}
+	.status-pulse {
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		animation: blink 2s infinite;
+	}
+	@keyframes blink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
-	.empty-button.primary {
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
+	/* ---- Main Content ---- */
+	.page-main {
+		flex: 1;
+		min-width: 0;
+		padding: 1.5rem 0;
 	}
 
-	.empty-button.primary:hover {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
+	/* View Header */
+	.view-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+	}
+	/* Empty / Error View */
+	.empty-view {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 8rem 2rem;
+		text-align: center;
+		gap: 1rem;
+	}
+	.empty-view h3 {
+		font-size: 1.25rem;
+		font-weight: 700;
+	}
+	.empty-view p {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		max-width: 400px;
+		line-height: 1.5;
+	}
+	.empty-icon {
+		width: 48px;
+		height: 48px;
+		color: var(--text-muted);
+		margin-bottom: 0.5rem;
+	}
+	.empty-actions {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+	.error-text {
+		color: var(--error);
+		font-size: 0.875rem;
+		max-width: 400px;
 	}
 
-	.threat-modeling-container.light .empty-button.primary {
-		background: #00d9ff;
-		color: #000000;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.25),
-			0 5px 15px rgba(0, 217, 255, 0.15);
-	}
-
-	.threat-modeling-container.light .empty-button.primary:hover {
-		background: #00b8d4;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.35),
-			0 8px 20px rgba(0, 217, 255, 0.25);
-	}
-
-	.empty-button.secondary {
-		background: rgba(0, 0, 0, 0.3);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.4),
-			0 0 20px rgba(0, 217, 255, 0.2);
-	}
-
-	.empty-button.secondary:hover {
-		background: #00d9ff;
-		color: #000000;
-		transform: translateY(-3px);
-		border-color: #00d9ff;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	.threat-modeling-container.light .empty-button.secondary {
-		background: rgba(255, 255, 255, 0.9);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.15),
-			0 0 20px rgba(0, 217, 255, 0.1);
-	}
-
-	.threat-modeling-container.light .empty-button.secondary:hover {
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	/* Models Grid */
+	/* ---- Models Grid ---- */
 	.models-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 		gap: 1.5rem;
 	}
 
-	/* Model Card */
 	.model-card {
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
 		border-radius: 12px;
-		backdrop-filter: blur(20px);
 		padding: 1.5rem;
-		transition: all 0.3s ease;
+		transition: all 0.2s var(--ease-premium);
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 1.25rem;
+		box-shadow: var(--card-shadow);
 	}
-
 	.model-card:hover {
-		transform: translateY(-4px);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.15);
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.08);
+		border-color: var(--border-focus);
+		transform: translateY(-2px);
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 	}
 
-	.threat-modeling-container.light .model-card {
-		background: rgba(255, 255, 255, 0.9);
-		border-color: rgba(0, 217, 255, 0.2);
-	}
-
-	.threat-modeling-container.light .model-card:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.12);
-	}
-
-	.model-header {
+	.model-card-top {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
-
-	.model-info {
-		flex: 1;
-	}
-
 	.model-name {
-		font-size: 1.25rem;
 		font-weight: 700;
-		color: var(--text-primary);
-		margin-bottom: 0.5rem;
-		line-height: 1.3;
+		font-size: 1rem;
+		margin-bottom: 0.25rem;
 	}
-
-	.model-description {
-		font-size: 0.875rem;
+	.model-desc {
+		font-size: 0.8125rem;
 		color: var(--text-secondary);
 		line-height: 1.5;
-		margin: 0;
 	}
-
 	.model-badges {
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
 	}
 
-	.badge {
-		padding: 0.375rem 0.75rem;
+	/* Tags / Badges */
+	.tag {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.25rem 0.625rem;
 		border-radius: 6px;
-		font-size: 0.75rem;
-		font-weight: 700;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		border: 1px solid;
+	}
+	.tag.methodology.stride {
+		color: var(--accent);
+		border-color: rgba(0, 173, 239, 0.15);
+	}
+	.tag.methodology.linddun {
+		color: #8b5cf6;
+		border-color: rgba(139, 92, 246, 0.15);
+	}
+	.tag.methodology.cia {
+		color: #ec4899;
+		border-color: rgba(236, 72, 153, 0.15);
+	}
+	.tag.methodology.custom {
+		color: var(--text-muted);
+		border-color: var(--border);
+	}
+	.tag.status.draft {
+		color: #f59e0b;
+		border-color: rgba(245, 158, 11, 0.15);
+	}
+	.tag.status.review {
+		color: #ec4899;
+		border-color: rgba(236, 72, 153, 0.15);
+	}
+	.tag.status.approved {
+		color: var(--success);
+		border-color: rgba(16, 185, 129, 0.15);
+	}
+	.tag.status.archived {
+		color: var(--text-muted);
+		border-color: var(--border);
+	}
+
+	/* Model Stats Row */
+	.model-stats-row {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+		padding: 0.875rem 0;
+		border-top: 1px solid var(--border);
+		border-bottom: 1px solid var(--border);
+	}
+	.m-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+	.m-stat-label {
+		font-size: 0.6rem;
+		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
-
-	.methodology-badge.stride {
-		background: rgba(0, 217, 255, 0.1);
-		color: #00d9ff;
-		border: 1px solid rgba(0, 217, 255, 0.3);
-	}
-
-	.methodology-badge.linddun {
-		background: rgba(139, 92, 246, 0.1);
-		color: #8b5cf6;
-		border: 1px solid rgba(139, 92, 246, 0.3);
-	}
-
-	.methodology-badge.cia {
-		background: rgba(236, 72, 153, 0.1);
-		color: #ec4899;
-		border: 1px solid rgba(236, 72, 153, 0.3);
-	}
-
-	.methodology-badge.custom {
-		background: rgba(184, 184, 184, 0.1);
-		color: #b8b8b8;
-		border: 1px solid rgba(184, 184, 184, 0.3);
-	}
-
-	.status-badge.draft {
-		background: rgba(251, 191, 36, 0.1);
-		color: #fbcf24;
-		border: 1px solid rgba(251, 191, 36, 0.3);
-	}
-
-	.status-badge.review {
-		background: rgba(236, 72, 153, 0.1);
-		color: #ec4899;
-		border: 1px solid rgba(236, 72, 153, 0.3);
-	}
-
-	.status-badge.approved {
-		background: rgba(34, 197, 94, 0.1);
-		color: #22c55e;
-		border: 1px solid rgba(34, 197, 94, 0.3);
-	}
-
-	.status-badge.archived {
-		background: rgba(184, 184, 184, 0.1);
-		color: #b8b8b8;
-		border: 1px solid rgba(184, 184, 184, 0.3);
-	}
-
-	/* Model Stats */
-	.model-stats {
-		display: flex;
-		gap: 1rem;
-		flex-wrap: wrap;
-		padding: 1rem 0;
-		border-top: 1px solid var(--border-color);
-		border-bottom: 1px solid var(--border-color);
-	}
-
-	.stat-item {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-		color: var(--text-secondary);
-	}
-
-	.stat-item-icon {
-		width: 16px;
-		height: 16px;
-		color: var(--text-muted);
+	.m-stat-value {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-primary);
 	}
 
 	/* Model Actions */
 	.model-actions {
 		display: flex;
-		gap: 0.75rem;
+		gap: 0.5rem;
 	}
 
-	.model-button {
-		flex: 1;
-		display: flex;
+	/* ---- Buttons ---- */
+	.btn {
+		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		padding: 0.75rem 1rem;
-		border-radius: 10px;
+		padding: 0.6875rem 1.125rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
 		font-weight: 600;
-		font-size: 0.875rem;
 		cursor: pointer;
-		transition: all 0.3s ease;
-		border: 1px solid var(--border-color);
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		white-space: nowrap;
 	}
-
-	.model-button.primary {
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
+	.btn:hover:not(:disabled) {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
 	}
-
-	.model-button.primary:hover {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
+	.btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
 	}
-
-	.threat-modeling-container.light .model-button.primary {
-		background: #00d9ff;
-		color: #000000;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.25),
-			0 5px 15px rgba(0, 217, 255, 0.15);
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
 	}
-
-	.threat-modeling-container.light .model-button.primary:hover {
-		background: #00b8d4;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.35),
-			0 8px 20px rgba(0, 217, 255, 0.25);
+	.btn-primary:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+		transform: none;
 	}
-
-	.model-button.danger {
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+		border-color: var(--border);
+		color: var(--text-primary);
+	}
+	.btn-outline {
 		background: transparent;
-		color: var(--error-color);
-		border-color: rgba(239, 68, 68, 0.3);
+		border-color: var(--border);
+		color: var(--text-secondary);
+	}
+	.btn-outline:hover:not(:disabled) {
+		border-color: var(--border-focus);
+		color: var(--text-primary);
+		background: var(--bg-surface-alt);
+		transform: translateY(-1px);
+	}
+	.btn-danger {
+		background: rgba(239, 68, 68, 0.08);
+		border-color: rgba(239, 68, 68, 0.15);
+		color: var(--error);
+	}
+	.btn-danger:hover:not(:disabled) {
+		background: rgba(239, 68, 68, 0.15);
+		border-color: var(--error);
+		transform: translateY(-1px);
+	}
+	.btn-full {
+		width: 100%;
+	}
+	.btn-sm {
+		padding: 0.5rem 0.75rem;
+		font-size: 0.75rem;
+	}
+	.btn-icon-only {
+		padding: 0.6875rem;
+		flex-shrink: 0;
 	}
 
-	.model-button.danger:hover {
-		background: rgba(239, 68, 68, 0.1);
-		border-color: var(--error-color);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+	.button-arrow {
+		font-size: 1.1rem;
+		transition: transform 0.2s var(--ease-premium);
+	}
+	.btn:hover .button-arrow {
+		transform: translateX(4px);
 	}
 
-	.btn-icon {
-		width: 18px;
-		height: 18px;
+	.btn-spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-top-color: currentColor;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
-	/* Modal Styles */
+	/* ---- Modal ---- */
 	.modal-backdrop {
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
-		background: rgba(0, 0, 0, 0.7);
-		backdrop-filter: blur(8px);
+		background: rgba(0, 0, 0, 0.6);
+		backdrop-filter: blur(6px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		padding: 2rem;
-		animation: backdropFadeIn 0.2s ease;
+		animation: fadeIn 0.15s ease;
 	}
-
-	.threat-modeling-container.light .modal-backdrop {
-		background: rgba(0, 0, 0, 0.3);
-	}
-
-	@keyframes backdropFadeIn {
+	@keyframes fadeIn {
 		from {
 			opacity: 0;
 		}
@@ -1863,30 +1467,44 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 	}
 
 	.modal-container {
-		background: rgba(0, 0, 0, 0.95);
-		border: 1px solid var(--border-color);
-		border-radius: 16px;
-		backdrop-filter: blur(10px);
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		background: var(--bg-surface, #f8fafc);
+		border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+		border-radius: 12px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 		width: 100%;
-		max-width: 500px;
+		max-width: 480px;
 		max-height: 90vh;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		animation: modalSlideIn 0.3s ease;
+		animation: modalIn 0.2s var(--ease-premium);
 	}
-
-	.threat-modeling-container.light .modal-container {
-		background: rgba(0, 0, 0, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.35);
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+	.modal-container.dark {
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--error: #ef4444;
 	}
-
-	@keyframes modalSlideIn {
+	.modal-container.light {
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--error: #dc2626;
+	}
+	@keyframes modalIn {
 		from {
 			opacity: 0;
-			transform: translateY(-20px) scale(0.95);
+			transform: translateY(-12px) scale(0.97);
 		}
 		to {
 			opacity: 1;
@@ -1895,380 +1513,208 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 	}
 
 	.modal-header {
-		padding: 1.5rem 2rem;
-		border-bottom: 1px solid var(--border-color);
+		padding: 1.25rem 1.5rem;
+		border-bottom: 1px solid var(--border);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 	}
-
 	.modal-title {
-		font-size: 1.5rem;
+		font-size: 1.125rem;
 		font-weight: 700;
 		color: var(--text-primary);
 		margin: 0;
-		color: #ffffff;
 	}
-
-	.threat-modeling-container.light .modal-title {
-		color: #ffffff;
-	}
-
 	.modal-subtitle {
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		color: var(--text-muted);
-		margin-top: 0.25rem;
-		color: rgba(255, 255, 255, 0.8);
+		margin-top: 0.125rem;
 	}
-
-	.threat-modeling-container.light .modal-subtitle {
-		color: rgba(255, 255, 255, 0.8);
-	}
-
 	.modal-close {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.2);
-		color: var(--error-color);
-		padding: 0.5rem;
-		border-radius: 8px;
+		background: transparent;
+		border: 1px solid var(--border);
+		color: var(--text-muted);
+		padding: 0.375rem;
+		border-radius: 6px;
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all 0.15s;
 		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
-
 	.modal-close:hover {
-		background: rgba(239, 68, 68, 0.2);
-		transform: rotate(90deg);
+		border-color: var(--error);
+		color: var(--error);
+		background: rgba(239, 68, 68, 0.06);
 	}
-
 	.modal-close svg {
-		width: 20px;
-		height: 20px;
+		width: 16px;
+		height: 16px;
 	}
 
 	.modal-body {
-		padding: 2rem;
+		padding: 1.5rem;
 		overflow-y: auto;
 		flex: 1;
 	}
-
 	.form-group {
-		margin-bottom: 1.5rem;
+		margin-bottom: 1.25rem;
 	}
-
 	.form-label {
 		display: block;
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--text-primary);
-		margin-bottom: 0.5rem;
+		color: var(--text-secondary);
+		margin-bottom: 0.375rem;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
-
-	:global(.threat-modeling-container.light) .form-label {
-		color: #ffffff !important;
-	}
-
 	.form-input {
 		width: 100%;
-		padding: 0.875rem 1rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid var(--border-color);
-		border-radius: 10px;
+		padding: 0.625rem 0.875rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 8px;
 		color: var(--text-primary);
-		font-size: 1rem;
-		transition: all 0.3s ease;
-		font-family: inherit;
+		font-size: 0.875rem;
+		transition: border-color 0.15s;
+		font-family: var(--font-sans);
 	}
-
-	/* Light mode: All form inputs white text */
-	:global(.threat-modeling-container.light) .form-input {
-		color: #ffffff !important;
-	}
-
-	/* Light mode: Select dropdown also white text */
-	:global(.threat-modeling-container.light) select.form-input {
-		color: #ffffff !important;
-	}
-
-	/* Dark mode: Select dropdown black text on white background */
-	:global(.threat-modeling-container.dark) select.form-input {
-		background: #ffffff !important;
-		color: #000000 !important;
-	}
-
-	:global(.threat-modeling-container.dark) select.form-input option {
-		background: #ffffff !important;
-		color: #000000 !important;
-	}
-
 	.form-input:focus {
 		outline: none;
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.1);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+		border-color: var(--accent);
 	}
-
-	/* Light mode: Focus state */
-	:global(.threat-modeling-container.light) .form-input:focus {
-		background: rgba(0, 217, 255, 0.1) !important;
-	}
-
-	/* Dark mode: Keep white background when select is focused */
-	:global(.threat-modeling-container.dark) select.form-input:focus {
-		background: #ffffff !important;
-		color: #000000 !important;
-	}
-
 	.form-input::placeholder {
 		color: var(--text-muted);
 	}
-
-	:global(.threat-modeling-container.light) .form-input::placeholder {
-		color: rgba(255, 255, 255, 0.6) !important;
+	select.form-input {
+		cursor: pointer;
 	}
 
 	.info-box {
 		display: flex;
 		align-items: flex-start;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid rgba(0, 217, 255, 0.2);
+		gap: 0.625rem;
+		padding: 0.75rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 		border-radius: 8px;
 	}
-
 	.info-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--primary-color);
+		width: 16px;
+		height: 16px;
+		color: var(--accent);
 		flex-shrink: 0;
-		margin-top: 2px;
+		margin-top: 1px;
 	}
-
 	.info-text {
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		color: var(--text-secondary);
 		margin: 0;
 		line-height: 1.5;
 	}
 
-	.threat-modeling-container.light .info-text {
-		color: rgba(255, 255, 255, 0.8);
-	}
-
-	.threat-modeling-container.light .info-text {
-		color: rgba(255, 255, 255, 0.8);
-	}
-
 	.modal-footer {
-		padding: 1.5rem 2rem;
-		border-top: 1px solid var(--border-color);
+		padding: 1rem 1.5rem;
+		border-top: 1px solid var(--border);
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 		justify-content: flex-end;
 	}
 
-	.btn-primary,
-	.btn-secondary,
-	.btn-danger {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.875rem 1.5rem;
-		border-radius: 10px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 0.95rem;
-		border: none;
-	}
-
-	.btn-primary {
-		background: #ffffff;
-		color: #000000;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	.threat-modeling-container.light .btn-primary {
-		background: #00d9ff;
-		color: #000000;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.25),
-			0 5px 15px rgba(0, 217, 255, 0.15);
-	}
-
-	.threat-modeling-container.light .btn-primary:hover:not(:disabled) {
-		background: #00b8d4;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.35),
-			0 8px 20px rgba(0, 217, 255, 0.25);
-	}
-
-	.btn-primary:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.btn-secondary {
-		background: rgba(0, 0, 0, 0.3);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.4),
-			0 0 20px rgba(0, 217, 255, 0.2);
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background: #00d9ff;
-		color: #000000;
-		transform: translateY(-3px);
-		border-color: #00d9ff;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	.threat-modeling-container.light .btn-secondary {
-		background: rgba(255, 255, 255, 0.9);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow:
-			0 10px 30px rgba(0, 217, 255, 0.15),
-			0 0 20px rgba(0, 217, 255, 0.1);
-	}
-
-	.threat-modeling-container.light .btn-secondary:hover:not(:disabled) {
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	.btn-danger {
-		background: rgba(239, 68, 68, 0.1);
-		color: var(--error-color);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-	}
-
-	.btn-danger:hover {
-		background: rgba(239, 68, 68, 0.2);
-		border-color: var(--error-color);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-	}
-
-	.animate-spin {
-		animation: spin 1s linear infinite;
-	}
-
-	/* Delete Warning */
+	/* ---- Delete Warning ---- */
 	.delete-warning {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		align-items: center;
 	}
-
-	.warning-icon {
-		width: 64px;
-		height: 64px;
-		margin: 0 auto;
-		background: rgba(239, 68, 68, 0.1);
+	.warning-icon-wrap {
+		width: 48px;
+		height: 48px;
 		border-radius: 50%;
+		background: rgba(239, 68, 68, 0.08);
+		border: 1px solid rgba(239, 68, 68, 0.12);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 1px solid rgba(239, 68, 68, 0.2);
 	}
-
-	.warning-icon svg {
-		width: 32px;
-		height: 32px;
-		color: var(--error-color);
+	.warning-icon-wrap svg {
+		width: 24px;
+		height: 24px;
+		color: var(--error);
 	}
-
 	.warning-content {
 		text-align: center;
 	}
-
 	.warning-title {
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		color: var(--text-secondary);
-		margin-bottom: 0.5rem;
+		margin-bottom: 0.375rem;
 	}
-
 	.warning-model-name {
-		font-size: 1.25rem;
+		font-size: 1rem;
 		font-weight: 700;
 		color: var(--text-primary);
 		margin-bottom: 1rem;
 	}
-
 	.warning-details {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.2);
-		border-radius: 10px;
-		padding: 1rem;
+		background: rgba(239, 68, 68, 0.05);
+		border: 1px solid rgba(239, 68, 68, 0.1);
+		border-radius: 8px;
+		padding: 0.875rem;
 		text-align: left;
 	}
-
 	.warning-subtitle {
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--error-color);
-		margin-bottom: 0.5rem;
+		color: var(--error);
+		margin-bottom: 0.375rem;
 	}
-
 	.warning-list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
 	}
-
 	.warning-list li {
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		color: var(--text-secondary);
-		line-height: 1.8;
+		line-height: 1.7;
+		padding-left: 0.75rem;
+		position: relative;
+	}
+	.warning-list li::before {
+		content: '';
+		width: 3px;
+		height: 3px;
+		background: var(--text-muted);
+		border-radius: 50%;
+		position: absolute;
+		left: 0;
+		top: 0.6em;
 	}
 
-	/* Notification Toast */
-	.notification {
+	/* ---- Notification Toast ---- */
+	.toast {
 		position: fixed;
 		bottom: 2rem;
 		right: 2rem;
-		padding: 1rem 1.5rem;
-		background: var(--bg-secondary);
-		border: 1px solid var(--border-color);
+		padding: 0.75rem 1.25rem;
+		background: var(--bg-surface, #020202);
+		border: 1px solid var(--border, rgba(255, 255, 255, 0.03));
 		border-radius: 8px;
-		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-		color: var(--text-primary);
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+		color: var(--text-primary, #f8fafc);
+		font-size: 0.8125rem;
 		font-weight: 500;
 		z-index: 10000;
-		animation:
-			slideInRight 0.3s ease,
-			fadeOut 0.3s ease 2.7s;
-		max-width: 400px;
+		animation: slideInRight 0.25s ease;
+		max-width: 380px;
 	}
-
-	.notification.success {
-		border-left: 4px solid var(--success-color);
+	.toast.success {
+		border-left: 3px solid var(--success, #10b981);
 	}
-
-	.notification.error {
-		border-left: 4px solid var(--error-color);
+	.toast.error {
+		border-left: 3px solid var(--error, #ef4444);
 	}
-
 	@keyframes slideInRight {
 		from {
 			transform: translateX(100%);
@@ -2280,68 +1726,53 @@ const response = await fetch(`${API_BASE_URL}/api/github/workspace/${orgName}`, 
 		}
 	}
 
-	@keyframes fadeOut {
-		from {
-			opacity: 1;
-		}
-		to {
-			opacity: 0;
-		}
-	}
-
-	/* Responsive Design */
+	/* ---- Responsive ---- */
 	@media (max-width: 1024px) {
+		.page-layout {
+			flex-direction: column;
+		}
+		.sidebar {
+			width: 100%;
+			position: relative;
+			top: 0;
+			max-height: none;
+		}
+		.stats-grid {
+			grid-template-columns: repeat(4, 1fr);
+		}
 		.models-grid {
-			grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 		}
 	}
-
 	@media (max-width: 768px) {
-		.navbar-content {
-			padding: 0 1rem;
+		.view-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1.5rem;
 		}
-
-		.breadcrumb {
+		.nav-menu {
 			display: none;
 		}
-
-		.brand-name {
-			font-size: 1.25rem;
+		.page-layout {
+			padding: 0 1rem;
 		}
-
-		.left-sidebar {
-			position: relative;
-			width: 100%;
-			height: auto;
-			top: 0;
-			border-right: none;
-			border-bottom: 1px solid var(--border-color);
-		}
-
-		.main-content {
-			margin-left: 0;
-			padding: 1rem;
-		}
-
 		.models-grid {
 			grid-template-columns: 1fr;
 		}
-
-		.modal-container {
-			max-width: 100%;
-			margin: 1rem;
+		.stats-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
-
 		.empty-actions {
 			flex-direction: column;
-		}
-
-		.empty-button {
 			width: 100%;
-			justify-content: center;
 		}
-
-		.notification {
+		.empty-actions .btn {
+			width: 100%;
+		}
+		.modal-container {
+			max-width: 100%;
+		}
+		.toast {
 			bottom: 1rem;
 			right: 1rem;
 			left: 1rem;

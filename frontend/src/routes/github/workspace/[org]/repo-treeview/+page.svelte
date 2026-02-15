@@ -1549,86 +1549,74 @@
      ═══════════════════════════════════════════ -->
 {#if showNewFolderModal}
 	<div
-		class="dlg-overlay"
+		class="modal-backdrop"
 		onclick={closeNewFolderModal}
 		onkeydown={(e) => e.key === 'Escape' && closeNewFolderModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="dlg-box"
+			class="modal-container {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
+			aria-modal="true"
 			tabindex="-1"
 		>
-			<!-- Icon + Title -->
-			<div class="dlg-top">
-				<button class="dlg-close" onclick={closeNewFolderModal} aria-label="Close">
-					<svg
-						width="18"
-						height="18"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
-					>
-				</button>
-				<div class="dlg-icon-wrap folder-color">
-					<svg
-						width="22"
-						height="22"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						><path
+			<div class="modal-header">
+				<div>
+					<h3 class="modal-title">Create New Folder</h3>
+					<p class="modal-subtitle">Organize your repositories into logical groups</p>
+				</div>
+				<button onclick={closeNewFolderModal} class="modal-close" aria-label="Close modal">
+					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-						/></svg
-					>
-				</div>
-				<h2 class="dlg-title">Create New Folder</h2>
-				<p class="dlg-desc">Organize your repositories into logical groups</p>
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
 			</div>
 
-			<!-- Body -->
-			<div class="dlg-body">
-				<label class="dlg-label" for="new-folder-name">Folder Name</label>
-				<input
-					id="new-folder-name"
-					class="dlg-input"
-					type="text"
-					bind:value={newFolderName}
-					placeholder="e.g. Frontend Services"
-					onkeypress={(e) => e.key === 'Enter' && createNewFolder()}
-				/>
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="new-folder-name" class="form-label">Folder Name *</label>
+					<input
+						id="new-folder-name"
+						type="text"
+						bind:value={newFolderName}
+						placeholder="e.g. Frontend Services"
+						class="form-input"
+						onkeypress={(e) => e.key === 'Enter' && createNewFolder()}
+					/>
+				</div>
 				{#if newFolderParent}
-					<div class="dlg-hint">
+					<div class="info-box">
 						<svg
-							width="14"
-							height="14"
+							class="info-icon"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 							stroke-width="2"
-							><path
+						>
+							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-							/></svg
-						>
-						Creating inside <strong>{newFolderParent.name}</strong>
+								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						<p class="info-text">
+							Creating inside <strong>{newFolderParent.name}</strong>
+						</p>
 					</div>
 				{/if}
 			</div>
 
-			<!-- Footer -->
-			<div class="dlg-foot">
-				<button class="dlg-btn ghost" onclick={closeNewFolderModal}>Cancel</button>
-				<button class="dlg-btn primary" onclick={createNewFolder} disabled={!newFolderName.trim()}
+			<div class="modal-footer">
+				<button onclick={closeNewFolderModal} class="btn btn-secondary">Cancel</button>
+				<button onclick={createNewFolder} disabled={!newFolderName.trim()} class="btn btn-primary"
 					>Create Folder</button
 				>
 			</div>
@@ -1641,53 +1629,38 @@
      ═══════════════════════════════════════════ -->
 {#if showAddRepoModal}
 	<div
-		class="dlg-overlay"
+		class="modal-backdrop"
 		onclick={closeAddRepoModal}
 		onkeydown={(e) => e.key === 'Escape' && closeAddRepoModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="dlg-box dlg-wide"
+			class="modal-container modal-wide {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
+			aria-modal="true"
 			tabindex="-1"
 		>
-			<!-- Icon + Title -->
-			<div class="dlg-top">
-				<button class="dlg-close" onclick={closeAddRepoModal} aria-label="Close">
-					<svg
-						width="18"
-						height="18"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
-					>
-				</button>
-				<div class="dlg-icon-wrap accent-color">
-					<svg
-						width="22"
-						height="22"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						><path
+			<div class="modal-header">
+				<div>
+					<h3 class="modal-title">Add Repository to Tree</h3>
+					<p class="modal-subtitle">Select a repository and choose the target folder</p>
+				</div>
+				<button onclick={closeAddRepoModal} class="modal-close" aria-label="Close modal">
+					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-						/></svg
-					>
-				</div>
-				<h2 class="dlg-title">Add Repository to Tree</h2>
-				<p class="dlg-desc">Select a repository and choose the target folder</p>
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
 			</div>
 
-			<!-- Body - Two Column -->
-			<div class="dlg-body">
+			<div class="modal-body">
 				<div class="dlg-columns">
 					<!-- Left: Repositories -->
 					<div class="dlg-col">
@@ -1827,15 +1800,14 @@
 				</div>
 			</div>
 
-			<!-- Footer -->
-			<div class="dlg-foot">
-				<button class="dlg-btn ghost" onclick={closeAddRepoModal}>Cancel</button>
+			<div class="modal-footer">
+				<button onclick={closeAddRepoModal} class="btn btn-secondary">Cancel</button>
 				<button
-					class="dlg-btn primary"
 					onclick={addRepositoryToTree}
 					disabled={!selectedRepoToAdd || !selectedNode || addingRepo}
+					class="btn btn-primary"
 				>
-					{#if addingRepo}<span class="spinner sm"></span> Adding...{:else}Add Repository{/if}
+					{#if addingRepo}<span class="btn-spinner"></span> Adding...{:else}Add Repository{/if}
 				</button>
 			</div>
 		</div>
@@ -1847,53 +1819,38 @@
      ═══════════════════════════════════════════ -->
 {#if showAnalyzeFolderModal}
 	<div
-		class="dlg-overlay"
+		class="modal-backdrop"
 		onclick={closeAnalyzeFolderModal}
 		onkeydown={(e) => e.key === 'Escape' && closeAnalyzeFolderModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="dlg-box"
+			class="modal-container {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
+			aria-modal="true"
 			tabindex="-1"
 		>
-			<!-- Icon + Title -->
-			<div class="dlg-top">
-				<button class="dlg-close" onclick={closeAnalyzeFolderModal} aria-label="Close">
-					<svg
-						width="18"
-						height="18"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
-					>
-				</button>
-				<div class="dlg-icon-wrap analysis-color">
-					<svg
-						width="22"
-						height="22"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						><path
+			<div class="modal-header">
+				<div>
+					<h3 class="modal-title">Analyze Folder</h3>
+					<p class="modal-subtitle">Run OWASP DSOMM security analysis on this folder</p>
+				</div>
+				<button onclick={closeAnalyzeFolderModal} class="modal-close" aria-label="Close modal">
+					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-						/></svg
-					>
-				</div>
-				<h2 class="dlg-title">Analyze Folder</h2>
-				<p class="dlg-desc">Run OWASP DSOMM security analysis on this folder</p>
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
 			</div>
 
-			<!-- Body -->
-			<div class="dlg-body">
+			<div class="modal-body">
 				{#if folderToAnalyze}
 					<!-- Folder Info Card -->
 					<div class="dlg-info-card">
@@ -1930,39 +1887,42 @@
 							<p>{analysisProgress}</p>
 						</div>
 					{:else}
-						<div class="dlg-hint">
+						<div class="info-box">
 							<svg
-								width="14"
-								height="14"
+								class="info-icon"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
 								stroke-width="2"
-								><path
+							>
+								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
-									d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-								/></svg
-							>
-							This will analyze {includeSubfolders
-								? 'this folder and all subfolders'
-								: 'only direct repositories'} using the OWASP DSOMM framework.
+									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							<p class="info-text">
+								This will analyze {includeSubfolders
+									? 'this folder and all subfolders'
+									: 'only direct repositories'} using the OWASP DSOMM framework.
+							</p>
 						</div>
 					{/if}
 				{/if}
 			</div>
 
-			<!-- Footer -->
-			<div class="dlg-foot">
-				<button class="dlg-btn ghost" onclick={closeAnalyzeFolderModal} disabled={analyzingFolder}
-					>Cancel</button
+			<div class="modal-footer">
+				<button
+					onclick={closeAnalyzeFolderModal}
+					class="btn btn-secondary"
+					disabled={analyzingFolder}>Cancel</button
 				>
 				<button
-					class="dlg-btn primary"
 					onclick={() => triggerFolderAnalysis()}
 					disabled={analyzingFolder}
+					class="btn btn-primary"
 				>
-					{#if analyzingFolder}<span class="spinner sm"></span> Analyzing...{:else}Start Analysis{/if}
+					{#if analyzingFolder}<span class="btn-spinner"></span> Analyzing...{:else}Start Analysis{/if}
 				</button>
 			</div>
 		</div>
@@ -1974,53 +1934,38 @@
      ═══════════════════════════════════════════ -->
 {#if showAnalysisOptionsModal}
 	<div
-		class="dlg-overlay"
+		class="modal-backdrop"
 		onclick={closeAnalysisOptionsModal}
 		onkeydown={(e) => e.key === 'Escape' && closeAnalysisOptionsModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="dlg-box dlg-wide"
+			class="modal-container modal-wide {darkMode ? 'dark' : 'light'}"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
+			aria-modal="true"
 			tabindex="-1"
 		>
-			<!-- Icon + Title -->
-			<div class="dlg-top">
-				<button class="dlg-close" onclick={closeAnalysisOptionsModal} aria-label="Close">
-					<svg
-						width="18"
-						height="18"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
-					>
-				</button>
-				<div class="dlg-icon-wrap accent-color">
-					<svg
-						width="22"
-						height="22"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						><path
+			<div class="modal-header">
+				<div>
+					<h3 class="modal-title">Choose Analysis Approach</h3>
+					<p class="modal-subtitle">Select how you want to analyze your workspace</p>
+				</div>
+				<button onclick={closeAnalysisOptionsModal} class="modal-close" aria-label="Close modal">
+					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-						/></svg
-					>
-				</div>
-				<h2 class="dlg-title">Choose Analysis Approach</h2>
-				<p class="dlg-desc">Select how you want to analyze your workspace</p>
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
 			</div>
 
-			<!-- Body -->
-			<div class="dlg-body">
+			<div class="modal-body">
 				<div class="dlg-option-grid">
 					<!-- Unified Analysis Card -->
 					<div
@@ -2056,7 +2001,7 @@
 							<span>~{Math.ceil(statistics.totalRepos / 20)} min</span>
 						</div>
 						{#if analysisMode === 'unified'}
-							<button class="dlg-btn primary full" onclick={startUnifiedAnalysis}
+							<button class="btn btn-primary btn-full mt" onclick={startUnifiedAnalysis}
 								>Start Unified Analysis</button
 							>
 						{/if}
@@ -2091,10 +2036,11 @@
 						</ul>
 						{#if analysisMode === 'folder'}
 							<div class="dlg-folder-picker">
-								<label class="dlg-label" for="folder-picker-select">Select folder to analyze</label>
+								<label class="form-label" for="folder-picker-select">Select folder to analyze</label
+								>
 								<select
 									id="folder-picker-select"
-									class="dlg-select"
+									class="form-input"
 									bind:value={folderForFolderAnalysis}
 								>
 									<option value={null}>Choose a folder...</option>
@@ -2111,7 +2057,7 @@
 								</label>
 							</div>
 							<button
-								class="dlg-btn primary full"
+								class="btn btn-primary btn-full mt"
 								disabled={!folderForFolderAnalysis}
 								onclick={startFolderAnalysisFromModal}>Start Folder Analysis</button
 							>
@@ -2807,11 +2753,6 @@
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}
-	.spinner.sm {
-		width: 14px;
-		height: 14px;
-		border-width: 2px;
-	}
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
@@ -2819,23 +2760,23 @@
 	}
 
 	/* ══════════════════════════════════════════════
-	   DIALOG – Professional Modal System
+	   MODAL SYSTEM (Matching Threat-Modeling Design)
 	   ══════════════════════════════════════════════ */
 
-	/* Overlay */
-	.dlg-overlay {
+	/* Backdrop */
+	.modal-backdrop {
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
-		background: rgba(0, 0, 0, 0.55);
+		background: rgba(0, 0, 0, 0.6);
 		backdrop-filter: blur(6px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		padding: 2rem;
-		animation: dlgFadeIn 0.18s ease;
+		animation: fadeIn 0.15s ease;
 	}
-	@keyframes dlgFadeIn {
+	@keyframes fadeIn {
 		from {
 			opacity: 0;
 		}
@@ -2844,24 +2785,55 @@
 		}
 	}
 
-	/* Dialog box */
-	.dlg-box {
+	/* Container */
+	.modal-container {
+		background: var(--bg-surface, #f8fafc);
+		border: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+		border-radius: 12px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 		width: 100%;
-		max-width: 500px;
-		max-height: 85vh;
+		max-width: 480px;
+		max-height: 90vh;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		border-radius: 14px;
-		animation: dlgSlideUp 0.22s ease;
+		animation: modalIn 0.2s var(--ease-premium);
 	}
-	.dlg-box.dlg-wide {
+	.modal-container.modal-wide {
 		max-width: 820px;
 	}
-	@keyframes dlgSlideUp {
+	.modal-container.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--error: #ef4444;
+	}
+	.modal-container.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+	}
+	@keyframes modalIn {
 		from {
 			opacity: 0;
-			transform: translateY(12px) scale(0.97);
+			transform: translateY(-12px) scale(0.97);
 		}
 		to {
 			opacity: 1;
@@ -2869,319 +2841,135 @@
 		}
 	}
 
-	/* ── Theme-specific dialog surfaces ── */
-	:global(.dark) .dlg-box {
-		background: #111111;
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		box-shadow:
-			0 24px 64px rgba(0, 0, 0, 0.65),
-			0 0 0 1px rgba(255, 255, 255, 0.04);
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-box {
-		background: #ffffff;
-		border: 1px solid #d1d5db;
-		box-shadow:
-			0 24px 64px rgba(0, 0, 0, 0.15),
-			0 4px 16px rgba(0, 0, 0, 0.08);
-		color: #1e293b;
-	}
-
-	/* ── Top / Header ── */
-	.dlg-top {
-		position: relative;
-		padding: 1.5rem 1.5rem 1rem;
-		text-align: center;
-	}
-
-	/* ── Close Button ── */
-	.dlg-close {
-		position: absolute;
-		top: 0.75rem;
-		right: 0.75rem;
-		width: 32px;
-		height: 32px;
-		border-radius: 8px;
+	/* Header */
+	.modal-header {
+		padding: 1.25rem 1.5rem;
+		border-bottom: 1px solid var(--border);
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all 0.15s;
-		border: none;
-		padding: 0;
-		z-index: 1;
+		justify-content: space-between;
 	}
-	:global(.dark) .dlg-close {
-		background: rgba(255, 255, 255, 0.05);
-		color: #64748b;
-	}
-	:global(.dark) .dlg-close:hover {
-		background: rgba(239, 68, 68, 0.12);
-		color: #ef4444;
-	}
-	:global(.light) .dlg-close {
-		background: #f1f5f9;
-		color: #64748b;
-		border: 1px solid #e2e8f0;
-	}
-	:global(.light) .dlg-close:hover {
-		background: #fee2e2;
-		color: #dc2626;
-		border-color: #fca5a5;
-	}
-	.dlg-icon-wrap {
-		width: 48px;
-		height: 48px;
-		border-radius: 12px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 0.75rem;
-	}
-	.dlg-icon-wrap.folder-color {
-		background: rgba(250, 204, 21, 0.12);
-		color: #facc15;
-	}
-	.dlg-icon-wrap.accent-color {
-		background: rgba(0, 173, 239, 0.12);
-		color: #00adef;
-	}
-	.dlg-icon-wrap.analysis-color {
-		background: rgba(139, 92, 246, 0.12);
-		color: #8b5cf6;
-	}
-	.dlg-title {
+	.modal-title {
 		font-size: 1.125rem;
 		font-weight: 700;
-		margin: 0 0 0.25rem;
-	}
-	:global(.dark) .dlg-title {
-		color: #f1f5f9;
-	}
-	:global(.light) .dlg-title {
-		color: #0f172a;
-	}
-
-	.dlg-desc {
-		font-size: 0.8125rem;
+		color: var(--text-primary);
 		margin: 0;
 	}
-	:global(.dark) .dlg-desc {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-desc {
-		color: #64748b;
+	.modal-subtitle {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: 0.125rem;
 	}
 
-	/* ── Body ── */
-	.dlg-body {
-		padding: 0 1.5rem 1.25rem;
+	/* Close Button */
+	.modal-close {
+		background: transparent;
+		border: 1px solid var(--border);
+		color: var(--text-muted);
+		padding: 0.375rem;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.15s;
+		display: flex;
+	}
+	.modal-close:hover {
+		border-color: var(--error);
+		color: var(--error);
+		background: rgba(239, 68, 68, 0.06);
+	}
+	.modal-close svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	/* Body */
+	.modal-body {
+		padding: 1.5rem;
 		overflow-y: auto;
 		flex: 1;
 	}
 
-	/* ── Footer ── */
-	.dlg-foot {
+	/* Footer */
+	.modal-footer {
 		padding: 1rem 1.5rem;
+		border-top: 1px solid var(--border);
 		display: flex;
 		gap: 0.75rem;
 		justify-content: flex-end;
 	}
-	:global(.dark) .dlg-foot {
-		border-top: 1px solid rgba(255, 255, 255, 0.06);
-	}
-	:global(.light) .dlg-foot {
-		border-top: 1px solid #e5e7eb;
-	}
 
-	/* ── Buttons ── */
-	.dlg-btn {
-		padding: 0.5rem 1.125rem;
-		border-radius: 8px;
-		font-size: 0.8125rem;
-		font-weight: 600;
-		cursor: pointer;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		transition: all 0.15s;
-		border: none;
-		font-family: inherit;
+	/* ── Form Elements ── */
+	.form-group {
+		margin-bottom: 1.25rem;
 	}
-	.dlg-btn.ghost {
-		background: transparent;
-	}
-	:global(.dark) .dlg-btn.ghost {
-		color: #94a3b8;
-		border: 1px solid rgba(255, 255, 255, 0.08);
-	}
-	:global(.dark) .dlg-btn.ghost:hover {
-		background: rgba(255, 255, 255, 0.04);
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-btn.ghost {
-		color: #475569;
-		border: 1px solid #d1d5db;
-	}
-	:global(.light) .dlg-btn.ghost:hover {
-		background: #f1f5f9;
-		color: #1e293b;
-		border-color: #94a3b8;
-	}
-	.dlg-btn.primary {
-		background: #00adef;
-		color: #fff;
-		border: none;
-	}
-	.dlg-btn.primary:hover {
-		background: #009ad6;
-	}
-	.dlg-btn.primary:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-	.dlg-btn.full {
-		width: 100%;
-		justify-content: center;
-		margin-top: 0.75rem;
-	}
-
-	/* ── Labels & Inputs ── */
-	.dlg-label {
+	.form-label {
 		display: block;
 		font-size: 0.75rem;
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		color: var(--text-secondary);
 		margin-bottom: 0.375rem;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
-	:global(.dark) .dlg-label {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-label {
-		color: #475569;
-	}
-
-	.dlg-input {
+	.form-input {
 		width: 100%;
 		padding: 0.625rem 0.875rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 		border-radius: 8px;
+		color: var(--text-primary);
 		font-size: 0.875rem;
-		font-family: inherit;
 		transition: border-color 0.15s;
-		box-sizing: border-box;
+		font-family: var(--font-sans);
 	}
-	:global(.dark) .dlg-input {
-		background: #1a1a1a;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: #f1f5f9;
-	}
-	:global(.dark) .dlg-input::placeholder {
-		color: #525b6b;
-	}
-	:global(.dark) .dlg-input:focus {
+	.form-input:focus {
 		outline: none;
-		border-color: #00adef;
-		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.15);
+		border-color: var(--accent);
 	}
-	:global(.light) .dlg-input {
-		background: #ffffff;
-		border: 1.5px solid #94a3b8;
-		color: #0f172a;
+	.form-input::placeholder {
+		color: var(--text-muted);
 	}
-	:global(.light) .dlg-input::placeholder {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-input:focus {
-		outline: none;
-		border-color: #00adef;
-		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.12);
-	}
-
-	/* ── Select / Dropdown ── */
-	.dlg-select {
-		width: 100%;
-		padding: 0.625rem 0.875rem;
-		border-radius: 8px;
-		font-size: 0.875rem;
-		font-family: inherit;
+	select.form-input {
 		cursor: pointer;
-		transition: border-color 0.15s;
-		box-sizing: border-box;
-		-webkit-appearance: none;
-		-moz-appearance: none;
-		appearance: none;
-		background-repeat: no-repeat;
-		background-position: right 0.75rem center;
-		background-size: 14px;
-	}
-	:global(.dark) .dlg-select {
-		background-color: #1a1a1a;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: #f1f5f9;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-	}
-	:global(.dark) .dlg-select:focus {
-		outline: none;
-		border-color: #00adef;
-		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.15);
-	}
-	:global(.dark) .dlg-select option {
-		background: #1a1a1a;
-		color: #f1f5f9;
-	}
-	:global(.light) .dlg-select {
-		background-color: #ffffff;
-		border: 1.5px solid #94a3b8;
-		color: #0f172a;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-	}
-	:global(.light) .dlg-select:focus {
-		outline: none;
-		border-color: #00adef;
-		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.12);
-	}
-	:global(.light) .dlg-select option {
-		background: #ffffff;
-		color: #0f172a;
 	}
 
-	/* ── Hint / Info strip ── */
-	.dlg-hint {
+	/* ── Info Box ── */
+	.info-box {
 		display: flex;
 		align-items: flex-start;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
+		gap: 0.625rem;
+		padding: 0.75rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 		border-radius: 8px;
-		font-size: 0.8125rem;
-		line-height: 1.5;
-		margin-top: 0.75rem;
 	}
-	.dlg-hint svg {
+	.info-icon {
+		width: 16px;
+		height: 16px;
+		color: var(--accent);
 		flex-shrink: 0;
 		margin-top: 1px;
 	}
-	:global(.dark) .dlg-hint {
-		background: rgba(0, 173, 239, 0.06);
-		border: 1px solid rgba(0, 173, 239, 0.1);
-		color: #94a3b8;
+	.info-text {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		margin: 0;
+		line-height: 1.5;
 	}
-	:global(.dark) .dlg-hint svg {
-		color: #00adef;
+
+	/* ── Button Spinner ── */
+	.btn-spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-top-color: currentColor;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
 	}
-	:global(.dark) .dlg-hint strong {
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-hint {
-		background: #eff6ff;
-		border: 1px solid #bfdbfe;
-		color: #475569;
-	}
-	:global(.light) .dlg-hint svg {
-		color: #0082b4;
-	}
-	:global(.light) .dlg-hint strong {
-		color: #0f172a;
+
+	/* ── Margin Top Utility ── */
+	.mt {
+		margin-top: 0.75rem;
 	}
 
 	/* ── Info Card (Analyze Folder) ── */
@@ -3192,56 +2980,33 @@
 		border-radius: 10px;
 		overflow: hidden;
 		margin-bottom: 1rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 	}
 	.dlg-info-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		padding: 0.75rem 1rem;
+		background: var(--bg-surface-alt);
 	}
-	:global(.dark) .dlg-info-card {
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.06);
-	}
-	:global(.dark) .dlg-info-row {
-		background: rgba(255, 255, 255, 0.02);
-	}
-	:global(.light) .dlg-info-card {
-		background: #f8fafc;
-		border: 1px solid #d1d5db;
-	}
-	:global(.light) .dlg-info-row {
-		background: #f1f5f9;
-	}
-
 	.dlg-info-key {
 		font-size: 0.7rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		color: var(--text-muted);
 	}
-	:global(.dark) .dlg-info-key {
-		color: #64748b;
-	}
-	:global(.light) .dlg-info-key {
-		color: #94a3b8;
-	}
-
 	.dlg-info-val {
 		font-size: 0.8125rem;
 		font-weight: 600;
-	}
-	:global(.dark) .dlg-info-val {
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-info-val {
-		color: #1e293b;
+		color: var(--text-primary);
 	}
 	.dlg-info-val.highlight {
-		color: #00adef;
+		color: var(--accent);
 	}
 
-	/* ── Toggle Row (checkbox + text) ── */
+	/* ── Toggle Row ── */
 	.dlg-toggle-row {
 		display: flex;
 		align-items: flex-start;
@@ -3251,22 +3016,12 @@
 		cursor: pointer;
 		margin-bottom: 1rem;
 		transition: border-color 0.15s;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 	}
-	:global(.dark) .dlg-toggle-row {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.06);
+	.dlg-toggle-row:hover {
+		border-color: var(--border-focus);
 	}
-	:global(.dark) .dlg-toggle-row:hover {
-		border-color: rgba(255, 255, 255, 0.12);
-	}
-	:global(.light) .dlg-toggle-row {
-		background: #f8fafc;
-		border: 1px solid #d1d5db;
-	}
-	:global(.light) .dlg-toggle-row:hover {
-		border-color: #94a3b8;
-	}
-
 	.dlg-toggle-row.compact {
 		padding: 0.5rem 0;
 		background: none !important;
@@ -3274,7 +3029,7 @@
 		margin-bottom: 0;
 	}
 	.dlg-toggle-row input[type='checkbox'] {
-		accent-color: #00adef;
+		accent-color: var(--accent);
 		width: 16px;
 		height: 16px;
 		margin-top: 2px;
@@ -3289,24 +3044,14 @@
 	.dlg-toggle-label {
 		font-size: 0.8125rem;
 		font-weight: 600;
-	}
-	:global(.dark) .dlg-toggle-label {
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-toggle-label {
-		color: #1e293b;
+		color: var(--text-primary);
 	}
 	.dlg-toggle-hint {
 		font-size: 0.75rem;
-	}
-	:global(.dark) .dlg-toggle-hint {
-		color: #64748b;
-	}
-	:global(.light) .dlg-toggle-hint {
-		color: #94a3b8;
+		color: var(--text-muted);
 	}
 
-	/* ── Progress spinner ── */
+	/* ── Progress ── */
 	.dlg-progress {
 		display: flex;
 		flex-direction: column;
@@ -3315,26 +3060,15 @@
 		padding: 2rem;
 		border-radius: 10px;
 		text-align: center;
-	}
-	:global(.dark) .dlg-progress {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.05);
-	}
-	:global(.light) .dlg-progress {
-		background: #f8fafc;
-		border: 1px solid #d1d5db;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 	}
 	.dlg-progress p {
 		font-size: 0.8125rem;
-	}
-	:global(.dark) .dlg-progress p {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-progress p {
-		color: #64748b;
+		color: var(--text-secondary);
 	}
 
-	/* ── Two Column Layout (Add Repo) ── */
+	/* ── Two Column Layout ── */
 	.dlg-columns {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -3345,57 +3079,31 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 	}
-	:global(.dark) .dlg-col {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.06);
-	}
-	:global(.light) .dlg-col {
-		background: #f1f5f9;
-		border: 1px solid #cbd5e1;
-	}
-
 	.dlg-col-head {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 0.75rem 1rem;
+		border-bottom: 1px solid var(--border);
 	}
-	:global(.dark) .dlg-col-head {
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	}
-	:global(.light) .dlg-col-head {
-		border-bottom: 1px solid #e5e7eb;
-	}
-
 	.dlg-col-title {
 		font-size: 0.7rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		color: var(--text-secondary);
 	}
-	:global(.dark) .dlg-col-title {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-col-title {
-		color: #64748b;
-	}
-
 	.dlg-col-count {
 		font-size: 0.65rem;
 		font-weight: 700;
 		padding: 0.125rem 0.5rem;
 		border-radius: 10px;
+		background: var(--accent-soft);
+		color: var(--accent);
 	}
-	:global(.dark) .dlg-col-count {
-		background: rgba(0, 173, 239, 0.1);
-		color: #00adef;
-	}
-	:global(.light) .dlg-col-count {
-		background: rgba(0, 130, 180, 0.08);
-		color: #0082b4;
-	}
-
 	.dlg-col-list {
 		flex: 1;
 		padding: 0.5rem;
@@ -3417,35 +3125,19 @@
 		transition: all 0.12s;
 		text-align: left;
 		width: 100%;
-		border: 1px solid transparent;
-		background: transparent;
+		border: 1px solid var(--border);
+		background: var(--bg-surface);
+		color: var(--text-secondary);
 		font-family: inherit;
 	}
-	:global(.dark) .dlg-list-item {
-		color: #cbd5e1;
+	.dlg-list-item:hover {
+		border-color: var(--border-focus);
+		background: var(--bg-surface-alt);
 	}
-	:global(.dark) .dlg-list-item:hover {
-		background: rgba(255, 255, 255, 0.04);
+	.dlg-list-item.active {
+		background: var(--accent-soft);
+		border-color: var(--accent);
 	}
-	:global(.dark) .dlg-list-item.active {
-		background: rgba(0, 173, 239, 0.08);
-		border-color: rgba(0, 173, 239, 0.25);
-	}
-	:global(.light) .dlg-list-item {
-		color: #334155;
-		background: #ffffff;
-		border: 1px solid #e2e8f0;
-	}
-	:global(.light) .dlg-list-item:hover {
-		background: #f1f5f9;
-		border-color: #94a3b8;
-	}
-	:global(.light) .dlg-list-item.active {
-		background: #eff6ff;
-		border-color: #00adef;
-		box-shadow: 0 0 0 1px rgba(0, 173, 239, 0.15);
-	}
-
 	.dlg-item-top-row {
 		display: flex;
 		align-items: center;
@@ -3454,26 +3146,14 @@
 	.dlg-item-name {
 		font-size: 0.8125rem;
 		font-weight: 600;
+		color: var(--text-primary);
 	}
-	:global(.dark) .dlg-item-name {
-		color: #e2e8f0;
-	}
-	:global(.light) .dlg-item-name {
-		color: #1e293b;
-	}
-
 	.dlg-item-desc {
 		font-size: 0.7rem;
 		line-height: 1.4;
 		margin: 0;
+		color: var(--text-muted);
 	}
-	:global(.dark) .dlg-item-desc {
-		color: #64748b;
-	}
-	:global(.light) .dlg-item-desc {
-		color: #94a3b8;
-	}
-
 	.dlg-item-tags {
 		display: flex;
 		align-items: center;
@@ -3486,12 +3166,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.2rem;
-	}
-	:global(.dark) .dlg-tag {
-		color: #64748b;
-	}
-	:global(.light) .dlg-tag {
-		color: #94a3b8;
+		color: var(--text-muted);
 	}
 	.dlg-tag.dim {
 		opacity: 0.7;
@@ -3500,23 +3175,17 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: #00adef;
+		background: var(--accent);
 	}
-
 	.dlg-check {
 		flex-shrink: 0;
-		color: #00adef;
+		color: var(--accent);
 	}
 
-	/* ── Folder icon in list items ── */
+	/* ── Folder Icon ── */
 	.dlg-folder-icon {
 		flex-shrink: 0;
-	}
-	:global(.dark) .dlg-folder-icon {
-		color: #facc15;
-	}
-	:global(.light) .dlg-folder-icon {
-		color: #ca8a04;
+		color: var(--accent);
 	}
 
 	/* ── Empty State ── */
@@ -3528,25 +3197,19 @@
 		padding: 2rem 1rem;
 		text-align: center;
 		font-size: 0.8125rem;
+		color: var(--text-muted);
 	}
-	:global(.dark) .dlg-empty-state {
-		color: #64748b;
-	}
-	:global(.light) .dlg-empty-state {
-		color: #94a3b8;
-	}
-
 	.dlg-link {
 		background: none;
 		border: none;
-		color: #00adef;
+		color: var(--accent);
 		cursor: pointer;
 		font-size: 0.8125rem;
 		text-decoration: underline;
 		font-family: inherit;
 	}
 
-	/* ── Confirm bar ── */
+	/* ── Confirm Bar ── */
 	.dlg-confirm-bar {
 		display: flex;
 		align-items: center;
@@ -3555,28 +3218,15 @@
 		margin: 0.5rem;
 		border-radius: 6px;
 		font-size: 0.75rem;
-	}
-	:global(.dark) .dlg-confirm-bar {
 		background: rgba(16, 185, 129, 0.06);
 		border: 1px solid rgba(16, 185, 129, 0.12);
-		color: #94a3b8;
+		color: var(--text-secondary);
 	}
-	:global(.dark) .dlg-confirm-bar strong {
-		color: #e2e8f0;
+	.dlg-confirm-bar strong {
+		color: var(--text-primary);
 	}
-	:global(.dark) .dlg-confirm-bar svg {
-		color: #10b981;
-	}
-	:global(.light) .dlg-confirm-bar {
-		background: #ecfdf5;
-		border: 1px solid #a7f3d0;
-		color: #475569;
-	}
-	:global(.light) .dlg-confirm-bar strong {
-		color: #1e293b;
-	}
-	:global(.light) .dlg-confirm-bar svg {
-		color: #059669;
+	.dlg-confirm-bar svg {
+		color: var(--success);
 	}
 
 	/* ══════════════════════════════════════════════
@@ -3592,30 +3242,16 @@
 		border-radius: 10px;
 		cursor: pointer;
 		transition: all 0.15s;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
 	}
-	:global(.dark) .dlg-option-card {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.06);
+	.dlg-option-card:hover {
+		border-color: var(--border-focus);
 	}
-	:global(.dark) .dlg-option-card:hover {
-		border-color: rgba(255, 255, 255, 0.12);
+	.dlg-option-card.active {
+		border-color: var(--accent);
+		background: var(--accent-soft);
 	}
-	:global(.dark) .dlg-option-card.active {
-		border-color: rgba(0, 173, 239, 0.35);
-		background: rgba(0, 173, 239, 0.05);
-	}
-	:global(.light) .dlg-option-card {
-		background: #f8fafc;
-		border: 1px solid #d1d5db;
-	}
-	:global(.light) .dlg-option-card:hover {
-		border-color: #94a3b8;
-	}
-	:global(.light) .dlg-option-card.active {
-		border-color: #00adef;
-		background: rgba(0, 173, 239, 0.06);
-	}
-
 	.dlg-option-top {
 		display: flex;
 		align-items: center;
@@ -3625,20 +3261,14 @@
 	.dlg-option-top input[type='radio'] {
 		width: 16px;
 		height: 16px;
-		accent-color: #00adef;
+		accent-color: var(--accent);
 		cursor: pointer;
 	}
 	.dlg-option-name {
 		font-size: 0.875rem;
 		font-weight: 700;
+		color: var(--text-primary);
 	}
-	:global(.dark) .dlg-option-name {
-		color: #f1f5f9;
-	}
-	:global(.light) .dlg-option-name {
-		color: #0f172a;
-	}
-
 	.dlg-badge {
 		font-size: 0.6rem;
 		font-weight: 700;
@@ -3652,19 +3282,12 @@
 		background: rgba(16, 185, 129, 0.12);
 		color: #10b981;
 	}
-
 	.dlg-option-desc {
 		font-size: 0.8125rem;
 		line-height: 1.5;
 		margin-bottom: 0.75rem;
+		color: var(--text-secondary);
 	}
-	:global(.dark) .dlg-option-desc {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-option-desc {
-		color: #64748b;
-	}
-
 	.dlg-feature-list {
 		list-style: none;
 		padding: 0;
@@ -3678,57 +3301,36 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-	}
-	:global(.dark) .dlg-feature-list li {
-		color: #94a3b8;
-	}
-	:global(.light) .dlg-feature-list li {
-		color: #64748b;
+		color: var(--text-secondary);
 	}
 	.dlg-feature-list li::before {
 		content: '';
 		width: 5px;
 		height: 5px;
-		background: #10b981;
+		background: var(--success);
 		border-radius: 50%;
 		flex-shrink: 0;
 	}
-
 	.dlg-option-stats {
 		display: flex;
 		gap: 1rem;
 		padding-top: 0.75rem;
-	}
-	:global(.dark) .dlg-option-stats {
-		border-top: 1px solid rgba(255, 255, 255, 0.05);
-	}
-	:global(.light) .dlg-option-stats {
-		border-top: 1px solid #e5e7eb;
+		border-top: 1px solid var(--border);
 	}
 	.dlg-option-stats span {
 		font-family: var(--font-mono, monospace);
 		font-size: 0.65rem;
-	}
-	:global(.dark) .dlg-option-stats span {
-		color: #64748b;
-	}
-	:global(.light) .dlg-option-stats span {
-		color: #94a3b8;
+		color: var(--text-muted);
 	}
 
-	/* ── Folder Picker (inside option card) ── */
+	/* ── Folder Picker ── */
 	.dlg-folder-picker {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-	}
-	:global(.dark) .dlg-folder-picker {
-		border-top: 1px solid rgba(255, 255, 255, 0.05);
-	}
-	:global(.light) .dlg-folder-picker {
-		border-top: 1px solid #e5e7eb;
+		border-top: 1px solid var(--border);
 	}
 
 	/* ── Notifications ── */
@@ -3813,6 +3415,9 @@
 		}
 		.stats-grid {
 			grid-template-columns: repeat(3, 1fr);
+		}
+		.modal-container {
+			max-width: 100%;
 		}
 	}
 </style>
