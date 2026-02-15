@@ -25,10 +25,10 @@
 	}
 
 	// Debug logging
-	console.log('🚀 Intelligence Page Initialized');
-	console.log('📍 Org param:', org);
-	console.log('🌐 API Base URL:', API_BASE_URL);
-	console.log('🔐 Has auth token:', !!getAuthToken());
+	console.log('[INIT] Intelligence Page Initialized');
+	console.log('[PARAM] Org param:', org);
+	console.log('[CONFIG] API Base URL:', API_BASE_URL);
+	console.log('[AUTH] Has auth token:', !!getAuthToken());
 
 	let loading = true;
 	let error = null;
@@ -58,45 +58,45 @@
 			id: 'build_deployment',
 			name: 'Build & Deployment',
 			description: 'CI/CD pipeline security, automated testing, deployment practices',
-			icon: '🚀'
+			icon: 'BD'
 		},
 		{
 			id: 'implementation',
 			name: 'Implementation',
 			description: 'Secure coding, dependency management, secret management',
-			icon: '💻'
+			icon: 'IM'
 		},
 		{
 			id: 'test_verification',
 			name: 'Test & Verification',
 			description: 'SAST, DAST, SCA, penetration testing',
-			icon: '🔍'
+			icon: 'TV'
 		},
 		{
 			id: 'information_gathering',
 			name: 'Information Gathering',
 			description: 'Vulnerability management, logging, monitoring',
-			icon: '📊'
+			icon: 'IG'
 		},
 		{
 			id: 'culture_organization',
 			name: 'Culture & Organization',
 			description: 'Security champions, training, collaboration',
-			icon: '👥'
+			icon: 'CO'
 		}
 	];
 
 	// Level indicators
 	const levelConfig = {
-		0: { label: 'None', color: '#E5E7EB', emoji: '⬜', bgDark: '#374151' },
-		1: { label: 'Basic', color: '#FCD34D', emoji: '🟨', bgDark: '#78350F' },
-		2: { label: 'Advanced', color: '#FB923C', emoji: '🟧', bgDark: '#9A3412' },
-		3: { label: 'Mature', color: '#86EFAC', emoji: '🟩', bgDark: '#14532D' },
-		4: { label: 'Optimized', color: '#22C55E', emoji: '🟩', bgDark: '#052E16' }
+		0: { label: 'None', color: '#E5E7EB', emoji: '', bgDark: '#374151' },
+		1: { label: 'Basic', color: '#FCD34D', emoji: '', bgDark: '#78350F' },
+		2: { label: 'Advanced', color: '#FB923C', emoji: '', bgDark: '#9A3412' },
+		3: { label: 'Mature', color: '#86EFAC', emoji: '', bgDark: '#14532D' },
+		4: { label: 'Optimized', color: '#22C55E', emoji: '', bgDark: '#052E16' }
 	};
 
 	onMount(async () => {
-		console.log('🔍 Intelligence page mounted for org:', org);
+		console.log('[MOUNT] Intelligence page mounted for org:', org);
 		await fetchAnalysis();
 	});
 
@@ -112,7 +112,7 @@
 				return;
 			}
 
-			console.log('🚀 Triggering new analysis for org:', org);
+			console.log('[TRIGGER] Triggering new analysis for org:', org);
 
 			// Fetch repository tree data
 			const treeResponse = await fetch(`${API_BASE_URL}/api/repository-tree/${org}`, {
@@ -129,7 +129,7 @@
 			}
 
 			const treeResult = await treeResponse.json();
-			console.log('📦 Tree result fetched:', treeResult);
+			console.log('[TREE] Tree result fetched:', treeResult);
 
 			// Extract tree data and ID from response
 			const treeData = treeResult.data || [];
@@ -141,7 +141,7 @@
 				);
 			}
 
-			console.log('📋 Tree ID:', repositoryTreeId, 'Tree data items:', treeData.length);
+			console.log('[TREE] Tree ID:', repositoryTreeId, 'Tree data items:', treeData.length);
 
 			// Trigger analysis
 			const analyzeResponse = await fetch(
@@ -166,13 +166,13 @@
 				throw new Error(errorData.detail || 'Failed to trigger analysis');
 			}
 
-			console.log('✅ Analysis triggered successfully');
+			console.log('[OK] Analysis triggered successfully');
 
 			// Wait a moment then fetch results
 			await new Promise((resolve) => setTimeout(resolve, 2000));
 			await fetchAnalysis();
 		} catch (err) {
-			console.error('❌ Failed to trigger analysis:', err);
+			console.error('[ERR] Failed to trigger analysis:', err);
 			error = err.message;
 		} finally {
 			loading = false;
@@ -185,16 +185,16 @@
 
 		try {
 			const token = getAuthToken();
-			console.log('🔑 Token exists:', !!token);
+			console.log('[AUTH] Token exists:', !!token);
 
 			if (!token) {
-				console.warn('❌ No token found');
+				console.warn('[ERR] No token found');
 				error = 'Authentication required. Please login to access Workspace Intelligence.';
 				loading = false;
 				return;
 			}
 
-			console.log('📡 Fetching analysis for org:', org);
+			console.log('[FETCH] Fetching analysis for org:', org);
 
 			// Get latest analysis for this org
 			const response = await fetch(
@@ -207,16 +207,16 @@
 				}
 			);
 
-			console.log('📊 API Response status:', response.status);
+			console.log('[API] Response status:', response.status);
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error('❌ API Error:', response.status, errorText);
+				console.error('[ERR] API Error:', response.status, errorText);
 				throw new Error(`Failed to fetch analysis: ${response.statusText}`);
 			}
 
 			const data = await response.json();
-			console.log('✅ Analysis data received:', data);
+			console.log('[OK] Analysis data received:', data);
 
 			if (data.analyses && data.analyses.length > 0) {
 				// Store all analyses for history
@@ -242,7 +242,7 @@
 
 				if (detailResponse.ok) {
 					const detailData = await detailResponse.json();
-					console.log('📋 Detailed analysis response:', detailData);
+					console.log('[DETAIL] Analysis response:', detailData);
 
 					// Check if this is a unified analysis
 					isUnifiedAnalysis = detailData.analysis?.analysis_scope === 'unified';
@@ -259,27 +259,27 @@
 					// If unified, extract project breakdowns
 					if (isUnifiedAnalysis && detailData.analysis?.analysis_data?.project_analyses) {
 						projectBreakdowns = detailData.analysis.analysis_data.project_analyses;
-						console.log('📂 Found', projectBreakdowns.length, 'project breakdowns');
+						console.log('[INFO] Found', projectBreakdowns.length, 'project breakdowns');
 					}
 
-					console.log('📦 Final analysisData:', analysisData);
-					console.log('🔍 Is Unified Analysis:', isUnifiedAnalysis);
-					console.log('📊 Repositories count:', analysisData.repositories?.length || 0);
-					console.log('🔍 Findings count:', analysisData.findings?.length || 0);
+					console.log('[DATA] Final analysisData:', analysisData);
+					console.log('[INFO] Is Unified Analysis:', isUnifiedAnalysis);
+					console.log('[INFO] Repositories count:', analysisData.repositories?.length || 0);
+					console.log('[INFO] Findings count:', analysisData.findings?.length || 0);
 				} else {
-					console.warn('⚠️ Detail fetch failed, using basic data');
+					console.warn('[WARN]ï¸ Detail fetch failed, using basic data');
 					analysisData = latestAnalysis;
 				}
 			} else {
 				error = 'No analysis found for this organization. Please run an analysis first.';
 			}
 		} catch (err) {
-			console.error('❌ Failed to fetch analysis:', err);
+			console.error('[ERR] Failed to fetch analysis:', err);
 			error = err.message;
 			// Don't redirect on error, stay on page and show error
 		} finally {
 			loading = false;
-			console.log('✅ Loading complete. Error:', error);
+			console.log('[OK] Loading complete. Error:', error);
 		}
 	}
 
@@ -403,13 +403,13 @@
 				throw new Error('Failed to delete analysis');
 			}
 
-			console.log('✅ Analysis deleted successfully');
+			console.log('[OK] Analysis deleted successfully');
 
 			// Reload analyses
 			selectedAnalysisId = null;
 			await fetchAnalysis();
 		} catch (err) {
-			console.error('❌ Failed to delete analysis:', err);
+			console.error('[ERR] Failed to delete analysis:', err);
 			alert(`Failed to delete analysis: ${err.message}`);
 		} finally {
 			deletingAnalysisId = null;
@@ -449,1262 +449,631 @@
 	<title>Workspace Intelligence - {org}</title>
 </svelte:head>
 
-<div class="intelligence-container {$isDarkMode ? 'dark' : 'light'}">
-	<!-- Professional Navigation Header -->
-	<nav class="intelligence-header">
-		<div class="header-content">
-			<div class="header-left">
-				<button onclick={() => goto(`/github/workspace/${org}/repo-treeview`)} class="back-button">
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<path d="M19 12H5M12 19l-7-7 7-7" />
-					</svg>
-					<span>Back</span>
-				</button>
-
-				<div class="header-title-section">
-					<h1 class="page-title">
-						<span class="title-icon">🧠</span>
-						<span class="title-text">Workspace Intelligence</span>
-					</h1>
-					<p class="page-subtitle">
-						OWASP DSOMM Security Maturity Assessment for <span class="org-name">{org}</span>
-					</p>
-				</div>
+{#if loading && !analysisData}
+	<div class="loading-screen">
+		<div class="loading-content">
+			<img src="/icons/excellence_17274210.png" alt="WithOps" class="loading-icon" />
+			<div class="progress-bar">
+				<div class="progress-fill"></div>
 			</div>
-
-			{#if !loading && analysisData}
-				<div class="header-actions">
-					<div class="maturity-score-display">
-						<div class="score-label">Overall Maturity Score</div>
-						<div class="score-value">
-							{getOverallScore(analysisData.detected_practices)}<span class="score-max">/100</span>
-						</div>
-					</div>
-
-					<button onclick={openChatModal} class="btn-ai">
-						<span class="btn-icon">🤖</span>
-						<span class="btn-text">Ask AI</span>
-					</button>
-
-					<button onclick={triggerNewAnalysis} class="btn-primary">
-						<span class="btn-icon">🔄</span>
-						<span class="btn-text">Analyze Now</span>
-					</button>
-				</div>
-			{/if}
+			<div class="status-message">SCANNING WORKSPACE INTELLIGENCE...</div>
 		</div>
-	</nav>
+	</div>
+{:else}
+	<div class="intel-page {$isDarkMode ? 'dark' : 'light'}">
+		<!-- Header Navigation -->
+		<nav class="dashboard-header">
+			<div class="header-content">
+				<a href="/dashboard" class="nav-brand">
+					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+					<span class="brand-name">WithOps</span>
+				</a>
 
-	<!-- Main Content -->
-	<div class="main-content">
-		{#if loading}
-			<div class="loading-state">
-				<div class="loading-content">
-					<div class="loading-spinner"></div>
-					<p class="loading-text">Loading workspace intelligence...</p>
+				<div class="nav-menu">
+					<a href="/dashboard" class="nav-link">Overview</a>
+					<a href="/organizations" class="nav-link">Organizations</a>
+				</div>
+
+				<div class="nav-actions">
+					<button
+						onclick={() => isDarkMode.set(!$isDarkMode)}
+						class="theme-toggle"
+						title="Toggle theme"
+					>
+						{#if $isDarkMode}
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<circle cx="12" cy="12" r="5" /><path
+									d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+								/>
+							</svg>
+						{:else}
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+							</svg>
+						{/if}
+					</button>
 				</div>
 			</div>
-		{:else if error && !error.includes('No analysis')}
-			<div class="error-state">
-				<div class="error-content">
-					<span class="error-icon">⚠️</span>
-					<div class="error-details">
-						<h3 class="error-title">
+		</nav>
+
+		<!-- Technical Breadcrumb Bar -->
+		<div class="technical-bar">
+			<div class="breadcrumb-node">WithOps</div>
+			<div class="breadcrumb-sep">/</div>
+			<div class="breadcrumb-node">{org}</div>
+			<div class="breadcrumb-sep">/</div>
+			<div class="breadcrumb-node active">Intelligence</div>
+			<div class="system-status-pill">
+				<div class="status-pulse"></div>
+				DSOMM: ACTIVE
+			</div>
+		</div>
+
+		<!-- Inline re-analysis loader -->
+		{#if loading && analysisData}
+			<div class="inline-loader">
+				<div class="inline-progress">
+					<div class="inline-progress-fill"></div>
+				</div>
+			</div>
+		{/if}
+
+		<div class="page-content">
+			<main class="page-main">
+				{#if error && !error.includes('No analysis')}
+					<!-- Error State -->
+					<div class="state-card">
+						<div class="state-icon">[WARN]ï¸</div>
+						<h3 class="state-title">
 							{error.includes('Authentication')
-								? '🔐 Authentication Required'
+								? 'Authentication Required'
 								: 'Error Loading Analysis'}
 						</h3>
-						<p class="error-message">{error}</p>
+						<p class="state-message">{error}</p>
 						{#if error.includes('Authentication')}
-							<button onclick={() => goto('/github/login')} class="btn-primary">
-								Go to Login
-							</button>
+							<button onclick={() => goto('/github/login')} class="btn btn-primary"
+								>Go to Login</button
+							>
 						{:else}
-							<button onclick={fetchAnalysis} class="btn-primary"> Try Again </button>
+							<button onclick={fetchAnalysis} class="btn btn-primary">Try Again</button>
 						{/if}
 					</div>
-				</div>
-			</div>
-		{:else if !analysisData || error?.includes('No analysis')}
-			<div class="empty-state">
-				<div class="empty-content">
-					<span class="empty-icon">🧠</span>
-					<div class="empty-details">
-						<h3 class="empty-title">No Analysis Found</h3>
-						<p class="empty-message">
-							No workspace intelligence data is available yet. Click below to run your first
-							analysis!
+				{:else if !analysisData || error?.includes('No analysis')}
+					<!-- Empty State -->
+					<div class="state-card">
+						<div class="state-icon">&#9881;</div>
+						<h3 class="state-title">No Analysis Found</h3>
+						<p class="state-message">
+							No workspace intelligence data is available yet. Run your first analysis to get
+							started.
 						</p>
-						<button onclick={triggerNewAnalysis} class="btn-primary">
-							<span class="btn-icon">🚀</span>
-							<span class="btn-text">Run Analysis Now</span>
+						<button onclick={triggerNewAnalysis} class="btn btn-primary">
+							Run Analysis Now
+							<span class="button-arrow">→</span>
 						</button>
 					</div>
-				</div>
-			</div>
-		{:else if analysisData}
-			<!-- Professional Tab Navigation -->
-			<div class="tab-navigation">
-				<nav class="tab-nav">
-					{#each ['overview', 'dsomm', 'repositories', 'findings', 'history'] as tab}
-						<button
-							onclick={() => (activeTab = tab)}
-							class="tab-button {activeTab === tab ? 'active' : ''}"
-						>
-							{tab === 'dsomm' ? 'DSOMM Levels' : tab === 'history' ? 'Analysis History' : tab}
-						</button>
-					{/each}
-				</nav>
-			</div>
-
-			<!-- Tab Content -->
-			{#if activeTab === 'overview'}
-				<!-- Overview Tab -->
-				<div class="space-y-6">
-					<!-- Analysis Type Header -->
-					{#if isUnifiedAnalysis}
-						<div
-							class="rounded-lg p-4 transition-colors {$isDarkMode
-								? 'border border-green-700 bg-gradient-to-r from-green-900/20 to-blue-900/20'
-								: 'border border-green-200 bg-gradient-to-r from-green-50 to-blue-50'}"
-						>
-							<div class="flex items-center gap-3">
-								<span class="text-3xl">🌐</span>
-								<div>
-									<h3
-										class="text-lg font-bold transition-colors {$isDarkMode
-											? 'text-green-400'
-											: 'text-green-800'}"
-									>
-										Unified Workspace Analysis
-									</h3>
-									<p
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-green-300'
-											: 'text-green-700'}"
-									>
-										Organization-wide security assessment across {projectBreakdowns.length} projects
-									</p>
-								</div>
-							</div>
+				{:else}
+					<!-- Page Header -->
+					<header class="view-header">
+						<div class="title-group">
+							<h1>Workspace Intelligence</h1>
+							<p>OWASP DSOMM security maturity assessment for <strong>{org}</strong></p>
 						</div>
-					{:else if analysisData.analysis?.analysis_scope === 'folder'}
-						<div
-							class="rounded-lg p-4 transition-colors {$isDarkMode
-								? 'border border-blue-700 bg-blue-900/20'
-								: 'border border-blue-200 bg-blue-50'}"
-						>
-							<div class="flex items-center gap-3">
-								<span class="text-3xl">📁</span>
-								<div>
-									<h3
-										class="text-lg font-bold transition-colors {$isDarkMode
-											? 'text-blue-400'
-											: 'text-blue-800'}"
-									>
-										Folder Analysis
-									</h3>
-									<p
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-blue-300'
-											: 'text-blue-700'}"
-									>
-										Team-specific security assessment for: {analysisData.analysis?.project_name ||
-											'Selected Folder'}
-									</p>
-								</div>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Quick Stats -->
-					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-						<div class="stat-card dashboard-card">
-							<div class="stat-label">Total Repositories</div>
-							<div class="stat-value">{analysisData.detected_practices?.total_repos || 0}</div>
-							<div class="stat-detail">
-								{analysisData.detected_practices?.repos_with_workflows || 0} with CI/CD workflows
-							</div>
-						</div>
-
-						<div class="stat-card dashboard-card">
-							<div class="stat-label">Security Tools</div>
-							<div class="stat-value">
-								{(analysisData.detected_practices?.sast_tools?.length || 0) +
-									(analysisData.detected_practices?.sca_tools?.length || 0) +
-									(analysisData.detected_practices?.dast_tools?.length || 0) +
-									(analysisData.detected_practices?.secret_scanning_tools?.length || 0) +
-									(analysisData.detected_practices?.container_scanning_tools?.length || 0)}
-							</div>
-							<div class="stat-detail">Detected across all repos</div>
-						</div>
-
-						<div
-							class="rounded-lg p-6 transition-colors {$isDarkMode
-								? 'bg-gray-800'
-								: 'bg-white shadow-sm'}"
-						>
-							<div
-								class="mb-2 text-sm font-medium transition-colors {$isDarkMode
-									? 'text-gray-400'
-									: 'text-gray-600'}"
-							>
-								Total Findings
-							</div>
-							<div
-								class="text-3xl font-bold transition-colors {$isDarkMode
-									? 'text-white'
-									: 'text-gray-900'}"
-							>
-								{analysisData.findings_count?.critical +
-									analysisData.findings_count?.high +
-									analysisData.findings_count?.medium +
-									analysisData.findings_count?.low || 0}
-							</div>
-							<div class="mt-2 flex gap-2 text-xs">
-								<span
-									class="rounded px-2 py-1"
-									style="background-color: {getSeverityColor(
-										'critical'
-									)}20; color: {getSeverityColor('critical')}"
+						<div class="header-cta">
+							<div class="score-pill">
+								<span class="score-lbl">MATURITY</span>
+								<span class="score-num"
+									>{getOverallScore(analysisData.detected_practices)}<span class="score-unit"
+										>/100</span
+									></span
 								>
-									{analysisData.findings_count?.critical || 0} Critical
-								</span>
-								<span
-									class="rounded px-2 py-1"
-									style="background-color: {getSeverityColor('high')}20; color: {getSeverityColor(
-										'high'
-									)}"
-								>
-									{analysisData.findings_count?.high || 0} High
-								</span>
 							</div>
+							<button onclick={openChatModal} class="btn btn-secondary">Ask AI</button>
+							<button onclick={triggerNewAnalysis} class="btn btn-primary" disabled={loading}>
+								{#if loading}
+									<span class="btn-spinner"></span>
+									Analyzing...
+								{:else}
+									Analyze Now
+									<span class="button-arrow">→</span>
+								{/if}
+							</button>
 						</div>
+					</header>
 
-						<div
-							class="rounded-lg p-6 transition-colors {$isDarkMode
-								? 'bg-gray-800'
-								: 'bg-white shadow-sm'}"
-						>
-							<div
-								class="mb-2 text-sm font-medium transition-colors {$isDarkMode
-									? 'text-gray-400'
-									: 'text-gray-600'}"
+					<!-- Tab Filter Navigation -->
+					<div class="filter-nav">
+						{#each [{ key: 'overview', label: 'OVERVIEW' }, { key: 'dsomm', label: 'DSOMM LEVELS' }, { key: 'repositories', label: 'REPOSITORIES' }, { key: 'findings', label: 'FINDINGS' }, { key: 'history', label: 'HISTORY' }] as tab}
+							<button
+								class="filter-btn {activeTab === tab.key ? 'active' : ''}"
+								onclick={() => (activeTab = tab.key)}
 							>
-								Centralized Workflows
-							</div>
-							<div
-								class="text-3xl font-bold transition-colors {$isDarkMode
-									? 'text-white'
-									: 'text-gray-900'}"
-							>
-								{analysisData.detected_practices?.uses_centralized_workflows ? '✅' : '❌'}
-							</div>
-							<div
-								class="mt-2 text-sm transition-colors {$isDarkMode
-									? 'text-gray-500'
-									: 'text-gray-600'}"
-							>
-								{analysisData.detected_practices?.uses_centralized_workflows
-									? 'Implemented'
-									: 'Not detected'}
-							</div>
-						</div>
+								{tab.label}
+							</button>
+						{/each}
 					</div>
 
-					<!-- Key Security Practices -->
-					<div
-						class="rounded-lg p-6 transition-colors {$isDarkMode
-							? 'bg-gray-800'
-							: 'bg-white shadow-sm'}"
-					>
-						<h2
-							class="mb-4 text-xl font-bold transition-colors {$isDarkMode
-								? 'text-white'
-								: 'text-gray-900'}"
-						>
-							🔐 Detected Security Practices
-						</h2>
-
-						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-							<!-- SAST Tools -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									🔍 SAST Tools
-								</div>
-								{#if analysisData.detected_practices?.sast_tools?.length > 0}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.sast_tools as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-
-							<!-- DAST Tools -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									🎯 DAST Tools
-								</div>
-								{#if analysisData.detected_practices?.dast_tools?.length > 0}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.dast_tools as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-
-							<!-- SCA Tools -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									📦 SCA Tools
-								</div>
-								{#if analysisData.detected_practices?.sca_tools?.length > 0}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.sca_tools as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-
-							<!-- Secret Scanning -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									🔑 Secret Scanning
-								</div>
-								{#if analysisData.detected_practices?.secret_scanning_tools?.length > 0}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.secret_scanning_tools as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-
-							<!-- Container Scanning -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									🐳 Container Scanning
-								</div>
-								{#if analysisData.detected_practices?.container_scanning_tools?.length > 0}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.container_scanning_tools as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-
-							<!-- Pre-commit Hooks -->
-							<div
-								class="rounded-lg p-4 transition-colors {$isDarkMode
-									? 'bg-gray-700'
-									: 'bg-gray-50'}"
-							>
-								<div
-									class="mb-2 font-semibold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									🪝 Pre-commit Hooks
-								</div>
-								{#if analysisData.detected_practices?.has_precommit_hooks}
-									<div class="space-y-1">
-										{#each analysisData.detected_practices.precommit_hooks || [] as tool}
-											<div
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-green-900/30 text-green-400'
-													: 'bg-green-100 text-green-800'}"
-											>
-												✅ {tool}
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-gray-500'
-											: 'text-gray-600'}"
-									>
-										❌ Not configured
-									</div>
-								{/if}
-							</div>
-						</div>
-					</div>
-
-					<!-- Policy Configuration -->
-					<div
-						class="rounded-lg p-6 transition-colors {$isDarkMode
-							? 'bg-gray-800'
-							: 'bg-white shadow-sm'}"
-					>
-						<h2
-							class="mb-4 text-xl font-bold transition-colors {$isDarkMode
-								? 'text-white'
-								: 'text-gray-900'}"
-						>
-							📋 Repository Policies
-						</h2>
-
-						<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-							<div class="space-y-3">
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
+					<!-- ===== OVERVIEW TAB ===== -->
+					{#if activeTab === 'overview'}
+						{#if isUnifiedAnalysis}
+							<div class="info-banner success">
+								<div class="banner-content">
+									<strong>Unified Workspace Analysis</strong>
 									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
+										>Organization-wide security assessment across {projectBreakdowns.length} projects</span
 									>
-										Branch Protection
-									</span>
-									<span class="text-2xl">
-										{analysisData.detected_practices?.branch_protection_enabled ? '✅' : '❌'}
-									</span>
-								</div>
-
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
-									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
-									>
-										CODEOWNERS File
-									</span>
-									<span class="text-2xl">
-										{analysisData.detected_practices?.has_codeowners ? '✅' : '❌'}
-									</span>
-								</div>
-
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
-									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
-									>
-										Required Reviews
-									</span>
-									<span
-										class="text-xl font-bold transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
-									>
-										{analysisData.detected_practices?.required_reviews || 0}
-									</span>
 								</div>
 							</div>
-
-							<div class="space-y-3">
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
+						{:else if analysisData.analysis?.analysis_scope === 'folder'}
+							<div class="info-banner info">
+								<div class="banner-content">
+									<strong>Folder Analysis</strong>
 									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
+										>Team-specific security assessment for: {analysisData.analysis?.project_name ||
+											'Selected Folder'}</span
 									>
-										Signed Commits Required
-									</span>
-									<span class="text-2xl">
-										{analysisData.detected_practices?.signed_commits_required ? '✅' : '❌'}
-									</span>
 								</div>
+							</div>
+						{/if}
 
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
-									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
-									>
-										Status Checks Required
-									</span>
-									<span class="text-2xl">
-										{analysisData.detected_practices?.required_status_checks ? '✅' : '❌'}
-									</span>
+						<!-- Quick Stats -->
+						<div class="stats-grid">
+							<div class="stat-card">
+								<div class="feature-number">REPOSITORIES</div>
+								<div class="stat-val">{analysisData.detected_practices?.total_repos || 0}</div>
+								<div class="stat-detail">
+									{analysisData.detected_practices?.repos_with_workflows || 0} with CI/CD workflows
 								</div>
-
-								<div
-									class="flex items-center justify-between rounded-lg p-3 transition-colors {$isDarkMode
-										? 'bg-gray-700'
-										: 'bg-gray-50'}"
-								>
-									<span
-										class="font-medium transition-colors {$isDarkMode
-											? 'text-white'
-											: 'text-gray-900'}"
+							</div>
+							<div class="stat-card">
+								<div class="feature-number">SECURITY TOOLS</div>
+								<div class="stat-val">
+									{(analysisData.detected_practices?.sast_tools?.length || 0) +
+										(analysisData.detected_practices?.sca_tools?.length || 0) +
+										(analysisData.detected_practices?.dast_tools?.length || 0) +
+										(analysisData.detected_practices?.secret_scanning_tools?.length || 0) +
+										(analysisData.detected_practices?.container_scanning_tools?.length || 0)}
+								</div>
+								<div class="stat-detail">Detected across all repos</div>
+							</div>
+							<div class="stat-card">
+								<div class="feature-number">TOTAL FINDINGS</div>
+								<div class="stat-val">
+									{(analysisData.findings_count?.critical || 0) +
+										(analysisData.findings_count?.high || 0) +
+										(analysisData.findings_count?.medium || 0) +
+										(analysisData.findings_count?.low || 0)}
+								</div>
+								<div class="stat-detail-badges">
+									<span class="severity-badge critical"
+										>{analysisData.findings_count?.critical || 0} Critical</span
 									>
-										PR Workflows
-									</span>
-									<span class="text-2xl">
-										{analysisData.detected_practices?.has_pr_workflows ? '✅' : '❌'}
-									</span>
+									<span class="severity-badge high"
+										>{analysisData.findings_count?.high || 0} High</span
+									>
+								</div>
+							</div>
+							<div class="stat-card">
+								<div class="feature-number">CENTRALIZED WORKFLOWS</div>
+								<div class="stat-val">
+									{analysisData.detected_practices?.uses_centralized_workflows ? 'Yes' : 'No'}
+								</div>
+								<div class="stat-detail">
+									{analysisData.detected_practices?.uses_centralized_workflows
+										? 'Implemented'
+										: 'Not detected'}
 								</div>
 							</div>
 						</div>
-					</div>
 
-					<!-- Project Breakdown Section (for Unified Analysis) -->
-					{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
-						<div
-							class="rounded-lg p-6 transition-colors {$isDarkMode
-								? 'bg-gray-800'
-								: 'bg-white shadow-sm'}"
-						>
-							<h2
-								class="mb-4 flex items-center gap-2 text-xl font-bold transition-colors {$isDarkMode
-									? 'text-white'
-									: 'text-gray-900'}"
-							>
-								<span>📂 Project Breakdown</span>
-								<span
-									class="rounded px-3 py-1 text-sm font-normal transition-colors {$isDarkMode
-										? 'bg-blue-900/30 text-blue-400'
-										: 'bg-blue-100 text-blue-800'}"
-								>
-									{projectBreakdowns.length}
-									{projectBreakdowns.length === 1 ? 'Project' : 'Projects'}
-								</span>
-							</h2>
+						<!-- Security Practices -->
+						<div class="intel-card">
+							<h2 class="card-heading">Detected Security Practices</h2>
+							<div class="practices-grid">
+								<div class="practice-item">
+									<div class="practice-label">SAST TOOLS</div>
+									{#if analysisData.detected_practices?.sast_tools?.length > 0}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.sast_tools as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+								<div class="practice-item">
+									<div class="practice-label">DAST TOOLS</div>
+									{#if analysisData.detected_practices?.dast_tools?.length > 0}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.dast_tools as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+								<div class="practice-item">
+									<div class="practice-label">SCA TOOLS</div>
+									{#if analysisData.detected_practices?.sca_tools?.length > 0}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.sca_tools as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+								<div class="practice-item">
+									<div class="practice-label">SECRET SCANNING</div>
+									{#if analysisData.detected_practices?.secret_scanning_tools?.length > 0}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.secret_scanning_tools as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+								<div class="practice-item">
+									<div class="practice-label">CONTAINER SCANNING</div>
+									{#if analysisData.detected_practices?.container_scanning_tools?.length > 0}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.container_scanning_tools as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+								<div class="practice-item">
+									<div class="practice-label">PRE-COMMIT HOOKS</div>
+									{#if analysisData.detected_practices?.has_precommit_hooks}
+										<div class="tool-list">
+											{#each analysisData.detected_practices.precommit_hooks || [] as tool}
+												<span class="tool-tag active">{tool}</span>
+											{/each}
+										</div>
+									{:else}
+										<span class="tool-tag inactive">Not configured</span>
+									{/if}
+								</div>
+							</div>
+						</div>
 
-							<div class="space-y-4">
-								{#each projectBreakdowns as project}
-									{@const projectMaturity = project.maturity || {}}
-									{@const projectId = project.project_id || project.project_name}
-									{@const isExpanded = expandedProjects.has(projectId)}
-
-									<div
-										class="rounded-lg border-2 transition-all {$isDarkMode
-											? 'bg-gray-750 border-gray-700'
-											: 'border-gray-200 bg-gray-50'}"
+						<!-- Repository Policies -->
+						<div class="intel-card">
+							<h2 class="card-heading">Repository Policies</h2>
+							<div class="policies-grid">
+								<div class="policy-row">
+									<span class="policy-name">Branch Protection</span>
+									<span
+										class="policy-status {analysisData.detected_practices?.branch_protection_enabled
+											? 'enabled'
+											: 'disabled'}"
+										>{analysisData.detected_practices?.branch_protection_enabled
+											? 'Enabled'
+											: 'Disabled'}</span
 									>
-										<!-- Project Header -->
-										<button
-											onclick={() => toggleProjectExpansion(projectId)}
-											class="flex w-full items-center justify-between p-4 transition-opacity hover:opacity-80"
-										>
-											<div class="flex flex-1 items-center gap-4">
+								</div>
+								<div class="policy-row">
+									<span class="policy-name">CODEOWNERS File</span>
+									<span
+										class="policy-status {analysisData.detected_practices?.has_codeowners
+											? 'enabled'
+											: 'disabled'}"
+										>{analysisData.detected_practices?.has_codeowners ? 'Present' : 'Missing'}</span
+									>
+								</div>
+								<div class="policy-row">
+									<span class="policy-name">Required Reviews</span>
+									<span class="policy-value"
+										>{analysisData.detected_practices?.required_reviews || 0}</span
+									>
+								</div>
+								<div class="policy-row">
+									<span class="policy-name">Signed Commits Required</span>
+									<span
+										class="policy-status {analysisData.detected_practices?.signed_commits_required
+											? 'enabled'
+											: 'disabled'}"
+										>{analysisData.detected_practices?.signed_commits_required
+											? 'Enabled'
+											: 'Disabled'}</span
+									>
+								</div>
+								<div class="policy-row">
+									<span class="policy-name">Status Checks Required</span>
+									<span
+										class="policy-status {analysisData.detected_practices?.required_status_checks
+											? 'enabled'
+											: 'disabled'}"
+										>{analysisData.detected_practices?.required_status_checks
+											? 'Enabled'
+											: 'Disabled'}</span
+									>
+								</div>
+								<div class="policy-row">
+									<span class="policy-name">PR Workflows</span>
+									<span
+										class="policy-status {analysisData.detected_practices?.has_pr_workflows
+											? 'enabled'
+											: 'disabled'}"
+										>{analysisData.detected_practices?.has_pr_workflows
+											? 'Enabled'
+											: 'Disabled'}</span
+									>
+								</div>
+							</div>
+						</div>
+
+						<!-- Project Breakdowns (Unified) -->
+						{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
+							<div class="intel-card">
+								<h2 class="card-heading">
+									Project Breakdown
+									<span class="count-badge">{projectBreakdowns.length}</span>
+								</h2>
+								<div class="projects-list">
+									{#each projectBreakdowns as project}
+										{@const projectMaturity = project.maturity || {}}
+										{@const projectId = project.project_id || project.project_name}
+										{@const isExpanded = expandedProjects.has(projectId)}
+										<div class="project-item">
+											<button
+												class="project-header"
+												onclick={() => toggleProjectExpansion(projectId)}
+											>
+												<div class="project-info">
+													<h3 class="project-name">{project.project_name}</h3>
+													<div class="project-meta">
+														<span>{project.repository_count || 0} repos</span>
+														<span>{project.workflow_count || 0} workflows</span>
+													</div>
+												</div>
+												<div class="project-score">
+													<span class="p-score-num"
+														>{Math.round(projectMaturity.overall_maturity_score || 0)}</span
+													>
+													<span class="p-score-lbl">Score</span>
+												</div>
 												<svg
-													class="h-8 w-8 transition-colors {$isDarkMode
-														? 'text-blue-400'
-														: 'text-blue-600'}"
+													class="chevron {isExpanded ? 'open' : ''}"
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
 													fill="none"
 													stroke="currentColor"
-													viewBox="0 0 24 24"
+													stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg
 												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-													/>
-												</svg>
-
-												<div class="flex-1 text-left">
-													<h3
-														class="text-lg font-bold transition-colors {$isDarkMode
-															? 'text-white'
-															: 'text-gray-900'}"
-													>
-														{project.project_name}
-													</h3>
-													<div
-														class="mt-1 flex items-center gap-4 text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-600'}"
-													>
-														<span>📦 {project.repository_count || 0} repositories</span>
-														<span>⚙️ {project.workflow_count || 0} workflows</span>
-													</div>
-												</div>
-
-												<div class="text-right">
-													<div
-														class="text-3xl font-bold transition-colors {$isDarkMode
-															? 'text-green-400'
-															: 'text-green-600'}"
-													>
-														{Math.round(projectMaturity.overall_maturity_score || 0)}
-													</div>
-													<div
-														class="text-xs transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-600'}"
-													>
-														Maturity Score
-													</div>
-												</div>
-											</div>
-
-											<svg
-												class="ml-4 h-6 w-6 transition-transform {isExpanded ? 'rotate-180' : ''}"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M19 9l-7 7-7-7"
-												/>
-											</svg>
-										</button>
-
-										<!-- Project Details (Expanded) -->
-										{#if isExpanded}
-											<div
-												class="space-y-4 border-t p-4 transition-colors {$isDarkMode
-													? 'border-gray-700'
-													: 'border-gray-200'}"
-											>
-												<!-- DSOMM Scores -->
-												<div>
-													<h4
-														class="mb-2 font-semibold transition-colors {$isDarkMode
-															? 'text-white'
-															: 'text-gray-900'}"
-													>
-														DSOMM Dimension Scores
-													</h4>
-													<div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-														<div
-															class="rounded p-2 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-white'}"
-														>
-															<div
-																class="text-xs transition-colors {$isDarkMode
-																	? 'text-gray-400'
-																	: 'text-gray-600'}"
-															>
-																Technology
-															</div>
-															<div
-																class="text-lg font-bold transition-colors {$isDarkMode
-																	? 'text-blue-400'
-																	: 'text-blue-600'}"
-															>
-																{Math.round(
+											</button>
+											{#if isExpanded}
+												<div class="project-details">
+													<div class="detail-scores">
+														<div class="detail-item">
+															<span class="detail-label">Technology</span>
+															<span class="detail-value"
+																>{Math.round(
 																	projectMaturity.domain_scores?.technology?.score ||
 																		projectMaturity.implementation_score ||
 																		0
-																)}
-															</div>
+																)}</span
+															>
 														</div>
-														<div
-															class="rounded p-2 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-white'}"
-														>
-															<div
-																class="text-xs transition-colors {$isDarkMode
-																	? 'text-gray-400'
-																	: 'text-gray-600'}"
-															>
-																Process
-															</div>
-															<div
-																class="text-lg font-bold transition-colors {$isDarkMode
-																	? 'text-orange-400'
-																	: 'text-orange-600'}"
-															>
-																{Math.round(
+														<div class="detail-item">
+															<span class="detail-label">Process</span>
+															<span class="detail-value"
+																>{Math.round(
 																	projectMaturity.domain_scores?.process?.score ||
 																		projectMaturity.build_deployment_score ||
 																		0
-																)}
-															</div>
+																)}</span
+															>
 														</div>
-														<div
-															class="rounded p-2 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-white'}"
-														>
-															<div
-																class="text-xs transition-colors {$isDarkMode
-																	? 'text-gray-400'
-																	: 'text-gray-600'}"
-															>
-																Level
-															</div>
-															<div
-																class="text-lg font-bold transition-colors {$isDarkMode
-																	? 'text-purple-400'
-																	: 'text-purple-600'}"
-															>
-																{projectMaturity.maturity_level !== undefined
+														<div class="detail-item">
+															<span class="detail-label">Level</span>
+															<span class="detail-value"
+																>{projectMaturity.maturity_level !== undefined
 																	? projectMaturity.maturity_level
-																	: '—'}
-															</div>
+																	: 'â€”'}</span
+															>
 														</div>
-														<div
-															class="rounded p-2 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-white'}"
-														>
-															<div
-																class="text-xs transition-colors {$isDarkMode
-																	? 'text-gray-400'
-																	: 'text-gray-600'}"
+														<div class="detail-item">
+															<span class="detail-label">Overall</span>
+															<span class="detail-value"
+																>{Math.round(projectMaturity.overall_maturity_score || 0)}</span
 															>
-																Overall Score
-															</div>
-															<div
-																class="text-lg font-bold transition-colors {$isDarkMode
-																	? 'text-green-400'
-																	: 'text-green-600'}"
-															>
-																{Math.round(projectMaturity.overall_maturity_score || 0)}
-															</div>
 														</div>
 													</div>
-												</div>
-
-												<!-- Findings Summary -->
-												{#if project.findings_count}
-													<div>
-														<h4
-															class="mb-2 font-semibold transition-colors {$isDarkMode
-																? 'text-white'
-																: 'text-gray-900'}"
-														>
-															Findings Summary
-														</h4>
-														<div class="flex flex-wrap gap-2">
+													{#if project.findings_count}
+														<div class="detail-findings">
 															{#if project.findings_count.critical > 0}
-																<span
-																	class="rounded px-3 py-1 text-sm font-medium"
-																	style="background-color: {getSeverityColor(
-																		'critical'
-																	)}20; color: {getSeverityColor('critical')}"
+																<span class="severity-badge critical"
+																	>{project.findings_count.critical} Critical</span
 																>
-																	{project.findings_count.critical} Critical
-																</span>
 															{/if}
 															{#if project.findings_count.high > 0}
-																<span
-																	class="rounded px-3 py-1 text-sm font-medium"
-																	style="background-color: {getSeverityColor(
-																		'high'
-																	)}20; color: {getSeverityColor('high')}"
+																<span class="severity-badge high"
+																	>{project.findings_count.high} High</span
 																>
-																	{project.findings_count.high} High
-																</span>
 															{/if}
 															{#if project.findings_count.medium > 0}
-																<span
-																	class="rounded px-3 py-1 text-sm font-medium"
-																	style="background-color: {getSeverityColor(
-																		'medium'
-																	)}20; color: {getSeverityColor('medium')}"
+																<span class="severity-badge medium"
+																	>{project.findings_count.medium} Medium</span
 																>
-																	{project.findings_count.medium} Medium
-																</span>
 															{/if}
 															{#if project.findings_count.low > 0}
-																<span
-																	class="rounded px-3 py-1 text-sm font-medium"
-																	style="background-color: {getSeverityColor(
-																		'low'
-																	)}20; color: {getSeverityColor('low')}"
+																<span class="severity-badge low"
+																	>{project.findings_count.low} Low</span
 																>
-																	{project.findings_count.low} Low
-																</span>
 															{/if}
 														</div>
-													</div>
-												{/if}
-
-												<!-- Top Security Tools -->
-												{#if project.detected_practices}
-													<div>
-														<h4
-															class="mb-2 font-semibold transition-colors {$isDarkMode
-																? 'text-white'
-																: 'text-gray-900'}"
-														>
-															Security Tools Detected
-														</h4>
-														<div class="flex flex-wrap gap-2">
+													{/if}
+													{#if project.detected_practices}
+														<div class="detail-tools">
 															{#each (project.detected_practices.sast_tools || []).slice(0, 3) as tool}
-																<span
-																	class="rounded px-2 py-1 text-xs transition-colors {$isDarkMode
-																		? 'bg-green-900/30 text-green-400'
-																		: 'bg-green-100 text-green-800'}"
-																>
-																	🔍 {tool}
-																</span>
+																<span class="tool-tag active sm">{tool}</span>
 															{/each}
 															{#each (project.detected_practices.sca_tools || []).slice(0, 2) as tool}
-																<span
-																	class="rounded px-2 py-1 text-xs transition-colors {$isDarkMode
-																		? 'bg-blue-900/30 text-blue-400'
-																		: 'bg-blue-100 text-blue-800'}"
-																>
-																	📦 {tool}
-																</span>
+																<span class="tool-tag active sm">{tool}</span>
 															{/each}
 														</div>
-													</div>
-												{/if}
-											</div>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
-				</div>
-			{:else if activeTab === 'dsomm'}
-				<!-- DSOMM Levels Tab -->
-				<div class="space-y-6">
-					<!-- DSOMM Level Grid -->
-					<div
-						class="rounded-lg p-6 transition-colors {$isDarkMode
-							? 'bg-gray-800'
-							: 'bg-white shadow-sm'}"
-					>
-						<h2
-							class="mb-6 text-xl font-bold transition-colors {$isDarkMode
-								? 'text-white'
-								: 'text-gray-900'}"
-						>
-							OWASP DSOMM Maturity Levels
-						</h2>
-
-						<div class="overflow-x-auto">
-							<table class="w-full border-collapse">
-								<thead>
-									<tr class="transition-colors {$isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}">
-										<th
-											class="p-4 text-left font-semibold transition-colors {$isDarkMode
-												? 'text-white'
-												: 'text-gray-900'}"
-										>
-											Dimension
-										</th>
-										{#each [0, 1, 2, 3, 4] as level}
-											<th
-												class="p-4 text-center font-semibold transition-colors {$isDarkMode
-													? 'text-white'
-													: 'text-gray-900'}"
-											>
-												Level {level}
-											</th>
-										{/each}
-									</tr>
-								</thead>
-								<tbody>
-									{#each dsommDimensions as dimension}
-										{@const currentLevel = calculateDimensionLevel(
-											dimension,
-											analysisData.detected_practices
-										)}
-										<tr
-											class="border-t transition-colors {$isDarkMode
-												? 'hover:bg-gray-750 border-gray-700'
-												: 'border-gray-200 hover:bg-gray-50'}"
-										>
-											<td class="p-4">
-												<div class="flex items-start gap-3">
-													<span class="text-2xl">{dimension.icon}</span>
-													<div>
-														<div
-															class="font-semibold transition-colors {$isDarkMode
-																? 'text-white'
-																: 'text-gray-900'}"
-														>
-															{dimension.name}
-														</div>
-														<div
-															class="text-sm transition-colors {$isDarkMode
-																? 'text-gray-400'
-																: 'text-gray-600'}"
-														>
-															{dimension.description}
-														</div>
-													</div>
+													{/if}
 												</div>
-											</td>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						<!-- ===== DSOMM TAB ===== -->
+					{:else if activeTab === 'dsomm'}
+						<div class="intel-card">
+							<h2 class="card-heading">OWASP DSOMM Maturity Levels</h2>
+							<div class="dsomm-table-wrap">
+								<table class="dsomm-table">
+									<thead>
+										<tr>
+											<th>Dimension</th>
 											{#each [0, 1, 2, 3, 4] as level}
-												<td class="p-4 text-center">
-													<div class="text-3xl">
-														{#if level <= currentLevel}
-															{levelConfig[level].emoji}
-														{:else}
-															⬜
-														{/if}
-													</div>
-												</td>
+												<th class="level-th">L{level}</th>
 											{/each}
 										</tr>
-									{/each}
-								</tbody>
-							</table>
+									</thead>
+									<tbody>
+										{#each dsommDimensions as dimension}
+											{@const currentLevel = calculateDimensionLevel(
+												dimension,
+												analysisData.detected_practices
+											)}
+											<tr>
+												<td>
+													<div class="dim-cell">
+														<span class="dim-icon">{dimension.icon}</span>
+														<div>
+															<div class="dim-name">{dimension.name}</div>
+															<div class="dim-desc">{dimension.description}</div>
+														</div>
+													</div>
+												</td>
+												{#each [0, 1, 2, 3, 4] as level}
+													<td class="level-cell">
+														<div
+															class="level-dot {level <= currentLevel ? 'filled' : 'empty'}"
+															style="--dot-color: {levelConfig[level].color}"
+														></div>
+													</td>
+												{/each}
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
 						</div>
-					</div>
 
-					<!-- Dimension Details -->
-					<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-						{#each dsommDimensions as dimension}
-							{@const currentLevel = calculateDimensionLevel(
-								dimension,
-								analysisData.detected_practices
-							)}
-							{@const levelInfo = levelConfig[currentLevel]}
-							<div
-								class="rounded-lg p-6 transition-colors {$isDarkMode
-									? 'bg-gray-800'
-									: 'bg-white shadow-sm'}"
-							>
-								<div class="mb-4 flex items-center justify-between">
-									<div class="flex items-center gap-3">
-										<span class="text-3xl">{dimension.icon}</span>
-										<h3
-											class="font-bold transition-colors {$isDarkMode
-												? 'text-white'
-												: 'text-gray-900'}"
-										>
-											{dimension.name}
-										</h3>
-									</div>
-									<div class="text-right">
-										<div class="mb-1 text-3xl">{levelInfo.emoji}</div>
-										<div
-											class="text-xs font-medium transition-colors {$isDarkMode
-												? 'text-gray-400'
-												: 'text-gray-600'}"
-										>
-											Level {currentLevel}
+						<div class="dimension-grid">
+							{#each dsommDimensions as dimension}
+								{@const currentLevel = calculateDimensionLevel(
+									dimension,
+									analysisData.detected_practices
+								)}
+								{@const levelInfo = levelConfig[currentLevel]}
+								<div class="intel-card compact">
+									<div class="dim-card-header">
+										<div class="dim-card-title">
+											<span>{dimension.icon}</span>
+											<h3>{dimension.name}</h3>
 										</div>
+										<div class="dim-level-badge">Level {currentLevel}</div>
 									</div>
-								</div>
-
-								<!-- Progress bar -->
-								<div class="mb-4">
-									<div
-										class="h-3 overflow-hidden rounded-full transition-colors {$isDarkMode
-											? 'bg-gray-700'
-											: 'bg-gray-200'}"
-									>
+									<div class="progress-track">
 										<div
-											class="h-full rounded-full transition-all duration-500"
+											class="progress-fill-bar"
 											style="width: {(currentLevel / 4) *
 												100}%; background-color: {levelInfo.color}"
 										></div>
 									</div>
+									<p class="dim-card-desc">{dimension.description}</p>
 								</div>
+							{/each}
+						</div>
 
-								<p
-									class="text-sm transition-colors {$isDarkMode
-										? 'text-gray-400'
-										: 'text-gray-600'}"
-								>
-									{dimension.description}
-								</p>
-							</div>
-						{/each}
-					</div>
-				</div>
-			{:else if activeTab === 'repositories'}
-				<!-- Repositories Tab -->
-				<div class="space-y-6">
-					{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
-						<!-- Unified Analysis: Group by Project -->
-						{#each projectBreakdowns as project}
-							{@const projectRepos =
-								analysisData?.repositories?.filter(
-									(r) => r.project_name === project.project_name
-								) || []}
-							{@const reposWithWorkflows = projectRepos.filter((r) => r.has_workflows !== false)}
-							{@const reposWithoutWorkflows = projectRepos.filter((r) => r.has_workflows === false)}
-
-							{#if projectRepos.length > 0}
-								<div
-									class="overflow-hidden rounded-lg transition-colors {$isDarkMode
-										? 'border border-gray-700 bg-gray-800'
-										: 'border border-gray-200 bg-white shadow-sm'}"
-								>
-									<!-- Project Header -->
-									<div
-										class="p-4 transition-colors {$isDarkMode
-											? 'bg-gray-750 border-b border-gray-700'
-											: 'border-b border-gray-200 bg-gray-50'}"
-									>
-										<div class="flex items-center gap-3">
-											<svg
-												class="h-6 w-6 transition-colors {$isDarkMode
-													? 'text-blue-400'
-													: 'text-blue-600'}"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-												/>
-											</svg>
-											<h3
-												class="text-lg font-bold transition-colors {$isDarkMode
-													? 'text-white'
-													: 'text-gray-900'}"
-											>
-												{project.project_name}
-											</h3>
-											<span
-												class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-													? 'bg-blue-900/30 text-blue-400'
-													: 'bg-blue-100 text-blue-800'}"
-											>
-												{projectRepos.length} repositories
-											</span>
+						<!-- ===== REPOSITORIES TAB ===== -->
+					{:else if activeTab === 'repositories'}
+						{#if isUnifiedAnalysis && projectBreakdowns.length > 0}
+							{#each projectBreakdowns as project}
+								{@const projectRepos =
+									analysisData?.repositories?.filter(
+										(r) => r.project_name === project.project_name
+									) || []}
+								{@const reposWithWorkflows = projectRepos.filter((r) => r.has_workflows !== false)}
+								{@const reposWithoutWorkflows = projectRepos.filter(
+									(r) => r.has_workflows === false
+								)}
+								{#if projectRepos.length > 0}
+									<div class="intel-card">
+										<div class="repo-project-header">
+											<h2 class="card-heading">{project.project_name}</h2>
+											<span class="count-badge">{projectRepos.length} repositories</span>
 										</div>
-									</div>
-
-									<!-- Project Repositories -->
-									<div class="p-4">
 										{#if reposWithWorkflows.length > 0}
-											<div class="mb-6">
-												<h4
-													class="mb-3 flex items-center gap-2 font-semibold transition-colors {$isDarkMode
-														? 'text-white'
-														: 'text-gray-900'}"
-												>
-													<span>🚀 With CI/CD Workflows</span>
-													<span
-														class="rounded px-2 py-1 text-xs transition-colors {$isDarkMode
-															? 'bg-green-900/30 text-green-400'
-															: 'bg-green-100 text-green-800'}"
+											<div class="repo-section">
+												<h3 class="repo-section-title">
+													With CI/CD Workflows <span class="count-badge success"
+														>{reposWithWorkflows.length}</span
 													>
-														{reposWithWorkflows.length}
-													</span>
-												</h4>
-
-												<div class="space-y-3">
+												</h3>
+												<div class="repo-list">
 													{#each reposWithWorkflows as repo}
-														<div
-															class="rounded-lg p-3 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-gray-50'}"
-														>
-															<div class="mb-2 flex items-start justify-between">
-																<div>
-																	<h5
-																		class="font-semibold transition-colors {$isDarkMode
-																			? 'text-white'
-																			: 'text-gray-900'}"
-																	>
-																		📁 {repo.repository_name}
-																	</h5>
-																	<div
-																		class="text-sm transition-colors {$isDarkMode
-																			? 'text-gray-400'
-																			: 'text-gray-600'}"
-																	>
-																		{repo.workflows_analyzed || 0} workflows analyzed
-																	</div>
-																</div>
-																{#if repo.security_score !== null && repo.security_score !== undefined}
-																	<div class="text-right">
-																		<div
-																			class="text-xl font-bold transition-colors {$isDarkMode
-																				? 'text-green-400'
-																				: 'text-green-600'}"
-																		>
-																			{Math.round(repo.security_score)}/100
-																		</div>
-																		<div
-																			class="text-xs transition-colors {$isDarkMode
-																				? 'text-gray-400'
-																				: 'text-gray-600'}"
-																		>
-																			Score
-																		</div>
-																	</div>
-																{/if}
+														<div class="repo-item">
+															<div class="repo-info">
+																<span class="repo-name">{repo.repository_name}</span>
+																<span class="repo-meta"
+																	>{repo.workflows_analyzed || 0} workflows analyzed</span
+																>
 															</div>
-
+															{#if repo.security_score !== null && repo.security_score !== undefined}
+																<div class="repo-score">
+																	{Math.round(repo.security_score)}<span class="score-unit"
+																		>/100</span
+																	>
+																</div>
+															{/if}
 															{#if repo.findings_count}
-																<div class="flex flex-wrap gap-2">
-																	{#if repo.findings_count.critical > 0}
-																		<span
-																			class="rounded px-2 py-1 text-xs font-medium"
-																			style="background-color: {getSeverityColor(
-																				'critical'
-																			)}20; color: {getSeverityColor('critical')}"
-																		>
-																			{repo.findings_count.critical} Critical
-																		</span>
-																	{/if}
-																	{#if repo.findings_count.high > 0}
-																		<span
-																			class="rounded px-2 py-1 text-xs font-medium"
-																			style="background-color: {getSeverityColor(
-																				'high'
-																			)}20; color: {getSeverityColor('high')}"
-																		>
-																			{repo.findings_count.high} High
-																		</span>
-																	{/if}
-																	{#if repo.findings_count.medium > 0}
-																		<span
-																			class="rounded px-2 py-1 text-xs font-medium"
-																			style="background-color: {getSeverityColor(
-																				'medium'
-																			)}20; color: {getSeverityColor('medium')}"
-																		>
-																			{repo.findings_count.medium} Medium
-																		</span>
-																	{/if}
-																	{#if repo.findings_count.low > 0}
-																		<span
-																			class="rounded px-2 py-1 text-xs font-medium"
-																			style="background-color: {getSeverityColor(
-																				'low'
-																			)}20; color: {getSeverityColor('low')}"
-																		>
-																			{repo.findings_count.low} Low
-																		</span>
-																	{/if}
+																<div class="repo-findings">
+																	{#if repo.findings_count.critical > 0}<span
+																			class="severity-badge critical sm"
+																			>{repo.findings_count.critical} C</span
+																		>{/if}
+																	{#if repo.findings_count.high > 0}<span
+																			class="severity-badge high sm"
+																			>{repo.findings_count.high} H</span
+																		>{/if}
+																	{#if repo.findings_count.medium > 0}<span
+																			class="severity-badge medium sm"
+																			>{repo.findings_count.medium} M</span
+																		>{/if}
+																	{#if repo.findings_count.low > 0}<span
+																			class="severity-badge low sm"
+																			>{repo.findings_count.low} L</span
+																		>{/if}
 																</div>
 															{/if}
 														</div>
@@ -1712,44 +1081,19 @@
 												</div>
 											</div>
 										{/if}
-
 										{#if reposWithoutWorkflows.length > 0}
-											<div>
-												<h4
-													class="mb-3 flex items-center gap-2 font-semibold transition-colors {$isDarkMode
-														? 'text-white'
-														: 'text-gray-900'}"
-												>
-													<span>⚠️ Without CI/CD Workflows</span>
-													<span
-														class="rounded px-2 py-1 text-xs transition-colors {$isDarkMode
-															? 'bg-yellow-900/30 text-yellow-400'
-															: 'bg-yellow-100 text-yellow-800'}"
+											<div class="repo-section">
+												<h3 class="repo-section-title">
+													Without CI/CD Workflows <span class="count-badge warning"
+														>{reposWithoutWorkflows.length}</span
 													>
-														{reposWithoutWorkflows.length}
-													</span>
-												</h4>
-
-												<div class="space-y-2">
+												</h3>
+												<div class="repo-list">
 													{#each reposWithoutWorkflows as repo}
-														<div
-															class="rounded-lg p-3 transition-colors {$isDarkMode
-																? 'bg-gray-700'
-																: 'bg-gray-50'}"
-														>
-															<h5
-																class="font-semibold transition-colors {$isDarkMode
-																	? 'text-white'
-																	: 'text-gray-900'}"
-															>
-																📁 {repo.repository_name}
-															</h5>
-															<div
-																class="mt-1 text-sm transition-colors {$isDarkMode
-																	? 'text-gray-400'
-																	: 'text-gray-600'}"
-															>
-																No CI/CD workflows configured
+														<div class="repo-item muted">
+															<div class="repo-info">
+																<span class="repo-name">{repo.repository_name}</span>
+																<span class="repo-meta">No CI/CD workflows configured</span>
 															</div>
 														</div>
 													{/each}
@@ -1757,521 +1101,207 @@
 											</div>
 										{/if}
 									</div>
-								</div>
-							{/if}
-						{/each}
-					{:else}
-						<!-- Folder Analysis: Flat List -->
-						<!-- Repositories WITH workflows -->
-						{#if getRepositoriesWithWorkflows().length > 0}
-							<div
-								class="rounded-lg p-6 transition-colors {$isDarkMode
-									? 'bg-gray-800'
-									: 'bg-white shadow-sm'}"
-							>
-								<h2
-									class="mb-4 flex items-center gap-2 text-xl font-bold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									<span>🚀 Repositories with CI/CD Workflows</span>
-									<span
-										class="rounded px-2 py-1 text-sm font-normal transition-colors {$isDarkMode
-											? 'bg-green-900/30 text-green-400'
-											: 'bg-green-100 text-green-800'}"
-									>
-										{getRepositoriesWithWorkflows().length}
-									</span>
-								</h2>
-
-								<div class="space-y-4">
-									{#each getRepositoriesWithWorkflows() as repo}
-										<div
-											class="rounded-lg p-4 transition-colors {$isDarkMode
-												? 'bg-gray-700'
-												: 'bg-gray-50'}"
+								{/if}
+							{/each}
+						{:else}
+							{#if getRepositoriesWithWorkflows().length > 0}
+								<div class="intel-card">
+									<h2 class="card-heading">
+										Repositories with CI/CD Workflows <span class="count-badge success"
+											>{getRepositoriesWithWorkflows().length}</span
 										>
-											<div class="mb-3 flex items-start justify-between">
-												<div>
-													<h3
-														class="text-lg font-bold transition-colors {$isDarkMode
-															? 'text-white'
-															: 'text-gray-900'}"
+									</h2>
+									<div class="repo-list">
+										{#each getRepositoriesWithWorkflows() as repo}
+											<div class="repo-item">
+												<div class="repo-info">
+													<span class="repo-name">{repo.repository_name}</span>
+													<span class="repo-meta"
+														>{repo.workflows_analyzed || 0} workflows analyzed</span
 													>
-														📁 {repo.repository_name}
-													</h3>
-													<div
-														class="text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-600'}"
-													>
-														{repo.workflows_analyzed || 0} workflows analyzed
-													</div>
 												</div>
 												{#if repo.security_score !== null && repo.security_score !== undefined}
-													<div class="text-right">
-														<div
-															class="text-2xl font-bold transition-colors {$isDarkMode
-																? 'text-green-400'
-																: 'text-green-600'}"
-														>
-															{Math.round(repo.security_score)}/100
-														</div>
-														<div
-															class="text-xs transition-colors {$isDarkMode
-																? 'text-gray-400'
-																: 'text-gray-600'}"
-														>
-															Security Score
-														</div>
+													<div class="repo-score">
+														{Math.round(repo.security_score)}<span class="score-unit">/100</span>
+													</div>
+												{/if}
+												{#if repo.findings_count}
+													<div class="repo-findings">
+														{#if repo.findings_count.critical > 0}<span
+																class="severity-badge critical sm"
+																>{repo.findings_count.critical} Critical</span
+															>{/if}
+														{#if repo.findings_count.high > 0}<span class="severity-badge high sm"
+																>{repo.findings_count.high} High</span
+															>{/if}
+														{#if repo.findings_count.medium > 0}<span
+																class="severity-badge medium sm"
+																>{repo.findings_count.medium} Medium</span
+															>{/if}
+														{#if repo.findings_count.low > 0}<span class="severity-badge low sm"
+																>{repo.findings_count.low} Low</span
+															>{/if}
 													</div>
 												{/if}
 											</div>
-
-											<!-- Findings Summary -->
-											{#if repo.findings_count}
-												<div class="flex flex-wrap gap-2">
-													{#if repo.findings_count.critical > 0}
-														<span
-															class="rounded px-2 py-1 text-xs font-medium"
-															style="background-color: {getSeverityColor(
-																'critical'
-															)}20; color: {getSeverityColor('critical')}"
-														>
-															{repo.findings_count.critical} Critical
-														</span>
-													{/if}
-													{#if repo.findings_count.high > 0}
-														<span
-															class="rounded px-2 py-1 text-xs font-medium"
-															style="background-color: {getSeverityColor(
-																'high'
-															)}20; color: {getSeverityColor('high')}"
-														>
-															{repo.findings_count.high} High
-														</span>
-													{/if}
-													{#if repo.findings_count.medium > 0}
-														<span
-															class="rounded px-2 py-1 text-xs font-medium"
-															style="background-color: {getSeverityColor(
-																'medium'
-															)}20; color: {getSeverityColor('medium')}"
-														>
-															{repo.findings_count.medium} Medium
-														</span>
-													{/if}
-													{#if repo.findings_count.low > 0}
-														<span
-															class="rounded px-2 py-1 text-xs font-medium"
-															style="background-color: {getSeverityColor(
-																'low'
-															)}20; color: {getSeverityColor('low')}"
-														>
-															{repo.findings_count.low} Low
-														</span>
-													{/if}
-												</div>
-											{/if}
-										</div>
-									{/each}
+										{/each}
+									</div>
 								</div>
-							</div>
-						{/if}
-
-						<!-- Repositories WITHOUT workflows -->
-						{#if getRepositoriesWithoutWorkflows().length > 0}
-							<div
-								class="rounded-lg p-6 transition-colors {$isDarkMode
-									? 'bg-gray-800'
-									: 'bg-white shadow-sm'}"
-							>
-								<h2
-									class="mb-4 flex items-center gap-2 text-xl font-bold transition-colors {$isDarkMode
-										? 'text-white'
-										: 'text-gray-900'}"
-								>
-									<span>⚠️ Repositories without CI/CD Workflows</span>
-									<span
-										class="rounded px-2 py-1 text-sm font-normal transition-colors {$isDarkMode
-											? 'bg-yellow-900/30 text-yellow-400'
-											: 'bg-yellow-100 text-yellow-800'}"
-									>
-										{getRepositoriesWithoutWorkflows().length}
-									</span>
-								</h2>
-
-								<div
-									class="mb-4 rounded-lg p-4 transition-colors {$isDarkMode
-										? 'border border-yellow-800 bg-yellow-900/20'
-										: 'border border-yellow-200 bg-yellow-50'}"
-								>
-									<p
-										class="text-sm transition-colors {$isDarkMode
-											? 'text-yellow-300'
-											: 'text-yellow-800'}"
-									>
-										ℹ️ These repositories are not included in the overall security score calculation
-										since they don't have any GitHub Actions workflows configured.
-									</p>
-								</div>
-
-								<div class="space-y-4">
-									{#each getRepositoriesWithoutWorkflows() as repo}
-										<div
-											class="rounded-lg p-4 transition-colors {$isDarkMode
-												? 'bg-gray-700'
-												: 'bg-gray-50'}"
+							{/if}
+							{#if getRepositoriesWithoutWorkflows().length > 0}
+								<div class="intel-card">
+									<h2 class="card-heading">
+										Repositories without CI/CD Workflows <span class="count-badge warning"
+											>{getRepositoriesWithoutWorkflows().length}</span
 										>
-											<h3
-												class="text-lg font-bold transition-colors {$isDarkMode
-													? 'text-white'
-													: 'text-gray-900'}"
-											>
-												📁 {repo.repository_name}
-											</h3>
-											<div
-												class="mt-2 text-sm transition-colors {$isDarkMode
-													? 'text-gray-400'
-													: 'text-gray-600'}"
-											>
-												No CI/CD workflows configured - Consider adding GitHub Actions for automated
-												security testing
-											</div>
-										</div>
-									{/each}
-								</div>
-							</div>
-						{/if}
-					{/if}
-				</div>
-			{:else if activeTab === 'findings'}
-				<!-- Findings Tab -->
-				<div class="space-y-4">
-					{#if analysisData.findings && analysisData.findings.length > 0}
-						{#each analysisData.findings as finding, idx}
-							<div
-								class="overflow-hidden rounded-lg transition-colors {$isDarkMode
-									? 'border border-gray-700 bg-gray-800'
-									: 'border border-gray-200 bg-white shadow-sm'}"
-							>
-								<button
-									onclick={() => toggleFinding(idx)}
-									class="flex w-full items-start justify-between p-4 transition-all hover:opacity-80"
-								>
-									<div class="flex flex-1 items-start gap-4 text-left">
+									</h2>
+									<div class="info-banner warning">
 										<span
-											class="rounded px-3 py-1 text-sm font-medium uppercase"
-											style="background-color: {getSeverityColor(
-												finding.severity
-											)}20; color: {getSeverityColor(finding.severity)}"
+											>These repositories are not included in the overall security score since they
+											don't have GitHub Actions workflows configured.</span
 										>
-											{finding.severity}
-										</span>
-										<div class="flex-1">
-											<h3
-												class="mb-1 font-semibold transition-colors {$isDarkMode
-													? 'text-white'
-													: 'text-gray-900'}"
-											>
-												{finding.title}
-											</h3>
-											<p
-												class="text-sm transition-colors {$isDarkMode
-													? 'text-gray-400'
-													: 'text-gray-600'}"
-											>
-												{finding.description}
-											</p>
-										</div>
 									</div>
-									<span
-										class="text-xl transition-transform {expandedFindings.has(idx)
-											? 'rotate-180'
-											: ''}"
-									>
-										▼
-									</span>
-								</button>
-
-								{#if expandedFindings.has(idx)}
-									<div
-										class="border-t px-4 pb-4 transition-colors {$isDarkMode
-											? 'border-gray-700'
-											: 'border-gray-200'}"
-									>
-										<div class="mt-4 space-y-4">
-											<div>
-												<h4
-													class="mb-2 font-semibold transition-colors {$isDarkMode
-														? 'text-white'
-														: 'text-gray-900'}"
-												>
-													💡 Recommendation
-												</h4>
-												<p
-													class="text-sm transition-colors {$isDarkMode
-														? 'text-gray-300'
-														: 'text-gray-700'}"
-												>
-													{finding.recommendation}
-												</p>
+									<div class="repo-list">
+										{#each getRepositoriesWithoutWorkflows() as repo}
+											<div class="repo-item muted">
+												<div class="repo-info">
+													<span class="repo-name">{repo.repository_name}</span>
+													<span class="repo-meta">No CI/CD workflows configured</span>
+												</div>
 											</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						{/if}
 
+						<!-- ===== FINDINGS TAB ===== -->
+					{:else if activeTab === 'findings'}
+						{#if analysisData.findings && analysisData.findings.length > 0}
+							{#each analysisData.findings as finding, idx}
+								<div class="finding-card">
+									<button class="finding-header" onclick={() => toggleFinding(idx)}>
+										<span class="severity-badge {finding.severity}">{finding.severity}</span>
+										<div class="finding-info">
+											<h3 class="finding-title">{finding.title}</h3>
+											<p class="finding-desc">{finding.description}</p>
+										</div>
+										<svg
+											class="chevron {expandedFindings.has(idx) ? 'open' : ''}"
+											width="16"
+											height="16"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg
+										>
+									</button>
+									{#if expandedFindings.has(idx)}
+										<div class="finding-details">
+											<div class="finding-section">
+												<h4>Recommendation</h4>
+												<p>{finding.recommendation}</p>
+											</div>
 											{#if finding.affected_component}
-												<div>
-													<h4
-														class="mb-2 font-semibold transition-colors {$isDarkMode
-															? 'text-white'
-															: 'text-gray-900'}"
-													>
-														📍 Affected Component
-													</h4>
-													<code
-														class="rounded px-2 py-1 text-sm transition-colors {$isDarkMode
-															? 'bg-gray-700 text-gray-300'
-															: 'bg-gray-100 text-gray-800'}"
-													>
-														{finding.affected_component}
-													</code>
+												<div class="finding-section">
+													<h4>Affected Component</h4>
+													<code class="component-code">{finding.affected_component}</code>
 												</div>
 											{/if}
 										</div>
-									</div>
-								{/if}
+									{/if}
+								</div>
+							{/each}
+						{:else}
+							<div class="state-card">
+								<div class="state-icon">&#10003;</div>
+								<h3 class="state-title">No Findings</h3>
+								<p class="state-message">No security issues detected.</p>
 							</div>
-						{/each}
-					{:else}
-						<div
-							class="rounded-lg py-12 text-center transition-colors {$isDarkMode
-								? 'bg-gray-800'
-								: 'bg-white shadow-sm'}"
-						>
-							<span class="mb-4 block text-6xl">🎉</span>
-							<h3
-								class="mb-2 text-xl font-bold transition-colors {$isDarkMode
-									? 'text-white'
-									: 'text-gray-900'}"
-							>
-								No Findings
-							</h3>
-							<p class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-								Great! No security issues detected.
-							</p>
-						</div>
-					{/if}
-				</div>
-			{/if}
+						{/if}
 
-			<!-- History Tab -->
-			{#if activeTab === 'history'}
-				<div class="space-y-4">
-					<div class="mb-6 flex items-center justify-between">
-						<h2
-							class="text-2xl font-bold transition-colors {$isDarkMode
-								? 'text-white'
-								: 'text-gray-900'}"
-						>
-							📜 Analysis History
-						</h2>
-						<div class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-							{allAnalyses.length}
-							{allAnalyses.length === 1 ? 'analysis' : 'analyses'}
+						<!-- ===== HISTORY TAB ===== -->
+					{:else if activeTab === 'history'}
+						<div class="history-header-row">
+							<h2 class="card-heading">Analysis History</h2>
+							<span class="count-badge">{allAnalyses.length}</span>
 						</div>
-					</div>
-
-					{#if allAnalyses.length > 0}
-						<div class="space-y-3">
+						{#if allAnalyses.length > 0}
 							{#each allAnalyses as analysis (analysis.id)}
-								<div
-									class="rounded-lg border-2 p-5 transition-all
-									{analysis.id === selectedAnalysisId
-										? $isDarkMode
-											? 'border-blue-500 bg-blue-900/30'
-											: 'border-blue-500 bg-blue-50'
-										: $isDarkMode
-											? 'border-gray-700 bg-gray-800 hover:border-gray-600'
-											: 'border-gray-200 bg-white hover:border-gray-300'}"
-								>
-									<div class="flex items-center justify-between">
-										<div class="flex-1">
-											<div class="mb-2 flex flex-wrap items-center gap-3">
-												<h3
-													class="text-lg font-semibold transition-colors {$isDarkMode
-														? 'text-white'
-														: 'text-gray-900'}"
-												>
-													{analysis.id === selectedAnalysisId ? '✓ ' : ''}Analysis - {formatDate(
-														analysis.created_at
-													)}
-												</h3>
-
-												{#if analysis.id === selectedAnalysisId}
-													<span
-														class="rounded-full px-3 py-1 text-xs font-medium transition-colors
-														{$isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}"
-													>
-														Currently Viewing
-													</span>
-												{/if}
-
-												<!-- Analysis Type Badge -->
-												{#if analysis.analysis_scope === 'unified'}
-													<span
-														class="rounded-full px-3 py-1 text-xs font-medium transition-colors
-														{$isDarkMode
-															? 'border border-green-700 bg-green-900/30 text-green-400'
-															: 'border border-green-300 bg-green-100 text-green-800'}"
-													>
-														🌐 Unified Analysis
-													</span>
-												{:else if analysis.analysis_scope === 'folder'}
-													<span
-														class="rounded-full px-3 py-1 text-xs font-medium transition-colors
-														{$isDarkMode
-															? 'border border-blue-700 bg-blue-900/30 text-blue-400'
-															: 'border border-blue-300 bg-blue-100 text-blue-800'}"
-													>
-														📁 Folder Analysis
-													</span>
-												{:else if analysis.analysis_scope === 'project'}
-													<span
-														class="rounded-full px-3 py-1 text-xs font-medium transition-colors
-														{$isDarkMode
-															? 'border border-gray-600 bg-gray-700 text-gray-400'
-															: 'border border-gray-300 bg-gray-100 text-gray-700'}"
-													>
-														📦 Project Analysis
-													</span>
-												{/if}
-											</div>
-
-											<div class="mb-3 grid grid-cols-2 gap-4 md:grid-cols-4">
-												<div>
-													<div
-														class="text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-500'}"
-													>
-														Repositories
-													</div>
-													<div
-														class="text-xl font-bold transition-colors {$isDarkMode
-															? 'text-blue-400'
-															: 'text-blue-600'}"
-													>
-														{analysis.total_repositories || 0}
-													</div>
-												</div>
-												<div>
-													<div
-														class="text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-500'}"
-													>
-														Findings
-													</div>
-													<div
-														class="text-xl font-bold transition-colors {$isDarkMode
-															? 'text-yellow-400'
-															: 'text-yellow-600'}"
-													>
-														{analysis.findings_count || 0}
-													</div>
-												</div>
-												<div>
-													<div
-														class="text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-500'}"
-													>
-														Maturity Score
-													</div>
-													<div
-														class="text-xl font-bold transition-colors {$isDarkMode
-															? 'text-green-400'
-															: 'text-green-600'}"
-													>
-														{analysis.maturity_score || 0}%
-													</div>
-												</div>
-												<div>
-													<div
-														class="text-sm transition-colors {$isDarkMode
-															? 'text-gray-400'
-															: 'text-gray-500'}"
-													>
-														Status
-													</div>
-													<div
-														class="text-xl font-bold transition-colors {$isDarkMode
-															? 'text-green-400'
-															: 'text-green-600'}"
-													>
-														{analysis.status || 'completed'}
-													</div>
-												</div>
-											</div>
-
-											{#if analysis.project_name}
-												<div
-													class="flex items-center gap-2 text-sm transition-colors {$isDarkMode
-														? 'text-gray-400'
-														: 'text-gray-600'}"
-												>
-													{#if analysis.analysis_scope === 'folder'}
-														📂 Folder:
-													{:else}
-														📦 Project:
-													{/if}
-													<span class="font-medium">{analysis.project_name}</span>
-												</div>
+								<div class="history-item {analysis.id === selectedAnalysisId ? 'selected' : ''}">
+									<div class="history-info">
+										<div class="history-top">
+											<h3 class="history-title">
+												{analysis.id === selectedAnalysisId ? '* ' : ''}Analysis - {formatDate(
+													analysis.created_at
+												)}
+											</h3>
+											{#if analysis.id === selectedAnalysisId}
+												<span class="tag-badge viewing">VIEWING</span>
+											{/if}
+											{#if analysis.analysis_scope === 'unified'}
+												<span class="tag-badge unified">UNIFIED</span>
+											{:else if analysis.analysis_scope === 'folder'}
+												<span class="tag-badge folder">FOLDER</span>
+											{:else if analysis.analysis_scope === 'project'}
+												<span class="tag-badge project">PROJECT</span>
 											{/if}
 										</div>
-
-										<div class="ml-4 flex items-center gap-2">
-											{#if analysis.id !== selectedAnalysisId}
-												<button onclick={() => switchToAnalysis(analysis.id)} class="btn-primary">
-													View
-												</button>
-											{/if}
-
+										<div class="history-stats">
+											<div class="history-stat">
+												<span class="history-stat-label">Repos</span>
+												<span class="history-stat-value">{analysis.total_repositories || 0}</span>
+											</div>
+											<div class="history-stat">
+												<span class="history-stat-label">Findings</span>
+												<span class="history-stat-value">{analysis.findings_count || 0}</span>
+											</div>
+											<div class="history-stat">
+												<span class="history-stat-label">Maturity</span>
+												<span class="history-stat-value">{analysis.maturity_score || 0}%</span>
+											</div>
+											<div class="history-stat">
+												<span class="history-stat-label">Status</span>
+												<span class="history-stat-value">{analysis.status || 'completed'}</span>
+											</div>
+										</div>
+										{#if analysis.project_name}
+											<div class="history-project">
+												{analysis.analysis_scope === 'folder' ? 'Folder' : 'Project'}:
+												<strong>{analysis.project_name}</strong>
+											</div>
+										{/if}
+									</div>
+									<div class="history-actions">
+										{#if analysis.id !== selectedAnalysisId}
 											<button
-												onclick={() => deleteAnalysis(analysis.id)}
-												disabled={deletingAnalysisId === analysis.id}
-												class="btn-delete {deletingAnalysisId === analysis.id ? 'disabled' : ''}"
+												onclick={() => switchToAnalysis(analysis.id)}
+												class="btn btn-secondary sm">View</button
 											>
-												{deletingAnalysisId === analysis.id ? '...' : 'Delete'}
-											</button>
-										</div>
+										{/if}
+										<button
+											onclick={() => deleteAnalysis(analysis.id)}
+											disabled={deletingAnalysisId === analysis.id}
+											class="btn btn-danger sm"
+										>
+											{deletingAnalysisId === analysis.id ? '...' : 'Delete'}
+										</button>
 									</div>
 								</div>
 							{/each}
-						</div>
-					{:else}
-						<div
-							class="rounded-lg py-12 text-center transition-colors {$isDarkMode
-								? 'bg-gray-800'
-								: 'bg-white shadow-sm'}"
-						>
-							<span class="mb-4 block text-6xl">📭</span>
-							<h3
-								class="mb-2 text-xl font-bold transition-colors {$isDarkMode
-									? 'text-white'
-									: 'text-gray-900'}"
-							>
-								No Analysis History
-							</h3>
-							<p class="transition-colors {$isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
-								Run your first analysis to see it here!
-							</p>
-						</div>
+						{:else}
+							<div class="state-card">
+								<div class="state-icon">&#128269;</div>
+								<h3 class="state-title">No Analysis History</h3>
+								<p class="state-message">Run your first analysis to see it here!</p>
+							</div>
+						{/if}
 					{/if}
-				</div>
-			{/if}
-		{/if}
+				{/if}
+			</main>
+		</div>
 	</div>
-</div>
+{/if}
 
 <!-- Chat Modal -->
 <ChatModal
@@ -2286,388 +1316,1382 @@
 
 <style>
 	/* ============================================
-	   PROFESSIONAL WORKSPACE INTELLIGENCE DESIGN
-	   Following WithOps Design Pattern
+	   PROFESSIONAL DESIGN SYSTEM (MATTE ENGINEERING)
+	   Consistent with Dashboard & Organizations
 	   ============================================ */
-
-	/* Container */
-	.intelligence-container {
-		min-height: 100vh;
-		width: 100%;
-		background: #000000;
-		transition: background-color 0.3s ease;
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--nav-height: 64px;
 	}
 
-	.intelligence-container.light {
-		background: #ffffff;
+	.intel-page.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--error: #ef4444;
+		--warning: #f59e0b;
+		--card-shadow: none;
+	}
+
+	.intel-page.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+		--warning: #d97706;
+		--card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+	}
+
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	.intel-page {
+		min-height: 100vh;
+		background: var(--bg-app);
+		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.3s ease;
+		position: relative;
+		overflow-x: hidden;
+	}
+
+	.intel-page::before {
+		content: '';
+		position: fixed;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.5;
 	}
 
 	/* ============================================
-	   NAVIGATION HEADER
+	   LOADING SCREEN
 	   ============================================ */
-	.intelligence-header {
-		width: 100%;
+	.loading-screen {
+		position: fixed;
+		inset: 0;
 		background: #000000;
-		border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-		padding: 1.5rem 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+	}
+
+	.loading-content {
+		text-align: center;
+		max-width: 300px;
+	}
+
+	.loading-icon {
+		width: 48px;
+		height: 48px;
+		margin-bottom: 2rem;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	.progress-bar {
+		height: 2px;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 4px;
+		overflow: hidden;
+		margin: 1rem 0;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: #00adef;
+		width: 40%;
+		animation: load 1.5s ease-in-out infinite;
+	}
+
+	@keyframes load {
+		0% {
+			transform: translateX(-100%);
+			width: 20%;
+		}
+		50% {
+			width: 50%;
+		}
+		100% {
+			transform: translateX(300%);
+			width: 20%;
+		}
+	}
+
+	.status-message {
+		font-family: var(--font-mono, monospace);
+		font-size: 0.7rem;
+		color: rgba(255, 255, 255, 0.4);
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+	}
+
+	/* Inline re-analysis loader */
+	.inline-loader {
+		padding: 0 2rem;
+	}
+
+	.inline-progress {
+		height: 2px;
+		background: var(--border);
+		border-radius: 1px;
+		overflow: hidden;
+	}
+
+	.inline-progress-fill {
+		height: 100%;
+		background: var(--accent);
+		width: 30%;
+		animation: load 1.5s ease-in-out infinite;
+	}
+
+	/* ============================================
+	   HEADER NAVIGATION
+	   ============================================ */
+	.dashboard-header {
 		position: sticky;
 		top: 0;
 		z-index: 100;
-		backdrop-filter: blur(10px);
-	}
-
-	.intelligence-container.light .intelligence-header {
-		background: #ffffff;
-		border-bottom-color: rgba(0, 217, 255, 0.15);
+		height: var(--nav-height);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
 	}
 
 	.header-content {
+		max-width: 1440px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 2rem;
-		padding: 0 3rem;
 	}
 
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-		flex: 1;
-	}
-
-	/* Back Button - Professional Secondary Style */
-	.back-button {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: transparent;
-		color: #00d9ff;
-		border: 1px solid rgba(0, 217, 255, 0.4);
-		border-radius: 8px;
-		font-weight: 600;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow: none;
-	}
-
-	.back-button svg {
-		transition: transform 0.3s ease;
-	}
-
-	.back-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		color: #00d9ff;
-		border-color: #00d9ff;
-		transform: translateY(-1px);
-	}
-
-	.back-button:hover svg {
-		transform: translateX(-3px);
-	}
-
-	.intelligence-container.light .back-button {
-		background: transparent;
-		color: #00d9ff;
-		border-color: rgba(0, 217, 255, 0.4);
-	}
-
-	.intelligence-container.light .back-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: #00d9ff;
-	}
-
-	/* Title Section */
-	.header-title-section {
-		flex: 1;
-	}
-
-	.page-title {
+	.nav-brand {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		font-size: 2rem;
+		text-decoration: none;
+		color: var(--text-primary);
+	}
+
+	.brand-icon {
+		width: 28px;
+		height: 28px;
+	}
+
+	.brand-name {
 		font-weight: 700;
-		color: #ffffff;
-		margin-bottom: 0.5rem;
-		line-height: 1.2;
-	}
-
-	.intelligence-container.light .page-title {
-		color: #000000;
-	}
-
-	.title-icon {
-		font-size: 2rem;
-		filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5));
-	}
-
-	.title-text {
-		background: linear-gradient(135deg, #00d9ff 0%, #ffffff 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.intelligence-container.light .title-text {
-		background: linear-gradient(135deg, #00d9ff 0%, #00a0c0 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.page-subtitle {
 		font-size: 1rem;
-		color: #b8b8b8;
-		line-height: 1.5;
+		letter-spacing: -0.02em;
 	}
 
-	.intelligence-container.light .page-subtitle {
-		color: #666666;
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
 	}
 
-	.org-name {
-		font-weight: 600;
-		color: #00d9ff;
+	.nav-link {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
 	}
 
-	/* Header Actions */
-	.header-actions {
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--text-primary);
+	}
+
+	.nav-actions {
 		display: flex;
 		align-items: center;
 		gap: 1.5rem;
 	}
 
-	/* Maturity Score Display */
-	.maturity-score-display {
-		text-align: right;
-		padding: 1rem 1.5rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
+	.theme-toggle {
+		background: none;
+		border: none;
+		color: var(--text-secondary);
+		cursor: pointer;
+		padding: 0.5rem;
+		border-radius: 6px;
+		transition: all 0.2s;
 	}
 
-	.score-label {
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: #b8b8b8;
+	.theme-toggle:hover {
+		background: var(--border);
+		color: var(--text-primary);
+	}
+
+	.theme-icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* ============================================
+	   TECHNICAL BREADCRUMB BAR
+	   ============================================ */
+	.technical-bar {
+		background: var(--bg-surface);
+		border-bottom: 1px solid var(--border);
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		height: 40px;
+	}
+
+	.breadcrumb-node {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		margin-bottom: 0.25rem;
 	}
 
-	.intelligence-container.light .score-label {
-		color: #666666;
+	.breadcrumb-node.active {
+		color: var(--accent);
 	}
 
-	.score-value {
-		font-size: 2.5rem;
-		font-weight: 700;
-		color: #00d9ff;
-		line-height: 1;
+	.breadcrumb-sep {
+		color: var(--border-focus);
+		font-size: 0.65rem;
 	}
 
-	.score-max {
-		font-size: 1.5rem;
-		color: #b8b8b8;
-	}
-
-	/* AI Button - Professional Primary Style with AI Accent */
-	.btn-ai {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 1rem 1.5rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
-		position: relative;
-		overflow: hidden;
-	}
-
-	.btn-ai::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
-		opacity: 0;
-		transition: opacity 0.3s ease;
-		z-index: 0;
-	}
-
-	.btn-ai:hover::before {
-		opacity: 1;
-	}
-
-	.btn-ai .btn-icon,
-	.btn-ai .btn-text {
-		position: relative;
-		z-index: 1;
-	}
-
-	.btn-ai:hover {
-		background: #00d9ff;
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 40px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-
-	.intelligence-container.light .btn-ai {
-		background: #00d9ff;
-		color: #000000;
-		box-shadow:
-			0 8px 25px rgba(0, 217, 255, 0.3),
-			0 4px 12px rgba(0, 217, 255, 0.15);
-	}
-
-	.intelligence-container.light .btn-ai:hover {
-		background: #00d9ff;
-		box-shadow:
-			0 12px 32px rgba(0, 217, 255, 0.5),
-			0 6px 16px rgba(0, 217, 255, 0.25);
-		transform: translateY(-3px);
-	}
-
-	/* Primary Button */
-	.btn-primary {
+	.system-status-pill {
+		margin-left: auto;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1rem 1.5rem;
-		background: #ffffff;
-		color: #000000;
-		border: none;
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		color: var(--success);
+		opacity: 0.8;
+	}
+
+	.status-pulse {
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		animation: blink 2s infinite;
+	}
+
+	@keyframes blink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
+	}
+
+	/* ============================================
+	   PAGE LAYOUT
+	   ============================================ */
+	.page-content {
+		position: relative;
+		z-index: 10;
+		padding-bottom: 5rem;
+	}
+
+	.page-main {
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 2.5rem 2rem;
+	}
+
+	/* ============================================
+	   VIEW HEADER
+	   ============================================ */
+	.view-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+		gap: 1.5rem;
+	}
+
+	.title-group h1 {
+		font-size: 1.75rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		margin-bottom: 0.5rem;
+	}
+
+	.title-group p {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		line-height: 1.5;
+	}
+
+	.title-group strong {
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.header-cta {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	/* Score Pill */
+	.score-pill {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		padding: 0.5rem 1rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
 		border-radius: 8px;
+	}
+
+	.score-lbl {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.score-num {
+		font-family: var(--font-mono);
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--accent);
+		line-height: 1;
+	}
+
+	.score-unit {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		font-weight: 500;
+	}
+
+	/* ============================================
+	   FILTER NAV (TABS)
+	   ============================================ */
+	.filter-nav {
+		display: flex;
+		gap: 0.25rem;
+		background: var(--bg-surface-alt);
+		padding: 0.25rem;
+		border-radius: 8px;
+		border: 1px solid var(--border);
+		margin-bottom: 2rem;
+		width: fit-content;
+	}
+
+	.filter-btn {
+		background: none;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 6px;
+		font-size: 0.7rem;
 		font-weight: 600;
-		font-size: 0.95rem;
+		color: var(--text-secondary);
 		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
+		transition: all 0.2s;
+		font-family: var(--font-sans);
+		letter-spacing: 0.02em;
 	}
 
-	.intelligence-container.light .btn-primary {
-		background: #00d9ff;
-		box-shadow:
-			0 8px 25px rgba(0, 217, 255, 0.3),
-			0 4px 12px rgba(0, 217, 255, 0.15);
+	.filter-btn:hover {
+		color: var(--text-primary);
 	}
 
-	.btn-primary:hover {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
+	.filter-btn.active {
+		background: var(--bg-surface);
+		color: var(--accent);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
 
-	.intelligence-container.light .btn-primary:hover {
-		background: #33e3ff;
-		box-shadow: 0 12px 32px rgba(0, 217, 255, 0.4);
+	/* ============================================
+	   INTEL CARD
+	   ============================================ */
+	.intel-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1.5rem;
+		margin-bottom: 1.25rem;
+		box-shadow: var(--card-shadow);
+		transition: all 0.2s var(--ease-premium);
 	}
 
-	.btn-icon {
+	.intel-card:hover {
+		border-color: var(--border-focus);
+	}
+
+	.intel-card.compact {
+		padding: 1.25rem;
+	}
+
+	.card-heading {
+		font-size: 0.9375rem;
+		font-weight: 700;
+		margin-bottom: 1.25rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	/* ============================================
+	   STATS GRID
+	   ============================================ */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.stat-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1.25rem;
+		box-shadow: var(--card-shadow);
+		transition: all 0.2s var(--ease-premium);
+	}
+
+	.stat-card:hover {
+		border-color: var(--border-focus);
+		transform: translateY(-2px);
+	}
+
+	.feature-number {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.08em;
+		margin-bottom: 0.75rem;
+		text-transform: uppercase;
+	}
+
+	.stat-val {
+		font-family: var(--font-mono);
+		font-size: 2rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		line-height: 1;
+		margin-bottom: 0.5rem;
+	}
+
+	.stat-detail {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+	}
+
+	.stat-detail-badges {
+		display: flex;
+		gap: 0.375rem;
+		margin-top: 0.5rem;
+	}
+
+	/* ============================================
+	   PRACTICES GRID
+	   ============================================ */
+	.practices-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+	}
+
+	.practice-item {
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 1rem;
+	}
+
+	.practice-label {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin-bottom: 0.5rem;
+	}
+
+	.tool-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
+	}
+
+	.tool-tag {
+		font-size: 0.75rem;
+		font-weight: 500;
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.tool-tag.active {
+		background: rgba(16, 185, 129, 0.08);
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.15);
+	}
+
+	.tool-tag.inactive {
+		color: var(--text-muted);
+		font-style: italic;
+		font-size: 0.75rem;
+	}
+
+	.tool-tag.sm {
+		font-size: 0.7rem;
+		padding: 0.125rem 0.375rem;
+	}
+
+	/* ============================================
+	   POLICIES
+	   ============================================ */
+	.policies-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem;
+	}
+
+	.policy-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.625rem 0.875rem;
+		background: var(--bg-surface-alt);
+		border-radius: 6px;
+	}
+
+	.policy-name {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-primary);
+	}
+
+	.policy-status {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.policy-status.enabled {
+		color: var(--success);
+	}
+
+	.policy-status.disabled {
+		color: var(--text-muted);
+	}
+
+	.policy-value {
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	/* ============================================
+	   PROJECTS LIST
+	   ============================================ */
+	.projects-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.project-item {
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.project-header {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.15s;
+	}
+
+	.project-header:hover {
+		background: var(--bg-surface-alt);
+	}
+
+	.project-info {
+		flex: 1;
+	}
+
+	.project-name {
+		font-size: 0.875rem;
+		font-weight: 700;
+		margin-bottom: 0.25rem;
+	}
+
+	.project-meta {
+		display: flex;
+		gap: 1rem;
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+	}
+
+	.project-score {
+		text-align: right;
+	}
+
+	.p-score-num {
+		font-family: var(--font-mono);
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--accent);
+		display: block;
+	}
+
+	.p-score-lbl {
+		font-size: 0.6rem;
+		color: var(--text-muted);
+	}
+
+	.chevron {
+		transition: transform 0.2s;
+		color: var(--text-muted);
+		flex-shrink: 0;
+	}
+
+	.chevron.open {
+		transform: rotate(180deg);
+	}
+
+	.project-details {
+		padding: 1rem;
+		border-top: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.detail-scores {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0.5rem;
+	}
+
+	.detail-item {
+		background: var(--bg-surface-alt);
+		border-radius: 6px;
+		padding: 0.625rem;
+	}
+
+	.detail-label {
+		font-size: 0.6rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.detail-value {
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 700;
+		color: var(--accent);
+	}
+
+	.detail-findings,
+	.detail-tools {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
+	}
+
+	/* ============================================
+	   DSOMM TABLE
+	   ============================================ */
+	.dsomm-table-wrap {
+		overflow-x: auto;
+	}
+
+	.dsomm-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.8125rem;
+	}
+
+	.dsomm-table th {
+		padding: 0.75rem;
+		text-align: left;
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.dsomm-table th.level-th {
+		text-align: center;
+		width: 60px;
+	}
+
+	.dsomm-table td {
+		padding: 0.75rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.dsomm-table tr:last-child td {
+		border-bottom: none;
+	}
+
+	.dsomm-table tr:hover {
+		background: var(--bg-surface-alt);
+	}
+
+	.dim-cell {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	.dim-icon {
 		font-size: 1.25rem;
 	}
 
-	.btn-text {
+	.dim-name {
 		font-weight: 600;
+		color: var(--text-primary);
+		margin-bottom: 0.125rem;
 	}
 
-	/* Delete Button - Professional Pattern */
-	.btn-delete {
-		display: inline-flex;
+	.dim-desc {
+		font-size: 0.7rem;
+		color: var(--text-secondary);
+	}
+
+	.level-cell {
+		text-align: center;
+	}
+
+	.level-dot {
+		width: 16px;
+		height: 16px;
+		border-radius: 3px;
+		margin: 0 auto;
+	}
+
+	.level-dot.filled {
+		background: var(--dot-color);
+	}
+
+	.level-dot.empty {
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+	}
+
+	/* Dimension Grid */
+	.dimension-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1rem;
+		margin-top: 1.25rem;
+	}
+
+	.dim-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+	}
+
+	.dim-card-title {
+		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1rem 1.5rem;
-		background: rgba(239, 68, 68, 0.1);
-		color: #ef4444;
-		border: 2px solid #ef4444;
-		border-radius: 8px;
+	}
+
+	.dim-card-title h3 {
+		font-size: 0.875rem;
+		font-weight: 700;
+	}
+
+	.dim-level-badge {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
 		font-weight: 600;
-		font-size: 0.95rem;
+		color: var(--accent);
+		border: 1px solid var(--border);
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+	}
+
+	.progress-track {
+		height: 4px;
+		background: var(--bg-surface-alt);
+		border-radius: 2px;
+		overflow: hidden;
+		margin-bottom: 0.75rem;
+	}
+
+	.progress-fill-bar {
+		height: 100%;
+		border-radius: 2px;
+		transition: width 0.5s var(--ease-premium);
+	}
+
+	.dim-card-desc {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.5;
+	}
+
+	/* ============================================
+	   REPOSITORY LIST
+	   ============================================ */
+	.repo-project-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.repo-project-header .card-heading {
+		margin-bottom: 0;
+	}
+
+	.repo-section {
+		margin-bottom: 1.5rem;
+	}
+
+	.repo-section:last-child {
+		margin-bottom: 0;
+	}
+
+	.repo-section-title {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-secondary);
+		margin-bottom: 0.75rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.repo-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.repo-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.75rem 1rem;
+		background: var(--bg-surface-alt);
+		border-radius: 8px;
+		border: 1px solid var(--border);
+	}
+
+	.repo-item.muted {
+		opacity: 0.6;
+	}
+
+	.repo-info {
+		flex: 1;
+	}
+
+	.repo-name {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.repo-meta {
+		font-size: 0.7rem;
+		color: var(--text-secondary);
+		margin-top: 0.125rem;
+	}
+
+	.repo-score {
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 700;
+		color: var(--accent);
+	}
+
+	.repo-score .score-unit {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+	}
+
+	.repo-findings {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	/* ============================================
+	   FINDING CARDS
+	   ============================================ */
+	.finding-card {
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		margin-bottom: 0.5rem;
+		overflow: hidden;
+		background: var(--bg-surface);
+	}
+
+	.finding-header {
+		width: 100%;
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		padding: 0.875rem 1rem;
+		background: none;
+		border: none;
 		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow:
-			0 10px 30px rgba(239, 68, 68, 0.2),
-			0 0 20px rgba(239, 68, 68, 0.1);
+		text-align: left;
+		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.15s;
 	}
 
-	.btn-delete:hover:not(.disabled) {
-		background: #ef4444;
-		color: #ffffff;
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(239, 68, 68, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
+	.finding-header:hover {
+		background: var(--bg-surface-alt);
 	}
 
-	.btn-delete.disabled {
+	.finding-info {
+		flex: 1;
+	}
+
+	.finding-title {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		margin-bottom: 0.25rem;
+	}
+
+	.finding-desc {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.4;
+	}
+
+	.finding-details {
+		padding: 0.875rem 1rem;
+		border-top: 1px solid var(--border);
+	}
+
+	.finding-section {
+		margin-bottom: 0.75rem;
+	}
+
+	.finding-section:last-child {
+		margin-bottom: 0;
+	}
+
+	.finding-section h4 {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		margin-bottom: 0.375rem;
+	}
+
+	.finding-section p {
+		font-size: 0.8125rem;
+		color: var(--text-secondary);
+		line-height: 1.5;
+	}
+
+	.component-code {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+		background: var(--bg-surface-alt);
+		border-radius: 4px;
+		color: var(--accent);
+	}
+
+	/* ============================================
+	   HISTORY
+	   ============================================ */
+	.history-header-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.history-header-row .card-heading {
+		margin-bottom: 0;
+	}
+
+	.history-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1.25rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		margin-bottom: 0.5rem;
+		background: var(--bg-surface);
+		transition: border-color 0.15s;
+	}
+
+	.history-item.selected {
+		border-color: var(--accent);
+		background: var(--accent-soft);
+	}
+
+	.history-info {
+		flex: 1;
+	}
+
+	.history-top {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+	}
+
+	.history-title {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.tag-badge {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 600;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.tag-badge.viewing {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.tag-badge.unified {
+		background: rgba(16, 185, 129, 0.08);
+		color: var(--success);
+	}
+
+	.tag-badge.folder {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.tag-badge.project {
+		background: var(--bg-surface-alt);
+		color: var(--text-muted);
+	}
+
+	.history-stats {
+		display: flex;
+		gap: 1.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.history-stat-label {
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		display: block;
+	}
+
+	.history-stat-value {
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.history-project {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+	}
+
+	.history-actions {
+		display: flex;
+		gap: 0.375rem;
+		flex-shrink: 0;
+	}
+
+	/* ============================================
+	   STATE CARDS (ERROR / EMPTY)
+	   ============================================ */
+	.state-card {
+		text-align: center;
+		padding: 5rem 2rem;
+		max-width: 500px;
+		margin: 0 auto;
+	}
+
+	.state-icon {
+		font-size: 3rem;
+		margin-bottom: 1rem;
+	}
+
+	.state-title {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		margin-bottom: 0.5rem;
+	}
+
+	.state-message {
+		font-size: 0.875rem;
+		color: var(--text-secondary);
+		margin-bottom: 1.5rem;
+		line-height: 1.6;
+	}
+
+	/* ============================================
+	   INFO BANNERS
+	   ============================================ */
+	.info-banner {
+		padding: 0.75rem 1rem;
+		border-radius: 8px;
+		margin-bottom: 1.25rem;
+		font-size: 0.8125rem;
+		border: 1px solid var(--border);
+	}
+
+	.info-banner.success {
+		background: rgba(16, 185, 129, 0.04);
+		border-color: rgba(16, 185, 129, 0.15);
+	}
+
+	.info-banner.info {
+		background: var(--accent-soft);
+		border-color: rgba(0, 173, 239, 0.15);
+	}
+
+	.info-banner.warning {
+		background: rgba(245, 158, 11, 0.04);
+		border-color: rgba(245, 158, 11, 0.15);
+		color: var(--text-secondary);
+	}
+
+	.banner-content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.banner-content strong {
+		color: var(--text-primary);
+	}
+
+	.banner-content span {
+		color: var(--text-secondary);
+		font-size: 0.75rem;
+	}
+
+	/* ============================================
+	   SEVERITY BADGES
+	   ============================================ */
+	.severity-badge {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		font-weight: 600;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.severity-badge.critical {
+		background: rgba(220, 38, 38, 0.08);
+		color: #ef4444;
+	}
+
+	.severity-badge.high {
+		background: rgba(234, 88, 12, 0.08);
+		color: #f97316;
+	}
+
+	.severity-badge.medium {
+		background: rgba(217, 119, 6, 0.08);
+		color: #f59e0b;
+	}
+
+	.severity-badge.low {
+		background: rgba(101, 163, 13, 0.08);
+		color: #84cc16;
+	}
+
+	.severity-badge.info {
+		background: rgba(2, 132, 199, 0.08);
+		color: #06b6d4;
+	}
+
+	.severity-badge.sm {
+		font-size: 0.6rem;
+		padding: 0.125rem 0.375rem;
+	}
+
+	/* Count Badge */
+	.count-badge {
+		font-size: 0.65rem;
+		font-weight: 600;
+		background: var(--bg-surface-alt);
+		color: var(--text-muted);
+		padding: 0.125rem 0.5rem;
+		border-radius: 4px;
+	}
+
+	.count-badge.success {
+		background: rgba(16, 185, 129, 0.08);
+		color: var(--success);
+	}
+
+	.count-badge.warning {
+		background: rgba(245, 158, 11, 0.08);
+		color: var(--warning);
+	}
+
+	/* ============================================
+	   BUTTONS
+	   ============================================ */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.625rem 1.25rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		white-space: nowrap;
+	}
+
+	.btn:hover:not(:disabled) {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
+	}
+
+	.btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 		transform: none;
 	}
 
-	.intelligence-container.light .btn-delete {
-		background: rgba(239, 68, 68, 0.08);
-		border-color: #dc2626;
-		color: #dc2626;
-		box-shadow: 0 4px 16px rgba(239, 68, 68, 0.15);
+	.btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
 	}
 
-	.intelligence-container.light .btn-delete:hover:not(.disabled) {
-		background: #ef4444;
-		color: #ffffff;
-		box-shadow: 0 12px 32px rgba(239, 68, 68, 0.3);
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
 	}
 
-	/* ============================================
-	   MAIN CONTENT
-	   ============================================ */
-	.main-content {
-		padding: 3rem;
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+		border-color: var(--border);
 	}
 
-	/* ============================================
-	   LOADING STATE
-	   ============================================ */
-	.loading-state {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 60vh;
-		padding: 4rem 2rem;
+	.btn-danger {
+		background: transparent;
+		border-color: rgba(239, 68, 68, 0.2);
+		color: var(--error);
 	}
 
-	.loading-content {
-		text-align: center;
+	.btn-danger:hover:not(:disabled) {
+		background: var(--error);
+		color: #fff;
+		border-color: var(--error);
 	}
 
-	.loading-spinner {
-		width: 64px;
-		height: 64px;
-		border: 4px solid rgba(0, 217, 255, 0.1);
-		border-top-color: #00d9ff;
+	.btn.sm {
+		padding: 0.4375rem 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	.button-arrow {
+		font-size: 1rem;
+		transition: transform 0.15s;
+	}
+
+	.btn:hover .button-arrow {
+		transform: translateX(3px);
+	}
+
+	.btn-spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-top-color: currentColor;
 		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin: 0 auto 1.5rem;
+		animation: spin 0.8s linear infinite;
 	}
 
 	@keyframes spin {
@@ -2676,565 +2700,73 @@
 		}
 	}
 
-	.loading-text {
-		font-size: 1.125rem;
-		color: #b8b8b8;
-		font-weight: 500;
-	}
-
-	.intelligence-container.light .loading-text {
-		color: #666666;
-	}
-
 	/* ============================================
-	   ERROR STATE
-	   ============================================ */
-	.error-state {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 60vh;
-		padding: 4rem 2rem;
-	}
-
-	.error-content {
-		text-align: center;
-		max-width: 600px;
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-		border-radius: 12px;
-		padding: 3rem;
-	}
-
-	.intelligence-container.light .error-content {
-		background: rgba(255, 255, 255, 0.95);
-		border-color: rgba(239, 68, 68, 0.2);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-	}
-
-	.error-icon {
-		font-size: 4rem;
-		display: block;
-		margin-bottom: 1.5rem;
-	}
-
-	.error-title {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #ef4444;
-		margin-bottom: 1rem;
-	}
-
-	.error-message {
-		font-size: 1rem;
-		color: #b8b8b8;
-		margin-bottom: 2rem;
-		line-height: 1.6;
-	}
-
-	.intelligence-container.light .error-message {
-		color: #666666;
-	}
-
-	/* ============================================
-	   EMPTY STATE
-	   ============================================ */
-	.empty-state {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 60vh;
-		padding: 4rem 2rem;
-	}
-
-	.empty-content {
-		text-align: center;
-		max-width: 600px;
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		padding: 3rem;
-	}
-
-	.intelligence-container.light .empty-content {
-		background: rgba(255, 255, 255, 0.95);
-		border-color: rgba(0, 217, 255, 0.15);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-	}
-
-	.empty-icon {
-		font-size: 4rem;
-		display: block;
-		margin-bottom: 1.5rem;
-	}
-
-	.empty-title {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #00d9ff;
-		margin-bottom: 1rem;
-	}
-
-	.empty-message {
-		font-size: 1rem;
-		color: #b8b8b8;
-		margin-bottom: 2rem;
-		line-height: 1.6;
-	}
-
-	.intelligence-container.light .empty-message {
-		color: #666666;
-	}
-
-	/* ============================================
-	   TAB NAVIGATION
-	   ============================================ */
-	.tab-navigation {
-		margin-bottom: 2.5rem;
-		border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-	}
-
-	.intelligence-container.light .tab-navigation {
-		border-bottom-color: rgba(0, 217, 255, 0.15);
-	}
-
-	.tab-nav {
-		display: flex;
-		gap: 0.5rem;
-		margin-bottom: -1px;
-	}
-
-	.tab-button {
-		padding: 1rem 2rem;
-		background: transparent;
-		border: none;
-		border-bottom: 3px solid transparent;
-		color: #b8b8b8;
-		font-size: 0.95rem;
-		font-weight: 600;
-		text-transform: capitalize;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-	}
-
-	.intelligence-container.light .tab-button {
-		color: #666666;
-	}
-
-	.tab-button:hover {
-		color: #00d9ff;
-		background: rgba(0, 217, 255, 0.05);
-	}
-
-	.tab-button.active {
-		color: #00d9ff;
-		border-bottom-color: #00d9ff;
-		background: rgba(0, 217, 255, 0.1);
-	}
-
-	/* ============================================
-	   RESPONSIVE DESIGN
+	   RESPONSIVE
 	   ============================================ */
 	@media (max-width: 1200px) {
-		.header-content {
-			flex-wrap: wrap;
+		.stats-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 
-		.header-actions {
-			width: 100%;
-			justify-content: flex-start;
+		.practices-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 
 	@media (max-width: 768px) {
+		.view-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.nav-menu {
+			display: none;
+		}
+
+		.stats-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.practices-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.policies-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.detail-scores {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.page-main {
+			padding: 1.5rem 1rem;
+		}
+
+		.header-cta {
+			flex-wrap: wrap;
+		}
+
+		.filter-nav {
+			overflow-x: auto;
+			width: 100%;
+		}
+
+		.history-item {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.history-actions {
+			width: 100%;
+		}
+
 		.header-content {
 			padding: 0 1rem;
 		}
 
-		.header-left {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 1rem;
+		.technical-bar {
+			padding: 0 1rem;
 		}
-
-		.header-actions {
-			flex-direction: column;
-			width: 100%;
-			align-items: stretch;
-		}
-
-		.maturity-score-display {
-			text-align: center;
-		}
-
-		.btn-ai,
-		.btn-primary {
-			width: 100%;
-			justify-content: center;
-		}
-
-		.page-title {
-			font-size: 1.5rem;
-		}
-
-		.page-subtitle {
-			font-size: 0.875rem;
-		}
-
-		.main-content {
-			padding: 2rem 1rem;
-		}
-
-		.tab-nav {
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-		}
-
-		.tab-button {
-			padding: 0.75rem 1.5rem;
-			white-space: nowrap;
-		}
-	}
-
-	@media (max-width: 480px) {
-		.back-button {
-			padding: 0.5rem 1rem;
-			font-size: 0.875rem;
-		}
-
-		.score-value {
-			font-size: 2rem;
-		}
-
-		.score-max {
-			font-size: 1.25rem;
-		}
-	}
-
-	/* Custom Scrollbar */
-	::-webkit-scrollbar {
-		width: 12px;
-		height: 12px;
-	}
-
-	::-webkit-scrollbar-track {
-		background: rgba(0, 0, 0, 0.3);
-	}
-
-	::-webkit-scrollbar-thumb {
-		background: rgba(0, 217, 255, 0.3);
-		border-radius: 6px;
-	}
-
-	::-webkit-scrollbar-thumb:hover {
-		background: rgba(0, 217, 255, 0.5);
-	}
-
-	.intelligence-container.light ::-webkit-scrollbar-track {
-		background: rgba(0, 0, 0, 0.05);
-	}
-
-	.intelligence-container.light ::-webkit-scrollbar-thumb {
-		background: rgba(0, 217, 255, 0.3);
-	}
-
-	.intelligence-container.light ::-webkit-scrollbar-thumb:hover {
-		background: rgba(0, 217, 255, 0.5);
-	}
-
-	/* ============================================
-	   CONTENT CARDS & BLOCKS - Professional Pattern
-	   ============================================ */
-
-	/* Professional Feature Card */
-	.dashboard-card,
-	div[class*='rounded-lg p-6'] {
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		padding: 2.5rem;
-		transition: all 0.4s ease;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.intelligence-container.light .dashboard-card,
-	.intelligence-container.light div[class*='rounded-lg p-6'] {
-		background: rgba(255, 255, 255, 0.95);
-		border-color: rgba(0, 217, 255, 0.15);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-	}
-
-	.dashboard-card::before,
-	div[class*='rounded-lg p-6']::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
-		transition: left 0.6s;
-	}
-
-	.dashboard-card:hover::before,
-	div[class*='rounded-lg p-6']:hover::before {
-		left: 100%;
-	}
-
-	.dashboard-card:hover,
-	div[class*='rounded-lg p-6']:hover {
-		transform: translateY(-5px);
-		border-color: rgba(0, 217, 255, 0.5);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.15);
-		background: rgba(0, 0, 0, 0.6);
-	}
-
-	.intelligence-container.light .dashboard-card:hover,
-	.intelligence-container.light div[class*='rounded-lg p-6']:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.12);
-	}
-
-	/* Stat Card Specific Styling */
-	:global(.stat-card) {
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		padding: 1.5rem;
-		transition: all 0.3s ease;
-	}
-
-	.intelligence-container.light :global(.stat-card) {
-		background: rgba(255, 255, 255, 0.95);
-		border-color: rgba(0, 217, 255, 0.15);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-	}
-
-	:global(.stat-card:hover) {
-		transform: translateY(-3px);
-		border-color: rgba(0, 217, 255, 0.4);
-		box-shadow: 0 10px 25px rgba(0, 217, 255, 0.15);
-	}
-
-	:global(.stat-label) {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #b8b8b8;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 0.75rem;
-	}
-
-	.intelligence-container.light :global(.stat-label) {
-		color: #666666;
-	}
-
-	:global(.stat-value) {
-		font-size: 2.5rem;
-		font-weight: 700;
-		color: #ffffff;
-		line-height: 1;
-		margin-bottom: 0.5rem;
-	}
-
-	.intelligence-container.light :global(.stat-value) {
-		color: #000000;
-	}
-
-	:global(.stat-detail) {
-		font-size: 0.875rem;
-		color: #b8b8b8;
-		line-height: 1.5;
-	}
-
-	.intelligence-container.light :global(.stat-detail) {
-		color: #666666;
-	}
-
-	/* ============================================
-	   BADGES & SEVERITY INDICATORS
-	   ============================================ */
-
-	/* Professional Badge Styling */
-	:global(.badge),
-	:global(.status-badge) {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		transition: all 0.3s ease;
-	}
-
-	/* Severity Badge Coloring */
-	:global(.severity-critical) {
-		background: rgba(220, 38, 38, 0.1);
-		color: #dc2626;
-		border: 1px solid rgba(220, 38, 38, 0.3);
-	}
-
-	:global(.severity-high) {
-		background: rgba(234, 88, 12, 0.1);
-		color: #ea580c;
-		border: 1px solid rgba(234, 88, 12, 0.3);
-	}
-
-	:global(.severity-medium) {
-		background: rgba(217, 119, 6, 0.1);
-		color: #d97706;
-		border: 1px solid rgba(217, 119, 6, 0.3);
-	}
-
-	:global(.severity-low) {
-		background: rgba(101, 163, 13, 0.1);
-		color: #65a30d;
-		border: 1px solid rgba(101, 163, 13, 0.3);
-	}
-
-	:global(.severity-info) {
-		background: rgba(2, 132, 199, 0.1);
-		color: #0284c7;
-		border: 1px solid rgba(2, 132, 199, 0.3);
-	}
-
-	/* Status Badges */
-	:global(.badge-success) {
-		background: rgba(0, 217, 255, 0.1);
-		color: #00d9ff;
-		border: 1px solid rgba(0, 217, 255, 0.3);
-	}
-
-	:global(.badge-warning) {
-		background: rgba(245, 158, 11, 0.1);
-		color: #f59e0b;
-		border: 1px solid rgba(245, 158, 11, 0.3);
-	}
-
-	:global(.badge-unified) {
-		background: rgba(16, 185, 129, 0.1);
-		color: #10b981;
-		border: 1px solid rgba(16, 185, 129, 0.3);
-	}
-
-	/* ============================================
-	   TEXT & TYPOGRAPHY
-	   ============================================ */
-
-	:global(h1),
-	:global(h2),
-	:global(h3),
-	:global(h4),
-	:global(h5),
-	:global(h6) {
-		color: #ffffff;
-		font-weight: 700;
-	}
-
-	.intelligence-container.light :global(h1),
-	.intelligence-container.light :global(h2),
-	.intelligence-container.light :global(h3),
-	.intelligence-container.light :global(h4),
-	.intelligence-container.light :global(h5),
-	.intelligence-container.light :global(h6) {
-		color: #000000;
-	}
-
-	:global(p) {
-		color: #b8b8b8;
-		line-height: 1.6;
-	}
-
-	.intelligence-container.light :global(p) {
-		color: #666666;
-	}
-
-	/* Secondary Text */
-	:global(.text-secondary) {
-		color: #b8b8b8 !important;
-	}
-
-	.intelligence-container.light :global(.text-secondary) {
-		color: #666666 !important;
-	}
-
-	/* Muted Text */
-	:global(.text-muted) {
-		color: rgba(255, 255, 255, 0.6) !important;
-	}
-
-	.intelligence-container.light :global(.text-muted) {
-		color: rgba(0, 0, 0, 0.5) !important;
-	}
-
-	/* ============================================
-	   UTILITY CLASSES
-	   ============================================ */
-
-	:global(.space-y-4 > * + *) {
-		margin-top: 1rem;
-	}
-
-	:global(.space-y-6 > * + *) {
-		margin-top: 1.5rem;
-	}
-
-	:global(.grid) {
-		display: grid;
-	}
-
-	:global(.gap-4) {
-		gap: 1rem;
-	}
-
-	:global(.gap-6) {
-		gap: 1.5rem;
-	}
-
-	/* ============================================
-	   ANIMATIONS
-	   ============================================ */
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes slideIn {
-		from {
-			opacity: 0;
-			transform: translateX(-20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateX(0);
-		}
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: -1000px 0;
-		}
-		100% {
-			background-position: 1000px 0;
-		}
-	}
-
-	:global(.animate-fade-in) {
-		animation: fadeIn 0.5s ease-out;
-	}
-
-	:global(.animate-slide-in) {
-		animation: slideIn 0.5s ease-out;
 	}
 </style>
