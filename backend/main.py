@@ -405,18 +405,23 @@ async def conditional_gzip_middleware(request: Request, call_next):
     return response
 
 # Configure CORS
-origins = [
-    "http://localhost:5173",  # SvelteKit dev server
-    "http://localhost:5174",  # SvelteKit dev server (alternative port)
-    "http://localhost:5175",  # SvelteKit dev server (alternative port 2)
-    "http://localhost:3000",  # Alternative dev server
-    "http://localhost:4173",  # SvelteKit preview
-    "http://127.0.0.1:5173",  # Alternative localhost format
-    "http://127.0.0.1:5174",  # Alternative localhost format
-    "http://127.0.0.1:5175",  # Alternative localhost format
-    "https://app.withops.com",  # Production frontend
-    "https://withops.com",  # Production domain (if used)
-]
+# Read from CORS_ORIGINS env var (comma-separated) or fall back to defaults
+_cors_env = os.environ.get("CORS_ORIGINS", "")
+if _cors_env:
+    origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+else:
+    origins = [
+        "http://localhost:5173",  # SvelteKit dev server
+        "http://localhost:5174",  # SvelteKit dev server (alternative port)
+        "http://localhost:5175",  # SvelteKit dev server (alternative port 2)
+        "http://localhost:3000",  # Alternative dev server
+        "http://localhost:4173",  # SvelteKit preview
+        "http://127.0.0.1:5173",  # Alternative localhost format
+        "http://127.0.0.1:5174",  # Alternative localhost format
+        "http://127.0.0.1:5175",  # Alternative localhost format
+        "https://app.withops.com",  # Production frontend
+        "https://withops.com",  # Production domain (if used)
+    ]
 
 app.add_middleware(
     CORSMiddleware,

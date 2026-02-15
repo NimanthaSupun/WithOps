@@ -12,8 +12,7 @@ RUN pip install --upgrade pip && \
 # Copy service code
 COPY services/ai-service/ .
 
-# Expose portcompact vdisk
-
+# Expose port
 EXPOSE 8001
 
 # Run the service

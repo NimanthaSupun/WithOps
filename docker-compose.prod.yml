@@ -1,5 +1,5 @@
 # Production Docker Compose Configuration
-# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Usage: docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
   # Frontend with production build arguments
@@ -11,7 +11,7 @@ services:
         - VITE_API_BASE_URL=${PROD_API_BASE_URL:-https://api.withops.com}
         - VITE_WS_BASE_URL=${PROD_WS_BASE_URL:-api.withops.com}
         - VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN:-dev-sabxychpf6paj41u.us.auth0.com}
-        - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID:-KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7}
+        - VITE_AUTH0_CLIENT_ID=${PROD_AUTH0_CLIENT_ID:-1iUTjKCwEeXwyjEilqb5Xq4zBZKr3lLD}
         - VITE_AUTH0_CALLBACK_URL=${PROD_AUTH0_CALLBACK_URL:-https://app.withops.com/callback}
         - VITE_AUTH0_AUDIENCE=${PROD_AUTH0_AUDIENCE:-https://api.withops.com}
     environment:
@@ -33,11 +33,26 @@ services:
     environment:
       - ENVIRONMENT=production
       - FRONTEND_URL=${PROD_FRONTEND_URL:-https://app.withops.com}
-      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME_PROD:-withops-devsecops-platform.private-key.pem}
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME_PROD:-withops-devsecops-platform-production.private-key.pem}
     restart: always
 
-  # All microservices - production restart policy
+  # GitHub Service with production env
   github-service:
+    env_file:
+      - services/github-service/.env.production
+    environment:
+      - ENVIRONMENT=production
+      - FRONTEND_URL=${PROD_FRONTEND_URL:-https://app.withops.com}
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME_PROD:-withops-devsecops-platform-production.private-key.pem}
+    restart: always
+
+  # GitHub Service Worker with production settings
+  github-service-worker:
+    env_file:
+      - services/github-service/.env.production
+    environment:
+      - ENVIRONMENT=production
+      - GITHUB_PRIVATE_KEY_PATH=/app/config/keys/${GITHUB_PRIVATE_KEY_NAME_PROD:-withops-devsecops-platform-production.private-key.pem}
     restart: always
 
   threat-modeling-service:
@@ -78,7 +93,6 @@ services:
 
   grafana:
     restart: always
-
     environment:
       - GF_SERVER_ROOT_URL=${PROD_GRAFANA_URL:-https://monitoring.withops.com}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
@@ -88,14 +102,3 @@ services:
 
   loki:
     restart: always
-
-# Production environment variables to set:
-#
-# PROD_API_BASE_URL=https://api.withops.com
-# PROD_WS_BASE_URL=wss://events.withops.com
-# PROD_FRONTEND_URL=https://app.withops.com
-# PROD_AUTH0_CLIENT_ID=your-prod-auth0-client-id
-# PROD_AUTH0_CALLBACK_URL=https://app.withops.com/callback
-# PROD_AUTH0_AUDIENCE=https://api.withops.com
-# GITHUB_PRIVATE_KEY_NAME_PROD=withops-production.private-key.pem
-# GRAFANA_ADMIN_PASSWORD=secure-password
