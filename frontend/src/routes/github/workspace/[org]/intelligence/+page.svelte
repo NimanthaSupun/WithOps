@@ -472,9 +472,9 @@
 				<div class="nav-menu">
 					<a href="/dashboard" class="nav-link">Overview</a>
 					<a href="/organizations" class="nav-link">Organizations</a>
-				</div>
-
-				<div class="nav-actions">
+				<a href="/github/workspace/{org}" class="nav-link">Workspace</a>
+				<a href="/github/workspace/{org}/repo-treeview" class="nav-link">Treeview</a>
+				<a href="/github/workspace/{org}/intelligence" class="nav-link active">Intelligence</a>
 					<button
 						onclick={() => isDarkMode.set(!$isDarkMode)}
 						class="theme-toggle"
@@ -510,12 +510,16 @@
 
 		<!-- Technical Breadcrumb Bar -->
 		<div class="technical-bar">
-			<div class="breadcrumb-node">WithOps</div>
-			<div class="breadcrumb-sep">/</div>
-			<div class="breadcrumb-node">{org}</div>
-			<div class="breadcrumb-sep">/</div>
-			<div class="breadcrumb-node active">Intelligence</div>
-			<div class="system-status-pill">
+			<a href="/dashboard" class="bc-node">WithOps</a>
+			<span class="bc-sep">/</span>
+			<a href="/organizations" class="bc-node">Organizations</a>
+			<span class="bc-sep">/</span>
+			<a href="/github/workspace/{org}" class="bc-node">{org}</a>
+			<span class="bc-sep">/</span>
+			<a href="/github/workspace/{org}/repo-treeview" class="bc-node">Treeview</a>
+			<span class="bc-sep">/</span>
+			<span class="bc-node active">Intelligence</span>
+			<div class="system-status">
 				<div class="status-pulse"></div>
 				DSOMM: ACTIVE
 			</div>
@@ -1585,24 +1589,31 @@
 		height: 40px;
 	}
 
-	.breadcrumb-node {
+	.bc-node {
 		font-family: var(--font-mono);
 		font-size: 0.65rem;
 		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		text-decoration: none;
+		transition: color 0.15s ease;
 	}
 
-	.breadcrumb-node.active {
+	.bc-node:hover {
 		color: var(--accent);
 	}
 
-	.breadcrumb-sep {
-		color: var(--border-focus);
-		font-size: 0.65rem;
+	.bc-node.active {
+		color: var(--accent);
 	}
 
-	.system-status-pill {
+	.bc-sep {
+		color: var(--text-muted);
+		font-size: 0.65rem;
+		opacity: 0.4;
+	}
+
+	.system-status {
 		margin-left: auto;
 		display: flex;
 		align-items: center;
