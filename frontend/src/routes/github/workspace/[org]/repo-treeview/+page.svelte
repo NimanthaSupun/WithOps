@@ -517,24 +517,21 @@
 				throw new Error('Authentication required. Please login first.');
 			}
 
-			const response = await fetch(
-				`${API_BASE_URL}/api/workspace-intelligence/analyze-folder`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`
-					},
-					body: JSON.stringify({
-						organization_name: orgName,
-						tree_data: repoTreeData,
-						repository_tree_id: currentRepositoryTreeId,
-						folder_id: folderToAnalyze.id,
-						folder_path: folderPath,
-						include_subfolders: includeSubfolders
-					})
-				}
-			);
+			const response = await fetch(`${API_BASE_URL}/api/workspace-intelligence/analyze-folder`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify({
+					organization_name: orgName,
+					tree_data: repoTreeData,
+					repository_tree_id: currentRepositoryTreeId,
+					folder_id: folderToAnalyze.id,
+					folder_path: folderPath,
+					include_subfolders: includeSubfolders
+				})
+			});
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -774,1665 +771,1352 @@
 	<title>Repository Treeview - {orgName} - WithOps</title>
 </svelte:head>
 
-<div class="treeview-container {darkMode ? 'dark' : 'light'}">
-	<!-- Top Navigation Bar -->
-	<nav class="top-navbar">
-		<div class="navbar-content">
-			<!-- Left: Brand & Breadcrumb -->
-			<div class="navbar-left">
-				<div class="brand-section">
-					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
-					<div class="brand-text">
-						<span class="brand-name">WithOps</span>
-						<span class="brand-subtitle">Repository Treeview</span>
-					</div>
-				</div>
-
-				<!-- Breadcrumb -->
-				<nav class="breadcrumb">
-					<a href="/dashboard" class="breadcrumb-link">Dashboard</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/organizations" class="breadcrumb-link">Organizations</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/github/workspace/{orgName}" class="breadcrumb-link">{orgName}</a>
-					<span class="breadcrumb-separator">/</span>
-					<span class="breadcrumb-current">Treeview</span>
-				</nav>
+<div class="page {darkMode ? 'dark' : 'light'}">
+	<!-- Header Navigation -->
+	<nav class="dashboard-header">
+		<div class="header-content">
+			<a href="/dashboard" class="nav-brand">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+				<span class="brand-name">WithOps</span>
+			</a>
+			<div class="nav-menu">
+				<a href="/dashboard" class="nav-link">Overview</a>
+				<a href="/organizations" class="nav-link">Organizations</a>
+				<a href="/github/workspace/{orgName}" class="nav-link">Workspace</a>
+				<a href="/github/workspace/{orgName}/repo-treeview" class="nav-link active">Treeview</a>
+			</div>
+			<div class="nav-actions">
+				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
+					{#if darkMode}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
+						</svg>
+					{:else}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+						</svg>
+					{/if}
+				</button>
 			</div>
 		</div>
 	</nav>
 
-	<!-- Main Layout: Sidebar + Content -->
-	<div class="main-layout">
-		<!-- Left Sidebar -->
-		<aside class="left-sidebar">
-			<!-- Back to Workspace Button -->
-			<button onclick={() => goto(`/github/workspace/${orgName}`)} class="back-button">
-				<svg class="back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 19l-7-7m0 0l7-7m-7 7h18"
-					/>
+	<!-- Technical Breadcrumb Bar -->
+	<div class="technical-bar">
+		<a href="/dashboard" class="bc-node">WithOps</a>
+		<span class="bc-sep">/</span>
+		<a href="/organizations" class="bc-node">Organizations</a>
+		<span class="bc-sep">/</span>
+		<a href="/github/workspace/{orgName}" class="bc-node">{orgName}</a>
+		<span class="bc-sep">/</span>
+		<span class="bc-node active">Treeview</span>
+		<div class="system-status">
+			<div class="status-pulse"></div>
+			TREE: ACTIVE
+		</div>
+	</div>
+
+	<!-- Main Layout -->
+	<div class="page-layout">
+		<!-- Sidebar -->
+		<aside class="sidebar">
+			<button
+				onclick={() => goto(`/github/workspace/${orgName}`)}
+				class="btn btn-outline btn-full btn-sm"
+			>
+				<svg
+					width="14"
+					height="14"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 				</svg>
 				Back to Workspace
 			</button>
 
-			<!-- Statistics Section -->
+			<!-- Stats -->
 			<div class="sidebar-section">
-				<h3 class="section-title">STATISTICS</h3>
-
-				<div class="stat-cards">
-					<!-- Folders -->
-					<div class="stat-card folders">
-						<div class="stat-icon">📁</div>
-						<div class="stat-content">
-							<div class="stat-value">{statistics.totalFolders}</div>
-							<div class="stat-label">Folders</div>
-						</div>
+				<h4 class="section-label">STATISTICS</h4>
+				<div class="stats-grid">
+					<div class="stat-cell">
+						<span class="stat-val">{statistics.totalFolders}</span>
+						<span class="stat-lbl">Folders</span>
 					</div>
-
-					<!-- Repositories -->
-					<div class="stat-card repos">
-						<div class="stat-icon">📦</div>
-						<div class="stat-content">
-							<div class="stat-value">{statistics.totalRepos}</div>
-							<div class="stat-label">Repositories</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{statistics.totalRepos}</span>
+						<span class="stat-lbl">Repos</span>
 					</div>
-
-					<!-- Workflows -->
-					<div class="stat-card workflows">
-						<div class="stat-icon">⚙️</div>
-						<div class="stat-content">
-							<div class="stat-value">{statistics.totalWorkflows}</div>
-							<div class="stat-label">Workflows</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{statistics.totalWorkflows}</span>
+						<span class="stat-lbl">Flows</span>
 					</div>
-
-					<!-- Private -->
-					<div class="stat-card private">
-						<div class="stat-icon">🔒</div>
-						<div class="stat-content">
-							<div class="stat-value">{statistics.privateRepos}</div>
-							<div class="stat-label">Private</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{statistics.privateRepos}</span>
+						<span class="stat-lbl">Private</span>
 					</div>
-
-					<!-- Public -->
-					<div class="stat-card public">
-						<div class="stat-icon">🌐</div>
-						<div class="stat-content">
-							<div class="stat-value">{statistics.publicRepos}</div>
-							<div class="stat-label">Public</div>
-						</div>
+					<div class="stat-cell">
+						<span class="stat-val">{statistics.publicRepos}</span>
+						<span class="stat-lbl">Public</span>
 					</div>
 				</div>
 			</div>
 
-			<!-- Action Buttons -->
-			<div class="sidebar-actions">
-				<button onclick={checkAndNavigateToIntelligence} class="action-button intelligence">
-					<div class="button-content">
-						<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<!-- Actions -->
+			<div class="sidebar-section">
+				<h4 class="section-label">ACTIONS</h4>
+				<div class="sidebar-actions">
+					<button onclick={checkAndNavigateToIntelligence} class="btn btn-primary btn-full btn-sm">
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
 								d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
 							/>
 						</svg>
-						<div class="button-text">
-							<span class="button-label">Workspace Intelligence</span>
-							<span class="button-desc">AI-powered insights</span>
-						</div>
-					</div>
-				</button>
+						Workspace Intelligence
+					</button>
 
-				{#if hasPastAnalysis}
-					<button onclick={navigateToDashboard} class="action-button dashboard">
-						<div class="button-content">
-							<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					{#if hasPastAnalysis}
+						<button onclick={navigateToDashboard} class="btn btn-secondary btn-full btn-sm">
+							<svg
+								width="14"
+								height="14"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+								stroke-width="2"
+							>
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
-									stroke-width="2"
 									d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
 								/>
 							</svg>
-							<div class="button-text">
-								<span class="button-label">Intelligence Dashboard</span>
-								<span class="button-desc">View past analysis</span>
-							</div>
-						</div>
-					</button>
-				{/if}
+							Intelligence Dashboard
+						</button>
+					{/if}
 
-				<button onclick={openNewFolderModal} class="action-button new-folder">
-					<div class="button-content">
-						<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<button onclick={openNewFolderModal} class="btn btn-secondary btn-full btn-sm">
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
 								d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
 							/>
 						</svg>
-						<div class="button-text">
-							<span class="button-label">New Folder</span>
-							<span class="button-desc">Organize repositories</span>
-						</div>
-					</div>
-				</button>
+						New Folder
+					</button>
 
-				<button onclick={openAddRepoModal} class="action-button add-repo">
-					<div class="button-content">
-						<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<button onclick={openAddRepoModal} class="btn btn-secondary btn-full btn-sm">
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
 								d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
 							/>
 						</svg>
-						<div class="button-text">
-							<span class="button-label">Add Repository</span>
-							<span class="button-desc">Import from GitHub</span>
-						</div>
-					</div>
-				</button>
+						Add Repository
+					</button>
+				</div>
 			</div>
 
 			<!-- Save Status -->
 			{#if saveStatus}
-				<div class="save-status {saveSuccess ? 'success' : 'error'}">
+				<div class="save-indicator {saveSuccess ? 'success' : 'error'}">
 					{saveStatus}
 				</div>
 			{/if}
 		</aside>
 
-		<!-- Main Content Area -->
-		<main class="main-content">
-			<!-- SVG Background -->
-			<div class="svg-background"></div>
-
-			<!-- Content Overlay -->
-			<div class="content-overlay">
-				{#if loading}
-					<div class="loading-state">
-						<div class="loading-spinner"></div>
-						<span class="loading-text">Loading repository tree...</span>
+		<!-- Main Content -->
+		<main class="page-main">
+			{#if loading}
+				<div class="center-state">
+					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+					<div class="loader-text">SCANNING REPOSITORIES...</div>
+				</div>
+			{:else if error}
+				<div class="center-state">
+					<p class="error-text">{error}</p>
+					<button onclick={loadRepoTreeData} class="btn btn-primary">Retry</button>
+				</div>
+			{:else if repoTreeData.length === 0}
+				<div class="center-state">
+					<svg
+						class="empty-icon"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+						/>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"
+						/>
+					</svg>
+					<h3>No repositories organized yet</h3>
+					<p class="empty-desc">
+						Start by creating a folder and adding repositories from your organization.
+					</p>
+					<div class="empty-actions">
+						<button onclick={openNewFolderModal} class="btn btn-primary">Create First Folder</button
+						>
+						<button onclick={openAddRepoModal} class="btn btn-secondary">Add Repository</button>
 					</div>
-				{:else if error}
-					<div class="error-state">
-						<svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-						<p class="error-message">{error}</p>
-					</div>
-				{:else if repoTreeData.length === 0}
-					<div class="empty-state">
-						<div class="empty-icon">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-								/>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"
-								/>
-							</svg>
-						</div>
-						<h3 class="empty-title">No repositories organized yet</h3>
-						<p class="empty-description">
-							Start by creating a folder and adding repositories from your organization
-						</p>
-						<div class="empty-actions">
-							<button onclick={openNewFolderModal} class="empty-button primary">
-								Create First Folder
-							</button>
-							<button onclick={openAddRepoModal} class="empty-button secondary">
-								Add Repository
-							</button>
-						</div>
-					</div>
-				{:else}
-					<!-- Folder Cards Grid -->
-					<div class="folders-grid">
-						{#each repoTreeData as node}
-							{#if node.type === 'folder'}
-								<div class="folder-card">
-									<div class="folder-header">
-										<button
-											onclick={(e) => toggleNode(e, node)}
-											class="expand-button"
-											aria-label={expandedNodes.has(node.id) ? 'Collapse folder' : 'Expand folder'}
+				</div>
+			{:else}
+				<!-- Folder Cards Grid -->
+				<div class="tree-grid">
+					{#each repoTreeData as node}
+						{#if node.type === 'folder'}
+							<div class="tree-card">
+								<div class="tree-card-header">
+									<button
+										onclick={(e) => toggleNode(e, node)}
+										class="expand-toggle"
+										aria-label={expandedNodes.has(node.id) ? 'Collapse' : 'Expand'}
+									>
+										<svg
+											class="expand-chevron {expandedNodes.has(node.id) ? 'open' : ''}"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+											stroke-width="2"
 										>
-											{#if expandedNodes.has(node.id)}
-												<svg
-													class="expand-icon"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M19 9l-7 7-7-7"
-													/>
-												</svg>
-											{:else}
-												<svg
-													class="expand-icon"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M9 5l7 7-7 7"
-													/>
-												</svg>
-											{/if}
-										</button>
-
-										<svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-											/>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"
-											/>
+											<path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
 										</svg>
-
-										{#if editingNode?.id === node.id}
-											<input
-												bind:value={editingValue}
-												onblur={saveEdit}
-												onkeydown={(e) => e.key === 'Enter' && saveEdit()}
-												class="folder-name-input"
-											/>
-										{:else}
-											<h3 class="folder-name">{node.name}</h3>
-										{/if}
-
-										<span class="item-count">({countItemsInNode(node)} items)</span>
-
-										<div class="folder-actions">
-											<button
-												onclick={() => openAnalyzeFolderModal(node)}
-												class="action-icon analyze"
-												title="Analyze Folder"
-												aria-label="Analyze folder maturity"
-											>
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-													/>
-												</svg>
-											</button>
-											<button
-												onclick={() => startEditing(node)}
-												class="action-icon"
-												title="Rename"
-												aria-label="Rename folder"
-											>
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-													/>
-												</svg>
-											</button>
-											<button
-												onclick={() => openNewFolderModal(node)}
-												class="action-icon"
-												title="Add subfolder"
-												aria-label="Add subfolder"
-											>
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M12 4v16m8-8H4"
-													/>
-												</svg>
-											</button>
-											<button
-												onclick={() => deleteNode(node)}
-												class="action-icon delete"
-												title="Delete"
-												aria-label="Delete folder"
-											>
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-													/>
-												</svg>
-											</button>
-										</div>
+									</button>
+									<svg
+										class="node-icon folder"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+										/>
+									</svg>
+									{#if editingNode?.id === node.id}
+										<input
+											bind:value={editingValue}
+											onblur={saveEdit}
+											onkeydown={(e) => e.key === 'Enter' && saveEdit()}
+											class="inline-edit"
+										/>
+									{:else}
+										<span class="node-name">{node.name}</span>
+									{/if}
+									<span class="node-meta">{countItemsInNode(node)} items</span>
+									<div class="node-actions">
+										<button
+											onclick={() => openAnalyzeFolderModal(node)}
+											class="icon-btn"
+											title="Analyze"
+											aria-label="Analyze"
+											><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+												/></svg
+											></button
+										>
+										<button
+											onclick={() => startEditing(node)}
+											class="icon-btn"
+											title="Rename"
+											aria-label="Rename"
+											><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+												/></svg
+											></button
+										>
+										<button
+											onclick={() => openNewFolderModal(node)}
+											class="icon-btn"
+											title="Add subfolder"
+											aria-label="Add subfolder"
+											><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M12 4v16m8-8H4"
+												/></svg
+											></button
+										>
+										<button
+											onclick={() => deleteNode(node)}
+											class="icon-btn danger"
+											title="Delete"
+											aria-label="Delete"
+											><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+												/></svg
+											></button
+										>
 									</div>
+								</div>
 
-									{#if expandedNodes.has(node.id) && node.children}
-										<div class="folder-children">
-											{#each node.children as child}
-												{#if child.type === 'folder'}
-													<!-- Nested Folder -->
-													<div class="nested-folder-item">
-														<div class="nested-folder-header">
-															<button
-																onclick={(e) => toggleNode(e, child)}
-																class="expand-button small"
-																aria-label={expandedNodes.has(child.id)
-																	? 'Collapse folder'
-																	: 'Expand folder'}
-															>
-																{#if expandedNodes.has(child.id)}
-																	<svg
-																		class="expand-icon"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M19 9l-7 7-7-7"
-																		/>
-																	</svg>
-																{:else}
-																	<svg
-																		class="expand-icon"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M9 5l7 7-7 7"
-																		/>
-																	</svg>
-																{/if}
-															</button>
-
+								{#if expandedNodes.has(node.id) && node.children}
+									<div class="tree-children">
+										{#each node.children as child}
+											{#if child.type === 'folder'}
+												<!-- Nested Folder -->
+												<div class="nested-folder">
+													<div class="tree-row">
+														<button
+															onclick={(e) => toggleNode(e, child)}
+															class="expand-toggle sm"
+															aria-label={expandedNodes.has(child.id) ? 'Collapse' : 'Expand'}
+														>
 															<svg
-																class="folder-icon small"
+																class="expand-chevron {expandedNodes.has(child.id) ? 'open' : ''}"
 																fill="none"
 																stroke="currentColor"
 																viewBox="0 0 24 24"
-															>
-																<path
+																stroke-width="2"
+																><path
 																	stroke-linecap="round"
 																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-																/>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M8 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"
-																/>
-															</svg>
-
-															{#if editingNode?.id === child.id}
-																<input
-																	bind:value={editingValue}
-																	onblur={saveEdit}
-																	onkeydown={(e) => e.key === 'Enter' && saveEdit()}
-																	class="folder-name-input small"
-																/>
-															{:else}
-																<span class="nested-folder-name">{child.name}</span>
-															{/if}
-
-															<span class="item-count small">({countItemsInNode(child)} items)</span
+																	d="M9 5l7 7-7 7"
+																/></svg
 															>
-
-															<div class="folder-actions">
-																<button
-																	onclick={() => openAnalyzeFolderModal(child)}
-																	class="action-icon analyze small"
-																	title="Analyze Folder"
-																	aria-label="Analyze folder maturity"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-																		/>
-																	</svg>
-																</button>
-																<button
-																	onclick={() => startEditing(child)}
-																	class="action-icon small"
-																	title="Rename"
-																	aria-label="Rename folder"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																		/>
-																	</svg>
-																</button>
-																<button
-																	onclick={() => openNewFolderModal(child)}
-																	class="action-icon small"
-																	title="Add subfolder"
-																	aria-label="Add subfolder"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M12 4v16m8-8H4"
-																		/>
-																	</svg>
-																</button>
-																<button
-																	onclick={() => deleteNode(child)}
-																	class="action-icon delete small"
-																	title="Delete"
-																	aria-label="Delete folder"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																		/>
-																	</svg>
-																</button>
-															</div>
-														</div>
-
-														<!-- Nested folder's children (recursive display) -->
-														{#if expandedNodes.has(child.id) && child.children}
-															<div class="nested-folder-children">
-																{#each child.children as nestedChild}
-																	{#if nestedChild.type === 'folder'}
-																		<!-- Further nested folders can be added here - you may want to create a recursive component for deeper nesting -->
-																		<div class="nested-folder-item deeper">
-																			<div class="nested-folder-header">
-																				<button
-																					onclick={(e) => toggleNode(e, nestedChild)}
-																					class="expand-button small"
-																				>
-																					{#if expandedNodes.has(nestedChild.id)}
-																						<svg
-																							class="expand-icon"
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M19 9l-7 7-7-7"
-																							/>
-																						</svg>
-																					{:else}
-																						<svg
-																							class="expand-icon"
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M9 5l7 7-7 7"
-																							/>
-																						</svg>
-																					{/if}
-																				</button>
-																				<svg
-																					class="folder-icon small"
-																					fill="none"
-																					stroke="currentColor"
-																					viewBox="0 0 24 24"
-																				>
-																					<path
-																						stroke-linecap="round"
-																						stroke-linejoin="round"
-																						stroke-width="2"
-																						d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-																					/>
-																				</svg>
-																				<span class="nested-folder-name">{nestedChild.name}</span>
-																				<span class="item-count small"
-																					>({countItemsInNode(nestedChild)} items)</span
-																				>
-																				<div class="folder-actions">
-																					<button
-																						onclick={() => openAnalyzeFolderModal(nestedChild)}
-																						class="action-icon analyze small"
-																						title="Analyze"
-																						aria-label="Analyze folder maturity"
-																					>
-																						<svg
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-																							/>
-																						</svg>
-																					</button>
-																					<button
-																						onclick={() => startEditing(nestedChild)}
-																						class="action-icon small"
-																						title="Rename"
-																						aria-label="Rename folder"
-																					>
-																						<svg
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																							/>
-																						</svg>
-																					</button>
-																					<button
-																						onclick={() => openNewFolderModal(nestedChild)}
-																						class="action-icon small"
-																						title="Add subfolder"
-																						aria-label="Add subfolder"
-																					>
-																						<svg
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M12 4v16m8-8H4"
-																							/>
-																						</svg>
-																					</button>
-																					<button
-																						onclick={() => deleteNode(nestedChild)}
-																						class="action-icon delete small"
-																						title="Delete"
-																						aria-label="Delete folder"
-																					>
-																						<svg
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																							/>
-																						</svg>
-																					</button>
-																				</div>
-																			</div>
-
-																			{#if expandedNodes.has(nestedChild.id) && nestedChild.children}
-																				<div class="nested-folder-children deeper">
-																					{#each nestedChild.children as deepChild}
-																						{#if deepChild.type === 'repository'}
-																							<div class="repo-item">
-																								<svg
-																									class="repo-icon"
-																									fill="none"
-																									stroke="currentColor"
-																									viewBox="0 0 24 24"
-																								>
-																									<path
-																										stroke-linecap="round"
-																										stroke-linejoin="round"
-																										stroke-width="2"
-																										d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-																									/>
-																								</svg>
-																								<span class="repo-name">{deepChild.name}</span>
-																								{#if deepChild.metadata?.private}
-																									<span class="repo-badge private">Private</span>
-																								{/if}
-																								{#if deepChild.children}
-																									<span class="workflow-count"
-																										>({deepChild.children.length} workflows)</span
-																									>
-																								{/if}
-																								<div class="repo-actions">
-																									{#if deepChild.metadata?.html_url}
-																										<a
-																											href={deepChild.metadata.html_url}
-																											target="_blank"
-																											class="action-icon"
-																											title="Open in GitHub"
-																											aria-label="Open repository in GitHub"
-																										>
-																											<svg
-																												fill="none"
-																												stroke="currentColor"
-																												viewBox="0 0 24 24"
-																											>
-																												<path
-																													stroke-linecap="round"
-																													stroke-linejoin="round"
-																													stroke-width="2"
-																													d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-																												/>
-																											</svg>
-																										</a>
-																									{/if}
-																									<button
-																										onclick={() => deleteNode(deepChild)}
-																										class="action-icon delete"
-																										title="Remove"
-																										aria-label="Remove repository from folder"
-																									>
-																										<svg
-																											fill="none"
-																											stroke="currentColor"
-																											viewBox="0 0 24 24"
-																										>
-																											<path
-																												stroke-linecap="round"
-																												stroke-linejoin="round"
-																												stroke-width="2"
-																												d="M6 18L18 6M6 6l12 12"
-																											/>
-																										</svg>
-																									</button>
-																								</div>
-																							</div>
-																						{/if}
-																					{/each}
-																				</div>
-																			{/if}
-																		</div>
-																	{:else if nestedChild.type === 'repository'}
-																		<div class="repo-item">
-																			<svg
-																				class="repo-icon"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																			>
-																				<path
-																					stroke-linecap="round"
-																					stroke-linejoin="round"
-																					stroke-width="2"
-																					d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-																				/>
-																			</svg>
-																			<span class="repo-name">{nestedChild.name}</span>
-																			{#if nestedChild.metadata?.private}
-																				<span class="repo-badge private">Private</span>
-																			{/if}
-																			{#if nestedChild.children}
-																				<span class="workflow-count"
-																					>({nestedChild.children.length} workflows)</span
-																				>
-																			{/if}
-
-																			<div class="repo-actions">
-																				{#if nestedChild.metadata?.html_url}
-																					<a
-																						href={nestedChild.metadata.html_url}
-																						target="_blank"
-																						class="action-icon"
-																						title="Open in GitHub"
-																						aria-label="Open repository in GitHub"
-																					>
-																						<svg
-																							fill="none"
-																							stroke="currentColor"
-																							viewBox="0 0 24 24"
-																						>
-																							<path
-																								stroke-linecap="round"
-																								stroke-linejoin="round"
-																								stroke-width="2"
-																								d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-																							/>
-																						</svg>
-																					</a>
-																				{/if}
-																				<button
-																					onclick={() => deleteNode(nestedChild)}
-																					class="action-icon delete"
-																					title="Remove"
-																					aria-label="Remove repository from folder"
-																				>
-																					<svg
-																						fill="none"
-																						stroke="currentColor"
-																						viewBox="0 0 24 24"
-																					>
-																						<path
-																							stroke-linecap="round"
-																							stroke-linejoin="round"
-																							stroke-width="2"
-																							d="M6 18L18 6M6 6l12 12"
-																						/>
-																					</svg>
-																				</button>
-																			</div>
-																		</div>
-																	{/if}
-																{/each}
-															</div>
-														{/if}
-													</div>
-												{:else if child.type === 'repository'}
-													<div class="repo-item">
+														</button>
 														<svg
-															class="repo-icon"
+															class="node-icon folder sm"
 															fill="none"
 															stroke="currentColor"
 															viewBox="0 0 24 24"
-														>
-															<path
+															stroke-width="2"
+															><path
 																stroke-linecap="round"
 																stroke-linejoin="round"
-																stroke-width="2"
-																d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+																d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+															/></svg
+														>
+														{#if editingNode?.id === child.id}
+															<input
+																bind:value={editingValue}
+																onblur={saveEdit}
+																onkeydown={(e) => e.key === 'Enter' && saveEdit()}
+																class="inline-edit sm"
 															/>
-														</svg>
-														<span class="repo-name">{child.name}</span>
-														{#if child.metadata?.private}
-															<span class="repo-badge private">Private</span>
+														{:else}
+															<span class="node-name">{child.name}</span>
 														{/if}
-														{#if child.children}
-															<span class="workflow-count">({child.children.length} workflows)</span
-															>
-														{/if}
-
-														<div class="repo-actions">
-															{#if child.metadata?.html_url}
-																<a
-																	href={child.metadata.html_url}
-																	target="_blank"
-																	class="action-icon"
-																	title="Open in GitHub"
-																	aria-label="Open repository in GitHub"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-																		/>
-																	</svg>
-																</a>
-															{/if}
+														<span class="node-meta">{countItemsInNode(child)} items</span>
+														<div class="node-actions">
 															<button
-																onclick={() => deleteNode(child)}
-																class="action-icon delete"
-																title="Remove"
-																aria-label="Remove repository from folder"
-															>
-																<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																	<path
+																onclick={() => openAnalyzeFolderModal(child)}
+																class="icon-btn sm"
+																title="Analyze"
+																aria-label="Analyze"
+																><svg
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																	stroke-width="2"
+																	><path
 																		stroke-linecap="round"
 																		stroke-linejoin="round"
-																		stroke-width="2"
-																		d="M6 18L18 6M6 6l12 12"
-																	/>
-																</svg>
-															</button>
+																		d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+																	/></svg
+																></button
+															>
+															<button
+																onclick={() => startEditing(child)}
+																class="icon-btn sm"
+																title="Rename"
+																aria-label="Rename"
+																><svg
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																	stroke-width="2"
+																	><path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+																	/></svg
+																></button
+															>
+															<button
+																onclick={() => openNewFolderModal(child)}
+																class="icon-btn sm"
+																title="Add subfolder"
+																aria-label="Add subfolder"
+																><svg
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																	stroke-width="2"
+																	><path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		d="M12 4v16m8-8H4"
+																	/></svg
+																></button
+															>
+															<button
+																onclick={() => deleteNode(child)}
+																class="icon-btn danger sm"
+																title="Delete"
+																aria-label="Delete"
+																><svg
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																	stroke-width="2"
+																	><path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																	/></svg
+																></button
+															>
 														</div>
 													</div>
-												{/if}
-											{/each}
-										</div>
-									{/if}
-								</div>
-							{/if}
-						{/each}
-					</div>
-				{/if}
-			</div>
+
+													{#if expandedNodes.has(child.id) && child.children}
+														<div class="tree-children nested">
+															{#each child.children as nestedChild}
+																{#if nestedChild.type === 'folder'}
+																	<div class="nested-folder deeper">
+																		<div class="tree-row">
+																			<button
+																				onclick={(e) => toggleNode(e, nestedChild)}
+																				class="expand-toggle sm"
+																				aria-label="Toggle"
+																			>
+																				<svg
+																					class="expand-chevron {expandedNodes.has(nestedChild.id)
+																						? 'open'
+																						: ''}"
+																					fill="none"
+																					stroke="currentColor"
+																					viewBox="0 0 24 24"
+																					stroke-width="2"
+																					><path
+																						stroke-linecap="round"
+																						stroke-linejoin="round"
+																						d="M9 5l7 7-7 7"
+																					/></svg
+																				>
+																			</button>
+																			<svg
+																				class="node-icon folder sm"
+																				fill="none"
+																				stroke="currentColor"
+																				viewBox="0 0 24 24"
+																				stroke-width="2"
+																				><path
+																					stroke-linecap="round"
+																					stroke-linejoin="round"
+																					d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+																				/></svg
+																			>
+																			<span class="node-name">{nestedChild.name}</span>
+																			<span class="node-meta"
+																				>{countItemsInNode(nestedChild)} items</span
+																			>
+																			<div class="node-actions">
+																				<button
+																					onclick={() => openAnalyzeFolderModal(nestedChild)}
+																					class="icon-btn sm"
+																					title="Analyze"
+																					aria-label="Analyze"
+																					><svg
+																						fill="none"
+																						stroke="currentColor"
+																						viewBox="0 0 24 24"
+																						stroke-width="2"
+																						><path
+																							stroke-linecap="round"
+																							stroke-linejoin="round"
+																							d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+																						/></svg
+																					></button
+																				>
+																				<button
+																					onclick={() => startEditing(nestedChild)}
+																					class="icon-btn sm"
+																					title="Rename"
+																					aria-label="Rename"
+																					><svg
+																						fill="none"
+																						stroke="currentColor"
+																						viewBox="0 0 24 24"
+																						stroke-width="2"
+																						><path
+																							stroke-linecap="round"
+																							stroke-linejoin="round"
+																							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+																						/></svg
+																					></button
+																				>
+																				<button
+																					onclick={() => openNewFolderModal(nestedChild)}
+																					class="icon-btn sm"
+																					title="Subfolder"
+																					aria-label="Subfolder"
+																					><svg
+																						fill="none"
+																						stroke="currentColor"
+																						viewBox="0 0 24 24"
+																						stroke-width="2"
+																						><path
+																							stroke-linecap="round"
+																							stroke-linejoin="round"
+																							d="M12 4v16m8-8H4"
+																						/></svg
+																					></button
+																				>
+																				<button
+																					onclick={() => deleteNode(nestedChild)}
+																					class="icon-btn danger sm"
+																					title="Delete"
+																					aria-label="Delete"
+																					><svg
+																						fill="none"
+																						stroke="currentColor"
+																						viewBox="0 0 24 24"
+																						stroke-width="2"
+																						><path
+																							stroke-linecap="round"
+																							stroke-linejoin="round"
+																							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																						/></svg
+																					></button
+																				>
+																			</div>
+																		</div>
+																		{#if expandedNodes.has(nestedChild.id) && nestedChild.children}
+																			<div class="tree-children nested deeper">
+																				{#each nestedChild.children as deepChild}
+																					{#if deepChild.type === 'repository'}
+																						<div class="repo-row">
+																							<svg
+																								class="node-icon repo"
+																								fill="none"
+																								stroke="currentColor"
+																								viewBox="0 0 24 24"
+																								stroke-width="2"
+																								><path
+																									stroke-linecap="round"
+																									stroke-linejoin="round"
+																									d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+																								/></svg
+																							>
+																							<span class="node-name">{deepChild.name}</span>
+																							{#if deepChild.metadata?.private}<span
+																									class="tag private">Private</span
+																								>{/if}
+																							{#if deepChild.children}<span class="node-meta"
+																									>{deepChild.children.length} workflows</span
+																								>{/if}
+																							<div class="node-actions">
+																								{#if deepChild.metadata?.html_url}<a
+																										href={deepChild.metadata.html_url}
+																										target="_blank"
+																										class="icon-btn sm"
+																										title="Open in GitHub"
+																										aria-label="Open in GitHub"
+																										><svg
+																											fill="none"
+																											stroke="currentColor"
+																											viewBox="0 0 24 24"
+																											stroke-width="2"
+																											><path
+																												stroke-linecap="round"
+																												stroke-linejoin="round"
+																												d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																											/></svg
+																										></a
+																									>{/if}
+																								<button
+																									onclick={() => deleteNode(deepChild)}
+																									class="icon-btn danger sm"
+																									title="Remove"
+																									aria-label="Remove"
+																									><svg
+																										fill="none"
+																										stroke="currentColor"
+																										viewBox="0 0 24 24"
+																										stroke-width="2"
+																										><path
+																											stroke-linecap="round"
+																											stroke-linejoin="round"
+																											d="M6 18L18 6M6 6l12 12"
+																										/></svg
+																									></button
+																								>
+																							</div>
+																						</div>
+																					{/if}
+																				{/each}
+																			</div>
+																		{/if}
+																	</div>
+																{:else if nestedChild.type === 'repository'}
+																	<div class="repo-row">
+																		<svg
+																			class="node-icon repo"
+																			fill="none"
+																			stroke="currentColor"
+																			viewBox="0 0 24 24"
+																			stroke-width="2"
+																			><path
+																				stroke-linecap="round"
+																				stroke-linejoin="round"
+																				d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+																			/></svg
+																		>
+																		<span class="node-name">{nestedChild.name}</span>
+																		{#if nestedChild.metadata?.private}<span class="tag private"
+																				>Private</span
+																			>{/if}
+																		{#if nestedChild.children}<span class="node-meta"
+																				>{nestedChild.children.length} workflows</span
+																			>{/if}
+																		<div class="node-actions">
+																			{#if nestedChild.metadata?.html_url}<a
+																					href={nestedChild.metadata.html_url}
+																					target="_blank"
+																					class="icon-btn sm"
+																					title="Open in GitHub"
+																					aria-label="Open in GitHub"
+																					><svg
+																						fill="none"
+																						stroke="currentColor"
+																						viewBox="0 0 24 24"
+																						stroke-width="2"
+																						><path
+																							stroke-linecap="round"
+																							stroke-linejoin="round"
+																							d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																						/></svg
+																					></a
+																				>{/if}
+																			<button
+																				onclick={() => deleteNode(nestedChild)}
+																				class="icon-btn danger sm"
+																				title="Remove"
+																				aria-label="Remove"
+																				><svg
+																					fill="none"
+																					stroke="currentColor"
+																					viewBox="0 0 24 24"
+																					stroke-width="2"
+																					><path
+																						stroke-linecap="round"
+																						stroke-linejoin="round"
+																						d="M6 18L18 6M6 6l12 12"
+																					/></svg
+																				></button
+																			>
+																		</div>
+																	</div>
+																{/if}
+															{/each}
+														</div>
+													{/if}
+												</div>
+											{:else if child.type === 'repository'}
+												<div class="repo-row">
+													<svg
+														class="node-icon repo"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+														stroke-width="2"
+														><path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+														/></svg
+													>
+													<span class="node-name">{child.name}</span>
+													{#if child.metadata?.private}<span class="tag private">Private</span>{/if}
+													{#if child.children}<span class="node-meta"
+															>{child.children.length} workflows</span
+														>{/if}
+													<div class="node-actions">
+														{#if child.metadata?.html_url}<a
+																href={child.metadata.html_url}
+																target="_blank"
+																class="icon-btn sm"
+																title="Open in GitHub"
+																aria-label="Open in GitHub"
+																><svg
+																	fill="none"
+																	stroke="currentColor"
+																	viewBox="0 0 24 24"
+																	stroke-width="2"
+																	><path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																	/></svg
+																></a
+															>{/if}
+														<button
+															onclick={() => deleteNode(child)}
+															class="icon-btn danger sm"
+															title="Remove"
+															aria-label="Remove"
+															><svg
+																fill="none"
+																stroke="currentColor"
+																viewBox="0 0 24 24"
+																stroke-width="2"
+																><path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	d="M6 18L18 6M6 6l12 12"
+																/></svg
+															></button
+														>
+													</div>
+												</div>
+											{/if}
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
+					{/each}
+				</div>
+			{/if}
 		</main>
 	</div>
 </div>
 
-<!-- New Folder Modal -->
+<!-- ═══════════════════════════════════════════
+     MODAL: Create New Folder
+     ═══════════════════════════════════════════ -->
 {#if showNewFolderModal}
 	<div
-		class="modal-backdrop"
+		class="dlg-overlay"
 		onclick={closeNewFolderModal}
 		onkeydown={(e) => e.key === 'Escape' && closeNewFolderModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="modal-container"
+			class="dlg-box"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			tabindex="-1"
 		>
-			<div class="modal-header">
-				<h3 class="modal-title">Create New Folder</h3>
-				<button onclick={closeNewFolderModal} class="modal-close" aria-label="Close modal">
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
+			<!-- Icon + Title -->
+			<div class="dlg-top">
+				<button class="dlg-close" onclick={closeNewFolderModal} aria-label="Close">
+					<svg
+						width="18"
+						height="18"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
+					>
+				</button>
+				<div class="dlg-icon-wrap folder-color">
+					<svg
+						width="22"
+						height="22"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						><path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
+							d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+						/></svg
+					>
+				</div>
+				<h2 class="dlg-title">Create New Folder</h2>
+				<p class="dlg-desc">Organize your repositories into logical groups</p>
 			</div>
 
-			<div class="modal-body">
-				<div class="form-group">
-					<label for="folder-name" class="form-label">Folder Name</label>
-					<input
-						id="folder-name"
-						bind:value={newFolderName}
-						placeholder="Enter folder name..."
-						class="form-input"
-						onkeypress={(e) => e.key === 'Enter' && createNewFolder()}
-					/>
-				</div>
-
+			<!-- Body -->
+			<div class="dlg-body">
+				<label class="dlg-label" for="new-folder-name">Folder Name</label>
+				<input
+					id="new-folder-name"
+					class="dlg-input"
+					type="text"
+					bind:value={newFolderName}
+					placeholder="e.g. Frontend Services"
+					onkeypress={(e) => e.key === 'Enter' && createNewFolder()}
+				/>
 				{#if newFolderParent}
-					<div class="info-box">
-						<svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
+					<div class="dlg-hint">
+						<svg
+							width="14"
+							height="14"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+							><path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								stroke-width="2"
-								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-						<p class="info-text">
-							Creating subfolder in: <span class="highlight">{newFolderParent.name}</span>
-						</p>
+								d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+							/></svg
+						>
+						Creating inside <strong>{newFolderParent.name}</strong>
 					</div>
 				{/if}
 			</div>
 
-			<div class="modal-footer">
-				<button onclick={closeNewFolderModal} class="btn-secondary"> Cancel </button>
-				<button onclick={createNewFolder} disabled={!newFolderName.trim()} class="btn-primary">
-					<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 4v16m8-8H4"
-						/>
-					</svg>
-					Create Folder
-				</button>
+			<!-- Footer -->
+			<div class="dlg-foot">
+				<button class="dlg-btn ghost" onclick={closeNewFolderModal}>Cancel</button>
+				<button class="dlg-btn primary" onclick={createNewFolder} disabled={!newFolderName.trim()}
+					>Create Folder</button
+				>
 			</div>
 		</div>
 	</div>
 {/if}
 
-<!-- Add Repository Modal -->
+<!-- ═══════════════════════════════════════════
+     MODAL: Add Repository to Tree
+     ═══════════════════════════════════════════ -->
 {#if showAddRepoModal}
 	<div
-		class="modal-backdrop"
+		class="dlg-overlay"
 		onclick={closeAddRepoModal}
 		onkeydown={(e) => e.key === 'Escape' && closeAddRepoModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="modal-container large"
+			class="dlg-box dlg-wide"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			tabindex="-1"
 		>
-			<div class="modal-header">
-				<div>
-					<h3 class="modal-title">Add Repository to Tree</h3>
-					<p class="modal-subtitle">Select a repository and a folder to organize it</p>
-				</div>
-				<button onclick={closeAddRepoModal} class="modal-close" aria-label="Close modal">
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
+			<!-- Icon + Title -->
+			<div class="dlg-top">
+				<button class="dlg-close" onclick={closeAddRepoModal} aria-label="Close">
+					<svg
+						width="18"
+						height="18"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
+					>
+				</button>
+				<div class="dlg-icon-wrap accent-color">
+					<svg
+						width="22"
+						height="22"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						><path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
+							d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+						/></svg
+					>
+				</div>
+				<h2 class="dlg-title">Add Repository to Tree</h2>
+				<p class="dlg-desc">Select a repository and choose the target folder</p>
 			</div>
 
-			<div class="modal-body">
-				<div class="selection-grid">
-					<!-- Available Repositories -->
-					<div class="selection-panel">
-						<h4 class="panel-title">
-							<span class="panel-icon">📦</span>
-							Available Repositories
-						</h4>
-
-						{#if loadingRepos}
-							<div class="panel-loading">
-								<div class="loading-spinner small"></div>
-								<span>Loading repositories...</span>
-							</div>
-						{:else if availableRepos.length === 0}
-							<p class="panel-empty">No repositories available</p>
-						{:else}
-							<div class="selection-list">
+			<!-- Body - Two Column -->
+			<div class="dlg-body">
+				<div class="dlg-columns">
+					<!-- Left: Repositories -->
+					<div class="dlg-col">
+						<div class="dlg-col-head">
+							<span class="dlg-col-title">Repositories</span>
+							<span class="dlg-col-count">{availableRepos.length}</span>
+						</div>
+						<div class="dlg-col-list">
+							{#if loadingRepos}
+								<div class="dlg-empty-state">
+									<div class="spinner"></div>
+									<span>Loading repositories...</span>
+								</div>
+							{:else if availableRepos.length === 0}
+								<div class="dlg-empty-state">No repositories available</div>
+							{:else}
 								{#each availableRepos as repo}
 									<button
+										class="dlg-list-item {selectedRepoToAdd?.name === repo.name ? 'active' : ''}"
 										onclick={() => (selectedRepoToAdd = repo)}
-										class="selection-item {selectedRepoToAdd?.name === repo.name ? 'selected' : ''}"
 									>
-										<div class="item-content">
-											<div class="item-header">
-												<span class="item-name">{repo.name}</span>
-												{#if selectedRepoToAdd?.name === repo.name}
-													<svg
-														class="check-icon"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															stroke-width="2"
-															d="M5 13l4 4L19 7"
-														/>
-													</svg>
-												{/if}
-											</div>
-											{#if repo.description}
-												<p class="item-description">{repo.description}</p>
+										<div class="dlg-item-top-row">
+											<span class="dlg-item-name">{repo.name}</span>
+											{#if selectedRepoToAdd?.name === repo.name}
+												<svg
+													class="dlg-check"
+													width="16"
+													height="16"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+													stroke-width="2.5"
+													><path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M5 13l4 4L19 7"
+													/></svg
+												>
 											{/if}
-											<div class="item-meta">
-												{#if repo.language}
-													<span class="meta-item">
-														<span class="language-dot"></span>
-														{repo.language}
-													</span>
-												{/if}
-												<span class="meta-item">{repo.workflow_count || 0} workflows</span>
-												{#if repo.private}
-													<span class="meta-badge">Private</span>
-												{/if}
-											</div>
+										</div>
+										{#if repo.description}
+											<p class="dlg-item-desc">{repo.description}</p>
+										{/if}
+										<div class="dlg-item-tags">
+											{#if repo.language}
+												<span class="dlg-tag"
+													><span class="dlg-lang-dot"></span>{repo.language}</span
+												>
+											{/if}
+											<span class="dlg-tag">{repo.workflow_count || 0} workflows</span>
+											{#if repo.private}<span class="dlg-tag dim">Private</span>{/if}
 										</div>
 									</button>
 								{/each}
-							</div>
-						{/if}
+							{/if}
+						</div>
 					</div>
 
-					<!-- Folder Selection -->
-					<div class="selection-panel">
-						<h4 class="panel-title">
-							<span class="panel-icon">📁</span>
-							Select Folder
-						</h4>
-
-						{#if repoTreeData.length === 0}
-							<div class="panel-empty-state">
-								<p>No folders created yet</p>
-								<button
-									onclick={() => {
-										closeAddRepoModal();
-										openNewFolderModal();
-									}}
-									class="link-button"
-								>
-									Create your first folder
-								</button>
-							</div>
-						{:else}
-							<div class="selection-list">
+					<!-- Right: Folders -->
+					<div class="dlg-col">
+						<div class="dlg-col-head">
+							<span class="dlg-col-title">Target Folder</span>
+						</div>
+						<div class="dlg-col-list">
+							{#if repoTreeData.length === 0}
+								<div class="dlg-empty-state">
+									<p>No folders created yet</p>
+									<button
+										class="dlg-link"
+										onclick={() => {
+											closeAddRepoModal();
+											openNewFolderModal();
+										}}>Create your first folder</button
+									>
+								</div>
+							{:else}
 								{#each getFlattenedFolders(repoTreeData) as folder}
 									<button
+										class="dlg-list-item {selectedNode?.id === folder.id ? 'active' : ''}"
 										onclick={() => (selectedNode = folder)}
-										class="selection-item {selectedNode?.id === folder.id ? 'selected' : ''}"
-										style="padding-left: {0.75 + folder.depth * 1}rem"
+										style="padding-left: {12 + folder.depth * 16}px"
 									>
 										<svg
-											class="folder-icon-small"
+											class="dlg-folder-icon"
+											width="16"
+											height="16"
 											fill="none"
 											stroke="currentColor"
 											viewBox="0 0 24 24"
-										>
-											<path
+											stroke-width="2"
+											style="flex-shrink:0"
+											><path
 												stroke-linecap="round"
 												stroke-linejoin="round"
-												stroke-width="2"
-												d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-											/>
-										</svg>
-										<span class="item-name">{folder.name}</span>
+												d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+											/></svg
+										>
+										<span class="dlg-item-name">{folder.name}</span>
 										{#if selectedNode?.id === folder.id}
-											<svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
+											<svg
+												class="dlg-check"
+												width="16"
+												height="16"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+												stroke-width="2.5"
+												><path
 													stroke-linecap="round"
 													stroke-linejoin="round"
-													stroke-width="2"
 													d="M5 13l4 4L19 7"
-												/>
-											</svg>
+												/></svg
+											>
 										{/if}
 									</button>
 								{/each}
-							</div>
-						{/if}
-
+							{/if}
+						</div>
 						{#if selectedRepoToAdd && selectedNode}
-							<div class="selection-summary">
-								<svg class="summary-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
-								<p class="summary-text">
-									<span class="highlight">{selectedRepoToAdd.name}</span> will be added to
-									<span class="highlight">{selectedNode.name}</span>
-								</p>
+							<div class="dlg-confirm-bar">
+								<svg
+									width="14"
+									height="14"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+									stroke-width="2"
+									><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg
+								>
+								<span
+									><strong>{selectedRepoToAdd.name}</strong> &rarr;
+									<strong>{selectedNode.name}</strong></span
+								>
 							</div>
 						{/if}
 					</div>
 				</div>
 			</div>
 
-			<div class="modal-footer">
-				<button onclick={closeAddRepoModal} class="btn-secondary"> Cancel </button>
+			<!-- Footer -->
+			<div class="dlg-foot">
+				<button class="dlg-btn ghost" onclick={closeAddRepoModal}>Cancel</button>
 				<button
+					class="dlg-btn primary"
 					onclick={addRepositoryToTree}
 					disabled={!selectedRepoToAdd || !selectedNode || addingRepo}
-					class="btn-primary"
 				>
-					{#if addingRepo}
-						<div class="loading-spinner small"></div>
-						<span>Adding...</span>
-					{:else}
-						<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-							/>
-						</svg>
-						<span>Add Repository</span>
-					{/if}
+					{#if addingRepo}<span class="spinner sm"></span> Adding...{:else}Add Repository{/if}
 				</button>
 			</div>
 		</div>
 	</div>
 {/if}
 
-<!-- Analyze Folder Modal -->
+<!-- ═══════════════════════════════════════════
+     MODAL: Analyze Folder
+     ═══════════════════════════════════════════ -->
 {#if showAnalyzeFolderModal}
-	<div class="modal-overlay">
-		<div class="modal">
-			<div class="modal-header">
-				<h3>Analyze Folder</h3>
-				<button class="close-btn" onclick={closeAnalyzeFolderModal} aria-label="Close modal">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
+	<div
+		class="dlg-overlay"
+		onclick={closeAnalyzeFolderModal}
+		onkeydown={(e) => e.key === 'Escape' && closeAnalyzeFolderModal()}
+		role="button"
+		tabindex="0"
+	>
+		<div
+			class="dlg-box"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="dialog"
+			tabindex="-1"
+		>
+			<!-- Icon + Title -->
+			<div class="dlg-top">
+				<button class="dlg-close" onclick={closeAnalyzeFolderModal} aria-label="Close">
+					<svg
+						width="18"
+						height="18"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
+					>
+				</button>
+				<div class="dlg-icon-wrap analysis-color">
+					<svg
+						width="22"
+						height="22"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						><path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
+							d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+						/></svg
+					>
+				</div>
+				<h2 class="dlg-title">Analyze Folder</h2>
+				<p class="dlg-desc">Run OWASP DSOMM security analysis on this folder</p>
 			</div>
 
-			<div class="modal-body">
+			<!-- Body -->
+			<div class="dlg-body">
 				{#if folderToAnalyze}
-					<div class="folder-info">
-						<div class="info-row">
-							<svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-								/>
-							</svg>
-							<div class="info-text">
-								<span class="label">Folder Name:</span>
-								<span class="value">{folderToAnalyze.name}</span>
-							</div>
+					<!-- Folder Info Card -->
+					<div class="dlg-info-card">
+						<div class="dlg-info-row">
+							<span class="dlg-info-key">Folder</span>
+							<span class="dlg-info-val">{folderToAnalyze.name}</span>
 						</div>
-
-						<div class="info-row">
-							<svg class="path-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-								/>
-							</svg>
-							<div class="info-text">
-								<span class="label">Path:</span>
-								<span class="value">{getFolderPath(folderToAnalyze)}</span>
-							</div>
+						<div class="dlg-info-row">
+							<span class="dlg-info-key">Path</span>
+							<span class="dlg-info-val">{getFolderPath(folderToAnalyze)}</span>
 						</div>
-
-						<div class="info-row">
-							<svg class="repo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
-								/>
-							</svg>
-							<div class="info-text">
-								<span class="label">Repositories:</span>
-								<span class="value badge">{countRepositoriesInFolder(folderToAnalyze)}</span>
-							</div>
+						<div class="dlg-info-row">
+							<span class="dlg-info-key">Repositories</span>
+							<span class="dlg-info-val highlight"
+								>{countRepositoriesInFolder(folderToAnalyze)}</span
+							>
 						</div>
 					</div>
 
-					<div class="options">
-						<label class="checkbox-label">
-							<input type="checkbox" bind:checked={includeSubfolders} disabled={analyzingFolder} />
-							<span>Include all subfolders and their repositories</span>
-						</label>
-					</div>
+					<!-- Subfolder Toggle -->
+					<label class="dlg-toggle-row">
+						<input type="checkbox" bind:checked={includeSubfolders} disabled={analyzingFolder} />
+						<div class="dlg-toggle-text">
+							<span class="dlg-toggle-label">Include subfolders</span>
+							<span class="dlg-toggle-hint"
+								>Analyze all nested subfolders and their repositories</span
+							>
+						</div>
+					</label>
 
 					{#if analyzingFolder}
-						<div class="progress-section">
-							<div class="loading-spinner"></div>
-							<p class="progress-text">{analysisProgress}</p>
+						<div class="dlg-progress">
+							<div class="spinner"></div>
+							<p>{analysisProgress}</p>
 						</div>
-					{/if}
-
-					{#if !analyzingFolder}
-						<div class="info-notice">
-							<svg class="notice-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
+					{:else}
+						<div class="dlg-hint">
+							<svg
+								width="14"
+								height="14"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+								stroke-width="2"
+								><path
 									stroke-linecap="round"
 									stroke-linejoin="round"
-									stroke-width="2"
-									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							<span
-								>This will analyze {includeSubfolders
-									? 'this folder and all subfolders'
-									: 'only repositories directly in this folder'} using the OWASP DSOMM framework.</span
+									d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+								/></svg
 							>
+							This will analyze {includeSubfolders
+								? 'this folder and all subfolders'
+								: 'only direct repositories'} using the OWASP DSOMM framework.
 						</div>
 					{/if}
 				{/if}
 			</div>
 
-			<div class="modal-footer">
-				<button onclick={closeAnalyzeFolderModal} disabled={analyzingFolder} class="btn-secondary">
-					Cancel
-				</button>
+			<!-- Footer -->
+			<div class="dlg-foot">
+				<button class="dlg-btn ghost" onclick={closeAnalyzeFolderModal} disabled={analyzingFolder}
+					>Cancel</button
+				>
 				<button
+					class="dlg-btn primary"
 					onclick={() => triggerFolderAnalysis()}
 					disabled={analyzingFolder}
-					class="btn-primary"
 				>
-					{#if analyzingFolder}
-						<div class="loading-spinner small"></div>
-						<span>Analyzing...</span>
-					{:else}
-						<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-							/>
-						</svg>
-						<span>Start Analysis</span>
-					{/if}
+					{#if analyzingFolder}<span class="spinner sm"></span> Analyzing...{:else}Start Analysis{/if}
 				</button>
 			</div>
 		</div>
 	</div>
 {/if}
 
-<!-- Analysis Options Modal -->
+<!-- ═══════════════════════════════════════════
+     MODAL: Choose Analysis Approach
+     ═══════════════════════════════════════════ -->
 {#if showAnalysisOptionsModal}
 	<div
-		class="modal-backdrop"
+		class="dlg-overlay"
 		onclick={closeAnalysisOptionsModal}
 		onkeydown={(e) => e.key === 'Escape' && closeAnalysisOptionsModal()}
 		role="button"
 		tabindex="0"
 	>
 		<div
-			class="modal-container analysis-options-modal"
+			class="dlg-box dlg-wide"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			tabindex="-1"
 		>
-			<div class="modal-header">
-				<h3 class="modal-title">Choose Analysis Approach</h3>
-				<button onclick={closeAnalysisOptionsModal} class="modal-close" aria-label="Close modal">
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
-			</div>
-
-			<div class="modal-body analysis-options-body">
-				<!-- Option 1: Unified Workspace Analysis -->
-				<div
-					class="analysis-option {analysisMode === 'unified' ? 'selected' : ''}"
-					onclick={() => (analysisMode = 'unified')}
-					onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'unified')}
-					role="button"
-					tabindex="0"
-				>
-					<div class="option-header">
-						<input type="radio" name="analysis-mode" checked={analysisMode === 'unified'} />
-						<div class="option-title-wrapper">
-							<span class="option-name">Unified Workspace Analysis</span>
-							<span class="recommended-badge">Recommended</span>
-						</div>
-					</div>
-
-					<p class="option-description">
-						Analyze all folders and repositories in one comprehensive assessment. Perfect for
-						executive dashboards and organization-wide visibility.
-					</p>
-
-					<ul class="option-benefits">
-						<li>✓ Organization-wide maturity score</li>
-						<li>✓ Complete security posture assessment</li>
-						<li>✓ Cross-team comparison built-in</li>
-						<li>✓ Executive-ready dashboards</li>
-					</ul>
-
-					<div class="option-stats">
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2"
-								/>
-							</svg>
-							{statistics.totalRepos} repos
-						</span>
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-								/>
-							</svg>
-							{statistics.totalFolders} folders
-						</span>
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							~{Math.ceil(statistics.totalRepos / 20)} min
-						</span>
-					</div>
-				</div>
-
-				<!-- Option 2: Folder-Specific Analysis -->
-				<div
-					class="analysis-option {analysisMode === 'folder' ? 'selected' : ''}"
-					onclick={() => (analysisMode = 'folder')}
-					onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'folder')}
-					role="button"
-					tabindex="0"
-				>
-					<div class="option-header">
-						<input type="radio" name="analysis-mode" checked={analysisMode === 'folder'} />
-						<div class="option-title-wrapper">
-							<span class="option-name">Folder-Specific Analysis</span>
-						</div>
-					</div>
-
-					<p class="option-description">
-						Analyze a specific team or product folder for focused assessment. Ideal for team
-						retrospectives and targeted improvements.
-					</p>
-
-					<ul class="option-benefits">
-						<li>✓ Focused team maturity assessment</li>
-						<li>✓ Faster analysis for subset</li>
-						<li>✓ Track team-level improvements</li>
-						<li>✓ Drill down into specific areas</li>
-					</ul>
-
-					{#if analysisMode === 'folder'}
-						<div class="folder-selector">
-							<label for="folder-analysis-select">Select folder to analyze:</label>
-							<select
-								id="folder-analysis-select"
-								bind:value={folderForFolderAnalysis}
-								class="folder-dropdown"
-							>
-								<option value={null}>Choose a folder...</option>
-								{#each repoTreeData as folder}
-									{#if folder.type === 'folder'}
-										<option value={folder}
-											>{folder.name} ({countRepositoriesInFolder(folder)} repos)</option
-										>
-									{/if}
-								{/each}
-							</select>
-
-							<label class="checkbox-label">
-								<input type="checkbox" bind:checked={includeSubfoldersInModal} />
-								Include nested subfolders
-							</label>
-						</div>
-					{/if}
-				</div>
-			</div>
-
-			<div class="modal-footer">
-				<button onclick={closeAnalysisOptionsModal} class="btn-secondary"> Cancel </button>
-				{#if analysisMode === 'unified'}
-					<button onclick={startUnifiedAnalysis} class="btn-primary">
-						<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-							/>
-						</svg>
-						<span>Start Unified Analysis</span>
-					</button>
-				{:else}
-					<button
-						onclick={startFolderAnalysisFromModal}
-						disabled={!folderForFolderAnalysis}
-						class="btn-primary"
+			<!-- Icon + Title -->
+			<div class="dlg-top">
+				<button class="dlg-close" onclick={closeAnalysisOptionsModal} aria-label="Close">
+					<svg
+						width="18"
+						height="18"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg
 					>
-						<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-							/>
-						</svg>
-						<span>Start Folder Analysis</span>
-					</button>
-				{/if}
-			</div>
-		</div>
-	</div>
-{/if}
-
-<!-- Analysis Options Modal -->
-{#if showAnalysisOptionsModal}
-	<div
-		class="modal-backdrop"
-		onclick={closeAnalysisOptionsModal}
-		onkeydown={(e) => e.key === 'Escape' && closeAnalysisOptionsModal()}
-		role="button"
-		tabindex="0"
-	>
-		<div
-			class="modal-container analysis-options-modal"
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-			role="dialog"
-			tabindex="-1"
-		>
-			<div class="modal-header">
-				<h3 class="modal-title">Choose Analysis Approach</h3>
-				<button onclick={closeAnalysisOptionsModal} class="modal-close" aria-label="Close modal">
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
+				</button>
+				<div class="dlg-icon-wrap accent-color">
+					<svg
+						width="22"
+						height="22"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						><path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
+							d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+						/></svg
+					>
+				</div>
+				<h2 class="dlg-title">Choose Analysis Approach</h2>
+				<p class="dlg-desc">Select how you want to analyze your workspace</p>
 			</div>
 
-			<div class="modal-body analysis-options-body">
-				<!-- Option 1: Unified Workspace Analysis -->
-				<div
-					class="analysis-option {analysisMode === 'unified' ? 'selected' : ''}"
-					onclick={() => (analysisMode = 'unified')}
-					onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'unified')}
-					role="button"
-					tabindex="0"
-				>
-					<div class="option-header">
-						<input
-							type="radio"
-							name="analysis-mode"
-							checked={analysisMode === 'unified'}
-							onchange={() => (analysisMode = 'unified')}
-						/>
-						<div class="option-title-wrapper">
-							<span class="option-name">Unified Workspace Analysis</span>
-							<span class="recommended-badge">Recommended</span>
+			<!-- Body -->
+			<div class="dlg-body">
+				<div class="dlg-option-grid">
+					<!-- Unified Analysis Card -->
+					<div
+						class="dlg-option-card {analysisMode === 'unified' ? 'active' : ''}"
+						onclick={() => (analysisMode = 'unified')}
+						onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'unified')}
+						role="button"
+						tabindex="0"
+					>
+						<div class="dlg-option-top">
+							<input
+								type="radio"
+								name="analysis-mode-dlg"
+								checked={analysisMode === 'unified'}
+								onchange={() => (analysisMode = 'unified')}
+							/>
+							<span class="dlg-option-name">Unified Workspace Analysis</span>
+							<span class="dlg-badge green">Recommended</span>
 						</div>
-					</div>
-
-					<p class="option-description">
-						Analyze all folders and repositories in one comprehensive assessment. Perfect for
-						executive dashboards and organization-wide visibility.
-					</p>
-
-					<ul class="option-benefits">
-						<li>Organization-wide maturity score</li>
-						<li>Complete security posture assessment</li>
-						<li>Cross-team comparison built-in</li>
-						<li>Executive-ready dashboards</li>
-					</ul>
-
-					<div class="option-stats">
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-								/>
-							</svg>
-							{statistics.totalRepos} repos
-						</span>
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-								/>
-							</svg>
-							{statistics.totalFolders} folders
-						</span>
-						<span class="stat">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							~{Math.ceil(statistics.totalRepos / 20)} min
-						</span>
-					</div>
-
-					{#if analysisMode === 'unified'}
-						<button
-							class="btn-primary"
-							onclick={startUnifiedAnalysis}
-							style="margin-top: 1rem; width: 100%;"
-						>
-							<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-								/>
-							</svg>
-							<span>Start Unified Analysis</span>
-						</button>
-					{/if}
-				</div>
-
-				<!-- Option 2: Folder-Specific Analysis -->
-				<div
-					class="analysis-option {analysisMode === 'folder' ? 'selected' : ''}"
-					onclick={() => (analysisMode = 'folder')}
-					onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'folder')}
-					role="button"
-					tabindex="0"
-				>
-					<div class="option-header">
-						<input
-							type="radio"
-							name="analysis-mode"
-							checked={analysisMode === 'folder'}
-							onchange={() => (analysisMode = 'folder')}
-						/>
-						<div class="option-title-wrapper">
-							<span class="option-name">Folder-Specific Analysis</span>
+						<p class="dlg-option-desc">
+							Analyze all folders and repositories in one comprehensive assessment. Perfect for
+							executive dashboards and organization-wide visibility.
+						</p>
+						<ul class="dlg-feature-list">
+							<li>Organization-wide maturity score</li>
+							<li>Complete security posture assessment</li>
+							<li>Cross-team comparison built-in</li>
+							<li>Executive-ready dashboards</li>
+						</ul>
+						<div class="dlg-option-stats">
+							<span>{statistics.totalRepos} repos</span>
+							<span>{statistics.totalFolders} folders</span>
+							<span>~{Math.ceil(statistics.totalRepos / 20)} min</span>
 						</div>
-					</div>
-
-					<p class="option-description">
-						Analyze a specific team or product folder for focused assessment. Ideal for team
-						retrospectives and targeted improvements.
-					</p>
-
-					<ul class="option-benefits">
-						<li>Focused team maturity assessment</li>
-						<li>Faster analysis for subset</li>
-						<li>Track team-level improvements</li>
-						<li>Drill down into specific areas</li>
-					</ul>
-
-					{#if analysisMode === 'folder'}
-						<div class="folder-selector">
-							<label for="folder-analysis-select-2">Select folder to analyze:</label>
-							<select
-								id="folder-analysis-select-2"
-								bind:value={folderForFolderAnalysis}
-								class="folder-dropdown"
+						{#if analysisMode === 'unified'}
+							<button class="dlg-btn primary full" onclick={startUnifiedAnalysis}
+								>Start Unified Analysis</button
 							>
-								<option value={null}>Choose a folder...</option>
-								{#each getFlattenedFolders(repoTreeData) as folder}
-									<option value={folder}>
-										{'  '.repeat(folder.depth)}📁 {folder.name} ({countRepositoriesInFolder(folder)}
-										repos)
-									</option>
-								{/each}
-							</select>
+						{/if}
+					</div>
 
-							<label class="checkbox-label">
-								<input type="checkbox" bind:checked={includeSubfoldersInModal} />
-								Include nested subfolders
-							</label>
+					<!-- Folder Analysis Card -->
+					<div
+						class="dlg-option-card {analysisMode === 'folder' ? 'active' : ''}"
+						onclick={() => (analysisMode = 'folder')}
+						onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (analysisMode = 'folder')}
+						role="button"
+						tabindex="0"
+					>
+						<div class="dlg-option-top">
+							<input
+								type="radio"
+								name="analysis-mode-dlg"
+								checked={analysisMode === 'folder'}
+								onchange={() => (analysisMode = 'folder')}
+							/>
+							<span class="dlg-option-name">Folder-Specific Analysis</span>
 						</div>
-
-						<button
-							class="btn-primary"
-							disabled={!folderForFolderAnalysis}
-							onclick={startFolderAnalysisFromModal}
-							style="margin-top: 1rem; width: 100%;"
-						>
-							<svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-								/>
-							</svg>
-							<span>Start Folder Analysis</span>
-						</button>
-					{/if}
+						<p class="dlg-option-desc">
+							Analyze a specific team or product folder for focused assessment. Ideal for team
+							retrospectives and targeted improvements.
+						</p>
+						<ul class="dlg-feature-list">
+							<li>Focused team maturity assessment</li>
+							<li>Faster analysis for subset</li>
+							<li>Track team-level improvements</li>
+							<li>Drill down into specific areas</li>
+						</ul>
+						{#if analysisMode === 'folder'}
+							<div class="dlg-folder-picker">
+								<label class="dlg-label" for="folder-picker-select">Select folder to analyze</label>
+								<select
+									id="folder-picker-select"
+									class="dlg-select"
+									bind:value={folderForFolderAnalysis}
+								>
+									<option value={null}>Choose a folder...</option>
+									{#each getFlattenedFolders(repoTreeData) as folder}
+										<option value={folder}
+											>{'— '.repeat(folder.depth)}{folder.name} ({countRepositoriesInFolder(folder)}
+											repos)</option
+										>
+									{/each}
+								</select>
+								<label class="dlg-toggle-row compact">
+									<input type="checkbox" bind:checked={includeSubfoldersInModal} />
+									<span class="dlg-toggle-label">Include nested subfolders</span>
+								</label>
+							</div>
+							<button
+								class="dlg-btn primary full"
+								disabled={!folderForFolderAnalysis}
+								onclick={startFolderAnalysisFromModal}>Start Folder Analysis</button
+							>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -2441,982 +2125,1645 @@
 
 <style>
 	/* ============================================
-	   PROFESSIONAL UI/UX DESIGN SYSTEM
-	   Based on Landing Page & Dashboard Pattern
+	   MATTE ENGINEERING DESIGN SYSTEM
 	   ============================================ */
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--nav-height: 64px;
+	}
 
-	/* Global Variables - Professional Design System */
-	.treeview-container {
-		--bg-primary: #000000;
-		--bg-secondary: #0a0a0a;
-		--text-primary: #ffffff;
-		--text-secondary: #b8b8b8;
-		--text-muted: #666666;
-		--border-color: rgba(0, 217, 255, 0.3);
-		--card-bg: rgba(0, 0, 0, 0.4);
-		--card-bg-hover: rgba(0, 0, 0, 0.6);
-		--primary-color: #00d9ff;
-		--accent-color: #00d9ff;
-		--success-color: #10b981;
-		--error-color: #ef4444;
-		--warning-color: #ffc107;
+	.page.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--error: #ef4444;
+		--card-shadow: none;
+	}
 
+	.page.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+		--card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+	}
+
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	.page {
 		min-height: 100vh;
-		background: var(--bg-primary);
+		background: var(--bg-app);
 		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.3s ease;
 		position: relative;
-		font-family:
-			'Inter',
-			-apple-system,
-			BlinkMacSystemFont,
-			'Segoe UI',
-			Roboto,
-			sans-serif;
+		overflow-x: hidden;
 	}
 
-	.treeview-container.light {
-		--bg-primary: #ffffff;
-		--bg-secondary: #f8fafc;
-		--text-primary: #1a1a1a;
-		--text-secondary: #666666;
-		--text-muted: #888888;
-		--border-color: rgba(0, 217, 255, 0.4);
-		--card-bg: rgba(255, 255, 255, 0.95);
-		--card-bg-hover: rgba(255, 255, 255, 1);
-		--primary-color: #00d9ff;
-		--accent-color: #00b8d4;
-	}
-
-	/* ============================================
-	   NAVIGATION BAR - Professional Pattern
-	   ============================================ */
-	.top-navbar {
+	/* Architectural Grid Backdrop */
+	.page::before {
+		content: '';
 		position: fixed;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.5;
+	}
+
+	/* ── Navigation ── */
+	.dashboard-header {
+		position: sticky;
 		top: 0;
-		left: 0;
-		right: 0;
-		z-index: 1000;
-		background: rgba(0, 0, 0, 0.95);
-		backdrop-filter: blur(20px);
-		border-bottom: 1px solid rgba(0, 217, 255, 0.3);
-		padding: 1rem 2rem;
-		transition: all 0.3s ease;
+		z-index: 100;
+		height: var(--nav-height);
+		background: rgba(0, 0, 0, 0.8);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+	}
+	.page.light .dashboard-header {
+		background: rgba(255, 255, 255, 0.8);
 	}
 
-	:global(.treeview-container.light) .top-navbar {
-		background: rgba(255, 255, 255, 0.95);
-		border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-	}
-
-	.navbar-content {
+	.header-content {
+		max-width: 1440px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		max-width: 100%;
 	}
 
-	.navbar-left {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-	}
-
-	/* Brand Section - Matching Landing Page */
-	.brand-section {
+	.nav-brand {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		cursor: pointer;
-		transition: transform 0.3s ease;
+		text-decoration: none;
+		color: var(--text-primary);
 	}
-
-	.brand-section:hover {
-		transform: translateY(-1px);
-	}
-
 	.brand-icon {
-		width: 48px;
-		height: 48px;
-		filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
-		transition: filter 0.3s ease;
+		width: 28px;
+		height: 28px;
 	}
-
-	.brand-section:hover .brand-icon {
-		filter: drop-shadow(0 0 15px rgba(0, 217, 255, 0.7));
-	}
-
-	.brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
 	.brand-name {
-		font-size: 1.5rem;
 		font-weight: 700;
-		color: #ffffff;
-		line-height: 1;
+		font-size: 1rem;
 		letter-spacing: -0.02em;
 	}
 
-	:global(.treeview-container.light) .brand-name {
-		color: #000000;
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
 	}
-
-	.brand-subtitle {
-		font-size: 0.7rem;
+	.nav-link {
+		font-size: 0.8125rem;
+		font-weight: 500;
 		color: var(--text-secondary);
-		opacity: 0.8;
-		margin-top: 0.2rem;
-		letter-spacing: 0.05em;
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
+		position: relative;
+	}
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--text-primary);
+	}
+	.nav-link.active::after {
+		content: '';
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: var(--accent);
 	}
 
-	/* Breadcrumb - Professional Navigation */
-	.breadcrumb {
+	.nav-actions {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+	}
+
+	.theme-toggle {
+		background: transparent;
+		border: 1px solid var(--border);
+		color: var(--text-secondary);
+		padding: 0.5rem;
+		border-radius: 8px;
+		cursor: pointer;
+		display: flex;
+		transition: all 0.15s;
+	}
+	.theme-toggle:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		border-color: var(--border-focus);
+	}
+	.theme-icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* ── Technical Bar ── */
+	.technical-bar {
+		background: var(--bg-surface);
+		border-bottom: 1px solid var(--border);
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		height: 40px;
+		position: relative;
+		z-index: 10;
+	}
+
+	.bc-node {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+		transition: color 0.15s;
+	}
+	.bc-node:hover {
+		color: var(--text-secondary);
+	}
+	.bc-node.active {
+		color: var(--accent);
+	}
+	.bc-sep {
+		color: var(--border-focus);
+		font-size: 0.65rem;
+	}
+
+	.system-status {
+		margin-left: auto;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-size: 0.875rem;
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		color: var(--success);
+		opacity: 0.8;
+	}
+	.status-pulse {
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		animation: blink 2s infinite;
+	}
+	@keyframes blink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
-	.breadcrumb-link {
-		color: var(--text-secondary);
-		text-decoration: none;
-		transition: color 0.3s ease;
-		position: relative;
-	}
-
-	.breadcrumb-link:hover {
-		color: var(--primary-color);
-	}
-
-	.breadcrumb-link::after {
-		content: '';
-		position: absolute;
-		bottom: -2px;
-		left: 0;
-		width: 0;
-		height: 2px;
-		background: var(--primary-color);
-		transition: width 0.3s ease;
-	}
-
-	.breadcrumb-link:hover::after {
-		width: 100%;
-	}
-
-	.breadcrumb-separator {
-		color: var(--text-muted);
-	}
-
-	.breadcrumb-current {
-		color: var(--primary-color);
-		font-weight: 600;
-	}
-
-	/* ============================================
-	   SIDEBAR - Professional Button Pattern
-	   ============================================ */
-	.main-layout {
+	/* ── Layout ── */
+	.page-layout {
 		display: flex;
-		margin-top: 80px;
-		min-height: calc(100vh - 80px);
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 0 2rem;
+		gap: 2rem;
+		position: relative;
+		z-index: 10;
 	}
 
-	.left-sidebar {
-		position: fixed;
-		left: 0;
-		top: 80px;
-		width: 320px;
-		height: calc(100vh - 80px);
-		background: rgba(0, 0, 0, 0.95);
-		border-right: 1px solid rgba(0, 217, 255, 0.3);
-		backdrop-filter: blur(20px);
-		padding: 1.5rem;
+	/* ── Sidebar ── */
+	.sidebar {
+		width: 240px;
+		flex-shrink: 0;
+		padding: 1.5rem 0;
+		position: sticky;
+		top: calc(var(--nav-height) + 40px);
+		height: fit-content;
+		max-height: calc(100vh - var(--nav-height) - 40px);
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1.25rem;
 	}
 
-	:global(.treeview-container.light) .left-sidebar {
-		background: rgba(255, 255, 255, 0.95);
-		border-right: 1px solid rgba(0, 217, 255, 0.2);
-	}
-
-	/* Back Button - Professional Design */
-	.back-button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
-		background: transparent;
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 8px;
-		color: var(--text-primary);
-		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 0.9rem;
-		font-weight: 500;
-	}
-
-	.back-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: #00d9ff;
-		transform: translateX(-4px);
-		box-shadow: 0 4px 12px rgba(0, 217, 255, 0.2);
-	}
-
-	.back-icon {
-		width: 18px;
-		height: 18px;
-		color: #00d9ff;
-	}
-
-	/* Sidebar Section */
 	.sidebar-section {
-		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 
-	.section-title {
-		font-size: 0.75rem;
+	.section-label {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
 		font-weight: 700;
 		color: var(--text-muted);
 		letter-spacing: 0.1em;
-		margin-bottom: 1rem;
+		text-transform: uppercase;
 	}
 
-	/* ============================================
-	   STAT CARDS - Professional Clean Design
-	   ============================================ */
-	.stat-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem;
+	}
+	.stats-grid .stat-cell:last-child:nth-child(odd) {
+		grid-column: 1 / -1;
 	}
 
-	.stat-card {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-	}
-
-	/* Shimmer effect on hover */
-	.stat-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
-		transition: left 0.6s;
-	}
-
-	.stat-card:hover::before {
-		left: 100%;
-	}
-
-	.stat-card:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.15);
-		border-color: rgba(0, 217, 255, 0.5);
-		background: rgba(0, 0, 0, 0.6);
-	}
-
-	.treeview-container.light .stat-card {
-		background: rgba(255, 255, 255, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.15);
-	}
-
-	.treeview-container.light .stat-card:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.12);
-	}
-
-	.stat-icon {
-		font-size: 1.75rem;
-	}
-
-	.stat-content {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.stat-value {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #00d9ff;
-		line-height: 1;
-	}
-
-	.stat-label {
-		font-size: 0.75rem;
-		color: var(--text-secondary);
-		margin-top: 0.25rem;
-	}
-
-	/* ============================================
-	   ACTION BUTTONS - Professional Pattern
-	   Matching Landing Page Button Design
-	   ============================================ */
-	.sidebar-actions {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.action-button {
-		padding: 0;
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		position: relative;
-		overflow: hidden;
-		background: rgba(0, 0, 0, 0.4);
-	}
-
-	/* Shimmer effect on hover */
-	.action-button::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
-		transition: left 0.6s;
-	}
-
-	.action-button:hover::before {
-		left: 100%;
-	}
-
-	.action-button:hover {
-		transform: translateY(-2px);
-		border-color: rgba(0, 217, 255, 0.5);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.2);
-		background: rgba(0, 0, 0, 0.6);
-	}
-
-	.action-button:active {
-		transform: translateY(0);
-	}
-
-	.treeview-container.light .action-button {
-		background: rgba(255, 255, 255, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.15);
-	}
-
-	.treeview-container.light .action-button:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 8px 20px rgba(0, 217, 255, 0.15);
-	}
-
-	.button-content {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem 1.25rem;
-		position: relative;
-		z-index: 1;
-	}
-
-	.button-icon {
-		width: 20px;
-		height: 20px;
-		flex-shrink: 0;
-		color: #00d9ff;
-		transition: transform 0.3s ease;
-	}
-
-	.action-button:hover .button-icon {
-		transform: scale(1.1);
-	}
-
-	.button-text {
+	.stat-cell {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.625rem 0.75rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.125rem;
-		flex: 1;
 	}
-
-	.button-label {
-		font-size: 0.875rem;
-		font-weight: 600;
+	.stat-val {
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 700;
 		color: var(--text-primary);
-		line-height: 1.2;
 	}
-
-	.button-desc {
-		font-size: 0.75rem;
+	.stat-lbl {
+		font-size: 0.6rem;
 		color: var(--text-muted);
-		line-height: 1.2;
-		opacity: 0.8;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.action-button:hover .button-desc {
-		opacity: 1;
-	}
-
-	/* Specific button color variants */
-	.action-button.add-repo .button-icon {
-		color: #10b981;
-	}
-
-	/* Save Status */
-	.save-status {
-		padding: 0.75rem;
-		border-radius: 8px;
-		font-size: 0.875rem;
-		text-align: center;
-	}
-
-	.save-status.success {
-		background: rgba(16, 185, 129, 0.1);
-		color: var(--success-color);
-		border: 1px solid rgba(16, 185, 129, 0.3);
-	}
-
-	.save-status.error {
-		background: rgba(239, 68, 68, 0.1);
-		color: var(--error-color);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-	}
-
-	/* ============================================
-	   MAIN CONTENT AREA
-	   ============================================ */
-	.main-content {
-		margin-left: 320px;
-		flex: 1;
-		position: relative;
-		min-height: calc(100vh - 80px);
-	}
-
-	.svg-background {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		opacity: 0.05;
-		overflow: hidden;
-	}
-
-	.content-overlay {
-		position: relative;
-		z-index: 1;
-		padding: 2rem;
-	}
-
-	/* Loading State */
-	.loading-state {
+	.sidebar-actions {
 		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.save-indicator {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 6px;
+		text-align: center;
+		letter-spacing: 0.02em;
+	}
+	.save-indicator.success {
+		color: var(--success);
+		background: rgba(16, 185, 129, 0.06);
+		border: 1px solid rgba(16, 185, 129, 0.1);
+	}
+	.save-indicator.error {
+		color: var(--error);
+		background: rgba(239, 68, 68, 0.06);
+		border: 1px solid rgba(239, 68, 68, 0.1);
+	}
+
+	/* ── Main Content ── */
+	.page-main {
+		flex: 1;
+		min-width: 0;
+		padding: 1.5rem 0;
+	}
+
+	.center-state {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		padding: 6rem 2rem;
+		text-align: center;
 		gap: 1rem;
-		padding: 4rem;
 	}
-
-	.loading-spinner {
+	.loader-icon {
 		width: 40px;
 		height: 40px;
-		border: 4px solid rgba(0, 217, 255, 0.2);
-		border-radius: 50%;
-		border-top-color: var(--primary-color);
-		animation: spin 1s linear infinite;
+		animation: pulse 2s ease-in-out infinite;
+	}
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+	.error-text {
+		color: var(--error);
+		font-size: 0.875rem;
+	}
+	.empty-icon {
+		width: 48px;
+		height: 48px;
+		color: var(--text-muted);
+		margin-bottom: 0.5rem;
+	}
+	.center-state h3 {
+		font-size: 1.125rem;
+		font-weight: 700;
+	}
+	.empty-desc {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		max-width: 400px;
+		line-height: 1.5;
+	}
+	.empty-actions {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 0.5rem;
 	}
 
+	/* ── Tree Grid ── */
+	.tree-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.tree-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1rem 1.25rem;
+		transition: all 0.2s var(--ease-premium);
+		box-shadow: var(--card-shadow);
+	}
+	.tree-card:hover {
+		border-color: var(--border-focus);
+		transform: translateY(-1px);
+	}
+
+	.tree-card-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.expand-toggle {
+		background: none;
+		border: none;
+		color: var(--text-muted);
+		cursor: pointer;
+		padding: 0.2rem;
+		display: flex;
+		transition: color 0.15s;
+	}
+	.expand-toggle:hover {
+		color: var(--text-primary);
+	}
+	.expand-toggle.sm {
+		padding: 0.125rem;
+	}
+
+	.expand-chevron {
+		width: 14px;
+		height: 14px;
+		transition: transform 0.2s var(--ease-premium);
+	}
+	.expand-chevron.open {
+		transform: rotate(90deg);
+	}
+
+	.node-icon {
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
+	}
+	.node-icon.folder {
+		color: var(--accent);
+	}
+	.node-icon.repo {
+		color: var(--text-muted);
+	}
+	.node-icon.sm {
+		width: 14px;
+		height: 14px;
+	}
+
+	.node-name {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.node-meta {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		white-space: nowrap;
+	}
+
+	.node-actions {
+		display: flex;
+		gap: 0.25rem;
+		margin-left: auto;
+		flex-shrink: 0;
+	}
+
+	.icon-btn {
+		background: none;
+		border: none;
+		color: var(--text-muted);
+		cursor: pointer;
+		padding: 0.25rem;
+		border-radius: 4px;
+		display: flex;
+		transition: all 0.15s;
+		text-decoration: none;
+	}
+	.icon-btn:hover {
+		color: var(--accent);
+		background: var(--accent-soft);
+	}
+	.icon-btn.danger:hover {
+		color: var(--error);
+		background: rgba(239, 68, 68, 0.06);
+	}
+	.icon-btn svg {
+		width: 14px;
+		height: 14px;
+	}
+	.icon-btn.sm svg {
+		width: 12px;
+		height: 12px;
+	}
+	.icon-btn.sm {
+		padding: 0.2rem;
+	}
+
+	.inline-edit {
+		padding: 0.25rem 0.5rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border-focus);
+		border-radius: 4px;
+		color: var(--text-primary);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		flex: 1;
+		min-width: 0;
+		outline: none;
+	}
+	.inline-edit.sm {
+		font-size: 0.75rem;
+	}
+
+	.tag {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 600;
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+	.tag.private {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+	}
+
+	/* Tree Children */
+	.tree-children {
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+		max-height: 500px;
+		overflow-y: auto;
+		padding-right: 0.25rem;
+	}
+	.tree-children::-webkit-scrollbar {
+		width: 4px;
+	}
+	.tree-children::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.tree-children::-webkit-scrollbar-thumb {
+		background: var(--border-focus);
+		border-radius: 2px;
+	}
+
+	.tree-children.nested {
+		margin-left: 1rem;
+		border-top: none;
+		margin-top: 0.5rem;
+		padding-top: 0.5rem;
+	}
+	.tree-children.nested.deeper {
+		margin-left: 1.25rem;
+	}
+
+	.nested-folder {
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.625rem 0.75rem;
+	}
+	.nested-folder.deeper {
+		margin-left: 0.5rem;
+	}
+
+	.tree-row {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.repo-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.625rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		transition: border-color 0.15s;
+	}
+	.repo-row:hover {
+		border-color: var(--border-focus);
+	}
+
+	/* ── Buttons ── */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.625rem 1rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		white-space: nowrap;
+		text-decoration: none;
+	}
+	.btn:hover:not(:disabled) {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
+	}
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+	}
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+		border-color: var(--border);
+		color: var(--text-primary);
+	}
+
+	.btn-outline {
+		background: transparent;
+		border-color: var(--border);
+		color: var(--text-secondary);
+	}
+	.btn-outline:hover:not(:disabled) {
+		border-color: var(--border-focus);
+		color: var(--text-primary);
+		background: var(--bg-surface-alt);
+		transform: none;
+	}
+
+	.btn-full {
+		width: 100%;
+	}
+	.btn-sm {
+		padding: 0.5rem 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	/* ── Spinner ── */
+	.spinner {
+		width: 20px;
+		height: 20px;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+	.spinner.sm {
+		width: 14px;
+		height: 14px;
+		border-width: 2px;
+	}
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
 		}
 	}
 
-	.loading-text {
-		font-size: 1rem;
-		color: var(--text-secondary);
-	}
+	/* ══════════════════════════════════════════════
+	   DIALOG – Professional Modal System
+	   ══════════════════════════════════════════════ */
 
-	/* Error State */
-	.error-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 4rem;
-	}
-
-	.error-icon {
-		width: 64px;
-		height: 64px;
-		color: var(--error-color);
-	}
-
-	.error-message {
-		color: var(--error-color);
-		font-size: 1.1rem;
-	}
-
-	/* Empty State - Professional Design */
-	.empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.5rem;
-		padding: 4rem;
-		text-align: center;
-	}
-
-	.empty-icon {
-		width: 100px;
-		height: 100px;
-		background: rgba(0, 217, 255, 0.1);
-		border-radius: 50%;
+	/* Overlay */
+	.dlg-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: rgba(0, 0, 0, 0.55);
+		backdrop-filter: blur(6px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 1px solid rgba(0, 217, 255, 0.2);
+		padding: 2rem;
+		animation: dlgFadeIn 0.18s ease;
+	}
+	@keyframes dlgFadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
-	.empty-icon svg {
-		width: 50px;
-		height: 50px;
-		color: #00d9ff;
-	}
-
-	.empty-title {
-		font-size: 1.75rem;
-		font-weight: 700;
-		color: var(--text-primary);
-	}
-
-	.empty-description {
-		font-size: 1.1rem;
-		color: var(--text-secondary);
+	/* Dialog box */
+	.dlg-box {
+		width: 100%;
 		max-width: 500px;
-		line-height: 1.6;
-	}
-
-	.empty-actions {
+		max-height: 85vh;
+		overflow: hidden;
 		display: flex;
-		gap: 1rem;
+		flex-direction: column;
+		border-radius: 14px;
+		animation: dlgSlideUp 0.22s ease;
+	}
+	.dlg-box.dlg-wide {
+		max-width: 820px;
+	}
+	@keyframes dlgSlideUp {
+		from {
+			opacity: 0;
+			transform: translateY(12px) scale(0.97);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
 	}
 
-	.empty-button {
-		padding: 1rem 2rem;
+	/* ── Theme-specific dialog surfaces ── */
+	:global(.dark) .dlg-box {
+		background: #111111;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		box-shadow:
+			0 24px 64px rgba(0, 0, 0, 0.65),
+			0 0 0 1px rgba(255, 255, 255, 0.04);
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-box {
+		background: #ffffff;
+		border: 1px solid #d1d5db;
+		box-shadow:
+			0 24px 64px rgba(0, 0, 0, 0.15),
+			0 4px 16px rgba(0, 0, 0, 0.08);
+		color: #1e293b;
+	}
+
+	/* ── Top / Header ── */
+	.dlg-top {
+		position: relative;
+		padding: 1.5rem 1.5rem 1rem;
+		text-align: center;
+	}
+
+	/* ── Close Button ── */
+	.dlg-close {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		width: 32px;
+		height: 32px;
 		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: all 0.15s;
+		border: none;
+		padding: 0;
+		z-index: 1;
+	}
+	:global(.dark) .dlg-close {
+		background: rgba(255, 255, 255, 0.05);
+		color: #64748b;
+	}
+	:global(.dark) .dlg-close:hover {
+		background: rgba(239, 68, 68, 0.12);
+		color: #ef4444;
+	}
+	:global(.light) .dlg-close {
+		background: #f1f5f9;
+		color: #64748b;
+		border: 1px solid #e2e8f0;
+	}
+	:global(.light) .dlg-close:hover {
+		background: #fee2e2;
+		color: #dc2626;
+		border-color: #fca5a5;
+	}
+	.dlg-icon-wrap {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 0.75rem;
+	}
+	.dlg-icon-wrap.folder-color {
+		background: rgba(250, 204, 21, 0.12);
+		color: #facc15;
+	}
+	.dlg-icon-wrap.accent-color {
+		background: rgba(0, 173, 239, 0.12);
+		color: #00adef;
+	}
+	.dlg-icon-wrap.analysis-color {
+		background: rgba(139, 92, 246, 0.12);
+		color: #8b5cf6;
+	}
+	.dlg-title {
+		font-size: 1.125rem;
+		font-weight: 700;
+		margin: 0 0 0.25rem;
+	}
+	:global(.dark) .dlg-title {
+		color: #f1f5f9;
+	}
+	:global(.light) .dlg-title {
+		color: #0f172a;
+	}
+
+	.dlg-desc {
+		font-size: 0.8125rem;
+		margin: 0;
+	}
+	:global(.dark) .dlg-desc {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-desc {
+		color: #64748b;
+	}
+
+	/* ── Body ── */
+	.dlg-body {
+		padding: 0 1.5rem 1.25rem;
+		overflow-y: auto;
+		flex: 1;
+	}
+
+	/* ── Footer ── */
+	.dlg-foot {
+		padding: 1rem 1.5rem;
+		display: flex;
+		gap: 0.75rem;
+		justify-content: flex-end;
+	}
+	:global(.dark) .dlg-foot {
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	:global(.light) .dlg-foot {
+		border-top: 1px solid #e5e7eb;
+	}
+
+	/* ── Buttons ── */
+	.dlg-btn {
+		padding: 0.5rem 1.125rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 1rem;
-	}
-
-	.empty-button.primary {
-		background: #ffffff;
-		color: #000000;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		transition: all 0.15s;
 		border: none;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+		font-family: inherit;
+	}
+	.dlg-btn.ghost {
+		background: transparent;
+	}
+	:global(.dark) .dlg-btn.ghost {
+		color: #94a3b8;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+	:global(.dark) .dlg-btn.ghost:hover {
+		background: rgba(255, 255, 255, 0.04);
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-btn.ghost {
+		color: #475569;
+		border: 1px solid #d1d5db;
+	}
+	:global(.light) .dlg-btn.ghost:hover {
+		background: #f1f5f9;
+		color: #1e293b;
+		border-color: #94a3b8;
+	}
+	.dlg-btn.primary {
+		background: #00adef;
+		color: #fff;
+		border: none;
+	}
+	.dlg-btn.primary:hover {
+		background: #009ad6;
+	}
+	.dlg-btn.primary:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+	.dlg-btn.full {
+		width: 100%;
+		justify-content: center;
+		margin-top: 0.75rem;
 	}
 
-	.empty-button.primary:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 15px 35px rgba(0, 217, 255, 0.4);
-		background: #00d9ff;
-		color: #000000;
+	/* ── Labels & Inputs ── */
+	.dlg-label {
+		display: block;
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		margin-bottom: 0.375rem;
+	}
+	:global(.dark) .dlg-label {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-label {
+		color: #475569;
 	}
 
-	.empty-button.secondary {
-		background: rgba(0, 0, 0, 0.3);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+	.dlg-input {
+		width: 100%;
+		padding: 0.625rem 0.875rem;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		font-family: inherit;
+		transition: border-color 0.15s;
+		box-sizing: border-box;
+	}
+	:global(.dark) .dlg-input {
+		background: #1a1a1a;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: #f1f5f9;
+	}
+	:global(.dark) .dlg-input::placeholder {
+		color: #525b6b;
+	}
+	:global(.dark) .dlg-input:focus {
+		outline: none;
+		border-color: #00adef;
+		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.15);
+	}
+	:global(.light) .dlg-input {
+		background: #ffffff;
+		border: 1.5px solid #94a3b8;
+		color: #0f172a;
+	}
+	:global(.light) .dlg-input::placeholder {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-input:focus {
+		outline: none;
+		border-color: #00adef;
+		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.12);
 	}
 
-	.empty-button.secondary:hover {
-		background: #00d9ff;
-		color: #000000;
-		transform: translateY(-3px);
-		box-shadow: 0 15px 35px rgba(0, 217, 255, 0.5);
+	/* ── Select / Dropdown ── */
+	.dlg-select {
+		width: 100%;
+		padding: 0.625rem 0.875rem;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		font-family: inherit;
+		cursor: pointer;
+		transition: border-color 0.15s;
+		box-sizing: border-box;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+		background-size: 14px;
+	}
+	:global(.dark) .dlg-select {
+		background-color: #1a1a1a;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: #f1f5f9;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+	}
+	:global(.dark) .dlg-select:focus {
+		outline: none;
+		border-color: #00adef;
+		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.15);
+	}
+	:global(.dark) .dlg-select option {
+		background: #1a1a1a;
+		color: #f1f5f9;
+	}
+	:global(.light) .dlg-select {
+		background-color: #ffffff;
+		border: 1.5px solid #94a3b8;
+		color: #0f172a;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+	}
+	:global(.light) .dlg-select:focus {
+		outline: none;
+		border-color: #00adef;
+		box-shadow: 0 0 0 2px rgba(0, 173, 239, 0.12);
+	}
+	:global(.light) .dlg-select option {
+		background: #ffffff;
+		color: #0f172a;
 	}
 
-	/* ============================================
-	   FOLDER CARDS - Professional Pattern
-	   Matching Landing Page Feature Cards
-	   ============================================ */
-	.folders-grid {
+	/* ── Hint / Info strip ── */
+	.dlg-hint {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		line-height: 1.5;
+		margin-top: 0.75rem;
+	}
+	.dlg-hint svg {
+		flex-shrink: 0;
+		margin-top: 1px;
+	}
+	:global(.dark) .dlg-hint {
+		background: rgba(0, 173, 239, 0.06);
+		border: 1px solid rgba(0, 173, 239, 0.1);
+		color: #94a3b8;
+	}
+	:global(.dark) .dlg-hint svg {
+		color: #00adef;
+	}
+	:global(.dark) .dlg-hint strong {
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-hint {
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		color: #475569;
+	}
+	:global(.light) .dlg-hint svg {
+		color: #0082b4;
+	}
+	:global(.light) .dlg-hint strong {
+		color: #0f172a;
+	}
+
+	/* ── Info Card (Analyze Folder) ── */
+	.dlg-info-card {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		border-radius: 10px;
+		overflow: hidden;
+		margin-bottom: 1rem;
+	}
+	.dlg-info-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem 1rem;
+	}
+	:global(.dark) .dlg-info-card {
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	:global(.dark) .dlg-info-row {
+		background: rgba(255, 255, 255, 0.02);
+	}
+	:global(.light) .dlg-info-card {
+		background: #f8fafc;
+		border: 1px solid #d1d5db;
+	}
+	:global(.light) .dlg-info-row {
+		background: #f1f5f9;
+	}
+
+	.dlg-info-key {
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	:global(.dark) .dlg-info-key {
+		color: #64748b;
+	}
+	:global(.light) .dlg-info-key {
+		color: #94a3b8;
+	}
+
+	.dlg-info-val {
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+	:global(.dark) .dlg-info-val {
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-info-val {
+		color: #1e293b;
+	}
+	.dlg-info-val.highlight {
+		color: #00adef;
+	}
+
+	/* ── Toggle Row (checkbox + text) ── */
+	.dlg-toggle-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		padding: 0.875rem 1rem;
+		border-radius: 8px;
+		cursor: pointer;
+		margin-bottom: 1rem;
+		transition: border-color 0.15s;
+	}
+	:global(.dark) .dlg-toggle-row {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	:global(.dark) .dlg-toggle-row:hover {
+		border-color: rgba(255, 255, 255, 0.12);
+	}
+	:global(.light) .dlg-toggle-row {
+		background: #f8fafc;
+		border: 1px solid #d1d5db;
+	}
+	:global(.light) .dlg-toggle-row:hover {
+		border-color: #94a3b8;
+	}
+
+	.dlg-toggle-row.compact {
+		padding: 0.5rem 0;
+		background: none !important;
+		border: none !important;
+		margin-bottom: 0;
+	}
+	.dlg-toggle-row input[type='checkbox'] {
+		accent-color: #00adef;
+		width: 16px;
+		height: 16px;
+		margin-top: 2px;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+	.dlg-toggle-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
+	.dlg-toggle-label {
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+	:global(.dark) .dlg-toggle-label {
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-toggle-label {
+		color: #1e293b;
+	}
+	.dlg-toggle-hint {
+		font-size: 0.75rem;
+	}
+	:global(.dark) .dlg-toggle-hint {
+		color: #64748b;
+	}
+	:global(.light) .dlg-toggle-hint {
+		color: #94a3b8;
+	}
+
+	/* ── Progress spinner ── */
+	.dlg-progress {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 2rem;
+		border-radius: 10px;
+		text-align: center;
+	}
+	:global(.dark) .dlg-progress {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+	:global(.light) .dlg-progress {
+		background: #f8fafc;
+		border: 1px solid #d1d5db;
+	}
+	.dlg-progress p {
+		font-size: 0.8125rem;
+	}
+	:global(.dark) .dlg-progress p {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-progress p {
+		color: #64748b;
+	}
+
+	/* ── Two Column Layout (Add Repo) ── */
+	.dlg-columns {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-		gap: 1.5rem;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
 	}
-
-	.folder-card {
-		background: rgba(0, 0, 0, 0.4);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 12px;
-		backdrop-filter: blur(20px);
-		padding: 1.5rem;
-		transition: all 0.4s ease;
-		max-height: 600px;
+	.dlg-col {
+		border-radius: 10px;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		position: relative;
+	}
+	:global(.dark) .dlg-col {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	:global(.light) .dlg-col {
+		background: #f1f5f9;
+		border: 1px solid #cbd5e1;
 	}
 
-	/* Shimmer effect on hover */
-	.folder-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
+	.dlg-col-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+	}
+	:global(.dark) .dlg-col-head {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	}
+	:global(.light) .dlg-col-head {
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.dlg-col-title {
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	:global(.dark) .dlg-col-title {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-col-title {
+		color: #64748b;
+	}
+
+	.dlg-col-count {
+		font-size: 0.65rem;
+		font-weight: 700;
+		padding: 0.125rem 0.5rem;
+		border-radius: 10px;
+	}
+	:global(.dark) .dlg-col-count {
+		background: rgba(0, 173, 239, 0.1);
+		color: #00adef;
+	}
+	:global(.light) .dlg-col-count {
+		background: rgba(0, 130, 180, 0.08);
+		color: #0082b4;
+	}
+
+	.dlg-col-list {
+		flex: 1;
+		padding: 0.5rem;
+		max-height: 320px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	/* ── List Items ── */
+	.dlg-list-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.12s;
+		text-align: left;
 		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
-		transition: left 0.6s;
+		border: 1px solid transparent;
+		background: transparent;
+		font-family: inherit;
+	}
+	:global(.dark) .dlg-list-item {
+		color: #cbd5e1;
+	}
+	:global(.dark) .dlg-list-item:hover {
+		background: rgba(255, 255, 255, 0.04);
+	}
+	:global(.dark) .dlg-list-item.active {
+		background: rgba(0, 173, 239, 0.08);
+		border-color: rgba(0, 173, 239, 0.25);
+	}
+	:global(.light) .dlg-list-item {
+		color: #334155;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+	}
+	:global(.light) .dlg-list-item:hover {
+		background: #f1f5f9;
+		border-color: #94a3b8;
+	}
+	:global(.light) .dlg-list-item.active {
+		background: #eff6ff;
+		border-color: #00adef;
+		box-shadow: 0 0 0 1px rgba(0, 173, 239, 0.15);
 	}
 
-	.folder-card:hover::before {
-		left: 100%;
+	.dlg-item-top-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.dlg-item-name {
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+	:global(.dark) .dlg-item-name {
+		color: #e2e8f0;
+	}
+	:global(.light) .dlg-item-name {
+		color: #1e293b;
 	}
 
-	.folder-card:hover {
-		transform: translateY(-5px);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.15);
-		border-color: rgba(0, 217, 255, 0.5);
-		background: rgba(0, 0, 0, 0.6);
+	.dlg-item-desc {
+		font-size: 0.7rem;
+		line-height: 1.4;
+		margin: 0;
+	}
+	:global(.dark) .dlg-item-desc {
+		color: #64748b;
+	}
+	:global(.light) .dlg-item-desc {
+		color: #94a3b8;
 	}
 
-	.treeview-container.light .folder-card {
-		background: rgba(255, 255, 255, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.15);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+	.dlg-item-tags {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-top: 0.125rem;
+	}
+	.dlg-tag {
+		font-size: 0.65rem;
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+	:global(.dark) .dlg-tag {
+		color: #64748b;
+	}
+	:global(.light) .dlg-tag {
+		color: #94a3b8;
+	}
+	.dlg-tag.dim {
+		opacity: 0.7;
+	}
+	.dlg-lang-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #00adef;
 	}
 
-	.treeview-container.light .folder-card:hover {
-		background: rgba(255, 255, 255, 1);
-		border-color: rgba(0, 217, 255, 0.3);
-		box-shadow: 0 20px 40px rgba(0, 217, 255, 0.12);
+	.dlg-check {
+		flex-shrink: 0;
+		color: #00adef;
 	}
 
-	.folder-header {
+	/* ── Folder icon in list items ── */
+	.dlg-folder-icon {
+		flex-shrink: 0;
+	}
+	:global(.dark) .dlg-folder-icon {
+		color: #facc15;
+	}
+	:global(.light) .dlg-folder-icon {
+		color: #ca8a04;
+	}
+
+	/* ── Empty State ── */
+	.dlg-empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 2rem 1rem;
+		text-align: center;
+		font-size: 0.8125rem;
+	}
+	:global(.dark) .dlg-empty-state {
+		color: #64748b;
+	}
+	:global(.light) .dlg-empty-state {
+		color: #94a3b8;
+	}
+
+	.dlg-link {
+		background: none;
+		border: none;
+		color: #00adef;
+		cursor: pointer;
+		font-size: 0.8125rem;
+		text-decoration: underline;
+		font-family: inherit;
+	}
+
+	/* ── Confirm bar ── */
+	.dlg-confirm-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.625rem 0.75rem;
+		margin: 0.5rem;
+		border-radius: 6px;
+		font-size: 0.75rem;
+	}
+	:global(.dark) .dlg-confirm-bar {
+		background: rgba(16, 185, 129, 0.06);
+		border: 1px solid rgba(16, 185, 129, 0.12);
+		color: #94a3b8;
+	}
+	:global(.dark) .dlg-confirm-bar strong {
+		color: #e2e8f0;
+	}
+	:global(.dark) .dlg-confirm-bar svg {
+		color: #10b981;
+	}
+	:global(.light) .dlg-confirm-bar {
+		background: #ecfdf5;
+		border: 1px solid #a7f3d0;
+		color: #475569;
+	}
+	:global(.light) .dlg-confirm-bar strong {
+		color: #1e293b;
+	}
+	:global(.light) .dlg-confirm-bar svg {
+		color: #059669;
+	}
+
+	/* ══════════════════════════════════════════════
+	   Analysis Options Cards
+	   ══════════════════════════════════════════════ */
+	.dlg-option-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.dlg-option-card {
+		padding: 1.25rem;
+		border-radius: 10px;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+	:global(.dark) .dlg-option-card {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	:global(.dark) .dlg-option-card:hover {
+		border-color: rgba(255, 255, 255, 0.12);
+	}
+	:global(.dark) .dlg-option-card.active {
+		border-color: rgba(0, 173, 239, 0.35);
+		background: rgba(0, 173, 239, 0.05);
+	}
+	:global(.light) .dlg-option-card {
+		background: #f8fafc;
+		border: 1px solid #d1d5db;
+	}
+	:global(.light) .dlg-option-card:hover {
+		border-color: #94a3b8;
+	}
+	:global(.light) .dlg-option-card.active {
+		border-color: #00adef;
+		background: rgba(0, 173, 239, 0.06);
+	}
+
+	.dlg-option-top {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+		margin-bottom: 0.75rem;
 	}
-
-	.expand-button {
-		background: transparent;
-		border: none;
-		color: var(--text-secondary);
+	.dlg-option-top input[type='radio'] {
+		width: 16px;
+		height: 16px;
+		accent-color: #00adef;
 		cursor: pointer;
-		padding: 0.25rem;
-		transition: all 0.3s ease;
 	}
-
-	.expand-button:hover {
-		color: var(--primary-color);
-	}
-
-	.expand-icon {
-		width: 20px;
-		height: 20px;
-	}
-
-	.folder-icon {
-		width: 24px;
-		height: 24px;
-		color: var(--primary-color);
-	}
-
-	.folder-name {
-		font-size: 1.1rem;
-		font-weight: 600;
-		color: var(--text-primary);
-		flex: 1;
-	}
-
-	.folder-name-input {
-		padding: 0.5rem;
-		background: rgba(0, 217, 255, 0.1);
-		border: 1px solid var(--border-color);
-		border-radius: 6px;
-		color: var(--text-primary);
-		font-size: 1.1rem;
-		font-weight: 600;
-		flex: 1;
-	}
-
-	.folder-name-input:focus {
-		outline: none;
-		border-color: var(--primary-color);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-
-	.item-count {
+	.dlg-option-name {
 		font-size: 0.875rem;
-		color: var(--text-muted);
+		font-weight: 700;
+	}
+	:global(.dark) .dlg-option-name {
+		color: #f1f5f9;
+	}
+	:global(.light) .dlg-option-name {
+		color: #0f172a;
 	}
 
-	.folder-actions {
-		display: flex;
-		gap: 0.5rem;
-		margin-left: auto;
+	.dlg-badge {
+		font-size: 0.6rem;
+		font-weight: 700;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-family: var(--font-mono, monospace);
+	}
+	.dlg-badge.green {
+		background: rgba(16, 185, 129, 0.12);
+		color: #10b981;
 	}
 
-	.action-icon {
-		background: transparent;
-		border: none;
-		color: var(--text-secondary);
-		cursor: pointer;
-		padding: 0.25rem;
-		transition: all 0.3s ease;
+	.dlg-option-desc {
+		font-size: 0.8125rem;
+		line-height: 1.5;
+		margin-bottom: 0.75rem;
+	}
+	:global(.dark) .dlg-option-desc {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-option-desc {
+		color: #64748b;
 	}
 
-	.action-icon:hover {
-		color: var(--primary-color);
-	}
-
-	.action-icon.analyze {
-		color: #00d9ff;
-	}
-
-	.action-icon.analyze:hover {
-		color: #00d9ff;
-		opacity: 0.8;
-	}
-
-	.action-icon.delete:hover {
-		color: var(--error-color);
-	}
-
-	.action-icon svg {
-		width: 18px;
-		height: 18px;
-	}
-
-	/* Folder Children */
-	.folder-children {
-		margin-top: 1rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--border-color);
+	.dlg-feature-list {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 0.75rem 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
-		overflow-y: auto; /* Add scroll for nested content */
-		max-height: 450px; /* Limit children height */
-		padding-right: 0.5rem;
+		gap: 0.35rem;
 	}
-
-	/* Custom scrollbar for folder children */
-	.folder-children::-webkit-scrollbar {
-		width: 6px;
-	}
-
-	.folder-children::-webkit-scrollbar-track {
-		background: rgba(0, 217, 255, 0.05);
-		border-radius: 3px;
-	}
-
-	.folder-children::-webkit-scrollbar-thumb {
-		background: rgba(0, 217, 255, 0.3);
-		border-radius: 3px;
-	}
-
-	.folder-children::-webkit-scrollbar-thumb:hover {
-		background: rgba(0, 217, 255, 0.5);
-	}
-
-	/* Nested Folder Item */
-	.nested-folder-item {
-		background: rgba(0, 217, 255, 0.03);
-		border: 1px solid rgba(0, 217, 255, 0.15);
-		border-radius: 10px;
-		padding: 0.75rem;
-		transition: all 0.3s ease;
-	}
-
-	.nested-folder-item:hover {
-		background: rgba(0, 217, 255, 0.08);
-		border-color: rgba(0, 217, 255, 0.3);
-	}
-
-	.nested-folder-item.deeper {
-		margin-left: 1rem;
-		background: rgba(0, 217, 255, 0.02);
-		border-color: rgba(0, 217, 255, 0.1);
-	}
-
-	/* Visual depth indicator line */
-	.nested-folder-children::before {
-		content: '';
-		position: absolute;
-		left: -8px;
-		top: 0;
-		bottom: 0;
-		width: 2px;
-		background: linear-gradient(to bottom, rgba(74, 158, 255, 0.3), rgba(74, 158, 255, 0.1));
-		border-radius: 2px;
-	}
-
-	.nested-folder-children.deeper {
-		margin-left: 1rem;
-	}
-
-	.nested-folder-children.deeper::before {
-		background: linear-gradient(to bottom, rgba(147, 51, 234, 0.3), rgba(147, 51, 234, 0.1)) er;
+	.dlg-feature-list li {
+		font-size: 0.75rem;
+		display: flex;
+		align-items: center;
 		gap: 0.5rem;
 	}
-
-	.nested-folder-name {
-		font-weight: 600;
-		color: var(--text-primary);
-		flex: 1;
-		font-size: 0.95rem;
+	:global(.dark) .dlg-feature-list li {
+		color: #94a3b8;
+	}
+	:global(.light) .dlg-feature-list li {
+		color: #64748b;
+	}
+	.dlg-feature-list li::before {
+		content: '';
+		width: 5px;
+		height: 5px;
+		background: #10b981;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
-	.nested-folder-children {
+	.dlg-option-stats {
+		display: flex;
+		gap: 1rem;
+		padding-top: 0.75rem;
+	}
+	:global(.dark) .dlg-option-stats {
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+	}
+	:global(.light) .dlg-option-stats {
+		border-top: 1px solid #e5e7eb;
+	}
+	.dlg-option-stats span {
+		font-family: var(--font-mono, monospace);
+		font-size: 0.65rem;
+	}
+	:global(.dark) .dlg-option-stats span {
+		color: #64748b;
+	}
+	:global(.light) .dlg-option-stats span {
+		color: #94a3b8;
+	}
+
+	/* ── Folder Picker (inside option card) ── */
+	.dlg-folder-picker {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid rgba(0, 217, 255, 0.1);
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-left: 0.5rem;
+	}
+	:global(.dark) .dlg-folder-picker {
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+	}
+	:global(.light) .dlg-folder-picker {
+		border-top: 1px solid #e5e7eb;
 	}
 
-	.nested-folder-children.deeper {
-		margin-left: 1rem;
-	}
-
-	/* Small variants for nested elements */
-	.expand-button.small {
-		padding: 0.2rem;
-	}
-
-	.expand-button.small .expand-icon {
-		width: 16px;
-		height: 16px;
-	}
-
-	.folder-icon.small {
-		width: 20px;
-		height: 20px;
-	}
-
-	.folder-name-input.small {
-		font-size: 0.95rem;
-	}
-
-	.item-count.small {
-		font-size: 0.75rem;
-	}
-
-	.action-icon.small svg {
-		width: 16px;
-		height: 16px;
-	}
-
-	.action-icon.analyze {
-		color: #00d9ff;
-	}
-
-	.action-icon.analyze:hover {
-		color: #00d9ff;
-		opacity: 0.8;
-	}
-
-	/* Repo Item */
-	.repo-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 8px;
-		transition: all 0.3s ease;
-	}
-
-	.repo-item:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: #00d9ff;
-	}
-
-	.repo-icon {
-		width: 20px;
-		height: 20px;
-		color: #00d9ff;
-	}
-
-	.repo-name {
-		font-weight: 500;
-		color: var(--text-primary);
-		flex: 1;
-	}
-
-	.repo-badge {
-		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 600;
-	}
-
-	.repo-badge.private {
-		background: rgba(136, 136, 136, 0.2);
-		color: var(--text-secondary);
-	}
-
-	.workflow-count {
-		font-size: 0.8rem;
-		color: var(--text-muted);
-	}
-
-	.repo-actions {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	/* Notifications */
+	/* ── Notifications ── */
 	:global(.notification) {
 		position: fixed;
-		top: 100px;
+		top: 80px;
 		right: 2rem;
-		z-index: 9999;
-		padding: 1rem 1.5rem;
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
-		border-radius: 12px;
-		backdrop-filter: blur(20px);
-		box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-		color: var(--text-primary);
-		animation: slideIn 0.3s ease;
+		z-index: 99999;
+		padding: 0.75rem 1.25rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		animation: dlgSlideIn 0.2s ease;
 	}
-
+	:global(.dark) :global(.notification) {
+		background: #111111;
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+		color: #f1f5f9;
+	}
+	:global(.light) :global(.notification) {
+		background: #ffffff;
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+		color: #1e293b;
+	}
 	:global(.notification.success) {
-		border-color: var(--success-color);
-		background: rgba(22, 163, 74, 0.1);
+		border-color: rgba(16, 185, 129, 0.25);
 	}
-
 	:global(.notification.error) {
-		border-color: var(--error-color);
-		background: rgba(255, 71, 87, 0.1);
+		border-color: rgba(239, 68, 68, 0.25);
 	}
-
 	:global(.notification.fade-out) {
-		animation: fadeOut 0.3s ease;
-		opacity: 0;
+		animation: dlgFadeOut 0.3s ease forwards;
 	}
-
-	@keyframes slideIn {
+	@keyframes dlgSlideIn {
 		from {
 			transform: translateX(100%);
 			opacity: 0;
@@ -3426,893 +3773,46 @@
 			opacity: 1;
 		}
 	}
-
-	@keyframes fadeOut {
+	@keyframes dlgFadeOut {
 		to {
 			opacity: 0;
-			transform: translateY(-10px);
+			transform: translateY(-8px);
 		}
 	}
 
-	/* ============================================
-	   MODAL STYLES - Professional Clean Design
-	   ============================================ */
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 9999;
-		background: rgba(0, 0, 0, 0.7);
-		backdrop-filter: blur(8px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 2rem;
-		animation: backdropFadeIn 0.2s ease;
-	}
-
-	/* Keep modal backdrop dark in light theme */
-	:global(.treeview-container.light) .modal-backdrop {
-		background: rgba(0, 0, 0, 0.5);
-	}
-
-	@keyframes backdropFadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	.modal-container {
-		background: rgba(0, 0, 0, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 16px;
-		backdrop-filter: blur(30px);
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-		width: 100%;
-		max-width: 500px;
-		max-height: 90vh;
-		overflow: hidden;
-		display: flex;
-		flex-direction: column;
-		animation: modalSlideIn 0.3s ease;
-	}
-	.modal-container.large {
-		max-width: 900px;
-	}
-
-	/* Keep modals dark in light theme for consistency */
-	:global(.treeview-container.light) .modal-container {
-		background: rgba(0, 0, 0, 0.95);
-		border: 1px solid rgba(0, 217, 255, 0.4);
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-	}
-	@keyframes modalSlideIn {
-		from {
-			opacity: 0;
-			transform: translateY(-20px) scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0) scale(1);
-		}
-	}
-
-	.modal-header {
-		padding: 1.5rem 2rem;
-		border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.modal-title {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #ffffff !important;
-		margin: 0;
-	}
-	.modal-subtitle {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.85) !important;
-		margin-top: 0.25rem;
-		opacity: 0.9;
-	}
-	.modal-close {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.2);
-		color: var(--error-color);
-		padding: 0.5rem;
-		border-radius: 8px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.modal-close:hover {
-		background: rgba(239, 68, 68, 0.2);
-		transform: rotate(90deg);
-	}
-
-	.modal-close svg {
-		width: 20px;
-		height: 20px;
-		display: block;
-	}
-
-	.modal-body {
-		padding: 2rem;
-		overflow-y: auto;
-		flex: 1;
-	}
-
-	.form-group {
-		margin-bottom: 1.5rem;
-	}
-
-	.form-label {
-		display: block;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #ffffff !important;
-		margin-bottom: 0.5rem;
-	}
-
-	.form-input {
-		width: 100%;
-		padding: 0.875rem 1rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 10px;
-		color: #ffffff !important;
-		font-size: 1rem;
-		transition: all 0.3s ease;
-	}
-
-	.form-input:focus {
-		outline: none;
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.1);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-
-	.info-box {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(0, 217, 255, 0.1);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 10px;
-	}
-
-	.info-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--primary-color);
-		flex-shrink: 0;
-	}
-
-	.info-text {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.85) !important;
-		margin: 0;
-	}
-
-	.highlight {
-		font-weight: 600;
-		color: var(--primary-color);
-	}
-
-	.modal-footer {
-		padding: 1.5rem 2rem;
-		border-top: 1px solid rgba(0, 217, 255, 0.2);
-		display: flex;
-		gap: 1rem;
-		justify-content: flex-end;
-	}
-	/* ============================================
-	   BUTTONS - Professional Pattern
-	   Matching Landing Page Button Design
-	   ============================================ */
-	.btn-primary,
-	.btn-secondary {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 1rem 1.5rem;
-		border-radius: 8px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		font-size: 0.95rem;
-	}
-
-	.btn-primary {
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-		background: #00d9ff;
-		color: #000000;
-	}
-
-	.btn-primary:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	.btn-secondary {
-		background: rgba(0, 0, 0, 0.3);
-		color: #00d9ff;
-		border: 2px solid #00d9ff;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.4),
-			0 0 20px rgba(0, 217, 255, 0.2);
-	}
-
-	.btn-secondary:hover {
-		background: #00d9ff;
-		color: #000000;
-		transform: translateY(-3px);
-		border-color: #00d9ff;
-		box-shadow:
-			0 15px 35px rgba(0, 217, 255, 0.5),
-			0 8px 20px rgba(0, 0, 0, 0.6);
-	}
-	.btn-icon {
-		width: 18px;
-		height: 18px;
-	}
-	/* Folder Analysis Modal Specific Styles */
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		z-index: 9999;
-		background: rgba(0, 0, 0, 0.7);
-		backdrop-filter: blur(8px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 2rem;
-		animation: backdropFadeIn 0.2s ease;
-	}
-
-	.modal {
-		background: rgba(0, 0, 0, 0.95);
-		border: 1px solid var(--border-color);
-		border-radius: 20px;
-		backdrop-filter: blur(30px);
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-		width: 100%;
-		max-width: 600px;
-		max-height: 90vh;
-		overflow: hidden;
-		display: flex;
-		flex-direction: column;
-		animation: modalSlideIn 0.3s ease;
-	}
-
-	.modal-header h3 {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		margin: 0;
-	}
-
-	.close-btn {
-		background: rgba(255, 71, 87, 0.1);
-		border: 1px solid rgba(255, 71, 87, 0.2);
-		color: var(--error-color);
-		padding: 0.5rem;
-		border-radius: 8px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.close-btn:hover {
-		background: rgba(255, 71, 87, 0.2);
-		transform: rotate(90deg);
-	}
-
-	.close-btn svg {
-		width: 20px;
-		height: 20px;
-		display: block;
-	}
-
-	.folder-info {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.info-row {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid var(--border-color);
-		border-radius: 10px;
-		transition: all 0.3s ease;
-	}
-	.info-row:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-	}
-
-	.folder-icon,
-	.path-icon,
-	.repo-icon {
-		width: 24px;
-		height: 24px;
-		color: var(--primary-color);
-		flex-shrink: 0;
-	}
-
-	.info-text {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		flex: 1;
-	}
-
-	.info-text .label {
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.info-text .value {
-		font-size: 1rem;
-		font-weight: 600;
-		color: #ffffff;
-	}
-
-	:global(.treeview-container.light) .info-text .label {
-		color: rgba(255, 255, 255, 0.6);
-	}
-
-	.badge {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.25rem 0.75rem;
-		background: #00d9ff;
-		color: #000000;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 700;
-		box-shadow: 0 2px 8px rgba(0, 217, 255, 0.3);
-	}
-
-	.options {
-		margin-bottom: 1.5rem;
-	}
-
-	.checkbox-label {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid var(--border-color);
-		border-radius: 10px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.checkbox-label:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-	}
-
-	.checkbox-label input[type='checkbox'] {
-		width: 20px;
-		height: 20px;
-		cursor: pointer;
-		accent-color: var(--primary-color);
-	}
-
-	.checkbox-label span {
-		font-size: 0.95rem;
-		color: rgba(255, 255, 255, 0.85);
-		flex: 1;
-	}
-
-	.progress-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		padding: 2rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid var(--border-color);
-		border-radius: 12px;
-		margin-bottom: 1.5rem;
-	}
-
-	.progress-text {
-		font-size: 0.95rem;
-		color: rgba(255, 255, 255, 0.85);
-		text-align: center;
-		margin: 0;
-	}
-
-	.info-notice {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(0, 217, 255, 0.1);
-		border: 1px solid rgba(0, 217, 255, 0.2);
-		border-radius: 10px;
-	}
-
-	.notice-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--primary-color);
-		flex-shrink: 0;
-		margin-top: 2px;
-	}
-
-	.info-notice span {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.85);
-		line-height: 1.5;
-	}
-
-	/* Analysis Options Modal Styles */
-	.analysis-options-modal {
-		max-width: 800px;
-		width: 100%;
-	}
-
-	.analysis-options-body {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-		max-height: 70vh;
-		overflow-y: auto;
-	}
-
-	.analysis-option {
-		padding: 1.5rem;
-		border: 2px solid var(--border-color);
-		border-radius: 12px;
-		background: rgba(255, 255, 255, 0.02);
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.analysis-option:hover {
-		background: rgba(0, 217, 255, 0.05);
-		border-color: var(--primary-color);
-	}
-
-	.analysis-option.selected {
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.1);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-	.option-header {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		margin-bottom: 1rem;
-	}
-
-	.option-header input[type='radio'] {
-		width: 20px;
-		height: 20px;
-		cursor: pointer;
-	}
-
-	.option-title-wrapper {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		flex: 1;
-	}
-
-	.option-name {
-		font-size: 1.1rem;
-		font-weight: 700;
-		color: #ffffff !important;
-	}
-	.recommended-badge {
-		padding: 0.25rem 0.75rem;
-		background: linear-gradient(135deg, #16a34a, #10b981);
-		color: white;
-		border-radius: 6px;
-		font-size: 0.75rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.option-description {
-		font-size: 0.95rem;
-		color: rgba(255, 255, 255, 0.8) !important;
-		line-height: 1.6;
-		margin: 0 0 1rem 0;
-	}
-
-	.option-benefits {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 1rem 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.option-benefits li {
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.8) !important;
-		padding-left: 1.5rem;
-		position: relative;
-	}
-
-	.option-benefits li::before {
-		content: '✓';
-		position: absolute;
-		left: 0;
-		color: var(--success-color);
-		font-weight: 700;
-	}
-
-	.option-stats {
-		display: flex;
-		gap: 1.5rem;
-		flex-wrap: wrap;
-		margin-top: 1rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--border-color);
-	}
-
-	.option-stats .stat {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.75);
-	}
-	.option-stats .stat svg {
-		width: 16px;
-		height: 16px;
-		color: var(--primary-color);
-	}
-
-	.folder-selector {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		margin-top: 1rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--border-color);
-	}
-
-	.folder-selector label {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #ffffff !important;
-	}
-
-	.folder-dropdown {
-		padding: 0.875rem;
-		background: rgba(0, 217, 255, 0.05);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 8px;
-		color: #ffffff !important;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.folder-dropdown:focus {
-		outline: none;
-		border-color: var(--primary-color);
-		background: rgba(0, 217, 255, 0.1);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-
-	.folder-dropdown option {
-		background: #000000;
-		color: #ffffff;
-	}
-	.checkbox-label {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-		color: rgba(255, 255, 255, 0.8);
-		cursor: pointer;
-	}
-
-	.checkbox-label input[type='checkbox'] {
-		width: 18px;
-		height: 18px;
-		cursor: pointer;
-	}
-
-	/* Selection Grid */
-	.selection-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1.5rem;
-	}
-
-	.selection-panel {
-		background: rgba(0, 217, 255, 0.02);
-		border: 1px solid var(--border-color);
-		border-radius: 12px;
-		padding: 1.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-	.panel-title {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 1rem;
-		font-weight: 600;
-		color: #ffffff !important;
-		margin: 0;
-	}
-
-	.panel-icon {
-		font-size: 1.25rem;
-	}
-
-	.panel-loading,
-	.panel-empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 1rem;
-		padding: 2rem;
-		text-align: center;
-	}
-
-	.panel-empty {
-		text-align: center;
-		padding: 2rem;
-		color: rgba(255, 255, 255, 0.6);
-		font-size: 0.875rem;
-	}
-
-	.link-button {
-		background: transparent;
-		border: none;
-		color: var(--primary-color);
-		cursor: pointer;
-		font-size: 0.875rem;
-		text-decoration: underline;
-	}
-
-	.link-button:hover {
-		color: var(--accent-color);
-	}
-
-	.selection-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		max-height: 400px;
-		overflow-y: auto;
-	}
-
-	.selection-item {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		padding: 0.75rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		text-align: left;
-		width: 100%;
-	}
-
-	.selection-item:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-	}
-
-	.selection-item.selected {
-		background: rgba(0, 217, 255, 0.15);
-		border-color: var(--primary-color);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-
-	.item-content {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.item-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.item-name {
-		font-weight: 600;
-		color: var(--text-primary);
-		font-size: 0.95rem;
-	}
-
-	:global(.treeview-container.light) .item-name {
-		color: #ffffff;
-	}
-
-	.item-description {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		margin: 0;
-		line-height: 1.4;
-	}
-
-	:global(.treeview-container.light) .item-description {
-		color: rgba(255, 255, 255, 0.75);
-	}
-
-	.item-meta {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.meta-item {
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
-	:global(.treeview-container.light) .meta-item {
-		color: rgba(255, 255, 255, 0.65);
-	}
-	.language-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: var(--primary-color);
-	}
-
-	.meta-badge {
-		padding: 0.125rem 0.5rem;
-		background: rgba(136, 136, 136, 0.2);
-		border-radius: 4px;
-		font-size: 0.7rem;
-		font-weight: 600;
-	}
-
-	.check-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--primary-color);
-		flex-shrink: 0;
-	}
-
-	.folder-icon-small {
-		width: 16px;
-		height: 16px;
-		color: var(--primary-color);
-		flex-shrink: 0;
-	}
-
-	.selection-summary {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: rgba(22, 163, 74, 0.1);
-		border: 1px solid rgba(22, 163, 74, 0.2);
-		border-radius: 8px;
-		margin-top: 1rem;
-	}
-
-	.summary-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--success-color);
-		flex-shrink: 0;
-	}
-
-	.summary-text {
-		font-size: 0.875rem;
-		color: var(--text-secondary);
-		margin: 0;
-	}
-
-	.loading-spinner.small {
-		width: 16px;
-		height: 16px;
-		border-width: 2px;
-	}
-
-	/* Responsive */
-	@media (max-width: 1200px) {
-		.left-sidebar {
-			width: 280px;
-		}
-
-		.main-content {
-			margin-left: 280px;
-		}
-	}
-
-	@media (max-width: 768px) {
-		.main-layout {
+	/* ── Responsive ── */
+	@media (max-width: 1024px) {
+		.page-layout {
 			flex-direction: column;
 		}
-
-		.left-sidebar {
-			position: relative;
+		.sidebar {
 			width: 100%;
-			height: auto;
+			position: relative;
 			top: 0;
+			max-height: none;
 		}
-
-		.main-content {
-			margin-left: 0;
+		.stats-grid {
+			grid-template-columns: repeat(5, 1fr);
 		}
-
-		.folders-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.navbar-left {
-			gap: 1rem;
-		}
-
-		.breadcrumb {
-			display: none;
-		}
-
-		.brand-icon {
-			width: 36px;
-			height: 36px;
-		}
-
-		.brand-name {
-			font-size: 1.2rem;
+		.stats-grid .stat-cell:last-child:nth-child(odd) {
+			grid-column: auto;
 		}
 	}
-
-	@media (max-width: 480px) {
-		.top-navbar {
-			padding: 0.75rem 1rem;
+	@media (max-width: 768px) {
+		.nav-menu {
+			display: none;
 		}
-
-		.folders-grid {
+		.header-content {
+			padding: 0 1rem;
+		}
+		.page-layout {
+			padding: 0 1rem;
+		}
+		.dlg-columns {
 			grid-template-columns: 1fr;
-			gap: 1rem;
 		}
-
-		.modal-container {
-			max-width: 95%;
+		.stats-grid {
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 </style>
