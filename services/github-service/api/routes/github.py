@@ -737,6 +737,146 @@ async def handle_installation_callback(
 
 
 # ============================================================================
+# SYNC INSTALLATIONS FROM GITHUB
+# ============================================================================
+
+@router.post("/sync-installations")
+async def sync_installations_from_github(
+    current_user: str = Depends(get_current_user),
+):
+    """
+    Sync GitHub App installations from GitHub API into the database.
+    This fixes the case where apps were installed directly on GitHub but
+    the callback didn't reach the server (or DB records were lost).
+    """
+    try:
+        async with db_manager.get_session() as session:
+            user_uuid = await resolve_user_uuid(current_user, session)
+
+            # 1. Get user's GitHub OAuth token
+            from database import GitHubToken
+            token_query = select(GitHubToken).where(
+                GitHubToken.user_id == user_uuid,
+                GitHubToken.is_active == True
+            ).order_by(GitHubToken.created_at.desc())
+            token_result = await session.execute(token_query)
+            github_token = token_result.scalar()
+
+            if not github_token or not github_token.access_token:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No active GitHub token found. Please connect your GitHub account first."
+                )
+
+            # 2. Get user's GitHub organizations
+            user_orgs_response = await github_client.http_client.get(
+                f"{github_client.base_url}/user/orgs",
+                headers={
+                    "Authorization": f"token {github_token.access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            )
+            if user_orgs_response.status_code != 200:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Failed to fetch GitHub organizations. Your token may have expired."
+                )
+            user_github_orgs = {org['login']: org for org in user_orgs_response.json()}
+            logger.info(f"🔄 Sync: User has {len(user_github_orgs)} GitHub orgs: {list(user_github_orgs.keys())}")
+
+            # 3. Get all GitHub App installations from GitHub API
+            all_installations = await github_client._get_all_installations_cached()
+            logger.info(f"🔄 Sync: Found {len(all_installations)} total app installations on GitHub")
+
+            # 4. Match installations to user's orgs and create missing DB records
+            synced = []
+            already_exists = []
+            not_matched = []
+
+            for installation in all_installations:
+                account = installation.get("account", {})
+                org_login = account.get("login")
+                installation_id = installation.get("id")
+
+                if not org_login or org_login not in user_github_orgs:
+                    not_matched.append(org_login or "unknown")
+                    continue
+
+                # Check if installation already exists in DB
+                existing_query = select(OrganizationInstallation).where(
+                    OrganizationInstallation.github_installation_id == installation_id
+                )
+                existing_result = await session.execute(existing_query)
+                existing_install = existing_result.scalar_one_or_none()
+
+                if existing_install:
+                    # Already exists - just make sure user is linked
+                    linked_users = existing_install.linked_users or []
+                    if existing_install.user_id != user_uuid and str(user_uuid) not in linked_users:
+                        linked_users.append(str(user_uuid))
+                        existing_install.linked_users = linked_users
+                        existing_install.updated_at = datetime.utcnow()
+                        already_exists.append(f"{org_login} (linked)")
+                    else:
+                        already_exists.append(org_login)
+                    continue
+
+                # Create Organization record if missing
+                org_result = await session.execute(
+                    select(Organization).where(Organization.login == org_login)
+                )
+                organization = org_result.scalar_one_or_none()
+                org_info = user_github_orgs[org_login]
+
+                if not organization:
+                    organization = Organization(
+                        github_org_id=account.get("id", org_info.get("id", 0)),
+                        login=org_login,
+                        name=org_info.get("name") or org_login,
+                        description=org_info.get("description"),
+                        avatar_url=account.get("avatar_url", org_info.get("avatar_url")),
+                        html_url=account.get("html_url", org_info.get("html_url")),
+                        type=account.get("type", "Organization"),
+                        github_metadata=account
+                    )
+                    session.add(organization)
+                    await session.flush()
+
+                # Create OrganizationInstallation record
+                new_installation = OrganizationInstallation(
+                    user_id=user_uuid,
+                    organization_id=organization.id,
+                    github_installation_id=installation_id,
+                    status="active",
+                    permissions=installation.get("permissions", {}),
+                    events=installation.get("events", []),
+                    installation_metadata=installation,
+                    last_verified=datetime.utcnow()
+                )
+                session.add(new_installation)
+                synced.append(org_login)
+                logger.info(f"✅ Sync: Created installation for {org_login} (ID: {installation_id})")
+
+            await session.commit()
+
+            # Clear installation cache so fresh data is used
+            github_client.cache.pop("all_installations", None)
+
+            return {
+                "success": True,
+                "synced": synced,
+                "already_exists": already_exists,
+                "not_matched": not_matched,
+                "message": f"Synced {len(synced)} installations, {len(already_exists)} already existed."
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error syncing installations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # USER ORGANIZATIONS
 # ============================================================================
 
@@ -851,13 +991,14 @@ async def get_my_organizations(
             from sqlalchemy import or_, cast, String, func
             from sqlalchemy.dialects.postgresql import JSONB
             
+            user_uuid_str = str(user_uuid)
             query = (
                 select(OrganizationInstallation, Organization)
                 .join(Organization, OrganizationInstallation.organization_id == Organization.id)
                 .where(
                     or_(
-                        OrganizationInstallation.user_id == user_uuid,  # User is owner
-                        cast(OrganizationInstallation.linked_users, JSONB).contains(cast([str(user_uuid)], JSONB))  # User is in linked_users
+                        OrganizationInstallation.user_id == user_uuid_str,  # User is owner (String column)
+                        cast(OrganizationInstallation.linked_users, JSONB).contains(cast([user_uuid_str], JSONB))  # User is in linked_users
                     )
                 )
                 .where(OrganizationInstallation.status == "active")
@@ -915,41 +1056,147 @@ async def get_my_organizations(
             
             if len(installations) == 0:
                 logger.warning(f"⚠️ No installations found for user {user_uuid} (Auth0 ID: {current_user})")
+                print(f"🔍 Debug: has_github_token={has_github_token}, valid_installation_ids count={len(valid_installation_ids)}")
                 
-                # Try to find orphaned installations (no user_id) and link them to this user
-                orphaned_query = (
-                    select(OrganizationInstallation, Organization)
-                    .join(Organization, OrganizationInstallation.organization_id == Organization.id)
-                    .where(OrganizationInstallation.user_id == None)
-                    .where(OrganizationInstallation.status == "active")
-                )
-                orphaned_result = await session.execute(orphaned_query)
-                orphaned_installations = orphaned_result.all()
+                # ===== AUTO-SYNC: Create missing DB records from GitHub API =====
+                if valid_installation_ids:
+                    print(f"🔄 Auto-syncing installations from GitHub for user {user_uuid}")
+                    try:
+                        from database import GitHubToken as _GT
+                        _tq = select(_GT).where(_GT.user_id == user_uuid, _GT.is_active == True).order_by(_GT.created_at.desc())
+                        _tr = await session.execute(_tq)
+                        _token = _tr.scalar()
+                        print(f"🔍 Debug: GitHub token found={_token is not None}, has_access_token={bool(_token and _token.access_token)}")
+                        if _token and _token.access_token:
+                            # Get user's GitHub orgs
+                            _orgs_resp = await github_client.http_client.get(
+                                f"{github_client.base_url}/user/orgs",
+                                headers={"Authorization": f"token {_token.access_token}", "Accept": "application/vnd.github.v3+json"}
+                            )
+                            print(f"🔍 Debug: /user/orgs response status={_orgs_resp.status_code}")
+                            if _orgs_resp.status_code == 200:
+                                _user_orgs = {o['login']: o for o in _orgs_resp.json()}
+                                print(f"🔍 Debug: User orgs={list(_user_orgs.keys())}")
+                                all_github_installations = await github_client._get_all_installations_cached()
+                                print(f"🔍 Debug: GitHub installations accounts={[i.get('account',{}).get('login') for i in all_github_installations]}")
+                                all_github_installations = await github_client._get_all_installations_cached()
+                                _synced_count = 0
+                                for _inst in all_github_installations:
+                                    _account = _inst.get("account", {})
+                                    _org_login = _account.get("login")
+                                    _inst_id = _inst.get("id")
+                                    if not _org_login or _org_login not in _user_orgs:
+                                        print(f"⏭️ Skipping installation {_inst_id} ({_org_login}) - not in user orgs")
+                                        continue
+                                    print(f"✅ Match found: {_org_login} (installation {_inst_id})")
+                                    # Check if already exists
+                                    _ex = await session.execute(
+                                        select(OrganizationInstallation).where(
+                                            OrganizationInstallation.github_installation_id == _inst_id
+                                        )
+                                    )
+                                    _existing = _ex.scalar_one_or_none()
+                                    if _existing:
+                                        if _existing.status == 'deleted':
+                                            print(f"♻️ Reactivating deleted installation {_inst_id} (was user_id={_existing.user_id})")
+                                            _existing.status = 'active'
+                                            _existing.user_id = str(user_uuid)
+                                            _existing.updated_at = datetime.utcnow()
+                                            _existing.last_verified = datetime.utcnow()
+                                            _existing.permissions = _inst.get('permissions', {})
+                                            _existing.events = _inst.get('events', [])
+                                            _existing.installation_metadata = _inst
+                                            _synced_count += 1
+                                        else:
+                                            print(f"⏭️ Installation {_inst_id} already exists and active (user_id={_existing.user_id})")
+                                        continue
+                                    # Create Organization if missing
+                                    _org_r = await session.execute(select(Organization).where(Organization.login == _org_login))
+                                    _org_obj = _org_r.scalar_one_or_none()
+                                    if not _org_obj:
+                                        _org_info = _user_orgs[_org_login]
+                                        print(f"📝 Creating Organization record for {_org_login}")
+                                        _org_obj = Organization(
+                                            github_org_id=_account.get("id", _org_info.get("id", 0)),
+                                            login=_org_login,
+                                            name=_org_info.get("name") or _org_login,
+                                            description=_org_info.get("description"),
+                                            avatar_url=_account.get("avatar_url", _org_info.get("avatar_url")),
+                                            html_url=_account.get("html_url", _org_info.get("html_url")),
+                                            type=_account.get("type", "Organization"),
+                                            github_metadata=_account
+                                        )
+                                        session.add(_org_obj)
+                                        await session.flush()
+                                        print(f"📝 Organization {_org_login} created with ID: {_org_obj.id}")
+                                    else:
+                                        print(f"📝 Organization {_org_login} already exists with ID: {_org_obj.id}")
+                                    # Create installation record
+                                    print(f"📝 Creating OrganizationInstallation for {_org_login} (inst_id={_inst_id}, user_id={user_uuid_str}, org_id={_org_obj.id})")
+                                    session.add(OrganizationInstallation(
+                                        user_id=user_uuid_str,
+                                        organization_id=_org_obj.id,
+                                        github_installation_id=_inst_id,
+                                        status="active",
+                                        permissions=_inst.get("permissions", {}),
+                                        events=_inst.get("events", []),
+                                        installation_metadata=_inst,
+                                        last_verified=datetime.utcnow()
+                                    ))
+                                    _synced_count += 1
+                                    print(f"✅ Auto-synced installation for {_org_login} (ID: {_inst_id})")
+                                print(f"💾 Committing {_synced_count} new installations to DB...")
+                                await session.commit()
+                                print(f"💾 Commit successful!")
+                                # Re-query
+                                result = await session.execute(query)
+                                installations_raw = result.all()
+                                seen_orgs = {}
+                                for inst, o in installations_raw:
+                                    if o.login not in seen_orgs:
+                                        seen_orgs[o.login] = (inst, o)
+                                installations = list(seen_orgs.values())
+                                print(f"📊 After auto-sync re-query: Found {len(installations)} installations")
+                    except Exception as sync_error:
+                        import traceback
+                        print(f"❌ Auto-sync failed: {sync_error}")
+                        print(f"❌ Traceback: {traceback.format_exc()}")
                 
-                if orphaned_installations:
-                    logger.info(f"🔧 Found {len(orphaned_installations)} orphaned installations, attempting to link to user {user_uuid}")
-                    for orphaned_install, orphaned_org in orphaned_installations:
-                        # Verify this installation is still valid on GitHub
-                        try:
-                            await github_client.get_installation_details(orphaned_install.github_installation_id)
-                            orphaned_install.user_id = user_uuid
-                            orphaned_install.updated_at = datetime.utcnow()
-                            logger.info(f"✅ Linked orphaned installation {orphaned_install.github_installation_id} ({orphaned_org.login}) to user {user_uuid}")
-                        except Exception as verify_error:
-                            logger.warning(f"⚠️ Orphaned installation {orphaned_install.github_installation_id} is no longer valid: {verify_error}")
+                # Fallback: Try to find orphaned installations (no user_id) and link them to this user
+                if len(installations) == 0:
+                    orphaned_query = (
+                        select(OrganizationInstallation, Organization)
+                        .join(Organization, OrganizationInstallation.organization_id == Organization.id)
+                        .where(OrganizationInstallation.user_id == None)
+                        .where(OrganizationInstallation.status == "active")
+                    )
+                    orphaned_result = await session.execute(orphaned_query)
+                    orphaned_installations = orphaned_result.all()
                     
-                    await session.commit()
-                    
-                    # Re-query after linking
-                    result = await session.execute(query)
-                    installations_raw = result.all()
-                    # Deduplicate again
-                    seen_orgs = {}
-                    for inst, o in installations_raw:
-                        if o.login not in seen_orgs:
-                            seen_orgs[o.login] = (inst, o)
-                    installations = list(seen_orgs.values())
-                    logger.info(f"📊 After linking: Found {len(installations)} installations for user {user_uuid}")
+                    if orphaned_installations:
+                        logger.info(f"🔧 Found {len(orphaned_installations)} orphaned installations, attempting to link to user {user_uuid}")
+                        for orphaned_install, orphaned_org in orphaned_installations:
+                            # Verify this installation is still valid on GitHub
+                            try:
+                                await github_client.get_installation_details(orphaned_install.github_installation_id)
+                                orphaned_install.user_id = str(user_uuid)
+                                orphaned_install.updated_at = datetime.utcnow()
+                                logger.info(f"✅ Linked orphaned installation {orphaned_install.github_installation_id} ({orphaned_org.login}) to user {user_uuid}")
+                            except Exception as verify_error:
+                                logger.warning(f"⚠️ Orphaned installation {orphaned_install.github_installation_id} is no longer valid: {verify_error}")
+                        
+                        await session.commit()
+                        
+                        # Re-query after linking
+                        result = await session.execute(query)
+                        installations_raw = result.all()
+                        # Deduplicate again
+                        seen_orgs = {}
+                        for inst, o in installations_raw:
+                            if o.login not in seen_orgs:
+                                seen_orgs[o.login] = (inst, o)
+                        installations = list(seen_orgs.values())
+                        logger.info(f"📊 After linking: Found {len(installations)} installations for user {user_uuid}")
             
             organizations = []
             verification_jobs_enqueued = 0
