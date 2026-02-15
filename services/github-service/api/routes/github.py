@@ -2410,6 +2410,87 @@ async def get_workflow_actions_history(
         raise HTTPException(status_code=500, detail=f"Failed to get workflow history: {str(e)}")
 
 
+@router.post("/workspace/{org_name}/actions/refresh")
+async def refresh_organization_actions_cache(
+    org_name: str
+):
+    """
+    Clear cache and refresh GitHub Actions data for an organization.
+    Use this after updating workflow files to see the latest status.
+    """
+    try:
+        # Clear in-memory cache for this organization
+        cleared_count = github_client._clear_organization_cache(org_name)
+        logger.info(f"🧹 Cleared {cleared_count} in-memory cache entries for {org_name}")
+
+        # Clear Redis cache too
+        try:
+            installation_id = await github_client._get_installation_id(org_name)
+            if installation_id:
+                redis_cleared = await cache.clear_organization_cache(org_name, installation_id)
+                logger.info(f"🧹 Cleared {redis_cleared} Redis cache entries for {org_name}")
+        except Exception as cache_err:
+            logger.warning(f"Redis cache clear failed (non-fatal): {cache_err}")
+
+        # Get installation ID
+        installation_id = await github_client._get_installation_id(org_name)
+        if not installation_id:
+            raise HTTPException(status_code=404, detail=f"GitHub App not installed in {org_name}")
+
+        # Fetch fresh data
+        actions_data = await github_client.get_organization_actions_detailed(installation_id, org_name)
+
+        # Re-cache the fresh data
+        await cache.cache_actions_data(org_name, actions_data)
+
+        # Group actions for the table
+        table_data = []
+        for action in actions_data:
+            table_data.append({
+                "repo_name": f"{action.get('repo_name', '')}/{action.get('workflow_filename', '')}",
+                "workflow": action.get('workflow_name', ''),
+                "action": action.get('action_full', ''),
+                "status": action.get('status', ''),
+                "latest_version": action.get('latest_version', ''),
+                "current_version": action.get('current_version', ''),
+                "action_name": action.get('action_name', ''),
+                "step_name": action.get('step_name', ''),
+                "job_name": action.get('job_name', '')
+            })
+
+        # Calculate statistics
+        total_actions = len(table_data)
+        up_to_date_count = sum(1 for a in table_data if 'up-to-date' in a['status'])
+        major_count = sum(1 for a in table_data if 'major upgrade' in a['status'].lower())
+        recommended_count = sum(1 for a in table_data if 'upgrade recommended' in a['status'].lower())
+        outdated_count = sum(1 for a in table_data if 'outdated' in a['status'].lower() and 'major' not in a['status'].lower() and 'recommended' not in a['status'].lower())
+        unknown_count = total_actions - up_to_date_count - major_count - recommended_count - outdated_count
+
+        logger.info(f"🔄 Refreshed {total_actions} actions from {org_name}")
+
+        return {
+            "message": f"Cache refreshed and GitHub Actions data updated for {org_name}",
+            "organization": org_name,
+            "total_actions": total_actions,
+            "statistics": {
+                "up_to_date": up_to_date_count,
+                "major_upgrade_needed": major_count,
+                "upgrade_recommended": recommended_count,
+                "outdated": outdated_count,
+                "unknown": unknown_count
+            },
+            "actions": table_data,
+            "cache_cleared": cleared_count,
+            "last_updated": datetime.now().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error refreshing organization actions cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh cache: {str(e)}")
+
+
 @router.get("/workspace/{org_name}/actions/paginated")
 async def get_actions_paginated(
     org_name: str,

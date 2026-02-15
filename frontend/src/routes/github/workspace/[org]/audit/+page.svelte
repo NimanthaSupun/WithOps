@@ -463,1154 +463,1244 @@
 	<title>Actions Version Audit - {orgName} | WithOps</title>
 </svelte:head>
 
-<div class="audit-container {darkMode ? 'dark' : 'light'}">
-	<!-- Top Navigation Bar -->
-	<nav class="top-navbar">
-		<div class="navbar-content">
-			<!-- Left: Brand & Breadcrumb -->
-			<div class="navbar-left">
-				<div class="brand-section">
+{#if loading}
+	<div class="loading-screen">
+		<div class="loading-content">
+			<img src="/icons/excellence_17274210.png" alt="WithOps" class="loading-icon" />
+			<div class="progress-bar">
+				<div class="progress-fill"></div>
+			</div>
+			<div class="status-message">SCANNING WORKFLOW ACTIONS...</div>
+		</div>
+	</div>
+{:else}
+	<div class="audit-page {darkMode ? 'dark' : 'light'}">
+		<!-- Header Navigation -->
+		<nav class="dashboard-header">
+			<div class="header-content">
+				<a href="/dashboard" class="nav-brand">
 					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
-					<div class="brand-text">
-						<span class="brand-name">WithOps</span>
-						<span class="brand-subtitle">Actions Audit</span>
-					</div>
+					<span class="brand-name">WithOps</span>
+				</a>
+
+				<div class="nav-menu">
+					<a href="/dashboard" class="nav-link">Overview</a>
+					<a href="/organizations" class="nav-link">Organizations</a>
+					<a href="/github/workspace/{orgName}" class="nav-link">{orgName}</a>
+					<a href="/github/workspace/{orgName}/audit" class="nav-link active">Audit</a>
 				</div>
 
-				<!-- Breadcrumb -->
-				<nav class="breadcrumb">
-					<a href="/dashboard" class="breadcrumb-link">Dashboard</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/github/organizations" class="breadcrumb-link">Organizations</a>
-					<span class="breadcrumb-separator">/</span>
-					<a href="/github/workspace/{orgName}" class="breadcrumb-link">{orgName}</a>
-					<span class="breadcrumb-separator">/</span>
-					<span class="breadcrumb-current">Audit</span>
-				</nav>
-			</div>
-
-			<!-- Right: Theme Toggle -->
-			<div class="navbar-right">
-				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
-					{#if darkMode}
-						<svg class="theme-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
+				<div class="nav-actions">
+					<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
+						{#if darkMode}
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
 								stroke-width="2"
-								d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
-					{:else}
-						<svg class="theme-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-							/>
-						</svg>
-					{/if}
-				</button>
-			</div>
-		</div>
-	</nav>
-
-	<!-- Main Content Area with Full Width -->
-	<div class="main-content">
-		<!-- Header Section -->
-		<div class="content-header">
-			<div class="header-left">
-				<h1 class="page-title">Actions Version Audit</h1>
-				<p class="page-subtitle">Organization: <span class="org-name">{orgName}</span></p>
-			</div>
-			<div class="header-actions">
-				<!-- View Mode Toggle -->
-				<div class="view-mode-toggle">
-					<span class="toggle-label">View:</span>
-					<button
-						onclick={() => (viewMode = 'detailed')}
-						class="toggle-button {viewMode === 'detailed' ? 'active' : ''}"
-					>
-						Detailed
-					</button>
-					<button
-						onclick={() => (viewMode = 'grouped')}
-						class="toggle-button {viewMode === 'grouped' ? 'active' : ''}"
-					>
-						Grouped
-					</button>
-				</div>
-				<!-- Refresh Button -->
-				<button onclick={refreshActionDetails} disabled={loadingactions} class="refresh-button">
-					<svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-						></path>
-					</svg>
-					<span>{loadingactions ? 'Refreshing...' : 'Refresh'}</span>
-				</button>
-				<button onclick={goBack} class="back-button"> ← Back to Workspace </button>
-			</div>
-		</div>
-
-		{#if loading || loadingactions}
-			<div class="loading-card">
-				<div class="spinner"></div>
-				<p class="loading-text">Loading workflow actions...</p>
-			</div>
-		{:else if error}
-			<div class="error-card">
-				<div class="error-content">
-					<svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<span class="error-message">Error: {error}</span>
-				</div>
-			</div>
-		{:else if actions.length === 0}
-			<div class="empty-card">
-				<p class="empty-text">No workflow actions found for this organization.</p>
-			</div>
-		{:else}
-			<!-- Search and Pagination Controls -->
-			<div class="controls-card">
-				<div class="controls-container">
-					<!-- Search Bar -->
-					<div class="search-wrapper">
-						<div class="search-container">
-							<svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+							>
+								<circle cx="12" cy="12" r="5" /><path
+									d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
 								/>
 							</svg>
-							<input
-								type="text"
-								placeholder="Search repositories, workflows, or actions..."
-								class="search-input"
-								oninput={handleSearch}
-								value={searchQuery}
-							/>
+						{:else}
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+							</svg>
+						{/if}
+					</button>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Technical Breadcrumb Bar -->
+		<div class="technical-bar">
+			<div class="breadcrumb">
+				<a href="/dashboard" class="breadcrumb-item">WithOps</a>
+				<span class="breadcrumb-sep">/</span>
+				<a href="/organizations" class="breadcrumb-item">Organizations</a>
+				<span class="breadcrumb-sep">/</span>
+				<a href="/github/workspace/{orgName}" class="breadcrumb-item">{orgName}</a>
+				<span class="breadcrumb-sep">/</span>
+				<span class="breadcrumb-item active">Audit</span>
+			</div>
+			<div class="system-status">
+				<div class="status-pulse"></div>
+				AUDIT: ACTIVE
+			</div>
+		</div>
+
+		<div class="page-content">
+			<main class="page-main">
+				<!-- View Header -->
+				<header class="view-header">
+					<div class="title-group">
+						<h1>Actions Version Audit</h1>
+						<p>
+							Audit and remediate GitHub Actions version compliance across <span class="accent-text"
+								>{orgName}</span
+							>.
+						</p>
+					</div>
+					<div class="header-cta">
+						<button onclick={goBack} class="btn btn-secondary">
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M19 12H5M12 19l-7-7 7-7" />
+							</svg>
+							Workspace
+						</button>
+						<button
+							onclick={refreshActionDetails}
+							disabled={loadingactions}
+							class="btn btn-secondary"
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path
+									d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+								/>
+							</svg>
+							{loadingactions ? 'Syncing...' : 'Sync'}
+						</button>
+					</div>
+				</header>
+
+				{#if loadingactions}
+					<div class="loader-view">
+						<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+						<div class="loader-text">SCANNING WORKFLOWS...</div>
+					</div>
+				{:else if error}
+					<div class="error-banner">
+						<p class="error-text">{error}</p>
+						<button onclick={() => loadActionDetails(1, '')} class="btn btn-primary">Retry</button>
+					</div>
+				{:else if actions.length === 0}
+					<div class="loader-view">
+						<p class="empty-text">No workflow actions found for this organization.</p>
+						<button
+							onclick={refreshActionDetails}
+							class="btn btn-primary"
+							style="margin-top: 1.5rem;">Scan Now</button
+						>
+					</div>
+				{:else}
+					<!-- Stats Cards Row -->
+					<div class="stats-grid">
+						<div class="stat-card">
+							<div class="stat-card-top">
+								<span class="stat-card-label">Up to Date</span>
+								<div class="stat-dot dot-success"></div>
+							</div>
+							<span class="stat-card-value">{statistics.up_to_date}</span>
+						</div>
+						<div class="stat-card">
+							<div class="stat-card-top">
+								<span class="stat-card-label">Major Upgrades</span>
+								<div class="stat-dot dot-error"></div>
+							</div>
+							<span class="stat-card-value">{statistics.major_upgrade_needed}</span>
+						</div>
+						<div class="stat-card">
+							<div class="stat-card-top">
+								<span class="stat-card-label">Recommended</span>
+								<div class="stat-dot dot-accent"></div>
+							</div>
+							<span class="stat-card-value">{statistics.upgrade_recommended}</span>
+						</div>
+						<div class="stat-card">
+							<div class="stat-card-top">
+								<span class="stat-card-label">Outdated</span>
+								<div class="stat-dot dot-warning"></div>
+							</div>
+							<span class="stat-card-value">{statistics.outdated}</span>
 						</div>
 					</div>
 
-					<!-- Stats and Cache Status -->
-					<div class="stats-container">
-						{#if isCached}
-							<div class="cached-indicator">
-								<svg class="cached-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M13 10V3L4 14h7v7l9-11h-7z"
-									/>
+					<!-- Controls Row: Filter + Search -->
+					<div class="controls-row">
+						<div class="filter-nav">
+							<button
+								class="filter-btn {viewMode === 'detailed' ? 'active' : ''}"
+								onclick={() => (viewMode = 'detailed')}
+							>
+								DETAILED <span class="count-badge">{actions.length}</span>
+							</button>
+							<button
+								class="filter-btn {viewMode === 'grouped' ? 'active' : ''}"
+								onclick={() => (viewMode = 'grouped')}
+							>
+								GROUPED <span class="count-badge">{Object.keys(workflowGroups).length}</span>
+							</button>
+						</div>
+
+						<div class="controls-right">
+							{#if isCached}
+								<div class="cached-pill">
+									<svg
+										width="12"
+										height="12"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg
+									>
+									Cached
+								</div>
+							{/if}
+							<span class="total-label">{totalItems} actions</span>
+							<div class="search-box">
+								<svg
+									class="search-icon"
+									width="14"
+									height="14"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
 								</svg>
-								<span>Cached</span>
+								<input
+									type="text"
+									placeholder="Search..."
+									class="search-input"
+									oninput={handleSearch}
+									value={searchQuery}
+								/>
+							</div>
+						</div>
+					</div>
+
+					<!-- Data Table -->
+					<div class="table-container">
+						<div class="table-scroll">
+							<table class="data-table">
+								<thead>
+									<tr>
+										<th>Repository</th>
+										<th>Workflow</th>
+										{#if viewMode === 'detailed'}
+											<th>Action</th>
+											<th>Current</th>
+											<th>Latest</th>
+											<th>Status</th>
+											<th>Fix</th>
+										{:else}
+											<th>Count</th>
+											<th>Current</th>
+											<th>Major</th>
+											<th>Recommended</th>
+											<th>Outdated</th>
+											<th>Summary</th>
+											<th>Fix</th>
+										{/if}
+									</tr>
+								</thead>
+								<tbody>
+									{#if viewMode === 'detailed'}
+										{#each actions as action, index}
+											<tr>
+												<td>
+													<span class="cell-mono">{action.repo_name}</span>
+												</td>
+												<td>{action.workflow_name || action.workflow || 'Unknown'}</td>
+												<td>
+													<span class="cell-mono"
+														>{action.action_name || action.action || 'No actions found'}</span
+													>
+												</td>
+												<td><span class="version-tag">{action.current_version || 'N/A'}</span></td>
+												<td><span class="version-tag">{action.latest_version}</span></td>
+												<td>
+													{#if isUpToDate(action.status)}
+														<span class="status-tag connected">CURRENT</span>
+													{:else if action.status === '🚨 major upgrade needed'}
+														<span class="status-tag critical">CRITICAL</span>
+													{:else if action.status === '🔧 upgrade recommended'}
+														<span class="status-tag recommended">UPGRADE</span>
+													{:else if action.status === '⚠️ outdated' || action.status === 'outdated'}
+														<span class="status-tag outdated">OUTDATED</span>
+													{:else}
+														<span class="status-tag pending">{action.status}</span>
+													{/if}
+												</td>
+												<td>
+													{#if isOutdated(action.status)}
+														<button
+															class="btn btn-sm btn-primary"
+															onclick={() => createPullRequest(action)}
+															disabled={action.prCreating}
+														>
+															{#if action.prCreating}
+																<span class="btn-spinner"></span> Creating...
+															{:else}
+																Fix via PR <span class="button-arrow">→</span>
+															{/if}
+														</button>
+													{:else if isUpToDate(action.status)}
+														<span class="status-tag connected">OK</span>
+													{:else}
+														<span class="cell-muted">—</span>
+													{/if}
+												</td>
+											</tr>
+										{/each}
+									{:else}
+										{#each Object.values(workflowGroups) as workflowGroup, index}
+											<tr>
+												<td>
+													<span class="cell-mono">{workflowGroup.repo_name}</span>
+												</td>
+												<td>{workflowGroup.workflow_name || workflowGroup.workflow || 'Unknown'}</td
+												>
+												<td>{workflowGroup.hasActions ? workflowGroup.total : '—'}</td>
+												<td><span class="status-tag connected">{workflowGroup.upToDate}</span></td>
+												<td
+													><span class="status-tag critical"
+														>{workflowGroup.majorUpgradeNeeded}</span
+													></td
+												>
+												<td
+													><span class="status-tag recommended"
+														>{workflowGroup.upgradeRecommended}</span
+													></td
+												>
+												<td><span class="status-tag outdated">{workflowGroup.outdated}</span></td>
+												<td>
+													{#if workflowGroup.hasActions}
+														{#if workflowGroup.majorUpgradeNeeded > 0}
+															<span class="status-tag critical"
+																>CRITICAL ({workflowGroup.majorUpgradeNeeded})</span
+															>
+														{:else if workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
+															<span class="status-tag outdated"
+																>UPDATES ({workflowGroup.upgradeRecommended +
+																	workflowGroup.outdated})</span
+															>
+														{:else}
+															<span class="status-tag connected">ALL CURRENT</span>
+														{/if}
+													{:else}
+														<span class="cell-muted">No actions</span>
+													{/if}
+												</td>
+												<td>
+													{#if workflowGroup.majorUpgradeNeeded > 0 || workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
+														<button
+															class="btn btn-sm btn-primary"
+															onclick={() => fixAllOutdatedInWorkflow(workflowGroup)}
+														>
+															Fix All ({workflowGroup.majorUpgradeNeeded +
+																workflowGroup.upgradeRecommended +
+																workflowGroup.outdated})
+															<span class="button-arrow">→</span>
+														</button>
+													{:else if workflowGroup.hasActions}
+														<span class="status-tag connected">OK</span>
+													{:else}
+														<span class="cell-muted">—</span>
+													{/if}
+												</td>
+											</tr>
+										{/each}
+									{/if}
+								</tbody>
+							</table>
+						</div>
+
+						<!-- Pagination -->
+						{#if totalPages > 1}
+							<div class="pagination-bar">
+								<span class="pagination-info">
+									Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> — {totalItems}
+									total
+								</span>
+								<div class="pagination-controls">
+									<button
+										class="btn btn-sm btn-secondary"
+										onclick={previousPage}
+										disabled={!hasPrevious}
+										aria-label="Previous page"
+									>
+										<svg
+											width="14"
+											height="14"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg
+										>
+									</button>
+									{#each Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+										const startPage = Math.max(1, currentPage - 2);
+										return startPage + i;
+									}) as pageNum}
+										{#if pageNum <= totalPages}
+											<button
+												class="btn btn-sm {pageNum === currentPage
+													? 'btn-primary'
+													: 'btn-secondary'}"
+												onclick={() => goToPage(pageNum)}
+											>
+												{pageNum}
+											</button>
+										{/if}
+									{/each}
+									<button
+										class="btn btn-sm btn-secondary"
+										onclick={nextPage}
+										disabled={!hasNext}
+										aria-label="Next page"
+									>
+										<svg
+											width="14"
+											height="14"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"><path d="M9 18l6-6-6-6" /></svg
+										>
+									</button>
+								</div>
 							</div>
 						{/if}
-						<div class="total-count">
-							{totalItems} total actions
-						</div>
-					</div>
-				</div>
-
-				<!-- Statistics -->
-				<div class="statistics-grid">
-					<div class="stat-item">
-						<div class="stat-dot up-to-date"></div>
-						<span class="stat-label">
-							{statistics.up_to_date} up-to-date
-						</span>
-					</div>
-					<div class="stat-item">
-						<div class="stat-dot major-upgrade"></div>
-						<span class="stat-label">
-							{statistics.major_upgrade_needed} major upgrades
-						</span>
-					</div>
-					<div class="stat-item">
-						<div class="stat-dot recommended"></div>
-						<span class="stat-label">
-							{statistics.upgrade_recommended} recommended
-						</span>
-					</div>
-					<div class="stat-item">
-						<div class="stat-dot outdated"></div>
-						<span class="stat-label">
-							{statistics.outdated} outdated
-						</span>
-					</div>
-					<div class="stat-item">
-						<div class="stat-dot unknown"></div>
-						<span class="stat-label">
-							{statistics.unknown} unknown
-						</span>
-					</div>
-				</div>
-			</div>
-
-			<div class="table-card">
-				<div class="table-header">
-					<div class="table-title-section">
-						<h2 class="table-title">
-							{viewMode === 'detailed' ? 'Workflow Actions' : 'Workflow Summary'} ({viewMode ===
-							'detailed'
-								? actions.length
-								: Object.keys(workflowGroups).length}
-							{viewMode === 'detailed' ? 'actions' : 'workflows'})
-						</h2>
-						<div class="realtime-badge">
-							<svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							<span>Real-time versions from GitHub API</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200">
-						<thead class="bg-gray-50">
-							<tr>
-								<th
-									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-								>
-									Repository
-								</th>
-								<th
-									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-								>
-									Workflow Name
-								</th>
-								{#if viewMode === 'detailed'}
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Action
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Current Version
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Latest Version
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Status
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Actions
-									</th>
-								{:else}
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Actions Count
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Up to Date
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Major Upgrades
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Recommended
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Outdated
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Summary
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-									>
-										Actions
-									</th>
-								{/if}
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-200 bg-white">
-							{#if viewMode === 'detailed'}
-								{#each actions as action, index}
-									<tr class="transition-colors duration-200 hover:bg-gray-50">
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="flex items-center">
-												<div class="h-10 w-10 flex-shrink-0">
-													<div
-														class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100"
-													>
-														<svg
-															class="h-5 w-5 text-blue-600"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-															/>
-														</svg>
-													</div>
-												</div>
-												<div class="ml-4">
-													<div class="font-mono text-sm font-medium text-gray-900">
-														{action.repo_name}
-													</div>
-												</div>
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="text-sm text-gray-900">
-												{action.workflow_name || action.workflow || 'Unknown Workflow'}
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="font-mono text-sm text-gray-900">
-												{action.action_name || action.action || 'No actions found'}
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span class="rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-												{action.current_version || 'N/A'}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span class="rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-												{action.latest_version}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium {getStatusColorClass(
-													action.status
-												)}"
-											>
-												{action.status}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											{#if isOutdated(action.status)}
-												<button
-													onclick={() => createPullRequest(action)}
-													disabled={action.prCreating}
-													class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-												>
-													{#if action.prCreating}
-														<svg
-															class="mr-2 -ml-1 h-4 w-4 animate-spin text-white"
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 24 24"
-														>
-															<circle
-																class="opacity-25"
-																cx="12"
-																cy="12"
-																r="10"
-																stroke="currentColor"
-																stroke-width="4"
-															></circle>
-															<path
-																class="opacity-75"
-																fill="currentColor"
-																d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-															></path>
-														</svg>
-														Creating PR...
-													{:else}
-														<svg
-															class="mr-2 -ml-1 h-4 w-4"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 10V3L4 14h7v7l9-11h-7z"
-															/>
-														</svg>
-														{action.status === '🚨 major upgrade needed'
-															? 'Major Update'
-															: 'Fix via PR'}
-													{/if}
-												</button>
-											{:else if isUpToDate(action.status)}
-												<span
-													class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700"
-												>
-													✅ Up to date
-												</span>
-											{:else}
-												<span
-													class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-500"
-												>
-													-
-												</span>
-											{/if}
-										</td>
-									</tr>
-								{/each}
-							{:else}
-								{#each Object.values(workflowGroups) as workflowGroup, index}
-									<tr class="transition-colors duration-200 hover:bg-gray-50">
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="flex items-center">
-												<div class="h-10 w-10 flex-shrink-0">
-													<div
-														class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100"
-													>
-														<svg
-															class="h-5 w-5 text-blue-600"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-															/>
-														</svg>
-													</div>
-												</div>
-												<div class="ml-4">
-													<div class="font-mono text-sm font-medium text-gray-900">
-														{workflowGroup.repo_name}
-													</div>
-												</div>
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="text-sm text-gray-900">
-												{workflowGroup.workflow_name ||
-													workflowGroup.workflow ||
-													'Unknown Workflow'}
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<div class="text-sm text-gray-900">
-												{workflowGroup.hasActions ? workflowGroup.total : 'No actions'}
-											</div>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800"
-											>
-												{workflowGroup.upToDate}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800"
-											>
-												{workflowGroup.majorUpgradeNeeded}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
-											>
-												{workflowGroup.upgradeRecommended}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800"
-											>
-												{workflowGroup.outdated}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											<span
-												class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
-                                            {workflowGroup.hasActions
-													? workflowGroup.majorUpgradeNeeded > 0
-														? 'bg-red-100 text-red-800'
-														: workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0
-															? 'bg-yellow-100 text-yellow-800'
-															: 'bg-green-100 text-green-800'
-													: 'bg-gray-100 text-gray-800'}"
-											>
-												{workflowGroup.hasActions
-													? workflowGroup.majorUpgradeNeeded > 0
-														? `🚨 ${workflowGroup.majorUpgradeNeeded} critical`
-														: workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0
-															? `⚠️ ${workflowGroup.upgradeRecommended + workflowGroup.outdated} updates`
-															: '✅ All up-to-date'
-													: 'No actions'}
-											</span>
-										</td>
-										<td class="px-6 py-4 whitespace-nowrap">
-											{#if workflowGroup.majorUpgradeNeeded > 0 || workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
-												<button
-													onclick={() => fixAllOutdatedInWorkflow(workflowGroup)}
-													class="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2
-													{workflowGroup.majorUpgradeNeeded > 0
-														? 'bg-red-600 hover:bg-red-500 focus-visible:outline-red-600'
-														: 'bg-blue-600 hover:bg-blue-500 focus-visible:outline-blue-600'}"
-												>
-													<svg
-														class="mr-2 -ml-1 h-4 w-4"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															stroke-width="2"
-															d="M13 10V3L4 14h7v7l9-11h-7z"
-														/>
-													</svg>
-													{workflowGroup.majorUpgradeNeeded > 0
-														? `Major Update (${workflowGroup.majorUpgradeNeeded + workflowGroup.upgradeRecommended + workflowGroup.outdated})`
-														: `Fix All (${workflowGroup.upgradeRecommended + workflowGroup.outdated})`}
-												</button>
-											{:else if workflowGroup.hasActions}
-												<span
-													class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700"
-												>
-													✅ All up to date
-												</span>
-											{:else}
-												<span
-													class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-500"
-												>
-													No actions
-												</span>
-											{/if}
-										</td>
-									</tr>
-								{/each}
-							{/if}
-						</tbody>
-					</table>
-				</div>
-
-				<!-- Pagination Controls -->
-				{#if totalPages > 1}
-					<div class="border-t border-gray-200 bg-gray-50 px-6 py-4">
-						<div class="flex items-center justify-between">
-							<div class="flex flex-1 justify-between sm:hidden">
-								<!-- Mobile pagination -->
-								<button
-									onclick={previousPage}
-									disabled={!hasPrevious}
-									class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									Previous
-								</button>
-								<button
-									onclick={nextPage}
-									disabled={!hasNext}
-									class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									Next
-								</button>
-							</div>
-
-							<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-								<div>
-									<p class="text-sm text-gray-700">
-										Showing page <span class="font-medium">{currentPage}</span> of
-										<span class="font-medium">{totalPages}</span>
-										(<span class="font-medium">{totalItems}</span> total actions)
-									</p>
-								</div>
-								<div>
-									<nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-										<!-- Previous button -->
-										<button
-											onclick={previousPage}
-											disabled={!hasPrevious}
-											class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-										>
-											<span class="sr-only">Previous</span>
-											<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-												<path
-													fill-rule="evenodd"
-													d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-													clip-rule="evenodd"
-												/>
-											</svg>
-										</button>
-
-										<!-- Page numbers -->
-										{#each Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-											const startPage = Math.max(1, currentPage - 2);
-											const endPage = Math.min(totalPages, startPage + 4);
-											return startPage + i;
-										}) as pageNum}
-											{#if pageNum <= totalPages}
-												<button
-													onclick={() => goToPage(pageNum)}
-													class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {pageNum ===
-													currentPage
-														? 'z-10 bg-blue-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-														: 'text-gray-900'}"
-												>
-													{pageNum}
-												</button>
-											{/if}
-										{/each}
-
-										<!-- Next button -->
-										<button
-											onclick={nextPage}
-											disabled={!hasNext}
-											class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-										>
-											<span class="sr-only">Next</span>
-											<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-												<path
-													fill-rule="evenodd"
-													d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-													clip-rule="evenodd"
-												/>
-											</svg>
-										</button>
-									</nav>
-								</div>
-							</div>
-						</div>
 					</div>
 				{/if}
-			</div>
-
-			<!-- Summary Statistics -->
-			<div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-				<div class="rounded-lg bg-white p-4 shadow">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-								<svg
-									class="h-5 w-5 text-green-600"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M5 13l4 4L19 7"
-									/>
-								</svg>
-							</div>
-						</div>
-						<div class="ml-3">
-							<p class="text-sm font-medium text-gray-500">Up to Date</p>
-							<p class="text-2xl font-semibold text-gray-900">
-								{actions.filter((a) => a.status === '✅ up-to-date' || a.status === 'up-to-date')
-									.length}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="rounded-lg bg-white p-4 shadow">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<div class="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
-								<svg
-									class="h-5 w-5 text-yellow-600"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-									/>
-								</svg>
-							</div>
-						</div>
-						<div class="ml-3">
-							<p class="text-sm font-medium text-gray-500">Outdated</p>
-							<p class="text-2xl font-semibold text-gray-900">
-								{actions.filter((a) => a.status === '⚠️ outdated' || a.status === 'outdated')
-									.length}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="rounded-lg bg-white p-4 shadow">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
-								<svg
-									class="h-5 w-5 text-gray-600"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-									/>
-								</svg>
-							</div>
-						</div>
-						<div class="ml-3">
-							<p class="text-sm font-medium text-gray-500">
-								{viewMode === 'detailed' ? 'No Actions' : 'Workflows'}
-							</p>
-							<p class="text-2xl font-semibold text-gray-900">
-								{viewMode === 'detailed'
-									? actions.filter((a) => a.status === 'No actions found').length
-									: Object.keys(workflowGroups).length}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="rounded-lg bg-white p-4 shadow">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-								<svg
-									class="h-5 w-5 text-blue-600"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-									/>
-								</svg>
-							</div>
-						</div>
-						<div class="ml-3">
-							<p class="text-sm font-medium text-gray-500">
-								{viewMode === 'detailed' ? 'Total Actions' : 'Total Actions'}
-							</p>
-							<p class="text-2xl font-semibold text-gray-900">
-								{actions.length}
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		{/if}
+			</main>
+		</div>
 	</div>
-</div>
+{/if}
 
 <style>
 	/* ============================================
-	   CSS VARIABLES - Cyan Design System
+	   PROFESSIONAL DESIGN SYSTEM (MATTE ENGINEERING)
 	   ============================================ */
-	:global(:root) {
-		--primary-color: #00d9ff;
-		--primary-hover: #33e3ff;
-		--primary-dark: #00c0e0;
-		--text-primary: #ffffff;
-		--text-secondary: #b8b8b8;
-		--text-muted: #666666;
-		--bg-primary: rgba(0, 0, 0, 0.95);
-		--bg-card: rgba(0, 0, 0, 0.4);
-		--border-color: rgba(0, 217, 255, 0.3);
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--nav-height: 64px;
 	}
 
-	/* ============================================
-	   MAIN CONTAINER
-	   ============================================ */
-	.audit-container {
+	.audit-page.dark {
+		--bg-app: #000000;
+		--bg-surface: #020202;
+		--bg-surface-alt: #050505;
+		--border: rgba(255, 255, 255, 0.03);
+		--border-focus: rgba(255, 255, 255, 0.08);
+		--text-primary: #f8fafc;
+		--text-secondary: #94a3b8;
+		--text-muted: #475569;
+		--accent: #00adef;
+		--accent-soft: rgba(0, 173, 239, 0.05);
+		--success: #10b981;
+		--warning: #f59e0b;
+		--error: #ef4444;
+		--card-shadow: none;
+	}
+
+	.audit-page.light {
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--warning: #d97706;
+		--error: #dc2626;
+		--card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+	}
+
+	/* Global Reset */
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	.audit-page {
 		min-height: 100vh;
-		background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+		background: var(--bg-app);
 		color: var(--text-primary);
+		font-family: var(--font-sans);
+		transition: background 0.3s ease;
+		position: relative;
+		overflow-x: hidden;
 	}
 
-	.audit-container.light {
-		background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-		color: #000000;
+	/* Architectural Backdrop */
+	.audit-page::before {
+		content: '';
+		position: fixed;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.5;
 	}
 
-	.audit-container.light {
-		--text-primary: #000000;
-		--text-secondary: #666666;
-		--text-muted: #999999;
-		--bg-primary: rgba(255, 255, 255, 0.95);
-		--bg-card: rgba(255, 255, 255, 0.6);
-		--border-color: rgba(0, 217, 255, 0.3);
+	.page-content {
+		position: relative;
+		z-index: 10;
+		padding-bottom: 5rem;
 	}
 
 	/* ============================================
-	   NAVIGATION BAR
+	   LOADER
 	   ============================================ */
-	.top-navbar {
+	.loading-screen {
 		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		z-index: 1000;
-		background: var(--bg-primary);
-		backdrop-filter: blur(20px);
-		border-bottom: 1px solid var(--border-color);
-		padding: 1rem 2rem;
-		transition: all 0.3s ease;
-	}
-
-	.navbar-content {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		max-width: 100%;
-	}
-
-	.navbar-left {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-	}
-
-	.navbar-right {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	/* Brand Section */
-	.brand-section {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		cursor: pointer;
-		transition: transform 0.3s ease;
-	}
-
-	.brand-section:hover {
-		transform: translateY(-1px);
-	}
-
-	.brand-icon {
-		width: 48px;
-		height: 48px;
-		filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
-		transition: filter 0.3s ease;
-	}
-
-	.brand-section:hover .brand-icon {
-		filter: drop-shadow(0 0 15px rgba(0, 217, 255, 0.7));
-	}
-
-	.brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.brand-name {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		line-height: 1;
-		letter-spacing: -0.02em;
-	}
-
-	.brand-subtitle {
-		font-size: 0.7rem;
-		color: var(--text-secondary);
-		opacity: 0.8;
-		margin-top: 0.2rem;
-		letter-spacing: 0.05em;
-	}
-
-	/* Breadcrumb */
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-	}
-
-	.breadcrumb-link {
-		color: var(--text-secondary);
-		text-decoration: none;
-		transition: color 0.3s ease;
-		position: relative;
-	}
-
-	.breadcrumb-link:hover {
-		color: var(--primary-color);
-	}
-
-	.breadcrumb-link::after {
-		content: '';
-		position: absolute;
-		bottom: -2px;
-		left: 0;
-		width: 0;
-		height: 2px;
-		background: var(--primary-color);
-		transition: width 0.3s ease;
-	}
-
-	.breadcrumb-link:hover::after {
-		width: 100%;
-	}
-
-	.breadcrumb-separator {
-		color: var(--text-muted);
-	}
-
-	.breadcrumb-current {
-		color: var(--primary-color);
-		font-weight: 600;
-	}
-
-	/* Theme Toggle */
-	.theme-toggle {
+		inset: 0;
+		background: #000000;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
-		background: transparent;
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		cursor: pointer;
-		transition: all 0.3s ease;
+		z-index: 9999;
 	}
 
-	.theme-toggle:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-		box-shadow: 0 4px 12px rgba(0, 217, 255, 0.2);
+	.loading-content {
+		text-align: center;
+		max-width: 300px;
 	}
 
-	.theme-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--primary-color);
+	.loading-icon {
+		width: 48px;
+		height: 48px;
+		margin-bottom: 2rem;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	.progress-bar {
+		height: 2px;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 4px;
+		overflow: hidden;
+		margin: 1rem 0;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: var(--accent, #00adef);
+		width: 40%;
+		animation: load 1.5s ease-in-out infinite;
+	}
+
+	@keyframes load {
+		0% {
+			transform: translateX(-100%);
+			width: 20%;
+		}
+		50% {
+			width: 50%;
+		}
+		100% {
+			transform: translateX(300%);
+			width: 20%;
+		}
+	}
+
+	.status-message {
+		font-family: var(--font-mono, monospace);
+		font-size: 0.65rem;
+		color: rgba(255, 255, 255, 0.4);
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
 	}
 
 	/* ============================================
-	   MAIN CONTENT AREA - FULL WIDTH
+	   HEADER NAVIGATION
 	   ============================================ */
-	.main-content {
-		margin-top: 80px;
-		padding: 2rem;
-		width: 100%;
-		min-height: calc(100vh - 80px);
+	.dashboard-header {
+		height: var(--nav-height);
+		background: var(--bg-app);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		position: sticky;
+		top: 0;
+		z-index: 100;
 	}
 
-	/* Header Section */
-	.content-header {
+	.header-content {
+		max-width: 1440px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 2rem;
-		flex-wrap: wrap;
+	}
+
+	.nav-brand {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		text-decoration: none;
+		color: var(--text-primary);
+	}
+
+	.brand-icon {
+		width: 28px;
+		height: 28px;
+	}
+	.brand-name {
+		font-weight: 700;
+		font-size: 1rem;
+		letter-spacing: -0.02em;
+	}
+
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
+	}
+
+	.nav-link {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
+		position: relative;
+	}
+
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--text-primary);
+	}
+
+	.nav-link.active::after {
+		content: '';
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: var(--accent);
+	}
+
+	.nav-actions {
+		display: flex;
+		align-items: center;
 		gap: 1.5rem;
 	}
 
-	.header-left {
-		flex: 1;
-		min-width: 250px;
-	}
-
-	.page-title {
-		font-size: 2rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		margin-bottom: 0.5rem;
-	}
-
-	.page-subtitle {
-		color: var(--text-secondary);
-		font-size: 0.95rem;
-	}
-
-	.org-name {
-		font-family: 'Courier New', monospace;
-		color: var(--primary-color);
-		font-weight: 600;
-	}
-
-	.header-actions {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-
-	/* View Mode Toggle */
-	.view-mode-toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		background: var(--bg-card);
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		padding: 0.5rem;
-	}
-
-	.toggle-label {
-		font-size: 0.875rem;
-		color: var(--text-secondary);
-		padding: 0 0.5rem;
-	}
-
-	.toggle-button {
-		padding: 0.5rem 1rem;
-		background: transparent;
-		border: 1px solid transparent;
-		border-radius: 6px;
-		color: var(--text-secondary);
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-
-	.toggle-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		color: var(--primary-color);
-	}
-
-	.toggle-button.active {
-		background: var(--primary-color);
-		color: #000000;
-		border-color: var(--primary-color);
-		box-shadow: 0 2px 8px rgba(0, 217, 255, 0.3);
-	}
-
-	/* Refresh Button */
-	.refresh-button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: #ffffff;
-		color: #000000;
+	.theme-toggle {
+		background: none;
 		border: none;
-		border-radius: 8px;
-		font-weight: 600;
+		color: var(--text-secondary);
 		cursor: pointer;
-		transition: all 0.3s ease;
-		box-shadow:
-			0 10px 30px rgba(0, 0, 0, 0.5),
-			0 5px 15px rgba(0, 0, 0, 0.3);
+		padding: 0.5rem;
+		border-radius: 6px;
+		transition: all 0.2s;
 	}
 
-	.refresh-button:hover:not(:disabled) {
-		background: var(--primary-color);
-		transform: translateY(-3px);
-		box-shadow:
-			0 15px 40px rgba(0, 217, 255, 0.4),
-			0 8px 20px rgba(0, 217, 255, 0.3);
+	.theme-toggle:hover {
+		background: var(--border);
+		color: var(--text-primary);
 	}
 
-	.refresh-button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.button-icon {
+	.theme-icon {
 		width: 18px;
 		height: 18px;
 	}
 
-	/* Back Button */
-	.back-button {
-		padding: 0.75rem 1.5rem;
-		background: transparent;
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		color: var(--text-primary);
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.3s ease;
+	/* ============================================
+	   TECHNICAL BAR
+	   ============================================ */
+	.technical-bar {
+		background: var(--bg-surface);
+		border-bottom: 1px solid var(--border);
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		height: 40px;
 	}
 
-	.back-button:hover {
-		background: rgba(0, 217, 255, 0.1);
-		border-color: var(--primary-color);
-		transform: translateX(-4px);
-		box-shadow: 0 4px 12px rgba(0, 217, 255, 0.2);
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.breadcrumb-item {
+		color: var(--text-muted);
+		text-decoration: none;
+		transition: color 0.15s;
+	}
+
+	.breadcrumb-item:hover {
+		color: var(--text-secondary);
+	}
+	.breadcrumb-item.active {
+		color: var(--accent);
+	}
+	.breadcrumb-sep {
+		color: var(--border);
+	}
+
+	.system-status {
+		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--success);
+		opacity: 0.8;
+	}
+
+	.status-pulse {
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		animation: blink 2s infinite;
+	}
+
+	@keyframes blink {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
 	/* ============================================
-	   CARD COMPONENTS - Cyan Design Pattern
+	   PAGE MAIN
 	   ============================================ */
-	.loading-card,
-	.error-card,
-	.empty-card,
-	.controls-card,
-	.table-card {
-		background: var(--bg-card);
-		border: 1px solid var(--border-color);
-		border-radius: 12px;
-		padding: 1.5rem;
-		backdrop-filter: blur(10px);
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-		margin-bottom: 1.5rem;
-		position: relative;
-		overflow: hidden;
+	.page-main {
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 2.5rem 2rem;
 	}
 
-	.loading-card,
-	.empty-card {
+	.view-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+	}
+
+	.title-group h1 {
+		font-size: 1.75rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		margin-bottom: 0.5rem;
+	}
+
+	.title-group p {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		max-width: 500px;
+		line-height: 1.5;
+	}
+
+	.accent-text {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.header-cta {
+		display: flex;
+		gap: 0.75rem;
+	}
+
+	/* ============================================
+	   LOADER / ERROR / EMPTY STATES
+	   ============================================ */
+	.loader-view {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 8rem 2rem;
 		text-align: center;
-		padding: 3rem 1.5rem;
 	}
 
-	/* Loading State */
-	.spinner {
-		width: 40px;
-		height: 40px;
-		margin: 0 auto 1rem;
-		border: 3px solid var(--border-color);
-		border-top-color: var(--primary-color);
+	.loader-icon {
+		width: 48px;
+		height: 48px;
+		margin-bottom: 1.5rem;
+		animation: pulse 2s infinite;
+	}
+
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+
+	.error-banner {
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--error);
+		border-radius: 12px;
+		padding: 1.25rem;
+		margin-bottom: 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.error-text {
+		color: var(--error);
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+	.empty-text {
+		color: var(--text-secondary);
+		font-size: 0.9375rem;
+	}
+
+	/* ============================================
+	   STATS CARDS
+	   ============================================ */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.stat-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		transition: all 0.2s var(--ease-premium);
+		box-shadow: var(--card-shadow);
+	}
+
+	.stat-card:hover {
+		border-color: var(--border-focus);
+	}
+
+	.stat-card-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.stat-card-label {
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.stat-card-value {
+		font-family: var(--font-mono);
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.stat-dot {
+		width: 8px;
+		height: 8px;
 		border-radius: 50%;
-		animation: spin 1s linear infinite;
+	}
+
+	.dot-success {
+		background: var(--success);
+	}
+	.dot-error {
+		background: var(--error);
+	}
+	.dot-accent {
+		background: var(--accent);
+	}
+	.dot-warning {
+		background: var(--warning);
+	}
+
+	/* ============================================
+	   CONTROLS ROW
+	   ============================================ */
+	.controls-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+		flex-wrap: wrap;
+	}
+
+	.filter-nav {
+		display: flex;
+		gap: 0.25rem;
+		background: var(--bg-surface-alt);
+		padding: 0.25rem;
+		border-radius: 8px;
+		border: 1px solid var(--border);
+	}
+
+	.filter-btn {
+		background: none;
+		border: none;
+		padding: 0.4rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--text-secondary);
+		cursor: pointer;
+		transition: all 0.2s;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.filter-btn:hover {
+		color: var(--text-primary);
+	}
+
+	.filter-btn.active {
+		background: var(--bg-surface);
+		color: var(--accent);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.count-badge {
+		font-size: 0.6rem;
+		background: var(--border);
+		color: var(--text-muted);
+		padding: 0.1rem 0.35rem;
+		border-radius: 4px;
+	}
+
+	.controls-right {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.cached-pill {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--accent);
+		padding: 0.25rem 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+	}
+
+	.total-label {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+	}
+
+	.search-box {
+		position: relative;
+	}
+
+	.search-icon {
+		position: absolute;
+		left: 0.625rem;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--text-muted);
+		pointer-events: none;
+	}
+
+	.search-input {
+		padding: 0.4rem 0.75rem 0.4rem 2rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		color: var(--text-primary);
+		font-size: 0.8125rem;
+		font-family: var(--font-sans);
+		width: 200px;
+		transition: all 0.15s;
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--border-focus);
+		width: 280px;
+	}
+
+	.search-input::placeholder {
+		color: var(--text-muted);
+	}
+
+	/* ============================================
+	   DATA TABLE
+	   ============================================ */
+	.table-container {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: var(--card-shadow);
+	}
+
+	.table-scroll {
+		overflow-x: auto;
+	}
+
+	.data-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.8125rem;
+	}
+
+	.data-table thead {
+		background: var(--bg-surface-alt);
+	}
+
+	.data-table th {
+		padding: 0.625rem 1rem;
+		text-align: left;
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		border-bottom: 1px solid var(--border);
+		white-space: nowrap;
+	}
+
+	.data-table td {
+		padding: 0.625rem 1rem;
+		border-bottom: 1px solid var(--border);
+		color: var(--text-secondary);
+		white-space: nowrap;
+	}
+
+	.data-table tbody tr {
+		transition: background 0.1s;
+	}
+
+	.data-table tbody tr:hover {
+		background: var(--bg-surface-alt);
+	}
+
+	.data-table tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	.cell-mono {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--text-primary);
+		font-weight: 500;
+	}
+
+	.cell-muted {
+		color: var(--text-muted);
+	}
+
+	.version-tag {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		padding: 0.15rem 0.4rem;
+		border-radius: 4px;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		color: var(--text-secondary);
+	}
+
+	/* ============================================
+	   STATUS TAGS
+	   ============================================ */
+	.status-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		font-size: 0.65rem;
+		font-weight: 600;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.status-tag.connected {
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.15);
+	}
+
+	.status-tag.critical {
+		color: var(--error);
+		border: 1px solid rgba(239, 68, 68, 0.15);
+	}
+
+	.status-tag.outdated {
+		color: var(--warning);
+		border: 1px solid rgba(245, 158, 11, 0.15);
+	}
+
+	.status-tag.recommended {
+		color: var(--accent);
+		border: 1px solid rgba(0, 173, 239, 0.15);
+	}
+
+	.status-tag.pending {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+	}
+
+	/* ============================================
+	   PAGINATION
+	   ============================================ */
+	.pagination-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		border-top: 1px solid var(--border);
+	}
+
+	.pagination-info {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
+
+	.pagination-info strong {
+		color: var(--text-secondary);
+	}
+
+	.pagination-controls {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	/* ============================================
+	   BUTTONS
+	   ============================================ */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.625rem 1rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		white-space: nowrap;
+	}
+
+	.btn:hover:not(:disabled) {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
+	}
+
+	.btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+		border-color: var(--border);
+		color: var(--text-secondary);
+	}
+
+	.btn-sm {
+		padding: 0.3rem 0.6rem;
+		font-size: 0.7rem;
+		border-radius: 6px;
+		gap: 0.3rem;
+	}
+
+	.button-arrow {
+		font-size: 0.9rem;
+		transition: transform 0.2s var(--ease-premium);
+	}
+
+	.btn:hover .button-arrow {
+		transform: translateX(3px);
+	}
+
+	.btn-spinner {
+		width: 12px;
+		height: 12px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-top-color: currentColor;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
 	}
 
 	@keyframes spin {
@@ -1619,274 +1709,63 @@
 		}
 	}
 
-	.loading-text {
-		color: var(--text-secondary);
-		font-size: 0.95rem;
-	}
-
-	/* Error State */
-	.error-card {
-		border-color: rgba(255, 87, 87, 0.5);
-		background: rgba(255, 87, 87, 0.1);
-	}
-
-	.error-content {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.error-icon {
-		width: 24px;
-		height: 24px;
-		color: #ff5757;
-		flex-shrink: 0;
-	}
-
-	.error-message {
-		color: #ff5757;
-		font-weight: 600;
-	}
-
-	/* Empty State */
-	.empty-text {
-		color: var(--text-secondary);
-		font-size: 1rem;
-	}
-
 	/* ============================================
-	   CONTROLS CARD
+	   RESPONSIVE
 	   ============================================ */
-	.controls-container {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
+	@media (max-width: 1024px) {
+		.stats-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
 	}
 
-	.search-wrapper {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 1rem;
-	}
-
-	.search-container {
-		position: relative;
-		flex: 1;
-		max-width: 500px;
-		min-width: 250px;
-	}
-
-	.search-icon {
-		position: absolute;
-		left: 1rem;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 20px;
-		height: 20px;
-		color: var(--text-muted);
-		pointer-events: none;
-	}
-
-	.search-input {
-		width: 100%;
-		padding: 0.75rem 1rem 0.75rem 3rem;
-		background: rgba(0, 0, 0, 0.3);
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		color: var(--text-primary);
-		font-size: 0.9rem;
-		transition: all 0.3s ease;
-	}
-
-	.audit-container.light .search-input {
-		background: rgba(255, 255, 255, 0.8);
-	}
-
-	.search-input:focus {
-		outline: none;
-		border-color: var(--primary-color);
-		box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
-	}
-
-	.search-input::placeholder {
-		color: var(--text-muted);
-	}
-
-	.stats-container {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-		flex-wrap: wrap;
-	}
-
-	.cached-indicator {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: rgba(0, 217, 255, 0.1);
-		border: 1px solid rgba(0, 217, 255, 0.3);
-		border-radius: 6px;
-		color: var(--primary-color);
-		font-size: 0.875rem;
-		font-weight: 500;
-	}
-
-	.cached-icon {
-		width: 16px;
-		height: 16px;
-	}
-
-	.total-count {
-		color: var(--text-secondary);
-		font-size: 0.875rem;
-	}
-
-	/* Statistics Grid */
-	.statistics-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: 1rem;
-	}
-
-	.stat-item {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.stat-dot {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
-	.stat-dot.up-to-date {
-		background: #00ff88;
-		box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
-	}
-
-	.stat-dot.major-upgrade {
-		background: #ff5757;
-		box-shadow: 0 0 8px rgba(255, 87, 87, 0.5);
-	}
-
-	.stat-dot.recommended {
-		background: var(--primary-color);
-		box-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
-	}
-
-	.stat-dot.outdated {
-		background: #ffaa00;
-		box-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
-	}
-
-	.stat-dot.unknown {
-		background: #888888;
-		box-shadow: 0 0 8px rgba(136, 136, 136, 0.5);
-	}
-
-	.stat-label {
-		color: var(--text-secondary);
-		font-size: 0.875rem;
-	}
-
-	/* ============================================
-	   TABLE CARD
-	   ============================================ */
-	.table-header {
-		padding-bottom: 1rem;
-		border-bottom: 1px solid var(--border-color);
-		margin-bottom: 1rem;
-	}
-
-	.table-title-section {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 1rem;
-	}
-
-	.table-title {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: var(--text-primary);
-	}
-
-	.realtime-badge {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: rgba(0, 255, 136, 0.1);
-		border: 1px solid rgba(0, 255, 136, 0.3);
-		border-radius: 6px;
-		color: #00ff88;
-		font-size: 0.8rem;
-		font-weight: 500;
-	}
-
-	.badge-icon {
-		width: 16px;
-		height: 16px;
-	}
-
-	/* ============================================
-	   RESPONSIVE DESIGN
-	   ============================================ */
 	@media (max-width: 768px) {
-		.navbar-left {
+		.page-main {
+			padding: 1.5rem 1rem;
+		}
+		.nav-menu {
+			display: none;
+		}
+
+		.view-header {
 			flex-direction: column;
 			align-items: flex-start;
-			gap: 1rem;
+			gap: 1.25rem;
 		}
 
-		.breadcrumb {
-			font-size: 0.75rem;
-		}
-
-		.content-header {
+		.controls-row {
 			flex-direction: column;
 			align-items: flex-start;
 		}
 
-		.header-actions {
-			width: 100%;
-			flex-direction: column;
+		.controls-right {
+			flex-wrap: wrap;
 		}
 
-		.view-mode-toggle,
-		.refresh-button,
-		.back-button {
-			width: 100%;
-			justify-content: center;
+		.stats-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 
-		.main-content {
-			padding: 1rem;
-		}
-
-		.page-title {
-			font-size: 1.5rem;
+		.title-group h1 {
+			font-size: 1.375rem;
 		}
 	}
 
 	@media (max-width: 480px) {
-		.brand-name {
-			font-size: 1.25rem;
-		}
-
-		.brand-icon {
-			width: 36px;
-			height: 36px;
-		}
-
-		.statistics-grid {
+		.stats-grid {
 			grid-template-columns: 1fr;
+		}
+		.header-cta {
+			flex-direction: column;
+			width: 100%;
+		}
+		.btn {
+			width: 100%;
+		}
+		.search-input {
+			width: 160px;
+		}
+		.search-input:focus {
+			width: 200px;
 		}
 	}
 </style>
