@@ -692,12 +692,26 @@
 
 				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 					{#if darkMode}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
 						</svg>
 					{:else}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
 				</button>
@@ -716,8 +730,18 @@
 		</div>
 		<div class="header-tools">
 			<button onclick={forceRefresh} disabled={refreshing} class="btn btn-secondary btn-sm">
-				<svg class="btn-icon {refreshing ? 'spinning' : ''}" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-					<path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+				<svg
+					class="btn-icon {refreshing ? 'spinning' : ''}"
+					width="14"
+					height="14"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+				>
+					<path
+						d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+					/>
 				</svg>
 				{refreshing ? 'Syncing...' : 'Sync'}
 			</button>
@@ -735,621 +759,628 @@
 	<!-- Sidebar Navigation -->
 	<div class="layout-with-sidebar">
 		<aside class="workspace-sidebar {sidebarCollapsed ? 'collapsed' : ''}">
-			<button onclick={toggleSidebar} class="sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar navigation">
-				<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-					<path d="M4 6h16M4 12h16M4 18h16"/>
+			<button
+				onclick={toggleSidebar}
+				class="sidebar-toggle-btn"
+				title="Toggle sidebar"
+				aria-label="Toggle sidebar navigation"
+			>
+				<svg
+					width="16"
+					height="16"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+				>
+					<path d="M4 6h16M4 12h16M4 18h16" />
 				</svg>
 			</button>
 			<nav class="sidebar-nav">
-				<a href="/github/workspace/{orgName}/repo-treeview" class="sidebar-link" title="Repo Treeview">
-					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2"/></svg>
+				<a
+					href="/github/workspace/{orgName}/repo-treeview"
+					class="sidebar-link"
+					title="Repo Treeview"
+				>
+					<svg
+						width="16"
+						height="16"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path
+							d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2"
+						/></svg
+					>
 					{#if !sidebarCollapsed}<span>Repo Tree</span>{/if}
 				</a>
-				<a href="/github/workspace/{orgName}/threat-modeling" class="sidebar-link" title="Threat Modeling">
-					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+				<a
+					href="/github/workspace/{orgName}/threat-modeling"
+					class="sidebar-link"
+					title="Threat Modeling"
+				>
+					<svg
+						width="16"
+						height="16"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path
+							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+						/></svg
+					>
 					{#if !sidebarCollapsed}<span>Threats</span>{/if}
 				</a>
 				<a href="/github/workspace/{orgName}/audit" class="sidebar-link" title="Actions Audit">
-					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+					<svg
+						width="16"
+						height="16"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path
+							d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+						/></svg
+					>
 					{#if !sidebarCollapsed}<span>Audit</span>{/if}
 				</a>
 				<a href="/github/workspace/{orgName}/canvas" class="sidebar-link" title="Canvas">
-					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+					<svg
+						width="16"
+						height="16"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path
+							d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+						/></svg
+					>
 					{#if !sidebarCollapsed}<span>Canvas</span>{/if}
 				</a>
 				<a href="/github/workspace/{orgName}/treeview" class="sidebar-link" title="Treeview">
-					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/></svg>
+					<svg
+						width="16"
+						height="16"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" /></svg
+					>
 					{#if !sidebarCollapsed}<span>Treeview</span>{/if}
 				</a>
 			</nav>
 		</aside>
 
 		<main class="workspace-main {sidebarCollapsed ? 'expanded' : ''}">
-		{#if loading}
-			<!-- Professional Loading State -->
-			<div class="loading-state">
-				<div class="loading-content">
-					<div class="loading-spinner"></div>
-					<h2 class="loading-title">Loading Workspace</h2>
-					<p class="loading-text">{loadingStage}</p>
-					<div class="loading-progress">
-						<div class="progress-bar"></div>
+			{#if loading}
+				<div class="center-state">
+					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+					<div class="loader-text">{loadingStage}</div>
+				</div>
+			{:else if error}
+				<!-- Professional Error State -->
+				<div class="error-state">
+					<div class="error-content">
+						<div class="error-icon">
+							<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+								/>
+							</svg>
+						</div>
+						<h3 class="error-title">Unable to Load Workspace</h3>
+						<p class="error-message">{error}</p>
+						<div class="error-actions">
+							<button onclick={loadWorkspaceData} class="retry-button">
+								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+									/>
+								</svg>
+								Retry
+							</button>
+							<button onclick={() => goto('/organizations')} class="back-button">
+								Back to Organizations
+							</button>
+						</div>
 					</div>
 				</div>
-			</div>
-		{:else if error}
-			<!-- Professional Error State -->
-			<div class="error-state">
-				<div class="error-content">
-					<div class="error-icon">
-						<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-							/>
-						</svg>
-					</div>
-					<h3 class="error-title">Unable to Load Workspace</h3>
-					<p class="error-message">{error}</p>
-					<div class="error-actions">
-						<button onclick={loadWorkspaceData} class="retry-button">
+			{:else if workspaceData}
+				<!-- Professional Stats Cards -->
+				<div class="stats-grid">
+					<div class="stat-card">
+						<div class="stat-icon stat-icon-blue">
 							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
 									stroke-width="2"
-									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+									d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
 								/>
 							</svg>
-							Retry
-						</button>
-						<button onclick={() => goto('/organizations')} class="back-button">
-							Back to Organizations
-						</button>
+						</div>
+						<div class="stat-content">
+							<p class="stat-label">Repositories</p>
+							<p class="stat-value">{workspaceData.repository_count || 0}</p>
+						</div>
+						<div class="stat-trend">
+							<span class="trend-up">Active</span>
+						</div>
 					</div>
-				</div>
-			</div>
-		{:else if workspaceData}
-			<!-- Professional Stats Cards -->
-			<div class="stats-grid">
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-blue">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-							/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<p class="stat-label">Repositories</p>
-						<p class="stat-value">{workspaceData.repository_count || 0}</p>
-					</div>
-					<div class="stat-trend">
-						<span class="trend-up">Active</span>
-					</div>
-				</div>
 
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-purple">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-							/>
-						</svg>
+					<div class="stat-card">
+						<div class="stat-icon stat-icon-purple">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+								/>
+							</svg>
+						</div>
+						<div class="stat-content">
+							<p class="stat-label">Workflows</p>
+							<p class="stat-value">{workspaceData.total_workflows || 0}</p>
+						</div>
+						<div class="stat-trend">
+							<span class="trend-neutral">Total</span>
+						</div>
 					</div>
-					<div class="stat-content">
-						<p class="stat-label">Workflows</p>
-						<p class="stat-value">{workspaceData.total_workflows || 0}</p>
-					</div>
-					<div class="stat-trend">
-						<span class="trend-neutral">Total</span>
-					</div>
-				</div>
 
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-green">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
+					<div class="stat-card">
+						<div class="stat-icon stat-icon-green">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+						</div>
+						<div class="stat-content">
+							<p class="stat-label">Status</p>
+							<p class="stat-value stat-value-small">{workspaceData.status || 'connected'}</p>
+						</div>
+						<div class="stat-trend">
+							<span class="trend-up">Online</span>
+						</div>
 					</div>
-					<div class="stat-content">
-						<p class="stat-label">Status</p>
-						<p class="stat-value stat-value-small">{workspaceData.status || 'connected'}</p>
-					</div>
-					<div class="stat-trend">
-						<span class="trend-up">Online</span>
-					</div>
-				</div>
 
-				<div class="stat-card">
-					<div class="stat-icon stat-icon-orange">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<p class="stat-label">Last Synced</p>
-						<p class="stat-value stat-value-small">
-							{#if workspaceData.last_updated}
-								{formatRelativeTime(workspaceData.last_updated)}
+					<div class="stat-card">
+						<div class="stat-icon stat-icon-orange">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+						</div>
+						<div class="stat-content">
+							<p class="stat-label">Last Synced</p>
+							<p class="stat-value stat-value-small">
+								{#if workspaceData.last_updated}
+									{formatRelativeTime(workspaceData.last_updated)}
+								{:else}
+									Just now
+								{/if}
+							</p>
+						</div>
+						<div class="stat-trend">
+							{#if realtimeUpdateCount > 0}
+								<span class="trend-up">{realtimeUpdateCount} updates</span>
 							{:else}
-								Just now
+								<span class="trend-neutral">Monitoring</span>
 							{/if}
-						</p>
-					</div>
-					<div class="stat-trend">
-						{#if realtimeUpdateCount > 0}
-							<span class="trend-up">{realtimeUpdateCount} updates</span>
-						{:else}
-							<span class="trend-neutral">Monitoring</span>
-						{/if}
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- Tabbed Content Section -->
-			<div class="content-tabs">
-				<div class="tabs-header">
-					<button
-						onclick={() => (activeTab = 'repositories')}
-						class="tab-button {activeTab === 'repositories' ? 'active' : ''}"
-					>
-						<svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-							/>
-						</svg>
-						<span>Repositories</span>
-						<span class="tab-badge">{workspaceData.repository_count || 0}</span>
-					</button>
-					<button
-						onclick={switchToWorkflowsTab}
-						class="tab-button {activeTab === 'workflows' ? 'active' : ''}"
-					>
-						<svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-							/>
-						</svg>
-						<span>Workflows</span>
-						<span class="tab-badge">{workspaceData.total_workflows || 0}</span>
-					</button>
-				</div>
+				<!-- Tabbed Content Section -->
+				<div class="content-tabs">
+					<div class="tabs-header">
+						<button
+							onclick={() => (activeTab = 'repositories')}
+							class="tab-button {activeTab === 'repositories' ? 'active' : ''}"
+						>
+							<svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+								/>
+							</svg>
+							<span>Repositories</span>
+							<span class="tab-badge">{workspaceData.repository_count || 0}</span>
+						</button>
+						<button
+							onclick={switchToWorkflowsTab}
+							class="tab-button {activeTab === 'workflows' ? 'active' : ''}"
+						>
+							<svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+								/>
+							</svg>
+							<span>Workflows</span>
+							<span class="tab-badge">{workspaceData.total_workflows || 0}</span>
+						</button>
+					</div>
 
-				<div class="tabs-content">
-					{#if activeTab === 'repositories'}
-						<!-- Repositories Content -->
-						{#if workspaceData.repositories && workspaceData.repositories.length > 0}
-							<div class="repositories-grid">
-								{#each workspaceData.repositories as repo}
-									<div class="repository-card">
-										<div class="repo-header relative">
-											<div class="repo-info">
-												<div class="repo-icon">
+					<div class="tabs-content">
+						{#if activeTab === 'repositories'}
+							<!-- Repositories Content -->
+							{#if workspaceData.repositories && workspaceData.repositories.length > 0}
+								<div class="repositories-grid">
+									{#each workspaceData.repositories as repo}
+										<div class="repository-card">
+											<div class="repo-header relative">
+												<div class="repo-info">
+													<div class="repo-icon">
+														<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"
+															/>
+														</svg>
+													</div>
+													<div class="repo-title-section">
+														<h3 class="repo-name">
+															<a href={repo.html_url} target="_blank">{repo.name}</a>
+														</h3>
+														{#if repo.private}
+															<span class="repo-badge private">Private</span>
+														{:else}
+															<span class="repo-badge public">Public</span>
+														{/if}
+													</div>
+												</div>
+												<button
+													onclick={() => toggleRepoActionMenu(repo.id || repo.name)}
+													class="repo-menu-button"
+													aria-label="Repository actions menu"
+												>
 													<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 														<path
 															stroke-linecap="round"
 															stroke-linejoin="round"
 															stroke-width="2"
-															d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"
+															d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
 														/>
 													</svg>
-												</div>
-												<div class="repo-title-section">
-													<h3 class="repo-name">
-														<a href={repo.html_url} target="_blank">{repo.name}</a>
-													</h3>
-													{#if repo.private}
-														<span class="repo-badge private">Private</span>
-													{:else}
-														<span class="repo-badge public">Public</span>
-													{/if}
-												</div>
-											</div>
-											<button
-												onclick={() => toggleRepoActionMenu(repo.id || repo.name)}
-												class="repo-menu-button"
-												aria-label="Repository actions menu"
-											>
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-													/>
-												</svg>
-											</button>
+												</button>
 
-											{#if activeRepoMenu === (repo.id || repo.name)}
-												<div class="dropdown-menu">
-													<button
-														onclick={() => {
-															viewRepository(repo);
-															activeRepoMenu = null;
-														}}
-														class="dropdown-item"
-													>
-														<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-															/>
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-															/>
-														</svg>
-														<span>View Details</span>
-													</button>
-
-													<button
-														onclick={() => {
-															goto(`/github/workspace/${orgName}/canvas?repo=${repo.name}`);
-															activeRepoMenu = null;
-														}}
-														class="dropdown-item"
-													>
-														<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-															/>
-														</svg>
-														<span>🎨 Canvas Builder</span>
-													</button>
-
-													<div class="dropdown-divider"></div>
-
-													<button
-														onclick={() => {
-															openAddRepoToProjectModal(repo);
-															activeRepoMenu = null;
-														}}
-														class="dropdown-item dropdown-item-primary"
-													>
-														<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M12 4v16m8-8H4"
-															/>
-														</svg>
-														<span>Add Repository to Project</span>
-													</button>
-
-													<a
-														href={repo.html_url}
-														target="_blank"
-														onclick={() => (activeRepoMenu = null)}
-														class="dropdown-item"
-													>
-														<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-															/>
-														</svg>
-														<span>Open in GitHub</span>
-													</a>
-												</div>
-											{/if}
-										</div>
-
-										{#if repo.description}
-											<p class="repo-description">{repo.description}</p>
-										{/if}
-
-										<div class="repo-meta">
-											{#if repo.language}
-												<div class="meta-item">
-													<span class="language-dot"></span>
-													<span>{repo.language}</span>
-												</div>
-											{/if}
-											<div class="meta-item">
-												<svg fill="currentColor" viewBox="0 0 20 20">
-													<path
-														d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-													/>
-												</svg>
-												<span>{repo.stargazers_count}</span>
-											</div>
-											<div class="meta-item">
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-													/>
-												</svg>
-												<span>{repo.forks_count}</span>
-											</div>
-											<div class="meta-item">
-												<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-													/>
-												</svg>
-												<span>{repo.workflow_count} workflows</span>
-											</div>
-										</div>
-
-										{#if repo.workflows && repo.workflows.length > 0}
-											<div class="repo-workflows">
-												<h4 class="workflows-title">Workflows</h4>
-												<div class="workflows-list">
-													{#each repo.workflows as workflow}
-														<div class="workflow-item">
-															<div class="workflow-info">
-																<span class="workflow-name">{workflow.name}</span>
-																<span class="workflow-badge {workflow.state}">{workflow.state}</span
-																>
-															</div>
-															<button
-																onclick={() => viewWorkflowContent(workflow, repo)}
-																class="view-workflow-button"
-															>
-																View YAML
-															</button>
-														</div>
-													{/each}
-												</div>
-											</div>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						{:else}
-							<div class="empty-state">
-								<svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
-									/>
-								</svg>
-								<h3 class="empty-title">No Repositories Found</h3>
-								<p class="empty-message">This organization doesn't have any repositories yet.</p>
-							</div>
-						{/if}
-					{:else if activeTab === 'workflows'}
-						<!-- Workflows Content -->
-						{#if loadingDetailedWorkflows}
-							<div class="workflows-loading">
-								<div class="loading-spinner"></div>
-								<p>Loading workflow details...</p>
-							</div>
-						{:else if detailedWorkflows.length > 0}
-							<div class="workflows-table-container">
-								<table class="workflows-table">
-									<thead>
-										<tr>
-											<th>Repository / Workflow</th>
-											<th>Trigger</th>
-											<th>Last Run</th>
-											<th>Last Successful</th>
-											<th>Uses</th>
-											<th>Author</th>
-											<th>Status</th>
-											<th>Actions</th>
-										</tr>
-									</thead>
-									<tbody>
-										{#each detailedWorkflows as workflow}
-											<tr class="workflow-row">
-												<td>
-													<div class="workflow-cell">
-														<div class="workflow-icon-wrapper">
+												{#if activeRepoMenu === (repo.id || repo.name)}
+													<div class="dropdown-menu">
+														<button
+															onclick={() => {
+																viewRepository(repo);
+																activeRepoMenu = null;
+															}}
+															class="dropdown-item"
+														>
 															<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																<path
 																	stroke-linecap="round"
 																	stroke-linejoin="round"
 																	stroke-width="2"
-																	d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+																	d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+																/>
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
 																/>
 															</svg>
-														</div>
-														<div class="workflow-details">
-															<span class="workflow-table-name">{workflow.name}</span>
-															<span class="workflow-repo-name">{workflow.repository}</span>
-														</div>
-													</div>
-												</td>
-												<td>
-													<div class="triggers-cell">
-														{#if workflow.triggers && workflow.triggers.length > 0}
-															{#each workflow.triggers.slice(0, 2) as trigger}
-																<span class="trigger-badge">{trigger}</span>
-															{/each}
-															{#if workflow.triggers.length > 2}
-																<span class="trigger-more">+{workflow.triggers.length - 2}</span>
-															{/if}
-														{:else}
-															<span class="trigger-unknown">Unknown</span>
-														{/if}
-													</div>
-												</td>
-												<td>
-													{#if workflow.last_run && workflow.last_run.created_at}
-														<span class="last-run-time"
-															>{formatRelativeTime(workflow.last_run.created_at)}</span
+															<span>View Details</span>
+														</button>
+
+														<button
+															onclick={() => {
+																goto(`/github/workspace/${orgName}/canvas?repo=${repo.name}`);
+																activeRepoMenu = null;
+															}}
+															class="dropdown-item"
 														>
-													{:else}
-														<span class="last-run-never">Never</span>
-													{/if}
-												</td>
-												<td>
-													{#if workflow.last_successful_run && workflow.last_successful_run.created_at}
-														<span class="last-run-time"
-															>{formatRelativeTime(workflow.last_successful_run.created_at)}</span
+															<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+																/>
+															</svg>
+															<span>🎨 Canvas Builder</span>
+														</button>
+
+														<div class="dropdown-divider"></div>
+
+														<button
+															onclick={() => {
+																openAddRepoToProjectModal(repo);
+																activeRepoMenu = null;
+															}}
+															class="dropdown-item dropdown-item-primary"
 														>
-													{:else}
-														<span class="last-run-never">N/A</span>
-													{/if}
-												</td>
-												<td>
-													<div class="uses-cell">
-														{#if workflow.uses && workflow.uses.length > 0}
-															{#each workflow.uses.slice(0, 2) as actionPath}
-																<div class="uses-action">{actionPath}</div>
-															{/each}
-															{#if workflow.uses.length > 2}
-																<span class="uses-more">+{workflow.uses.length - 2} more</span>
-															{/if}
-														{:else}
-															<span class="uses-none">None</span>
-														{/if}
+															<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M12 4v16m8-8H4"
+																/>
+															</svg>
+															<span>Add Repository to Project</span>
+														</button>
+
+														<a
+															href={repo.html_url}
+															target="_blank"
+															onclick={() => (activeRepoMenu = null)}
+															class="dropdown-item"
+														>
+															<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																/>
+															</svg>
+															<span>Open in GitHub</span>
+														</a>
 													</div>
-												</td>
-												<td>
-													<div class="author-cell">
-														<div class="author-avatar">
-															{#if workflow.author && workflow.author !== 'Unknown'}
-																<span>{workflow.author.charAt(0).toUpperCase()}</span>
-															{:else}
+												{/if}
+											</div>
+
+											{#if repo.description}
+												<p class="repo-description">{repo.description}</p>
+											{/if}
+
+											<div class="repo-meta">
+												{#if repo.language}
+													<div class="meta-item">
+														<span class="language-dot"></span>
+														<span>{repo.language}</span>
+													</div>
+												{/if}
+												<div class="meta-item">
+													<svg fill="currentColor" viewBox="0 0 20 20">
+														<path
+															d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+														/>
+													</svg>
+													<span>{repo.stargazers_count}</span>
+												</div>
+												<div class="meta-item">
+													<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+														/>
+													</svg>
+													<span>{repo.forks_count}</span>
+												</div>
+												<div class="meta-item">
+													<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+														/>
+													</svg>
+													<span>{repo.workflow_count} workflows</span>
+												</div>
+											</div>
+
+											{#if repo.workflows && repo.workflows.length > 0}
+												<div class="repo-workflows">
+													<h4 class="workflows-title">Workflows</h4>
+													<div class="workflows-list">
+														{#each repo.workflows as workflow}
+															<div class="workflow-item">
+																<div class="workflow-info">
+																	<span class="workflow-name">{workflow.name}</span>
+																	<span class="workflow-badge {workflow.state}"
+																		>{workflow.state}</span
+																	>
+																</div>
+																<button
+																	onclick={() => viewWorkflowContent(workflow, repo)}
+																	class="view-workflow-button"
+																>
+																	View YAML
+																</button>
+															</div>
+														{/each}
+													</div>
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							{:else}
+								<div class="empty-state">
+									<svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2M7 7h10"
+										/>
+									</svg>
+									<h3 class="empty-title">No Repositories Found</h3>
+									<p class="empty-message">This organization doesn't have any repositories yet.</p>
+								</div>
+							{/if}
+						{:else if activeTab === 'workflows'}
+							<!-- Workflows Content -->
+							{#if loadingDetailedWorkflows}
+								<div class="workflows-loading">
+									<div class="loading-spinner"></div>
+									<p>Loading workflow details...</p>
+								</div>
+							{:else if detailedWorkflows.length > 0}
+								<div class="workflows-table-container">
+									<table class="workflows-table">
+										<thead>
+											<tr>
+												<th>Repository / Workflow</th>
+												<th>Trigger</th>
+												<th>Last Run</th>
+												<th>Last Successful</th>
+												<th>Uses</th>
+												<th>Author</th>
+												<th>Status</th>
+												<th>Actions</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#each detailedWorkflows as workflow}
+												<tr class="workflow-row">
+													<td>
+														<div class="workflow-cell">
+															<div class="workflow-icon-wrapper">
 																<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																	<path
 																		stroke-linecap="round"
 																		stroke-linejoin="round"
 																		stroke-width="2"
-																		d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+																		d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
 																	/>
 																</svg>
+															</div>
+															<div class="workflow-details">
+																<span class="workflow-table-name">{workflow.name}</span>
+																<span class="workflow-repo-name">{workflow.repository}</span>
+															</div>
+														</div>
+													</td>
+													<td>
+														<div class="triggers-cell">
+															{#if workflow.triggers && workflow.triggers.length > 0}
+																{#each workflow.triggers.slice(0, 2) as trigger}
+																	<span class="trigger-badge">{trigger}</span>
+																{/each}
+																{#if workflow.triggers.length > 2}
+																	<span class="trigger-more">+{workflow.triggers.length - 2}</span>
+																{/if}
+															{:else}
+																<span class="trigger-unknown">Unknown</span>
 															{/if}
 														</div>
-														<span class="author-name">
-															{#if workflow.author && workflow.author !== 'Unknown'}
-																{workflow.author}
+													</td>
+													<td>
+														{#if workflow.last_run && workflow.last_run.created_at}
+															<span class="last-run-time"
+																>{formatRelativeTime(workflow.last_run.created_at)}</span
+															>
+														{:else}
+															<span class="last-run-never">Never</span>
+														{/if}
+													</td>
+													<td>
+														{#if workflow.last_successful_run && workflow.last_successful_run.created_at}
+															<span class="last-run-time"
+																>{formatRelativeTime(workflow.last_successful_run.created_at)}</span
+															>
+														{:else}
+															<span class="last-run-never">N/A</span>
+														{/if}
+													</td>
+													<td>
+														<div class="uses-cell">
+															{#if workflow.uses && workflow.uses.length > 0}
+																{#each workflow.uses.slice(0, 2) as actionPath}
+																	<div class="uses-action">{actionPath}</div>
+																{/each}
+																{#if workflow.uses.length > 2}
+																	<span class="uses-more">+{workflow.uses.length - 2} more</span>
+																{/if}
 															{:else}
-																<span class="author-unknown">Unknown</span>
+																<span class="uses-none">None</span>
 															{/if}
+														</div>
+													</td>
+													<td>
+														<div class="author-cell">
+															<div class="author-avatar">
+																{#if workflow.author && workflow.author !== 'Unknown'}
+																	<span>{workflow.author.charAt(0).toUpperCase()}</span>
+																{:else}
+																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																		<path
+																			stroke-linecap="round"
+																			stroke-linejoin="round"
+																			stroke-width="2"
+																			d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+																		/>
+																	</svg>
+																{/if}
+															</div>
+															<span class="author-name">
+																{#if workflow.author && workflow.author !== 'Unknown'}
+																	{workflow.author}
+																{:else}
+																	<span class="author-unknown">Unknown</span>
+																{/if}
+															</span>
+														</div>
+													</td>
+													<td>
+														<span class="status-badge {workflow.state || 'unknown'}">
+															{workflow.state || 'unknown'}
 														</span>
-													</div>
-												</td>
-												<td>
-													<span class="status-badge {workflow.state || 'unknown'}">
-														{workflow.state || 'unknown'}
-													</span>
-												</td>
-												<td>
-													<div class="relative">
-														<button
-															onclick={() =>
-																toggleWorkflowActionMenu(`${workflow.id}-${workflow.repository}`)}
-															class="table-action-button"
-															aria-label="Workflow actions"
-														>
-															<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-																/>
-															</svg>
-														</button>
+													</td>
+													<td>
+														<div class="relative">
+															<button
+																onclick={() =>
+																	toggleWorkflowActionMenu(`${workflow.id}-${workflow.repository}`)}
+																class="table-action-button"
+																aria-label="Workflow actions"
+															>
+																<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																	<path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		stroke-width="2"
+																		d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+																	/>
+																</svg>
+															</button>
 
-														{#if activeWorkflowMenu === `${workflow.id}-${workflow.repository}`}
-															<div class="dropdown-menu dropdown-menu-right">
-																<button
-																	onclick={() => {
-																		viewWorkflowContent(workflow, { name: workflow.repository });
-																		activeWorkflowMenu = null;
-																	}}
-																	class="dropdown-item"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-																		/>
-																	</svg>
-																	<span>View YAML</span>
-																</button>
-																<button
-																	onclick={() => {
-																		goto(
-																			`/github/workspace/${orgName}/canvas?repo=${workflow.repository}&workflow=${encodeURIComponent(workflow.name)}`
-																		);
-																		activeWorkflowMenu = null;
-																	}}
-																	class="dropdown-item"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-																		/>
-																	</svg>
-																	<span>Open Canvas</span>
-																</button>
-																<div class="dropdown-divider"></div>
-
-																<button
-																	onclick={() => {
-																		openAddToProjectModal(workflow);
-																		activeWorkflowMenu = null;
-																	}}
-																	class="dropdown-item dropdown-item-primary"
-																>
-																	<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path
-																			stroke-linecap="round"
-																			stroke-linejoin="round"
-																			stroke-width="2"
-																			d="M12 4v16m8-8H4"
-																		/>
-																	</svg>
-																	<span>Add to Project</span>
-																</button>
-																{#if workflow.html_url}
-																	<a
-																		href={workflow.html_url}
-																		target="_blank"
-																		onclick={() => (activeWorkflowMenu = null)}
+															{#if activeWorkflowMenu === `${workflow.id}-${workflow.repository}`}
+																<div class="dropdown-menu dropdown-menu-right">
+																	<button
+																		onclick={() => {
+																			viewWorkflowContent(workflow, { name: workflow.repository });
+																			activeWorkflowMenu = null;
+																		}}
 																		class="dropdown-item"
 																	>
 																		<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1357,41 +1388,96 @@
 																				stroke-linecap="round"
 																				stroke-linejoin="round"
 																				stroke-width="2"
-																				d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																				d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
 																			/>
 																		</svg>
-																		<span>Open in GitHub</span>
-																	</a>
-																{/if}
-															</div>
-														{/if}
-													</div>
-												</td>
-											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
-						{:else}
-							<div class="empty-state">
-								<svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-									/>
-								</svg>
-								<h3 class="empty-title">No Workflows Found</h3>
-								<p class="empty-message">
-									No GitHub Actions workflows configured in this organization.
-								</p>
-							</div>
+																		<span>View YAML</span>
+																	</button>
+																	<button
+																		onclick={() => {
+																			goto(
+																				`/github/workspace/${orgName}/canvas?repo=${workflow.repository}&workflow=${encodeURIComponent(workflow.name)}`
+																			);
+																			activeWorkflowMenu = null;
+																		}}
+																		class="dropdown-item"
+																	>
+																		<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																			<path
+																				stroke-linecap="round"
+																				stroke-linejoin="round"
+																				stroke-width="2"
+																				d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+																			/>
+																		</svg>
+																		<span>Open Canvas</span>
+																	</button>
+																	<div class="dropdown-divider"></div>
+
+																	<button
+																		onclick={() => {
+																			openAddToProjectModal(workflow);
+																			activeWorkflowMenu = null;
+																		}}
+																		class="dropdown-item dropdown-item-primary"
+																	>
+																		<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																			<path
+																				stroke-linecap="round"
+																				stroke-linejoin="round"
+																				stroke-width="2"
+																				d="M12 4v16m8-8H4"
+																			/>
+																		</svg>
+																		<span>Add to Project</span>
+																	</button>
+																	{#if workflow.html_url}
+																		<a
+																			href={workflow.html_url}
+																			target="_blank"
+																			onclick={() => (activeWorkflowMenu = null)}
+																			class="dropdown-item"
+																		>
+																			<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																				<path
+																					stroke-linecap="round"
+																					stroke-linejoin="round"
+																					stroke-width="2"
+																					d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+																				/>
+																			</svg>
+																			<span>Open in GitHub</span>
+																		</a>
+																	{/if}
+																</div>
+															{/if}
+														</div>
+													</td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
+								</div>
+							{:else}
+								<div class="empty-state">
+									<svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+										/>
+									</svg>
+									<h3 class="empty-title">No Workflows Found</h3>
+									<p class="empty-message">
+										No GitHub Actions workflows configured in this organization.
+									</p>
+								</div>
+							{/if}
 						{/if}
-					{/if}
+					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
 		</main>
 	</div>
 </div>
@@ -2122,9 +2208,20 @@
 		text-decoration: none;
 		color: var(--text-primary);
 	}
-	.brand-icon { width: 28px; height: 28px; }
-	.brand-name { font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; }
-	.nav-menu { display: flex; gap: 1.5rem; margin-left: 3rem; }
+	.brand-icon {
+		width: 28px;
+		height: 28px;
+	}
+	.brand-name {
+		font-weight: 700;
+		font-size: 1rem;
+		letter-spacing: -0.02em;
+	}
+	.nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
+	}
 	.nav-link {
 		font-size: 0.8125rem;
 		font-weight: 500;
@@ -2134,16 +2231,24 @@
 		padding: 0.5rem 0;
 		position: relative;
 	}
-	.nav-link:hover, .nav-link.active { color: var(--text-primary); }
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--text-primary);
+	}
 	.nav-link.active::after {
 		content: '';
 		position: absolute;
 		bottom: -1px;
-		left: 0; right: 0;
+		left: 0;
+		right: 0;
 		height: 2px;
 		background: var(--accent);
 	}
-	.nav-actions { display: flex; align-items: center; gap: 1.25rem; }
+	.nav-actions {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+	}
 	.live-status {
 		display: flex;
 		align-items: center;
@@ -2153,7 +2258,8 @@
 		color: var(--success);
 	}
 	.status-dot {
-		width: 6px; height: 6px;
+		width: 6px;
+		height: 6px;
 		background: var(--success);
 		border-radius: 50%;
 		animation: blink 2s infinite;
@@ -2173,7 +2279,10 @@
 		color: var(--text-primary);
 		border-color: var(--border-focus);
 	}
-	.theme-icon { width: 18px; height: 18px; }
+	.theme-icon {
+		width: 18px;
+		height: 18px;
+	}
 
 	/* ─── Technical Bar ─── */
 	.technical-bar {
@@ -2196,10 +2305,19 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
-	.breadcrumb a { color: var(--text-muted); text-decoration: none; }
-	.breadcrumb a:hover { color: var(--text-secondary); }
-	.breadcrumb-sep { color: var(--border-focus); }
-	.breadcrumb-item.active { color: var(--accent); }
+	.breadcrumb a {
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+	.breadcrumb a:hover {
+		color: var(--text-secondary);
+	}
+	.breadcrumb-sep {
+		color: var(--border-focus);
+	}
+	.breadcrumb-item.active {
+		color: var(--accent);
+	}
 	.header-tools {
 		margin-left: auto;
 		display: flex;
@@ -2216,14 +2334,20 @@
 		opacity: 0.8;
 	}
 	.status-pulse {
-		width: 4px; height: 4px;
+		width: 4px;
+		height: 4px;
 		background: currentColor;
 		border-radius: 50%;
 		animation: blink 2s infinite;
 	}
 	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.3; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
 	/* ─── Layout with Sidebar ─── */
@@ -2247,7 +2371,9 @@
 		height: calc(100vh - var(--nav-height) - 40px);
 		overflow-y: auto;
 	}
-	.workspace-sidebar.collapsed { width: var(--sidebar-collapsed); }
+	.workspace-sidebar.collapsed {
+		width: var(--sidebar-collapsed);
+	}
 	.sidebar-toggle-btn {
 		background: none;
 		border: none;
@@ -2261,8 +2387,15 @@
 		margin-bottom: 0.5rem;
 		transition: all 0.15s;
 	}
-	.sidebar-toggle-btn:hover { background: var(--bg-surface-alt); color: var(--text-primary); }
-	.sidebar-nav { display: flex; flex-direction: column; gap: 0.125rem; }
+	.sidebar-toggle-btn:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+	}
+	.sidebar-nav {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
 	.sidebar-link {
 		display: flex;
 		align-items: center;
@@ -2287,10 +2420,58 @@
 		max-width: 1280px;
 		min-width: 0;
 	}
-	.workspace-main.expanded { max-width: 1440px; }
+	.workspace-main.expanded {
+		max-width: 1440px;
+	}
 
 	/* ─── Loading / Error / Empty ─── */
-	.loading-state, .error-state, .empty-state {
+	.center-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 6rem 2rem;
+		text-align: center;
+		gap: 1rem;
+	}
+	.loader-icon {
+		width: 40px;
+		height: 40px;
+		animation: pulse 2s ease-in-out infinite;
+	}
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+	.loading-spinner {
+		width: 32px;
+		height: 32px;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+		margin: 0 auto;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.error-state,
+	.empty-state {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -2298,54 +2479,37 @@
 		padding: 8rem 2rem;
 		text-align: center;
 	}
-	.loading-content { text-align: center; max-width: 300px; }
-	.loading-spinner {
-		width: 32px; height: 32px;
-		border: 2px solid var(--border);
-		border-top-color: var(--accent);
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-		margin: 0 auto 1.5rem;
+	.error-content {
+		text-align: center;
+		max-width: 400px;
 	}
-	@keyframes spin { to { transform: rotate(360deg); } }
-	.loading-title {
-		font-size: 1rem;
-		font-weight: 600;
+	.error-icon {
+		width: 40px;
+		height: 40px;
+		color: var(--error);
+		margin-bottom: 1rem;
+	}
+	.error-icon svg {
+		width: 100%;
+		height: 100%;
+	}
+	.error-title {
+		font-size: 1.125rem;
+		font-weight: 700;
 		margin-bottom: 0.5rem;
 	}
-	.loading-text, .loading-progress {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		letter-spacing: 0.05em;
+	.error-message {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+		margin-bottom: 1.5rem;
+		line-height: 1.5;
 	}
-	.progress-bar {
-		height: 2px;
-		background: var(--border);
-		border-radius: 4px;
-		overflow: hidden;
-		margin-top: 1rem;
-		width: 200px;
+	.error-actions {
+		display: flex;
+		gap: 0.75rem;
 	}
-	.progress-bar::after {
-		content: '';
-		display: block;
-		height: 100%;
-		width: 40%;
-		background: var(--accent);
-		animation: load 1.5s ease-in-out infinite;
-	}
-	@keyframes load {
-		0% { transform: translateX(-100%); }
-		100% { transform: translateX(350%); }
-	}
-	.error-content { text-align: center; max-width: 400px; }
-	.error-icon { width: 40px; height: 40px; color: var(--error); margin-bottom: 1rem; }
-	.error-icon svg { width: 100%; height: 100%; }
-	.error-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; }
-	.error-message { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
-	.error-actions { display: flex; gap: 0.75rem; }
-	.retry-button, .back-button {
+	.retry-button,
+	.back-button {
 		padding: 0.625rem 1.25rem;
 		border-radius: 8px;
 		font-size: 0.8125rem;
@@ -2362,13 +2526,20 @@
 		color: var(--bg-app);
 		border-color: var(--text-primary);
 	}
-	.retry-button:hover { opacity: 0.9; }
-	.retry-button svg { width: 14px; height: 14px; }
+	.retry-button:hover {
+		opacity: 0.9;
+	}
+	.retry-button svg {
+		width: 14px;
+		height: 14px;
+	}
 	.back-button {
 		background: var(--bg-surface-alt);
 		color: var(--text-primary);
 	}
-	.back-button:hover { border-color: var(--border-focus); }
+	.back-button:hover {
+		border-color: var(--border-focus);
+	}
 
 	/* ─── Stats Grid ─── */
 	.stats-grid {
@@ -2388,21 +2559,42 @@
 		transition: all 0.2s var(--ease-premium);
 		box-shadow: var(--card-shadow);
 	}
-	.stat-card:hover { border-color: var(--border-focus); }
+	.stat-card:hover {
+		border-color: var(--border-focus);
+	}
 	.stat-icon {
-		width: 36px; height: 36px;
+		width: 36px;
+		height: 36px;
 		border-radius: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
 	}
-	.stat-icon svg { width: 18px; height: 18px; }
-	.stat-icon-blue { background: rgba(0, 173, 239, 0.08); color: var(--accent); }
-	.stat-icon-purple { background: rgba(139, 92, 246, 0.08); color: #8b5cf6; }
-	.stat-icon-green { background: rgba(16, 185, 129, 0.08); color: var(--success); }
-	.stat-icon-orange { background: rgba(245, 158, 11, 0.08); color: var(--warning); }
-	.stat-content { flex: 1; min-width: 0; }
+	.stat-icon svg {
+		width: 18px;
+		height: 18px;
+	}
+	.stat-icon-blue {
+		background: rgba(0, 173, 239, 0.08);
+		color: var(--accent);
+	}
+	.stat-icon-purple {
+		background: rgba(139, 92, 246, 0.08);
+		color: #8b5cf6;
+	}
+	.stat-icon-green {
+		background: rgba(16, 185, 129, 0.08);
+		color: var(--success);
+	}
+	.stat-icon-orange {
+		background: rgba(245, 158, 11, 0.08);
+		color: var(--warning);
+	}
+	.stat-content {
+		flex: 1;
+		min-width: 0;
+	}
 	.stat-label {
 		font-size: 0.65rem;
 		color: var(--text-muted);
@@ -2416,8 +2608,12 @@
 		font-size: 1.25rem;
 		font-weight: 700;
 	}
-	.stat-value-small { font-size: 0.875rem; }
-	.stat-trend { flex-shrink: 0; }
+	.stat-value-small {
+		font-size: 0.875rem;
+	}
+	.stat-trend {
+		flex-shrink: 0;
+	}
 	.trend-up {
 		font-size: 0.65rem;
 		font-family: var(--font-mono);
@@ -2436,7 +2632,9 @@
 	}
 
 	/* ─── Tabs ─── */
-	.content-tabs { margin-top: 0.5rem; }
+	.content-tabs {
+		margin-top: 0.5rem;
+	}
 	.tabs-header {
 		display: flex;
 		gap: 0.25rem;
@@ -2461,13 +2659,18 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-	.tab-button:hover { color: var(--text-primary); }
+	.tab-button:hover {
+		color: var(--text-primary);
+	}
 	.tab-button.active {
 		background: var(--bg-surface);
 		color: var(--accent);
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
-	.tab-icon { width: 14px; height: 14px; }
+	.tab-icon {
+		width: 14px;
+		height: 14px;
+	}
 	.tab-badge {
 		font-size: 0.65rem;
 		font-family: var(--font-mono);
@@ -2476,7 +2679,10 @@
 		padding: 0.125rem 0.375rem;
 		border-radius: 4px;
 	}
-	.tab-button.active .tab-badge { background: var(--accent-soft); color: var(--accent); }
+	.tab-button.active .tab-badge {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
 
 	/* ─── Repository Cards ─── */
 	.repositories-grid {
@@ -2496,10 +2702,22 @@
 		border-color: var(--border-focus);
 		transform: translateY(-1px);
 	}
-	.repo-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
-	.repo-info { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+	.repo-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+	}
+	.repo-info {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex: 1;
+		min-width: 0;
+	}
 	.repo-icon {
-		width: 32px; height: 32px;
+		width: 32px;
+		height: 32px;
 		border-radius: 6px;
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
@@ -2508,11 +2726,29 @@
 		justify-content: center;
 		flex-shrink: 0;
 	}
-	.repo-icon svg { width: 16px; height: 16px; color: var(--text-muted); }
-	.repo-title-section { min-width: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-	.repo-name { font-size: 0.875rem; font-weight: 600; }
-	.repo-name a { color: var(--text-primary); text-decoration: none; }
-	.repo-name a:hover { color: var(--accent); }
+	.repo-icon svg {
+		width: 16px;
+		height: 16px;
+		color: var(--text-muted);
+	}
+	.repo-title-section {
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	.repo-name {
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+	.repo-name a {
+		color: var(--text-primary);
+		text-decoration: none;
+	}
+	.repo-name a:hover {
+		color: var(--accent);
+	}
 	.repo-badge {
 		font-size: 0.6rem;
 		font-family: var(--font-mono);
@@ -2522,8 +2758,14 @@
 		letter-spacing: 0.05em;
 		font-weight: 600;
 	}
-	.repo-badge.private { color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.15); }
-	.repo-badge.public { color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); }
+	.repo-badge.private {
+		color: var(--warning);
+		border: 1px solid rgba(245, 158, 11, 0.15);
+	}
+	.repo-badge.public {
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.15);
+	}
 	.repo-description {
 		font-size: 0.8125rem;
 		color: var(--text-secondary);
@@ -2548,9 +2790,13 @@
 		font-size: 0.75rem;
 		color: var(--text-muted);
 	}
-	.meta-item svg { width: 12px; height: 12px; }
+	.meta-item svg {
+		width: 12px;
+		height: 12px;
+	}
 	.language-dot {
-		width: 8px; height: 8px;
+		width: 8px;
+		height: 8px;
 		border-radius: 50%;
 		background: var(--accent);
 	}
@@ -2568,7 +2814,11 @@
 		letter-spacing: 0.05em;
 		margin-bottom: 0.5rem;
 	}
-	.workflows-list { display: flex; flex-direction: column; gap: 0.375rem; }
+	.workflows-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+	}
 	.workflow-item {
 		display: flex;
 		align-items: center;
@@ -2578,7 +2828,13 @@
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
 	}
-	.workflow-info { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+	.workflow-info {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1;
+		min-width: 0;
+	}
 	.workflow-name {
 		font-size: 0.75rem;
 		font-weight: 500;
@@ -2593,8 +2849,14 @@
 		border-radius: 4px;
 		text-transform: uppercase;
 	}
-	.workflow-badge.active { color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); }
-	.workflow-badge.disabled { color: var(--text-muted); border: 1px solid var(--border); }
+	.workflow-badge.active {
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.15);
+	}
+	.workflow-badge.disabled {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+	}
 	.view-workflow-button {
 		font-size: 0.7rem;
 		font-family: var(--font-mono);
@@ -2606,10 +2868,13 @@
 		border-radius: 4px;
 		transition: background 0.15s;
 	}
-	.view-workflow-button:hover { background: var(--accent-soft); }
+	.view-workflow-button:hover {
+		background: var(--accent-soft);
+	}
 
 	/* ─── Dropdown Menus ─── */
-	.repo-menu-button, .table-action-button {
+	.repo-menu-button,
+	.table-action-button {
 		background: none;
 		border: none;
 		color: var(--text-muted);
@@ -2619,12 +2884,19 @@
 		transition: all 0.15s;
 		flex-shrink: 0;
 	}
-	.repo-menu-button:hover, .table-action-button:hover {
+	.repo-menu-button:hover,
+	.table-action-button:hover {
 		background: var(--bg-surface-alt);
 		color: var(--text-primary);
 	}
-	.repo-menu-button svg, .table-action-button svg { width: 16px; height: 16px; }
-	.relative { position: relative; }
+	.repo-menu-button svg,
+	.table-action-button svg {
+		width: 16px;
+		height: 16px;
+	}
+	.relative {
+		position: relative;
+	}
 	.dropdown-menu {
 		position: absolute;
 		top: calc(100% + 4px);
@@ -2637,7 +2909,9 @@
 		padding: 0.375rem;
 		z-index: 50;
 	}
-	.dropdown-menu-right { right: 0; }
+	.dropdown-menu-right {
+		right: 0;
+	}
 	.dropdown-item {
 		display: flex;
 		align-items: center;
@@ -2654,11 +2928,26 @@
 		text-decoration: none;
 		transition: all 0.15s;
 	}
-	.dropdown-item:hover { background: var(--bg-surface-alt); color: var(--text-primary); }
-	.dropdown-item svg { width: 14px; height: 14px; flex-shrink: 0; }
-	.dropdown-item-primary { color: var(--accent); }
-	.dropdown-item-primary:hover { background: var(--accent-soft); }
-	.dropdown-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
+	.dropdown-item:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+	}
+	.dropdown-item svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+	.dropdown-item-primary {
+		color: var(--accent);
+	}
+	.dropdown-item-primary:hover {
+		background: var(--accent-soft);
+	}
+	.dropdown-divider {
+		height: 1px;
+		background: var(--border);
+		margin: 0.25rem 0;
+	}
 
 	/* ─── Workflows Table ─── */
 	.workflows-loading {
@@ -2670,13 +2959,19 @@
 		color: var(--text-muted);
 		font-size: 0.875rem;
 	}
-	.workflows-table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+	.workflows-table-container {
+		overflow-x: auto;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+	}
 	.workflows-table {
 		width: 100%;
 		border-collapse: collapse;
 		font-size: 0.8125rem;
 	}
-	.workflows-table thead { background: var(--bg-surface-alt); }
+	.workflows-table thead {
+		background: var(--bg-surface-alt);
+	}
 	.workflows-table th {
 		padding: 0.75rem 1rem;
 		text-align: left;
@@ -2694,11 +2989,20 @@
 		border-bottom: 1px solid var(--border);
 		vertical-align: middle;
 	}
-	.workflow-row:hover { background: var(--bg-surface-alt); }
-	.workflow-row:last-child td { border-bottom: none; }
-	.workflow-cell { display: flex; align-items: center; gap: 0.75rem; }
+	.workflow-row:hover {
+		background: var(--bg-surface-alt);
+	}
+	.workflow-row:last-child td {
+		border-bottom: none;
+	}
+	.workflow-cell {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
 	.workflow-icon-wrapper {
-		width: 28px; height: 28px;
+		width: 28px;
+		height: 28px;
 		border-radius: 6px;
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
@@ -2707,11 +3011,33 @@
 		justify-content: center;
 		flex-shrink: 0;
 	}
-	.workflow-icon-wrapper svg { width: 14px; height: 14px; color: var(--text-muted); }
-	.workflow-details { display: flex; flex-direction: column; min-width: 0; }
-	.workflow-table-name { font-weight: 600; font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.workflow-repo-name { font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); }
-	.triggers-cell { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+	.workflow-icon-wrapper svg {
+		width: 14px;
+		height: 14px;
+		color: var(--text-muted);
+	}
+	.workflow-details {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.workflow-table-name {
+		font-weight: 600;
+		font-size: 0.8125rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.workflow-repo-name {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		font-family: var(--font-mono);
+	}
+	.triggers-cell {
+		display: flex;
+		gap: 0.375rem;
+		flex-wrap: wrap;
+	}
 	.trigger-badge {
 		font-size: 0.65rem;
 		font-family: var(--font-mono);
@@ -2721,14 +3047,27 @@
 		border: 1px solid var(--border);
 		color: var(--text-secondary);
 	}
-	.trigger-more, .trigger-unknown {
+	.trigger-more,
+	.trigger-unknown {
 		font-size: 0.65rem;
 		color: var(--text-muted);
 		font-family: var(--font-mono);
 	}
-	.last-run-time { font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-mono); }
-	.last-run-never { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
-	.uses-cell { display: flex; flex-direction: column; gap: 0.25rem; }
+	.last-run-time {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		font-family: var(--font-mono);
+	}
+	.last-run-never {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		font-family: var(--font-mono);
+	}
+	.uses-cell {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
 	.uses-action {
 		font-size: 0.65rem;
 		font-family: var(--font-mono);
@@ -2738,10 +3077,20 @@
 		white-space: nowrap;
 		max-width: 180px;
 	}
-	.uses-more, .uses-none { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); }
-	.author-cell { display: flex; align-items: center; gap: 0.5rem; }
+	.uses-more,
+	.uses-none {
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		font-family: var(--font-mono);
+	}
+	.author-cell {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
 	.author-avatar {
-		width: 24px; height: 24px;
+		width: 24px;
+		height: 24px;
 		border-radius: 50%;
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
@@ -2753,9 +3102,16 @@
 		color: var(--text-secondary);
 		flex-shrink: 0;
 	}
-	.author-avatar svg { width: 12px; height: 12px; }
-	.author-name { font-size: 0.8125rem; }
-	.author-unknown { color: var(--text-muted); }
+	.author-avatar svg {
+		width: 12px;
+		height: 12px;
+	}
+	.author-name {
+		font-size: 0.8125rem;
+	}
+	.author-unknown {
+		color: var(--text-muted);
+	}
 	.status-badge {
 		display: inline-flex;
 		align-items: center;
@@ -2767,14 +3123,35 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
-	.status-badge.active { color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); }
-	.status-badge.disabled { color: var(--text-muted); border: 1px solid var(--border); }
-	.status-badge.unknown { color: var(--text-muted); border: 1px solid var(--border); }
+	.status-badge.active {
+		color: var(--success);
+		border: 1px solid rgba(16, 185, 129, 0.15);
+	}
+	.status-badge.disabled {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+	}
+	.status-badge.unknown {
+		color: var(--text-muted);
+		border: 1px solid var(--border);
+	}
 
 	/* ─── Empty State ─── */
-	.empty-icon { width: 40px; height: 40px; color: var(--text-muted); margin-bottom: 1rem; }
-	.empty-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
-	.empty-message { color: var(--text-secondary); font-size: 0.875rem; }
+	.empty-icon {
+		width: 40px;
+		height: 40px;
+		color: var(--text-muted);
+		margin-bottom: 1rem;
+	}
+	.empty-title {
+		font-size: 1rem;
+		font-weight: 600;
+		margin-bottom: 0.5rem;
+	}
+	.empty-message {
+		color: var(--text-secondary);
+		font-size: 0.875rem;
+	}
 
 	/* ─── Buttons ─── */
 	.btn {
@@ -2798,11 +3175,24 @@
 		border-color: var(--border-focus);
 		transform: translateY(-1px);
 	}
-	.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-	.btn-secondary { background: var(--bg-surface-alt); }
-	.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
-	.btn-icon { width: 14px; height: 14px; }
-	.spinning { animation: spin 0.8s linear infinite; }
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+	}
+	.btn-sm {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+	}
+	.btn-icon {
+		width: 14px;
+		height: 14px;
+	}
+	.spinning {
+		animation: spin 0.8s linear infinite;
+	}
 
 	/* ─── Modal ─── */
 	.modal-overlay {
@@ -2828,7 +3218,9 @@
 		flex-direction: column;
 		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 	}
-	.modal-content-large { max-width: 900px; }
+	.modal-content-large {
+		max-width: 900px;
+	}
 	.modal-header {
 		display: flex;
 		align-items: center;
@@ -2836,8 +3228,15 @@
 		padding: 1.25rem 1.5rem;
 		border-bottom: 1px solid var(--border);
 	}
-	.modal-title h3 { font-size: 1rem; font-weight: 700; }
-	.modal-title p { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
+	.modal-title h3 {
+		font-size: 1rem;
+		font-weight: 700;
+	}
+	.modal-title p {
+		font-size: 0.8125rem;
+		color: var(--text-secondary);
+		margin-top: 0.25rem;
+	}
 	.modal-close {
 		background: none;
 		border: none;
@@ -2847,8 +3246,14 @@
 		border-radius: 6px;
 		transition: all 0.15s;
 	}
-	.modal-close:hover { background: var(--bg-surface-alt); color: var(--text-primary); }
-	.modal-close svg { width: 18px; height: 18px; }
+	.modal-close:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+	}
+	.modal-close svg {
+		width: 18px;
+		height: 18px;
+	}
 	.modal-body {
 		padding: 1.5rem;
 		overflow-y: auto;
@@ -2863,7 +3268,11 @@
 		color: var(--text-muted);
 		font-size: 0.875rem;
 	}
-	.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+	.modal-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+	}
 	.modal-footer {
 		display: flex;
 		justify-content: flex-end;
@@ -2890,7 +3299,8 @@
 	}
 
 	/* ─── Modal Buttons ─── */
-	.btn-primary, .btn-primary-small {
+	.btn-primary,
+	.btn-primary-small {
 		background: var(--text-primary);
 		color: var(--bg-app);
 		border: 1px solid var(--text-primary);
@@ -2904,10 +3314,22 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-	.btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-	.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-	.btn-primary-small { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
-	.btn-primary-small svg { width: 12px; height: 12px; }
+	.btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+	.btn-primary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.btn-primary-small {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+	}
+	.btn-primary-small svg {
+		width: 12px;
+		height: 12px;
+	}
 	.btn-secondary {
 		background: var(--bg-surface-alt);
 		color: var(--text-primary);
@@ -2919,7 +3341,9 @@
 		cursor: pointer;
 		transition: all 0.15s;
 	}
-	.btn-secondary:hover { border-color: var(--border-focus); }
+	.btn-secondary:hover {
+		border-color: var(--border-focus);
+	}
 	.btn-success {
 		background: var(--success);
 		color: #fff;
@@ -2934,19 +3358,31 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-	.btn-success:hover:not(:disabled) { opacity: 0.9; }
-	.btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
-	.btn-success svg { width: 14px; height: 14px; }
-	.spinner { animation: spin 0.8s linear infinite; }
+	.btn-success:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+	.btn-success:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.btn-success svg {
+		width: 14px;
+		height: 14px;
+	}
+	.spinner {
+		animation: spin 0.8s linear infinite;
+	}
 
 	/* ─── Tree Panel (Add to Project Modal) ─── */
-	.tree-panel, .preview-panel {
+	.tree-panel,
+	.preview-panel {
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
 		border-radius: 8px;
 		padding: 1.25rem;
 	}
-	.tree-panel h4, .preview-panel h4 {
+	.tree-panel h4,
+	.preview-panel h4 {
 		font-size: 0.875rem;
 		font-weight: 700;
 		margin-bottom: 1rem;
@@ -2957,7 +3393,9 @@
 		justify-content: space-between;
 		margin-bottom: 0.75rem;
 	}
-	.tree-header h4 { margin-bottom: 0; }
+	.tree-header h4 {
+		margin-bottom: 0;
+	}
 	.new-folder-form {
 		background: var(--bg-surface);
 		border: 1px solid var(--border);
@@ -2973,7 +3411,8 @@
 		font-weight: 600;
 		color: var(--text-secondary);
 	}
-	.new-folder-form input, .new-folder-form select {
+	.new-folder-form input,
+	.new-folder-form select {
 		padding: 0.5rem 0.75rem;
 		border-radius: 6px;
 		border: 1px solid var(--border);
@@ -2982,7 +3421,8 @@
 		font-size: 0.8125rem;
 		font-family: var(--font-sans);
 	}
-	.new-folder-form input:focus, .new-folder-form select:focus {
+	.new-folder-form input:focus,
+	.new-folder-form select:focus {
 		outline: none;
 		border-color: var(--accent);
 	}
@@ -3008,8 +3448,15 @@
 		color: var(--text-muted);
 		font-size: 0.8125rem;
 	}
-	.tree-empty svg { width: 32px; height: 32px; margin-bottom: 0.75rem; }
-	.tree-empty small { font-size: 0.75rem; margin-top: 0.25rem; }
+	.tree-empty svg {
+		width: 32px;
+		height: 32px;
+		margin-bottom: 0.75rem;
+	}
+	.tree-empty small {
+		font-size: 0.75rem;
+		margin-top: 0.25rem;
+	}
 	.folder-item {
 		display: flex;
 		align-items: center;
@@ -3025,20 +3472,63 @@
 		color: var(--text-primary);
 		font-size: 0.8125rem;
 	}
-	.folder-item:hover { background: var(--bg-surface); border-color: var(--border); }
-	.folder-item.selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-	.folder-item svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-muted); }
-	.folder-item.selected svg { color: var(--accent); }
-	.folder-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-	.folder-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.folder-count { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); }
-	.check-icon { width: 16px; height: 16px; color: var(--accent); flex-shrink: 0; }
+	.folder-item:hover {
+		background: var(--bg-surface);
+		border-color: var(--border);
+	}
+	.folder-item.selected {
+		background: var(--accent-soft);
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+	.folder-item svg {
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
+		color: var(--text-muted);
+	}
+	.folder-item.selected svg {
+		color: var(--accent);
+	}
+	.folder-info {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.folder-name {
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.folder-count {
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		font-family: var(--font-mono);
+	}
+	.check-icon {
+		width: 16px;
+		height: 16px;
+		color: var(--accent);
+		flex-shrink: 0;
+	}
 
 	/* ─── Preview Panel ─── */
-	.workflow-preview, .repo-preview { display: flex; flex-direction: column; gap: 1rem; }
-	.preview-header { display: flex; align-items: center; gap: 0.75rem; }
+	.workflow-preview,
+	.repo-preview {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.preview-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
 	.preview-icon {
-		width: 32px; height: 32px;
+		width: 32px;
+		height: 32px;
 		border-radius: 6px;
 		background: var(--bg-surface);
 		border: 1px solid var(--border);
@@ -3046,11 +3536,26 @@
 		align-items: center;
 		justify-content: center;
 	}
-	.preview-icon svg { width: 16px; height: 16px; color: var(--text-muted); }
-	.preview-icon-primary { border-color: var(--accent); }
-	.preview-icon-primary svg { color: var(--accent); }
-	.preview-name { font-weight: 600; font-size: 0.875rem; }
-	.preview-repo, .preview-desc { font-size: 0.75rem; color: var(--text-secondary); }
+	.preview-icon svg {
+		width: 16px;
+		height: 16px;
+		color: var(--text-muted);
+	}
+	.preview-icon-primary {
+		border-color: var(--accent);
+	}
+	.preview-icon-primary svg {
+		color: var(--accent);
+	}
+	.preview-name {
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+	.preview-repo,
+	.preview-desc {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+	}
 	.preview-details {
 		display: flex;
 		flex-direction: column;
@@ -3066,8 +3571,15 @@
 		justify-content: space-between;
 		font-size: 0.8125rem;
 	}
-	.detail-item > span:first-child { color: var(--text-muted); font-size: 0.75rem; }
-	.triggers-preview { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+	.detail-item > span:first-child {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+	}
+	.triggers-preview {
+		display: flex;
+		gap: 0.375rem;
+		flex-wrap: wrap;
+	}
 	.status-message {
 		display: flex;
 		align-items: flex-start;
@@ -3076,8 +3588,17 @@
 		border-radius: 8px;
 		font-size: 0.8125rem;
 	}
-	.status-message svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
-	.status-message p { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.125rem; }
+	.status-message svg {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	.status-message p {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		margin-top: 0.125rem;
+	}
 	.status-message.success {
 		background: rgba(16, 185, 129, 0.05);
 		border: 1px solid rgba(16, 185, 129, 0.15);
@@ -3091,19 +3612,41 @@
 
 	/* ─── Responsive ─── */
 	@media (max-width: 1024px) {
-		.stats-grid { grid-template-columns: repeat(2, 1fr); }
-		.repositories-grid { grid-template-columns: 1fr; }
-		.modal-grid { grid-template-columns: 1fr; }
+		.stats-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.repositories-grid {
+			grid-template-columns: 1fr;
+		}
+		.modal-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 	@media (max-width: 768px) {
-		.nav-menu { display: none; }
-		.workspace-sidebar { display: none; }
-		.workspace-main { padding: 1.5rem 1rem; }
-		.stats-grid { grid-template-columns: 1fr; }
-		.header-content { padding: 0 1rem; }
-		.technical-bar { padding: 0 1rem; }
-		.modal-content-large { max-height: 95vh; }
-		.tree-panel, .preview-panel { padding: 1rem; }
+		.nav-menu {
+			display: none;
+		}
+		.workspace-sidebar {
+			display: none;
+		}
+		.workspace-main {
+			padding: 1.5rem 1rem;
+		}
+		.stats-grid {
+			grid-template-columns: 1fr;
+		}
+		.header-content {
+			padding: 0 1rem;
+		}
+		.technical-bar {
+			padding: 0 1rem;
+		}
+		.modal-content-large {
+			max-height: 95vh;
+		}
+		.tree-panel,
+		.preview-panel {
+			padding: 1rem;
+		}
 	}
 </style>
-

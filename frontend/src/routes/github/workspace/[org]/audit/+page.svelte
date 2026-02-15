@@ -463,434 +463,418 @@
 	<title>Actions Version Audit - {orgName} | WithOps</title>
 </svelte:head>
 
-{#if loading}
-	<div class="loading-screen">
-		<div class="loading-content">
-			<img src="/icons/excellence_17274210.png" alt="WithOps" class="loading-icon" />
-			<div class="progress-bar">
-				<div class="progress-fill"></div>
+<div class="audit-page {darkMode ? 'dark' : 'light'}">
+	<!-- Header Navigation -->
+	<nav class="dashboard-header">
+		<div class="header-content">
+			<a href="/dashboard" class="nav-brand">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
+				<span class="brand-name">WithOps</span>
+			</a>
+
+			<div class="nav-menu">
+				<a href="/dashboard" class="nav-link">Overview</a>
+				<a href="/organizations" class="nav-link">Organizations</a>
+				<a href="/github/workspace/{orgName}" class="nav-link">{orgName}</a>
+				<a href="/github/workspace/{orgName}/audit" class="nav-link active">Audit</a>
 			</div>
-			<div class="status-message">SCANNING WORKFLOW ACTIONS...</div>
+
+			<div class="nav-actions">
+				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
+					{#if darkMode}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
+						</svg>
+					{:else}
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+						</svg>
+					{/if}
+				</button>
+			</div>
+		</div>
+	</nav>
+
+	<!-- Technical Breadcrumb Bar -->
+	<div class="technical-bar">
+		<div class="breadcrumb">
+			<a href="/dashboard" class="breadcrumb-item">WithOps</a>
+			<span class="breadcrumb-sep">/</span>
+			<a href="/organizations" class="breadcrumb-item">Organizations</a>
+			<span class="breadcrumb-sep">/</span>
+			<a href="/github/workspace/{orgName}" class="breadcrumb-item">{orgName}</a>
+			<span class="breadcrumb-sep">/</span>
+			<span class="breadcrumb-item active">Audit</span>
+		</div>
+		<div class="system-status">
+			<div class="status-pulse"></div>
+			AUDIT: ACTIVE
 		</div>
 	</div>
-{:else}
-	<div class="audit-page {darkMode ? 'dark' : 'light'}">
-		<!-- Header Navigation -->
-		<nav class="dashboard-header">
-			<div class="header-content">
-				<a href="/dashboard" class="nav-brand">
-					<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
-					<span class="brand-name">WithOps</span>
-				</a>
 
-				<div class="nav-menu">
-					<a href="/dashboard" class="nav-link">Overview</a>
-					<a href="/organizations" class="nav-link">Organizations</a>
-					<a href="/github/workspace/{orgName}" class="nav-link">{orgName}</a>
-					<a href="/github/workspace/{orgName}/audit" class="nav-link active">Audit</a>
+	<div class="page-content">
+		<main class="page-main">
+			<!-- View Header -->
+			<header class="view-header">
+				<div class="title-group">
+					<h1>Actions Version Audit</h1>
+					<p>
+						Audit and remediate GitHub Actions version compliance across <span class="accent-text"
+							>{orgName}</span
+						>.
+					</p>
 				</div>
-
-				<div class="nav-actions">
-					<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
-						{#if darkMode}
-							<svg
-								class="theme-icon"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<circle cx="12" cy="12" r="5" /><path
-									d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-								/>
-							</svg>
-						{:else}
-							<svg
-								class="theme-icon"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-							</svg>
-						{/if}
+				<div class="header-cta">
+					<button onclick={goBack} class="btn btn-secondary">
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M19 12H5M12 19l-7-7 7-7" />
+						</svg>
+						Workspace
+					</button>
+					<button
+						onclick={refreshActionDetails}
+						disabled={loadingactions}
+						class="btn btn-secondary"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path
+								d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+							/>
+						</svg>
+						{loadingactions ? 'Syncing...' : 'Sync'}
 					</button>
 				</div>
-			</div>
-		</nav>
+			</header>
 
-		<!-- Technical Breadcrumb Bar -->
-		<div class="technical-bar">
-			<div class="breadcrumb">
-				<a href="/dashboard" class="breadcrumb-item">WithOps</a>
-				<span class="breadcrumb-sep">/</span>
-				<a href="/organizations" class="breadcrumb-item">Organizations</a>
-				<span class="breadcrumb-sep">/</span>
-				<a href="/github/workspace/{orgName}" class="breadcrumb-item">{orgName}</a>
-				<span class="breadcrumb-sep">/</span>
-				<span class="breadcrumb-item active">Audit</span>
-			</div>
-			<div class="system-status">
-				<div class="status-pulse"></div>
-				AUDIT: ACTIVE
-			</div>
-		</div>
-
-		<div class="page-content">
-			<main class="page-main">
-				<!-- View Header -->
-				<header class="view-header">
-					<div class="title-group">
-						<h1>Actions Version Audit</h1>
-						<p>
-							Audit and remediate GitHub Actions version compliance across <span class="accent-text"
-								>{orgName}</span
-							>.
-						</p>
+			{#if loading || loadingactions}
+				<div class="center-state">
+					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
+					<div class="loader-text">
+						{loading ? 'SCANNING WORKFLOW ACTIONS...' : 'SCANNING WORKFLOWS...'}
 					</div>
-					<div class="header-cta">
-						<button onclick={goBack} class="btn btn-secondary">
-							<svg
-								width="14"
-								height="14"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path d="M19 12H5M12 19l-7-7 7-7" />
-							</svg>
-							Workspace
+				</div>
+			{:else if error}
+				<div class="error-banner">
+					<p class="error-text">{error}</p>
+					<button onclick={() => loadActionDetails(1, '')} class="btn btn-primary">Retry</button>
+				</div>
+			{:else if actions.length === 0}
+				<div class="center-state">
+					<p class="empty-text">No workflow actions found for this organization.</p>
+					<button onclick={refreshActionDetails} class="btn btn-primary" style="margin-top: 1.5rem;"
+						>Scan Now</button
+					>
+				</div>
+			{:else}
+				<!-- Stats Cards Row -->
+				<div class="stats-grid">
+					<div class="stat-card">
+						<div class="stat-card-top">
+							<span class="stat-card-label">Up to Date</span>
+							<div class="stat-dot dot-success"></div>
+						</div>
+						<span class="stat-card-value">{statistics.up_to_date}</span>
+					</div>
+					<div class="stat-card">
+						<div class="stat-card-top">
+							<span class="stat-card-label">Major Upgrades</span>
+							<div class="stat-dot dot-error"></div>
+						</div>
+						<span class="stat-card-value">{statistics.major_upgrade_needed}</span>
+					</div>
+					<div class="stat-card">
+						<div class="stat-card-top">
+							<span class="stat-card-label">Recommended</span>
+							<div class="stat-dot dot-accent"></div>
+						</div>
+						<span class="stat-card-value">{statistics.upgrade_recommended}</span>
+					</div>
+					<div class="stat-card">
+						<div class="stat-card-top">
+							<span class="stat-card-label">Outdated</span>
+							<div class="stat-dot dot-warning"></div>
+						</div>
+						<span class="stat-card-value">{statistics.outdated}</span>
+					</div>
+				</div>
+
+				<!-- Controls Row: Filter + Search -->
+				<div class="controls-row">
+					<div class="filter-nav">
+						<button
+							class="filter-btn {viewMode === 'detailed' ? 'active' : ''}"
+							onclick={() => (viewMode = 'detailed')}
+						>
+							DETAILED <span class="count-badge">{actions.length}</span>
 						</button>
 						<button
-							onclick={refreshActionDetails}
-							disabled={loadingactions}
-							class="btn btn-secondary"
+							class="filter-btn {viewMode === 'grouped' ? 'active' : ''}"
+							onclick={() => (viewMode = 'grouped')}
 						>
-							<svg
-								width="14"
-								height="14"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path
-									d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
-								/>
-							</svg>
-							{loadingactions ? 'Syncing...' : 'Sync'}
+							GROUPED <span class="count-badge">{Object.keys(workflowGroups).length}</span>
 						</button>
 					</div>
-				</header>
 
-				{#if loadingactions}
-					<div class="loader-view">
-						<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
-						<div class="loader-text">SCANNING WORKFLOWS...</div>
-					</div>
-				{:else if error}
-					<div class="error-banner">
-						<p class="error-text">{error}</p>
-						<button onclick={() => loadActionDetails(1, '')} class="btn btn-primary">Retry</button>
-					</div>
-				{:else if actions.length === 0}
-					<div class="loader-view">
-						<p class="empty-text">No workflow actions found for this organization.</p>
-						<button
-							onclick={refreshActionDetails}
-							class="btn btn-primary"
-							style="margin-top: 1.5rem;">Scan Now</button
-						>
-					</div>
-				{:else}
-					<!-- Stats Cards Row -->
-					<div class="stats-grid">
-						<div class="stat-card">
-							<div class="stat-card-top">
-								<span class="stat-card-label">Up to Date</span>
-								<div class="stat-dot dot-success"></div>
-							</div>
-							<span class="stat-card-value">{statistics.up_to_date}</span>
-						</div>
-						<div class="stat-card">
-							<div class="stat-card-top">
-								<span class="stat-card-label">Major Upgrades</span>
-								<div class="stat-dot dot-error"></div>
-							</div>
-							<span class="stat-card-value">{statistics.major_upgrade_needed}</span>
-						</div>
-						<div class="stat-card">
-							<div class="stat-card-top">
-								<span class="stat-card-label">Recommended</span>
-								<div class="stat-dot dot-accent"></div>
-							</div>
-							<span class="stat-card-value">{statistics.upgrade_recommended}</span>
-						</div>
-						<div class="stat-card">
-							<div class="stat-card-top">
-								<span class="stat-card-label">Outdated</span>
-								<div class="stat-dot dot-warning"></div>
-							</div>
-							<span class="stat-card-value">{statistics.outdated}</span>
-						</div>
-					</div>
-
-					<!-- Controls Row: Filter + Search -->
-					<div class="controls-row">
-						<div class="filter-nav">
-							<button
-								class="filter-btn {viewMode === 'detailed' ? 'active' : ''}"
-								onclick={() => (viewMode = 'detailed')}
-							>
-								DETAILED <span class="count-badge">{actions.length}</span>
-							</button>
-							<button
-								class="filter-btn {viewMode === 'grouped' ? 'active' : ''}"
-								onclick={() => (viewMode = 'grouped')}
-							>
-								GROUPED <span class="count-badge">{Object.keys(workflowGroups).length}</span>
-							</button>
-						</div>
-
-						<div class="controls-right">
-							{#if isCached}
-								<div class="cached-pill">
-									<svg
-										width="12"
-										height="12"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg
-									>
-									Cached
-								</div>
-							{/if}
-							<span class="total-label">{totalItems} actions</span>
-							<div class="search-box">
+					<div class="controls-right">
+						{#if isCached}
+							<div class="cached-pill">
 								<svg
-									class="search-icon"
-									width="14"
-									height="14"
+									width="12"
+									height="12"
 									viewBox="0 0 24 24"
 									fill="none"
 									stroke="currentColor"
-									stroke-width="2"
+									stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg
 								>
-									<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-								</svg>
-								<input
-									type="text"
-									placeholder="Search..."
-									class="search-input"
-									oninput={handleSearch}
-									value={searchQuery}
-								/>
-							</div>
-						</div>
-					</div>
-
-					<!-- Data Table -->
-					<div class="table-container">
-						<div class="table-scroll">
-							<table class="data-table">
-								<thead>
-									<tr>
-										<th>Repository</th>
-										<th>Workflow</th>
-										{#if viewMode === 'detailed'}
-											<th>Action</th>
-											<th>Current</th>
-											<th>Latest</th>
-											<th>Status</th>
-											<th>Fix</th>
-										{:else}
-											<th>Count</th>
-											<th>Current</th>
-											<th>Major</th>
-											<th>Recommended</th>
-											<th>Outdated</th>
-											<th>Summary</th>
-											<th>Fix</th>
-										{/if}
-									</tr>
-								</thead>
-								<tbody>
-									{#if viewMode === 'detailed'}
-										{#each actions as action, index}
-											<tr>
-												<td>
-													<span class="cell-mono">{action.repo_name}</span>
-												</td>
-												<td>{action.workflow_name || action.workflow || 'Unknown'}</td>
-												<td>
-													<span class="cell-mono"
-														>{action.action_name || action.action || 'No actions found'}</span
-													>
-												</td>
-												<td><span class="version-tag">{action.current_version || 'N/A'}</span></td>
-												<td><span class="version-tag">{action.latest_version}</span></td>
-												<td>
-													{#if isUpToDate(action.status)}
-														<span class="status-tag connected">CURRENT</span>
-													{:else if action.status === '🚨 major upgrade needed'}
-														<span class="status-tag critical">CRITICAL</span>
-													{:else if action.status === '🔧 upgrade recommended'}
-														<span class="status-tag recommended">UPGRADE</span>
-													{:else if action.status === '⚠️ outdated' || action.status === 'outdated'}
-														<span class="status-tag outdated">OUTDATED</span>
-													{:else}
-														<span class="status-tag pending">{action.status}</span>
-													{/if}
-												</td>
-												<td>
-													{#if isOutdated(action.status)}
-														<button
-															class="btn btn-sm btn-primary"
-															onclick={() => createPullRequest(action)}
-															disabled={action.prCreating}
-														>
-															{#if action.prCreating}
-																<span class="btn-spinner"></span> Creating...
-															{:else}
-																Fix via PR <span class="button-arrow">→</span>
-															{/if}
-														</button>
-													{:else if isUpToDate(action.status)}
-														<span class="status-tag connected">OK</span>
-													{:else}
-														<span class="cell-muted">—</span>
-													{/if}
-												</td>
-											</tr>
-										{/each}
-									{:else}
-										{#each Object.values(workflowGroups) as workflowGroup, index}
-											<tr>
-												<td>
-													<span class="cell-mono">{workflowGroup.repo_name}</span>
-												</td>
-												<td>{workflowGroup.workflow_name || workflowGroup.workflow || 'Unknown'}</td
-												>
-												<td>{workflowGroup.hasActions ? workflowGroup.total : '—'}</td>
-												<td><span class="status-tag connected">{workflowGroup.upToDate}</span></td>
-												<td
-													><span class="status-tag critical"
-														>{workflowGroup.majorUpgradeNeeded}</span
-													></td
-												>
-												<td
-													><span class="status-tag recommended"
-														>{workflowGroup.upgradeRecommended}</span
-													></td
-												>
-												<td><span class="status-tag outdated">{workflowGroup.outdated}</span></td>
-												<td>
-													{#if workflowGroup.hasActions}
-														{#if workflowGroup.majorUpgradeNeeded > 0}
-															<span class="status-tag critical"
-																>CRITICAL ({workflowGroup.majorUpgradeNeeded})</span
-															>
-														{:else if workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
-															<span class="status-tag outdated"
-																>UPDATES ({workflowGroup.upgradeRecommended +
-																	workflowGroup.outdated})</span
-															>
-														{:else}
-															<span class="status-tag connected">ALL CURRENT</span>
-														{/if}
-													{:else}
-														<span class="cell-muted">No actions</span>
-													{/if}
-												</td>
-												<td>
-													{#if workflowGroup.majorUpgradeNeeded > 0 || workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
-														<button
-															class="btn btn-sm btn-primary"
-															onclick={() => fixAllOutdatedInWorkflow(workflowGroup)}
-														>
-															Fix All ({workflowGroup.majorUpgradeNeeded +
-																workflowGroup.upgradeRecommended +
-																workflowGroup.outdated})
-															<span class="button-arrow">→</span>
-														</button>
-													{:else if workflowGroup.hasActions}
-														<span class="status-tag connected">OK</span>
-													{:else}
-														<span class="cell-muted">—</span>
-													{/if}
-												</td>
-											</tr>
-										{/each}
-									{/if}
-								</tbody>
-							</table>
-						</div>
-
-						<!-- Pagination -->
-						{#if totalPages > 1}
-							<div class="pagination-bar">
-								<span class="pagination-info">
-									Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> — {totalItems}
-									total
-								</span>
-								<div class="pagination-controls">
-									<button
-										class="btn btn-sm btn-secondary"
-										onclick={previousPage}
-										disabled={!hasPrevious}
-										aria-label="Previous page"
-									>
-										<svg
-											width="14"
-											height="14"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg
-										>
-									</button>
-									{#each Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-										const startPage = Math.max(1, currentPage - 2);
-										return startPage + i;
-									}) as pageNum}
-										{#if pageNum <= totalPages}
-											<button
-												class="btn btn-sm {pageNum === currentPage
-													? 'btn-primary'
-													: 'btn-secondary'}"
-												onclick={() => goToPage(pageNum)}
-											>
-												{pageNum}
-											</button>
-										{/if}
-									{/each}
-									<button
-										class="btn btn-sm btn-secondary"
-										onclick={nextPage}
-										disabled={!hasNext}
-										aria-label="Next page"
-									>
-										<svg
-											width="14"
-											height="14"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"><path d="M9 18l6-6-6-6" /></svg
-										>
-									</button>
-								</div>
+								Cached
 							</div>
 						{/if}
+						<span class="total-label">{totalItems} actions</span>
+						<div class="search-box">
+							<svg
+								class="search-icon"
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+							</svg>
+							<input
+								type="text"
+								placeholder="Search..."
+								class="search-input"
+								oninput={handleSearch}
+								value={searchQuery}
+							/>
+						</div>
 					</div>
-				{/if}
-			</main>
-		</div>
+				</div>
+
+				<!-- Data Table -->
+				<div class="table-container">
+					<div class="table-scroll">
+						<table class="data-table">
+							<thead>
+								<tr>
+									<th>Repository</th>
+									<th>Workflow</th>
+									{#if viewMode === 'detailed'}
+										<th>Action</th>
+										<th>Current</th>
+										<th>Latest</th>
+										<th>Status</th>
+										<th>Fix</th>
+									{:else}
+										<th>Count</th>
+										<th>Current</th>
+										<th>Major</th>
+										<th>Recommended</th>
+										<th>Outdated</th>
+										<th>Summary</th>
+										<th>Fix</th>
+									{/if}
+								</tr>
+							</thead>
+							<tbody>
+								{#if viewMode === 'detailed'}
+									{#each actions as action, index}
+										<tr>
+											<td>
+												<span class="cell-mono">{action.repo_name}</span>
+											</td>
+											<td>{action.workflow_name || action.workflow || 'Unknown'}</td>
+											<td>
+												<span class="cell-mono"
+													>{action.action_name || action.action || 'No actions found'}</span
+												>
+											</td>
+											<td><span class="version-tag">{action.current_version || 'N/A'}</span></td>
+											<td><span class="version-tag">{action.latest_version}</span></td>
+											<td>
+												{#if isUpToDate(action.status)}
+													<span class="status-tag connected">CURRENT</span>
+												{:else if action.status === '🚨 major upgrade needed'}
+													<span class="status-tag critical">CRITICAL</span>
+												{:else if action.status === '🔧 upgrade recommended'}
+													<span class="status-tag recommended">UPGRADE</span>
+												{:else if action.status === '⚠️ outdated' || action.status === 'outdated'}
+													<span class="status-tag outdated">OUTDATED</span>
+												{:else}
+													<span class="status-tag pending">{action.status}</span>
+												{/if}
+											</td>
+											<td>
+												{#if isOutdated(action.status)}
+													<button
+														class="btn btn-sm btn-primary"
+														onclick={() => createPullRequest(action)}
+														disabled={action.prCreating}
+													>
+														{#if action.prCreating}
+															<span class="btn-spinner"></span> Creating...
+														{:else}
+															Fix via PR <span class="button-arrow">→</span>
+														{/if}
+													</button>
+												{:else if isUpToDate(action.status)}
+													<span class="status-tag connected">OK</span>
+												{:else}
+													<span class="cell-muted">—</span>
+												{/if}
+											</td>
+										</tr>
+									{/each}
+								{:else}
+									{#each Object.values(workflowGroups) as workflowGroup, index}
+										<tr>
+											<td>
+												<span class="cell-mono">{workflowGroup.repo_name}</span>
+											</td>
+											<td>{workflowGroup.workflow_name || workflowGroup.workflow || 'Unknown'}</td>
+											<td>{workflowGroup.hasActions ? workflowGroup.total : '—'}</td>
+											<td><span class="status-tag connected">{workflowGroup.upToDate}</span></td>
+											<td
+												><span class="status-tag critical">{workflowGroup.majorUpgradeNeeded}</span
+												></td
+											>
+											<td
+												><span class="status-tag recommended"
+													>{workflowGroup.upgradeRecommended}</span
+												></td
+											>
+											<td><span class="status-tag outdated">{workflowGroup.outdated}</span></td>
+											<td>
+												{#if workflowGroup.hasActions}
+													{#if workflowGroup.majorUpgradeNeeded > 0}
+														<span class="status-tag critical"
+															>CRITICAL ({workflowGroup.majorUpgradeNeeded})</span
+														>
+													{:else if workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
+														<span class="status-tag outdated"
+															>UPDATES ({workflowGroup.upgradeRecommended +
+																workflowGroup.outdated})</span
+														>
+													{:else}
+														<span class="status-tag connected">ALL CURRENT</span>
+													{/if}
+												{:else}
+													<span class="cell-muted">No actions</span>
+												{/if}
+											</td>
+											<td>
+												{#if workflowGroup.majorUpgradeNeeded > 0 || workflowGroup.upgradeRecommended > 0 || workflowGroup.outdated > 0}
+													<button
+														class="btn btn-sm btn-primary"
+														onclick={() => fixAllOutdatedInWorkflow(workflowGroup)}
+													>
+														Fix All ({workflowGroup.majorUpgradeNeeded +
+															workflowGroup.upgradeRecommended +
+															workflowGroup.outdated})
+														<span class="button-arrow">→</span>
+													</button>
+												{:else if workflowGroup.hasActions}
+													<span class="status-tag connected">OK</span>
+												{:else}
+													<span class="cell-muted">—</span>
+												{/if}
+											</td>
+										</tr>
+									{/each}
+								{/if}
+							</tbody>
+						</table>
+					</div>
+
+					<!-- Pagination -->
+					{#if totalPages > 1}
+						<div class="pagination-bar">
+							<span class="pagination-info">
+								Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> — {totalItems}
+								total
+							</span>
+							<div class="pagination-controls">
+								<button
+									class="btn btn-sm btn-secondary"
+									onclick={previousPage}
+									disabled={!hasPrevious}
+									aria-label="Previous page"
+								>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg
+									>
+								</button>
+								{#each Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+									const startPage = Math.max(1, currentPage - 2);
+									return startPage + i;
+								}) as pageNum}
+									{#if pageNum <= totalPages}
+										<button
+											class="btn btn-sm {pageNum === currentPage ? 'btn-primary' : 'btn-secondary'}"
+											onclick={() => goToPage(pageNum)}
+										>
+											{pageNum}
+										</button>
+									{/if}
+								{/each}
+								<button
+									class="btn btn-sm btn-secondary"
+									onclick={nextPage}
+									disabled={!hasNext}
+									aria-label="Next page"
+								>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"><path d="M9 18l6-6-6-6" /></svg
+									>
+								</button>
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</main>
 	</div>
-{/if}
+</div>
 
 <style>
 	/* ============================================
@@ -976,27 +960,21 @@
 	}
 
 	/* ============================================
-	   LOADER
+	   LOADER / CENTER STATE
 	   ============================================ */
-	.loading-screen {
-		position: fixed;
-		inset: 0;
-		background: #000000;
+	.center-state {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		z-index: 9999;
-	}
-
-	.loading-content {
+		padding: 6rem 2rem;
 		text-align: center;
-		max-width: 300px;
+		gap: 1rem;
 	}
 
-	.loading-icon {
-		width: 48px;
-		height: 48px;
-		margin-bottom: 2rem;
+	.loader-icon {
+		width: 40px;
+		height: 40px;
 		animation: pulse 2s ease-in-out infinite;
 	}
 
@@ -1012,41 +990,11 @@
 		}
 	}
 
-	.progress-bar {
-		height: 2px;
-		background: rgba(255, 255, 255, 0.05);
-		border-radius: 4px;
-		overflow: hidden;
-		margin: 1rem 0;
-	}
-
-	.progress-fill {
-		height: 100%;
-		background: var(--accent, #00adef);
-		width: 40%;
-		animation: load 1.5s ease-in-out infinite;
-	}
-
-	@keyframes load {
-		0% {
-			transform: translateX(-100%);
-			width: 20%;
-		}
-		50% {
-			width: 50%;
-		}
-		100% {
-			transform: translateX(300%);
-			width: 20%;
-		}
-	}
-
-	.status-message {
-		font-family: var(--font-mono, monospace);
-		font-size: 0.65rem;
-		color: rgba(255, 255, 255, 0.4);
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
+	.loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
 	}
 
 	/* ============================================
@@ -1258,31 +1206,8 @@
 	}
 
 	/* ============================================
-	   LOADER / ERROR / EMPTY STATES
+	   ERROR / EMPTY STATES
 	   ============================================ */
-	.loader-view {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 8rem 2rem;
-		text-align: center;
-	}
-
-	.loader-icon {
-		width: 48px;
-		height: 48px;
-		margin-bottom: 1.5rem;
-		animation: pulse 2s infinite;
-	}
-
-	.loader-text {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		letter-spacing: 0.1em;
-	}
-
 	.error-banner {
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--error);
