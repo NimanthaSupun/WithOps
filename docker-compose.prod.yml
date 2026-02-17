@@ -16,6 +16,10 @@ services:
         - VITE_AUTH0_AUDIENCE=${PROD_AUTH0_AUDIENCE:-https://api.withops.com}
     environment:
       - NODE_ENV=production
+      # SvelteKit behind Cloudflare: trust proxy headers for correct HTTPS detection
+      - ORIGIN=${PROD_FRONTEND_URL:-https://app.withops.com}
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
     ports:
       - "3000:3000" # Production port
     restart: always
