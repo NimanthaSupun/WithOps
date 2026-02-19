@@ -685,52 +685,44 @@ features:
 				</div>
 				<span class="trust-logo-name">Docker</span>
 			</div>
+
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<svg width="24" height="24" viewBox="0 0 256 250" xmlns="http://www.w3.org/2000/svg">
-						<path fill="#326CE5" d="M128 0L238.85 41.52V171.79L128 250L17.15 171.79V41.52L128 0Z" />
-						<path
-							fill="#FFFFFF"
-							d="M128 20.31L217.49 53.05V156.4L128 221.28L38.51 156.4V53.05L128 20.31Z"
-						/>
-						<path
-							fill="#326CE5"
-							d="M128 36.21L197.64 61.64V146.47L128 205.51L58.36 146.47V61.64L128 36.21Z"
-						/>
-						<path
-							fill="#FFFFFF"
-							d="M128 65.04L170.62 81.24V130.67L128 165.65L85.38 130.67V81.24L128 65.04Z"
-						/>
-					</svg>
+					<img
+						src="/logos/Kubernetes_logo_without_workmark.svg"
+						alt="Kubernetes"
+						width="32"
+						height="32"
+					/>
 				</div>
 				<span class="trust-logo-name">Kubernetes</span>
 			</div>
+
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="#844FBA"
-						><path
-							d="M1.44 0v7.575l6.561 3.79V3.787L1.44 0zm14.559 0v7.575l6.561 3.79V3.787L15.999 0zM8.72 4.197v7.575l6.561 3.79V7.987l-6.561-3.79zM1.44 8.965v7.575l6.561 3.79v-7.575l-6.561-3.79zm14.559 8.965v7.575l6.561 3.79v-7.575l-6.561-3.79z"
-						/></svg
-					>
+					<img
+						src="/logos/Terraform_Logo.svg"
+						alt="Terraform"
+						width="80"
+						height="20"
+						style="object-fit: contain;"
+					/>
 				</div>
 				<span class="trust-logo-name">Terraform</span>
 			</div>
+
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<svg
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ADEF" />
-						<path d="M12 7L2 12L12 17L22 12L12 7Z" fill="#00ADEF" fill-opacity="0.6" />
-						<path d="M12 12L2 17L12 22L22 17L12 12Z" fill="#00ADEF" fill-opacity="0.3" />
-					</svg>
+					<img
+						src="/logos/Harness_Logo.svg"
+						alt="Harness"
+						width="32"
+						height="32"
+					/>
 				</div>
 				<span class="trust-logo-name">Harness</span>
 			</div>
+
 			<div class="trust-logo">
 				<div class="trust-logo-box">
 					<svg width="24" height="24" viewBox="0 0 24 24" fill="#FC6D26"
