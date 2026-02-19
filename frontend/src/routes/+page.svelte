@@ -713,12 +713,7 @@ features:
 
 			<div class="trust-logo">
 				<div class="trust-logo-box">
-					<img
-						src="/logos/Harness_Logo.svg"
-						alt="Harness"
-						width="32"
-						height="32"
-					/>
+					<img src="/logos/Harness_Logo.svg" alt="Harness" width="32" height="32" />
 				</div>
 				<span class="trust-logo-name">Harness</span>
 			</div>
@@ -751,105 +746,113 @@ features:
 		<div class="problem-grid" use:reveal={{ direction: 'up', delay: 200 }}>
 			<!-- Problem 1: Coverage -->
 			<div class="problem-card" use:spotlight>
-				<div class="problem-header-row">
-					<div class="problem-icon problem-icon-red">
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							><path
-								d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-							/><line x1="12" y1="9" x2="12" y2="13" /><line
-								x1="12"
-								y1="17"
-								x2="12.01"
-								y2="17"
-							/></svg
-						>
-					</div>
-					<div class="problem-badge">HIGH RISK</div>
+				<div class="problem-card-number">01</div>
+				<div class="problem-icon-wrap">
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+						/>
+						<line x1="12" y1="9" x2="12" y2="13" />
+						<line x1="12" y1="17" x2="12.01" y2="17" />
+					</svg>
 				</div>
 				<h3>Critical Visibility Gaps</h3>
 				<p>
-					Organizations remain blind to risk: **70% miss SAST**, **85% lack DAST**, and **55% have
-					incomplete SCA** configurations.
+					Organizations remain blind to risk — 70% miss SAST, 85% lack DAST, and 55% have incomplete
+					SCA configurations.
 				</p>
-				<div class="problem-data-box">
-					<div class="data-row">
-						<span>SAST_CORE</span> <span class="data-status status-null">NULL</span>
+				<div class="problem-stat-row">
+					<div class="problem-stat">
+						<span class="problem-stat-value">70%</span>
+						<span class="problem-stat-label">Missing SAST</span>
 					</div>
-					<div class="data-row">
-						<span>DAST_PROD</span> <span class="data-status status-null">NULL</span>
+					<div class="problem-stat">
+						<span class="problem-stat-value">85%</span>
+						<span class="problem-stat-label">No DAST</span>
 					</div>
-					<div class="data-row">
-						<span>SCA_DEP</span> <span class="data-status status-fail">FAILED</span>
+					<div class="problem-stat">
+						<span class="problem-stat-value">55%</span>
+						<span class="problem-stat-label">Partial SCA</span>
 					</div>
 				</div>
 			</div>
 
 			<!-- Problem 2: Inconsistency -->
-			<div class="problem-card">
-				<div class="problem-header-row">
-					<div class="problem-icon problem-icon-amber">
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path
-								d="M9 21V9"
-							/></svg
-						>
-					</div>
-					<div class="problem-badge badge-amber">MISMATCH</div>
+			<div class="problem-card" use:spotlight>
+				<div class="problem-card-number">02</div>
+				<div class="problem-icon-wrap">
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<rect x="3" y="3" width="18" height="18" rx="2" />
+						<path d="M3 9h18" />
+						<path d="M9 21V9" />
+					</svg>
 				</div>
 				<h3>Fragmented Workflow Policies</h3>
 				<p>
 					Different teams implement varying security standards, creating holes in branch protection
 					and code review processes.
 				</p>
-				<div class="problem-data-box">
-					<div class="data-row"><span>BR_PROT</span> <span class="data-status">BYPASSED</span></div>
-					<div class="data-row"><span>REQ_REV</span> <span class="data-status">DISABLED</span></div>
-					<div class="data-row">
-						<span>CI_VAL</span> <span class="data-status status-fail">FAILING</span>
+				<div class="problem-stat-row">
+					<div class="problem-stat">
+						<span class="problem-stat-value">3×</span>
+						<span class="problem-stat-label">Policy Variants</span>
+					</div>
+					<div class="problem-stat">
+						<span class="problem-stat-value">40%</span>
+						<span class="problem-stat-label">Bypass Rate</span>
+					</div>
+					<div class="problem-stat">
+						<span class="problem-stat-value">0</span>
+						<span class="problem-stat-label">Enforcement</span>
 					</div>
 				</div>
 			</div>
 
 			<!-- Problem 3: Maturity -->
-			<div class="problem-card">
-				<div class="problem-header-row">
-					<div class="problem-icon problem-icon-red">
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
-						>
-					</div>
-					<div class="problem-badge">STAGNANT</div>
+			<div class="problem-card" use:spotlight>
+				<div class="problem-card-number">03</div>
+				<div class="problem-icon-wrap">
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+					</svg>
 				</div>
 				<h3>Stagnant Security Maturity</h3>
 				<p>
-					Most teams lack a structured roadmap for reaching higher **OWASP DSOMM** levels, with no
+					Most teams lack a structured roadmap for reaching higher OWASP DSOMM levels, with no
 					baseline to measure improvements.
 				</p>
-				<div class="problem-data-box">
-					<div class="maturity-bar-container">
-						<div class="m-bar m-active"></div>
-						<div class="m-bar"></div>
-						<div class="m-bar"></div>
-						<div class="m-bar"></div>
+				<div class="problem-maturity-visual">
+					<div class="maturity-track">
+						<div class="maturity-fill"></div>
 					</div>
-					<div class="maturity-label">BASELINE: LEVEL 1</div>
+					<div class="maturity-levels">
+						<span class="maturity-level maturity-current">L1</span>
+						<span class="maturity-level">L2</span>
+						<span class="maturity-level">L3</span>
+						<span class="maturity-level">L4</span>
+						<span class="maturity-level">L5</span>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -2354,64 +2357,62 @@ features:
 	.problem-card {
 		background: var(--bg-surface);
 		border: 1px solid var(--border);
-		border-radius: 12px;
-		padding: 2rem;
+		border-radius: 16px;
+		padding: 2.25rem;
 		position: relative;
 		overflow: hidden;
-		transition: all 0.2s var(--ease-premium);
+		transition: all 0.35s var(--ease-premium);
 		display: flex;
 		flex-direction: column;
-		border-left: 2px solid rgba(239, 68, 68, 0.3);
+	}
+	.problem-card::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 16px;
+		background: radial-gradient(
+			600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+			rgba(0, 173, 239, 0.04),
+			transparent 40%
+		);
+		opacity: 0;
+		transition: opacity 0.35s var(--ease-premium);
+		pointer-events: none;
+	}
+	.problem-card:hover::before {
+		opacity: 1;
 	}
 	.problem-card:hover {
 		border-color: var(--border-focus);
-		border-left-color: var(--error);
-		transform: translateY(-4px);
-		box-shadow:
-			0 16px 32px rgba(0, 0, 0, 0.4),
-			0 0 0 1px rgba(239, 68, 68, 0.1);
+		transform: translateY(-2px);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 	}
-	.problem-header-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: 1.5rem;
-	}
-	.problem-badge {
+	.problem-card-number {
+		position: absolute;
+		top: 1.75rem;
+		right: 2rem;
 		font-family: var(--font-mono);
-		font-size: 0.6rem;
+		font-size: 0.65rem;
 		font-weight: 700;
-		padding: 0.25rem 0.6rem;
-		border-radius: 6px;
-		background: rgba(239, 68, 68, 0.05);
-		color: var(--error);
-		border: 1px solid rgba(239, 68, 68, 0.1);
+		color: var(--text-muted);
 		letter-spacing: 0.05em;
-		text-transform: uppercase;
+		opacity: 0.5;
 	}
-	.badge-amber {
-		background: rgba(245, 158, 11, 0.05);
-		color: var(--warning);
-		border-color: rgba(245, 158, 11, 0.1);
-	}
-	.problem-icon {
+	.problem-icon-wrap {
 		width: 48px;
 		height: 48px;
 		border-radius: 12px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		margin-bottom: 1.75rem;
+		background: var(--accent-soft);
+		color: var(--accent);
+		border: 1px solid rgba(0, 173, 239, 0.08);
 		transition: transform 0.2s var(--ease-premium);
 	}
-	.problem-icon-red {
-		background: rgba(239, 68, 68, 0.05);
-		color: var(--error);
-		border: 1px solid rgba(239, 68, 68, 0.08);
-	}
-	.problem-icon-amber {
-		background: rgba(245, 158, 11, 0.05);
-		color: var(--warning);
-		border: 1px solid rgba(245, 158, 11, 0.08);
+	.problem-card:hover .problem-icon-wrap {
+		transform: scale(1.05);
 	}
 	.problem-card h3 {
 		color: var(--text-primary);
@@ -2423,63 +2424,86 @@ features:
 	.problem-card p {
 		color: var(--text-secondary);
 		font-size: 0.875rem;
-		line-height: 1.6;
+		line-height: 1.7;
 		margin-bottom: 2rem;
 		flex-grow: 1;
 	}
 
-	/* Diagnostic Data Box */
-	.problem-data-box {
-		background: var(--bg-app);
-		border: 1px solid var(--border);
-		border-left: 2px solid rgba(239, 68, 68, 0.25);
-		border-radius: 8px;
-		padding: 1.25rem;
-		font-family: var(--font-mono);
+	/* Problem Stats */
+	.problem-stat-row {
+		display: flex;
+		gap: 1px;
+		background: var(--border);
+		border-radius: 10px;
+		overflow: hidden;
+	}
+	.problem-stat {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 1rem 0.5rem;
+		background: var(--bg-app);
 	}
-	.data-row {
-		display: flex;
-		justify-content: space-between;
-		font-size: 0.6rem;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
+	.problem-stat:first-child {
+		border-radius: 10px 0 0 10px;
 	}
-	.data-status {
-		color: var(--error);
-		font-weight: 700;
+	.problem-stat:last-child {
+		border-radius: 0 10px 10px 0;
 	}
-	.status-null {
-		color: var(--text-muted);
+	.problem-stat-value {
+		font-family: var(--font-mono);
+		font-size: 1.1rem;
+		font-weight: 800;
+		color: var(--accent);
+		letter-spacing: -0.02em;
 	}
-	.status-fail {
-		color: var(--error);
-		text-decoration: underline;
-	}
-	.maturity-bar-container {
-		display: flex;
-		gap: 4px;
-		height: 3px;
-		margin-bottom: 0.5rem;
-	}
-	.m-bar {
-		flex: 1;
-		background: var(--border-focus);
-		border-radius: 2px;
-	}
-	.m-bar.m-active {
-		background: var(--error);
-		opacity: 0.6;
-	}
-	.maturity-label {
+	.problem-stat-label {
+		font-family: var(--font-mono);
 		font-size: 0.55rem;
 		color: var(--text-muted);
-		text-align: right;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-weight: 600;
+	}
+
+	/* Maturity Visual */
+	.problem-maturity-visual {
+		background: var(--bg-app);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1.25rem;
+	}
+	.maturity-track {
+		height: 4px;
+		background: var(--border-focus);
+		border-radius: 4px;
+		overflow: hidden;
+		margin-bottom: 0.75rem;
+	}
+	.maturity-fill {
+		width: 20%;
+		height: 100%;
+		background: linear-gradient(90deg, var(--accent), rgba(0, 173, 239, 0.5));
+		border-radius: 4px;
+		transition: width 0.5s var(--ease-premium);
+	}
+	.maturity-levels {
+		display: flex;
+		justify-content: space-between;
+	}
+	.maturity-level {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
 		font-weight: 700;
+		color: var(--text-muted);
 		letter-spacing: 0.05em;
+		opacity: 0.5;
+	}
+	.maturity-current {
+		color: var(--accent);
+		opacity: 1;
 	}
 
 	/* ============================================
