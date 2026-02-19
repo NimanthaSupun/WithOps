@@ -540,6 +540,9 @@ features:
 		<div class="hero-bg-base"></div>
 		<div class="hero-bg-grid"></div>
 	</div>
+	<!-- Studio spotlight layers -->
+	<div class="hero-spotlight"></div>
+	<div class="hero-spotlight-secondary"></div>
 	<!-- 3D Depth layers -->
 	<div class="hero-depth-fog"></div>
 	<div class="hero-vignette"></div>
@@ -1600,7 +1603,7 @@ features:
 		pointer-events: none;
 		z-index: 0;
 	}
-	/* Ambient accent glow — stronger cyan wash */
+	/* Ambient accent glow — subtle top wash */
 	.hero::after {
 		content: '';
 		position: absolute;
@@ -1608,11 +1611,44 @@ features:
 		left: 20%;
 		width: 60%;
 		height: 60%;
-		background: radial-gradient(circle, rgba(0, 173, 239, 0.08) 0%, transparent 70%);
+		background: radial-gradient(circle, rgba(0, 173, 239, 0.05) 0%, transparent 70%);
 		pointer-events: none;
 		z-index: 0;
 		filter: blur(60px);
 	}
+
+	/* Studio spotlight — centered behind heading */
+	.hero-spotlight {
+		position: absolute;
+		top: 15%;
+		left: 5%;
+		width: 50%;
+		height: 70%;
+		background: radial-gradient(
+			ellipse 60% 50% at 50% 45%,
+			rgba(0, 173, 239, 0.06) 0%,
+			rgba(0, 173, 239, 0.02) 35%,
+			transparent 70%
+		);
+		pointer-events: none;
+		z-index: 0;
+	}
+	/* Secondary soft wash — dim fill light */
+	.hero-spotlight-secondary {
+		position: absolute;
+		top: 30%;
+		right: 10%;
+		width: 40%;
+		height: 50%;
+		background: radial-gradient(
+			ellipse 70% 60% at 50% 50%,
+			rgba(0, 173, 239, 0.03) 0%,
+			transparent 65%
+		);
+		pointer-events: none;
+		z-index: 0;
+	}
+
 	.hero-bg {
 		position: absolute;
 		inset: 0;
