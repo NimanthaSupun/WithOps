@@ -432,16 +432,6 @@ cursor.execute(<span class="str">"SELECT * FROM users WHERE id = %s"</span>, (us
 		</div>
 	</div>
 
-	<div class="page-nav">
-		<a href="/docs/getting-started/connecting-github" class="page-nav-btn prev">
-			<span class="page-nav-label">← Previous</span>
-			<span class="page-nav-title">Connecting GitHub</span>
-		</a>
-		<a href="/docs/getting-started" class="page-nav-btn next">
-			<span class="page-nav-label">Back to →</span>
-			<span class="page-nav-title">Getting Started</span>
-		</a>
-	</div>
 </div>
 
 <style>
@@ -570,14 +560,6 @@ cursor.execute(<span class="str">"SELECT * FROM users WHERE id = %s"</span>, (us
 	.callout-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; color: var(--callout-tip-text); }
 	.callout-content p { font-family: 'Lora', serif; font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); margin: 0; }
 	.callout-content strong { font-weight: 600; color: var(--text-primary); }
-
-	/* Page nav */
-	.page-nav { display: flex; justify-content: space-between; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); }
-	.page-nav-btn { display: flex; flex-direction: column; gap: 3px; text-decoration: none; }
-	.page-nav-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
-	.page-nav-title { font-family: 'Lora', serif; font-size: 14px; color: var(--text-secondary); transition: color 0.15s; }
-	.page-nav-btn:hover .page-nav-title { color: var(--accent); }
-	.page-nav-btn.next { text-align: right; margin-left: auto; }
 
 	@media (max-width: 768px) {
 		.page-title { font-size: 28px; }

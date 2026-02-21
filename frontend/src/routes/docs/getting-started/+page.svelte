@@ -478,33 +478,6 @@
 		</div>
 	</div>
 
-	<!-- Next Step Card -->
-	<div class="next-step-card">
-		<a href="/docs/getting-started/quick-start" class="nsc-link">
-			<div class="nsc-content">
-				<div class="nsc-label">Next Step</div>
-				<h3 class="nsc-title">Quick Start Guide →</h3>
-				<p class="nsc-desc">Set up your account and get the platform running in under five minutes — cloud or self-hosted.</p>
-			</div>
-			<div class="nsc-arrow">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M5 12h14M12 5l7 7-7 7" />
-				</svg>
-			</div>
-		</a>
-	</div>
-
-	<!-- Footer nav -->
-	<div class="page-nav">
-		<a href="/" class="page-nav-btn prev">
-			<span class="page-nav-label">← Previous</span>
-			<span class="page-nav-title">Landing Page</span>
-		</a>
-		<a href="/docs/getting-started/quick-start" class="page-nav-btn next">
-			<span class="page-nav-label">Next →</span>
-			<span class="page-nav-title">Quick Start</span>
-		</a>
-	</div>
 </div>
 
 <style>
@@ -947,95 +920,6 @@
 		font-size: 12px;
 		color: var(--text-secondary);
 		line-height: 1.5;
-	}
-
-	/* ── Next Step Card ── */
-	.next-step-card {
-		margin: 40px 0 32px;
-		border-radius: 8px;
-		overflow: hidden;
-		border: 1px solid var(--border);
-		background: var(--bg-surface);
-		transition: all 0.2s ease;
-	}
-	.next-step-card:hover {
-		border-color: var(--accent);
-		box-shadow: 0 4px 20px rgba(0, 173, 239, 0.08);
-	}
-	.nsc-link {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 24px;
-		text-decoration: none;
-		color: inherit;
-	}
-	.nsc-label {
-		font-family: 'DM Mono', monospace;
-		font-size: 10px;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--accent);
-		margin-bottom: 6px;
-	}
-	.nsc-title {
-		font-family: 'Playfair Display', serif;
-		font-size: 18px;
-		font-weight: 700;
-		color: var(--text-primary);
-		margin-bottom: 4px;
-	}
-	.nsc-desc {
-		font-family: 'Lora', serif;
-		font-size: 13px;
-		color: var(--text-secondary);
-		margin: 0;
-		line-height: 1.5;
-	}
-	.nsc-arrow {
-		color: var(--accent);
-		flex-shrink: 0;
-		margin-left: 20px;
-		transition: transform 0.15s;
-	}
-	.next-step-card:hover .nsc-arrow {
-		transform: translateX(4px);
-	}
-
-	/* ── Page navigation ── */
-	.page-nav {
-		display: flex;
-		justify-content: space-between;
-		margin-top: 32px;
-		padding-top: 20px;
-		border-top: 1px solid var(--border);
-	}
-	.page-nav-btn {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		text-decoration: none;
-		transition: all 0.15s;
-	}
-	.page-nav-label {
-		font-family: 'DM Mono', monospace;
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--text-muted);
-	}
-	.page-nav-title {
-		font-family: 'Lora', serif;
-		font-size: 14px;
-		color: var(--text-secondary);
-		transition: color 0.15s;
-	}
-	.page-nav-btn:hover .page-nav-title {
-		color: var(--accent);
-	}
-	.page-nav-btn.next {
-		text-align: right;
-		margin-left: auto;
 	}
 
 	/* ── Animations ── */

@@ -79,16 +79,6 @@
 		</div>
 	</div>
 
-	<div class="page-nav">
-		<a href="/docs/api" class="page-nav-btn prev">
-			<span class="page-nav-label">← Previous</span>
-			<span class="page-nav-title">API Reference</span>
-		</a>
-		<a href="/docs/getting-started" class="page-nav-btn next">
-			<span class="page-nav-label">Next →</span>
-			<span class="page-nav-title">Introduction</span>
-		</a>
-	</div>
 </div>
 
 <style>
@@ -110,8 +100,4 @@
 	.callout-icon { color: var(--callout-warn-text); }
 	.callout-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--callout-warn-text); text-transform: uppercase; margin-bottom: 4px; }
 
-	.page-nav { display: flex; justify-content: space-between; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
-	.page-nav-btn { text-decoration: none; }
-	.page-nav-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
-	.page-nav-title { font-family: 'Lora', serif; display: block; color: var(--text-secondary); }
 </style>

@@ -46,10 +46,6 @@
 		</ul>
 
 		<h2 id="system-diagram" class="section-heading">System Architecture</h2>
-		<div class="code-block architecture-code">
-			<div class="code-header">
-				<span class="code-lang">system-architecture</span>
-			</div>
 			<div class="arch-container">
 				<!-- Users -->
 				<div class="arch-box">
@@ -146,7 +142,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
 
 		<h2 id="microservices" class="section-heading">Core Microservices</h2>
 		<p>The platform consists of 9 specialized services, each handling a specific part of the DevSecOps lifecycle.</p>
@@ -214,16 +209,6 @@
 		</div>
 	</div>
 
-	<div class="page-nav">
-		<a href="/docs/getting-started/first-security-scan" class="page-nav-btn prev">
-			<span class="page-nav-label">← Previous</span>
-			<span class="page-nav-title">First Security Scan</span>
-		</a>
-		<a href="/docs/features" class="page-nav-btn next">
-			<span class="page-nav-label">Next →</span>
-			<span class="page-nav-title">Features & Tools</span>
-		</a>
-	</div>
 </div>
 
 <style>
@@ -248,8 +233,4 @@
 	.tech-item { padding: 16px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; }
 	.tech-category { display: block; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
 	.tech-value { font-size: 14px; color: var(--text-primary); }
-	.page-nav { display: flex; justify-content: space-between; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
-	.page-nav-btn { text-decoration: none; }
-	.page-nav-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
-	.page-nav-title { font-family: 'Lora', serif; display: block; color: var(--text-secondary); }
 </style>

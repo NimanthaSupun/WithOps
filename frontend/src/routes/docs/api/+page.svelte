@@ -109,16 +109,6 @@
 		</ul>
 	</div>
 
-	<div class="page-nav">
-		<a href="/docs/features" class="page-nav-btn prev">
-			<span class="page-nav-label">← Previous</span>
-			<span class="page-nav-title">Features & Tools</span>
-		</a>
-		<a href="/docs/deployment" class="page-nav-btn next">
-			<span class="page-nav-label">Next →</span>
-			<span class="page-nav-title">Deployment Guide</span>
-		</a>
-	</div>
 </div>
 
 <style>
@@ -131,25 +121,17 @@
 	.page-title { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: var(--text-primary); }
 	.page-subtitle { font-family: 'Lora', serif; font-style: italic; font-size: 15px; color: var(--text-secondary); }
 	.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-	.section-heading { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin: 40px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-	.prose p { font-family: 'Lora', serif; font-size: 15px; margin-bottom: 16px; line-height: 1.85; }
-	.code-block { background: var(--code-bg); border-radius: 6px; margin: 16px 0; border: 1px solid var(--code-border); padding: 16px; }
-	pre { color: var(--code-text); font-family: 'DM Mono', monospace; font-size: 13px; margin: 0; }
-	
-	.perm-table { margin: 16px 0 32px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-	.perm-header { display: grid; grid-template-columns: 160px 160px 1fr; gap: 12px; padding: 10px 16px; background: var(--bg-surface-2); font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
-	.perm-row { display: grid; grid-template-columns: 160px 160px 1fr; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--border); }
-	.perm-name { font-weight: 600; font-size: 13px; }
+	.perm-table { margin: 24px 0 40px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg-surface); }
+	.perm-header { display: grid; grid-template-columns: 180px 180px 1fr; gap: 12px; padding: 12px 20px; background: var(--bg-surface-2); font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+	.perm-row { display: grid; grid-template-columns: 180px 180px 1fr; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--border); transition: background 0.15s; }
+	.perm-row:hover { background: var(--bg-surface-2); }
+	.perm-name { font-weight: 600; font-size: 13px; color: var(--text-primary); }
 
-	.endpoint-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
-	.method { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; color: white; width: 45px; text-align: center; }
-	.method.post { background: #10b981; }
-	.method.get { background: #00adef; }
-	.path { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--accent); }
-	.endpoint-item p { font-size: 13px; color: var(--text-secondary); margin: 0; flex: 1; text-align: right; }
-
-	.page-nav { display: flex; justify-content: space-between; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
-	.page-nav-btn { text-decoration: none; }
-	.page-nav-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
-	.page-nav-title { font-family: 'Lora', serif; display: block; color: var(--text-secondary); }
+	.endpoint-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; transition: all 0.2s; }
+	.endpoint-item:hover { border-color: var(--accent); transform: translateX(4px); background: var(--bg-surface-2); }
+	.method { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 4px; color: white; width: 50px; text-align: center; letter-spacing: 0.05em; }
+	.method.post { background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2); }
+	.method.get { background: #00adef; box-shadow: 0 2px 8px rgba(0, 173, 239, 0.2); }
+	.path { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-primary); font-weight: 500; }
+	.endpoint-item p { font-family: 'Lora', serif; font-size: 13px; color: var(--text-secondary); margin: 0; flex: 1; text-align: right; }
 </style>

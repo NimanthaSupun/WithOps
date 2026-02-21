@@ -137,6 +137,26 @@
 	function closeSidebar() {
 		sidebarOpen = false;
 	}
+
+	// Calculate Prev/Next chapters
+	let navPair = $derived.by(() => {
+		const allItems = navigation.flatMap(s => s.items);
+		const currentIndex = allItems.findIndex(item => item.href === $page.url.pathname);
+		return {
+			prev: currentIndex > 0 ? allItems[currentIndex - 1] : null,
+			next: currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null
+		};
+	});
+
+	// Reading progress calculation
+	let scrollProgress = $state(0);
+	function handleScroll(e) {
+		const element = e.target;
+		const totalHeight = element.scrollHeight - element.clientHeight;
+		if (totalHeight > 0) {
+			scrollProgress = (element.scrollTop / totalHeight) * 100;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -277,9 +297,45 @@
 			<!-- Margin line -->
 			<div class="notebook-margin"></div>
 
-			<div class="docs-content-wrap" bind:this={contentWrapEl}>
+			<div class="docs-content-wrap" bind:this={contentWrapEl} onscroll={handleScroll}>
+				<!-- Reading Progress Bar -->
+				<div class="reading-progress-container">
+					<div class="reading-progress-bar" style="width: {scrollProgress}%"></div>
+				</div>
+
 				<div class="doc-content">
 					{@render children()}
+
+					<!-- Chapter Navigation Footer -->
+					{#if navPair.prev || navPair.next}
+						<nav class="chapter-nav">
+							{#if navPair.prev}
+								<a href={navPair.prev.href} class="chapter-btn prev">
+									<div class="chapter-btn-label">
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M19 12H5M12 19l-7-7 7-7"/>
+										</svg>
+										Previous
+									</div>
+									<div class="chapter-btn-title">{navPair.prev.title}</div>
+								</a>
+							{:else}
+								<div class="spacer"></div>
+							{/if}
+
+							{#if navPair.next}
+								<a href={navPair.next.href} class="chapter-btn next">
+									<div class="chapter-btn-label">
+										Next
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M5 12h14M12 5l7 7-7 7"/>
+										</svg>
+									</div>
+									<div class="chapter-btn-title">{navPair.next.title}</div>
+								</a>
+							{/if}
+						</nav>
+					{/if}
 				</div>
 			</div>
 
@@ -1120,6 +1176,81 @@
 			padding: 24px 16px 60px 16px;
 		}
 	}
+
+	/* ── Reading Progress ── */
+	.reading-progress-container {
+		position: sticky;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 2px;
+		background: transparent;
+		z-index: 100;
+	}
+	.reading-progress-bar {
+		height: 100%;
+		background: var(--accent);
+		transition: width 0.1s ease-out;
+		box-shadow: 0 0 8px var(--accent);
+	}
+
+	/* ── Chapter Navigation Footer ── */
+	.chapter-nav {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 24px;
+		margin-top: 80px;
+		padding-top: 40px;
+		border-top: 1px solid var(--border);
+	}
+
+	.chapter-btn {
+		display: flex;
+		flex-direction: column;
+		padding: 24px;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		text-decoration: none;
+		transition: all 0.2s var(--ease-premium);
+		position: relative;
+		overflow: hidden;
+	}
+
+	.chapter-btn:hover {
+		border-color: var(--accent-subtle);
+		transform: translateY(-2px);
+		background: var(--bg-surface-2);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+	}
+
+	.chapter-btn.prev { align-items: flex-start; }
+	.chapter-btn.next { align-items: flex-end; text-align: right; }
+
+	.chapter-btn-label {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--text-muted);
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 8px;
+	}
+
+	.chapter-btn-title {
+		font-family: var(--font-serif);
+		font-size: 18px;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.chapter-btn:hover .chapter-btn-title {
+		color: var(--accent);
+	}
+
+	.spacer { flex: 1; }
 
 	/* Scrollbar */
 	::-webkit-scrollbar {
