@@ -7,10 +7,8 @@ This document outlines the current state of the WithOps documentation, the desig
 | Section | Status | Files / Routes |
 | :--- | :--- | :--- |
 | **Getting Started** | ✅ Complete | `/docs/getting-started/*` |
-| **Platform Overview**| 🚧 Missing | `/docs/overview` |
-| **Features & Tools** | 🚧 Partial | `/docs/features/*` (Routes need creation) |
-| **API Reference** | ❌ Missing | `/docs/api` |
-| **Deployment Guide** | ❌ Missing | `/docs/deployment` |
+| **Platform Overview**| ✅ Complete | `/docs/overview`, `/docs/api`, `/docs/deployment` |
+| **Features & Tools** | ✅ Complete | `/docs/features/*` |
 
 ## 🎨 Design System & Patterns
 

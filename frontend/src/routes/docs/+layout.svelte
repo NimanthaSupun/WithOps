@@ -104,6 +104,15 @@
 			]
 		},
 		{
+			title: 'Platform Overview',
+			icon: 'layers',
+			items: [
+				{ title: 'Architecture Deep Dive', href: '/docs/overview' },
+				{ title: 'API Reference', href: '/docs/api' },
+				{ title: 'Deployment Guide', href: '/docs/deployment' }
+			]
+		},
+		{
 			title: 'Features & Tools',
 			icon: 'cpu',
 			items: [
@@ -115,11 +124,7 @@
 		}
 	];
 
-	const placeholderSections = [
-		{ title: 'Platform Overview', icon: 'layers' },
-		{ title: 'API Reference', icon: 'code' },
-		{ title: 'Deployment Guide', icon: 'server' }
-	];
+	const placeholderSections = [];
 
 	function isActive(href) {
 		return $page.url.pathname === href;
@@ -176,6 +181,10 @@
 								<path
 									d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09zM12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"
 								/>
+							</svg>
+						{:else if section.icon === 'layers'}
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" />
 							</svg>
 						{:else if section.icon === 'cpu'}
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -856,6 +865,206 @@
 	.sidebar-overlay {
 		display: none;
 	}
+
+	/* ── Global Code block styles for all doc pages ── */
+	:global(.code-block) {
+		background: var(--code-bg);
+		border-radius: 6px;
+		margin: 20px 0;
+		overflow: hidden;
+		border: 1px solid var(--code-border);
+		position: relative;
+	}
+	:global(.code-header) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 16px;
+		border-bottom: 1px solid var(--code-border);
+	}
+	:global(.code-lang) {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: #6b7a5e;
+		letter-spacing: 0.06em;
+	}
+	:global(.copy-btn) {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: #6b7a5e;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px 8px;
+		border-radius: 3px;
+		transition: all 0.15s;
+	}
+	:global(.copy-btn:hover) {
+		background: rgba(255, 255, 255, 0.06);
+		color: #b5c9a0;
+	}
+	:global(pre) {
+		padding: 18px 20px;
+		overflow-x: auto;
+		font-family: var(--font-mono);
+		font-size: 13px;
+		line-height: 1.6;
+		color: var(--code-text);
+		margin: 0;
+		tab-size: 4;
+	}
+
+	/* ── Modern Logical Architecture Diagram ── */
+	:global(.arch-container) {
+		margin: 40px 0;
+		padding: 40px;
+		background: #0a0a0a;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+		position: relative;
+		overflow: hidden;
+	}
+
+	:global(.arch-container::before) {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+		background-size: 24px 24px;
+		pointer-events: none;
+	}
+
+	:global(.arch-box) {
+		width: 100%;
+		max-width: 600px;
+		background: rgba(20, 20, 20, 0.8);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		padding: 20px;
+		text-align: center;
+		position: relative;
+		z-index: 2;
+		backdrop-filter: blur(8px);
+		box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+	}
+
+	:global(.arch-box.microservices) {
+		max-width: 800px;
+	}
+
+	:global(.arch-title) {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		color: var(--accent);
+		margin-bottom: 12px;
+		display: block;
+	}
+
+	:global(.arch-name) {
+		font-family: 'Playfair Display', serif;
+		font-size: 18px;
+		font-weight: 600;
+		color: #fff;
+		margin-bottom: 8px;
+		display: block;
+	}
+
+	:global(.arch-details) {
+		font-family: 'Lora', serif;
+		font-size: 13px;
+		color: var(--text-secondary);
+		display: block;
+		line-height: 1.5;
+	}
+
+	:global(.arch-connector) {
+		height: 40px;
+		width: 2px;
+		background: linear-gradient(to bottom, var(--accent), rgba(181, 201, 160, 0.1));
+		position: relative;
+	}
+
+	:global(.arch-connector::after) {
+		content: '▼';
+		position: absolute;
+		bottom: -6px;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 10px;
+		color: rgba(181, 201, 160, 0.5);
+	}
+
+	:global(.arch-grid) {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 12px;
+		margin-top: 20px;
+	}
+
+	:global(.arch-sub-box) {
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 6px;
+		padding: 12px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		transition: all 0.2s;
+	}
+
+	:global(.arch-sub-box:hover) {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: var(--accent-subtle);
+		transform: translateY(-2px);
+	}
+
+	:global(.arch-sub-name) {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: #fff;
+		font-weight: 500;
+	}
+
+	:global(.arch-sub-port) {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		color: var(--accent);
+		margin-top: 4px;
+		opacity: 0.8;
+	}
+
+	:global(.arch-multi-connector) {
+		width: 80%;
+		height: 30px;
+		border: 2px solid rgba(181, 201, 160, 0.2);
+		border-bottom: none;
+		border-radius: 12px 12px 0 0;
+		margin: 0 auto;
+		position: relative;
+	}
+
+	:global(.arch-multi-connector::before) {
+		content: '';
+		position: absolute;
+		top: -30px;
+		left: 50%;
+		width: 2px;
+		height: 30px;
+		background: rgba(181, 201, 160, 0.2);
+	}
+
+	/* Syntax tokens for code blocks */
+	:global(.kw) { color: #c8956e; }
+	:global(.str) { color: #a5c985; }
+	:global(.cm) { color: #5a6e4a; }
+	:global(.fn) { color: #8bb8d4; }
+	:global(.num) { color: #c884a0; }
 
 	/* ── Responsive ── */
 	@media (max-width: 1200px) {

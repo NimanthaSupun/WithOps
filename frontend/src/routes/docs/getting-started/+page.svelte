@@ -231,42 +231,101 @@
 		WithOps uses a microservices architecture with an API Gateway pattern. Here's how requests flow through the system:
 	</p>
 
-	<div class="code-block">
-		<div class="code-header">
-			<span class="code-lang">architecture</span>
-			<button class="copy-btn" onclick={() => copyCode('arch', 'Browser → Kong API Gateway → Microservices → AI + Data')}>
-				{copiedStates['arch'] ? '✓ Copied' : 'Copy'}
-			</button>
+	<div class="arch-container">
+		<!-- Users -->
+		<div class="arch-box">
+			<span class="arch-title">Entry Layer</span>
+			<span class="arch-name">Users & Clients</span>
+			<span class="arch-details">Web Browsers, Mobile Apps, CLI Tools</span>
 		</div>
-		<pre><code class="arch-code"><span class="cm">┌─────────────────────────────────────────────────┐</span>
-<span class="cm">│</span>  <span class="kw">Browser / Client</span>                                <span class="cm">│</span>
-<span class="cm">└──────────────────────┬──────────────────────────┘</span>
-                       <span class="cm">│</span>
-                       <span class="cm">▼</span>
-<span class="cm">┌─────────────────────────────────────────────────┐</span>
-<span class="cm">│</span>  <span class="fn">Kong API Gateway</span> <span class="str">(Port 9000)</span>                     <span class="cm">│</span>
-<span class="cm">│</span>  <span class="cm">Rate limiting · CORS · Auth · Routing</span>          <span class="cm">│</span>
-<span class="cm">└──────────────────────┬──────────────────────────┘</span>
-                       <span class="cm">│</span>
-        <span class="cm">┌──────────────┼──────────────┐</span>
-        <span class="cm">▼</span>              <span class="cm">▼</span>              <span class="cm">▼</span>
-<span class="cm">┌──────────────┐┌──────────────┐┌──────────────┐</span>
-<span class="cm">│</span><span class="fn"> AI Service   </span><span class="cm">││</span><span class="fn"> GitHub Svc   </span><span class="cm">││</span><span class="fn"> Auth Service </span><span class="cm">│</span>
-<span class="cm">│</span> <span class="str">GPT4/Claude/L3</span><span class="cm">││</span> <span class="str">REST + GQL</span>   <span class="cm">││</span> <span class="str">Auth0 + JWT</span>  <span class="cm">│</span>
-<span class="cm">└──────────────┘└──────────────┘└──────────────┘</span>
-        <span class="cm">│</span>              <span class="cm">│</span>              <span class="cm">│</span>
-        <span class="cm">▼</span>              <span class="cm">▼</span>              <span class="cm">▼</span>
-<span class="cm">┌──────────────┐┌──────────────┐┌──────────────┐</span>
-<span class="cm">│</span><span class="fn"> Threat Model </span><span class="cm">││</span><span class="fn"> Workspace    </span><span class="cm">││</span><span class="fn"> Workflow     </span><span class="cm">│</span>
-<span class="cm">│</span> <span class="str">STRIDE</span>       <span class="cm">││</span> <span class="str">Intelligence</span> <span class="cm">││</span> <span class="str">Orchestrator</span> <span class="cm">│</span>
-<span class="cm">└──────────────┘└──────────────┘└──────────────┘</span>
-        <span class="cm">│</span>              <span class="cm">│</span>              <span class="cm">│</span>
-        <span class="cm">└──────────────┼──────────────┘</span>
-                       <span class="cm">▼</span>
-<span class="cm">┌──────────────┐┌──────────────┐┌──────────────┐</span>
-<span class="cm">│</span><span class="kw"> PostgreSQL   </span><span class="cm">││</span><span class="kw"> Redis Cache  </span><span class="cm">││</span><span class="kw"> Ollama LLM   </span><span class="cm">│</span>
-<span class="cm">│</span> <span class="str">Supabase</span>     <span class="cm">││</span> <span class="str">Pub/Sub</span>      <span class="cm">││</span> <span class="str">Local AI</span>     <span class="cm">│</span>
-<span class="cm">└──────────────┘└──────────────┘└──────────────┘</span></code></pre>
+
+		<div class="arch-connector"></div>
+
+		<!-- Frontend -->
+		<div class="arch-box">
+			<span class="arch-title">Frontend Layer</span>
+			<span class="arch-name">SvelteKit Application</span>
+			<span class="arch-details">Port 5173 · UI Components · WebSocket Client</span>
+		</div>
+
+		<div class="arch-connector"></div>
+
+		<!-- Gateway -->
+		<div class="arch-box">
+			<span class="arch-title">Gateway Layer</span>
+			<span class="arch-name">Kong API Gateway</span>
+			<span class="arch-details">Port 8000 · Auth · Routing · Rate Limiting</span>
+		</div>
+
+		<div class="arch-multi-connector"></div>
+
+		<!-- Microservices -->
+		<div class="arch-box microservices">
+			<span class="arch-title">Microservices Layer</span>
+			<span class="arch-name">Core Domain Services</span>
+			
+			<div class="arch-grid">
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Auth</span>
+					<span class="arch-sub-port">9106</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">GitHub</span>
+					<span class="arch-sub-port">9102</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">AI Engine</span>
+					<span class="arch-sub-port">8101</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Threat</span>
+					<span class="arch-sub-port">9103</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Workspace</span>
+					<span class="arch-sub-port">9104</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Collab</span>
+					<span class="arch-sub-port">9105</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Workflow</span>
+					<span class="arch-sub-port">9107</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="arch-connector"></div>
+
+		<!-- Communication & Data -->
+		<div class="arch-box">
+			<span class="arch-title">Communication & Data</span>
+			<span class="arch-name">Events Hub & PostgreSQL</span>
+			<span class="arch-details">Events (9100) · Redis Pub/Sub (16379) · Supabase</span>
+		</div>
+
+		<div class="arch-connector"></div>
+
+		<!-- Observability -->
+		<div class="arch-box">
+			<span class="arch-title">Observability Layer</span>
+			<span class="arch-name">Monitoring & Tracing</span>
+			<div class="arch-grid">
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Prometheus</span>
+					<span class="arch-sub-port">9090</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Grafana</span>
+					<span class="arch-sub-port">3000</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">Jaeger</span>
+					<span class="arch-sub-port">16686</span>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<div class="prose">
@@ -562,13 +621,13 @@
 	}
 	.prose strong { font-weight: 600; }
 	.prose em { font-style: italic; color: var(--text-secondary); }
-	.prose a, .prose-text a {
+	.prose-text a {
 		color: var(--accent);
 		text-decoration: none;
 		border-bottom: 1px solid transparent;
 		transition: border-color 0.15s;
 	}
-	.prose a:hover, .prose-text a:hover {
+	.prose-text a:hover {
 		border-bottom-color: var(--accent);
 	}
 
@@ -813,58 +872,8 @@
 		margin: 0;
 	}
 
-	/* ── Code block ── */
-	.code-block {
-		background: var(--code-bg);
-		border-radius: 6px;
-		margin: 20px 0;
-		overflow: hidden;
-		border: 1px solid var(--code-border);
-	}
-	.code-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 10px 16px;
-		border-bottom: 1px solid var(--code-border);
-	}
-	.code-lang {
-		font-family: 'DM Mono', monospace;
-		font-size: 11px;
-		color: #6b7a5e;
-		letter-spacing: 0.06em;
-	}
-	.copy-btn {
-		font-family: 'DM Mono', monospace;
-		font-size: 11px;
-		color: #6b7a5e;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 2px 8px;
-		border-radius: 3px;
-		transition: all 0.15s;
-	}
-	.copy-btn:hover {
-		background: rgba(255, 255, 255, 0.06);
-		color: #b5c9a0;
-	}
-	pre {
-		padding: 18px 20px;
-		overflow-x: auto;
-		font-family: 'DM Mono', monospace;
-		font-size: 12.5px;
-		line-height: 1.7;
-		color: var(--code-text);
-		margin: 0;
-	}
-
 	/* Syntax tokens */
-	.kw { color: #c8956e; }
-	.str { color: #a5c985; }
-	.cm { color: #5a6e4a; }
-	.fn { color: #8bb8d4; }
-	.num { color: #c884a0; }
+	/* (Removed - now handled by global styles in +layout.svelte) */
 
 	/* ── Service grid ── */
 	.service-grid {
