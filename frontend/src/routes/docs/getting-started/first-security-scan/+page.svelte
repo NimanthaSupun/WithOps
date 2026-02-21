@@ -1,1071 +1,1101 @@
 <script>
+	import { isDarkMode } from '$lib/stores.js';
 	import { onMount } from 'svelte';
 
-	let visible = $state(false);
+	let darkMode = $state(false);
+	isDarkMode.subscribe((v) => (darkMode = v));
+
+	let scanProgress = $state(0);
+	let scanRunning = $state(false);
+	let scanComplete = $state(false);
+
+	function startScanDemo() {
+		if (scanRunning) return;
+		scanRunning = true;
+		scanComplete = false;
+		scanProgress = 0;
+		const interval = setInterval(() => {
+			scanProgress += Math.random() * 8 + 2;
+			if (scanProgress >= 100) {
+				scanProgress = 100;
+				scanRunning = false;
+				scanComplete = true;
+				clearInterval(interval);
+			}
+		}, 200);
+	}
+
+	const scanDimensions = [
+		{
+			num: '01',
+			label: 'SAST',
+			title: 'Static Analysis',
+			description:
+				'Analyzes source code patterns, control flow, and data flow to identify security flaws before runtime.',
+			color: '#00adef'
+		},
+		{
+			num: '02',
+			label: 'SCA',
+			title: 'Dependency Scan',
+			description:
+				'Maps your dependency graph and cross-references against CVE databases for known vulnerabilities.',
+			color: '#10b981'
+		},
+		{
+			num: '03',
+			label: 'SECRETS',
+			title: 'Secret Detection',
+			description:
+				'Scans for hardcoded credentials, API keys, tokens, and other sensitive data in code and configuration files.',
+			color: '#d4a054'
+		},
+		{
+			num: '04',
+			label: 'IaC',
+			title: 'Infrastructure Scan',
+			description:
+				'Validates Infrastructure-as-Code templates (Terraform, CloudFormation, Kubernetes) against security benchmarks.',
+			color: '#8b5cf6'
+		},
+		{
+			num: '05',
+			label: 'LICENSE',
+			title: 'License Compliance',
+			description:
+				'Identifies open-source license types and flags potential compliance risks in your dependency chain.',
+			color: '#06b6d4'
+		}
+	];
+
+	const severityLevels = [
+		{
+			level: 'Critical',
+			color: '#ef4444',
+			score: '9.0 — 10.0',
+			action: 'Immediate fix required. Blocks deployment.',
+			indicator: '████'
+		},
+		{
+			level: 'High',
+			color: '#f97316',
+			score: '7.0 — 8.9',
+			action: 'Fix within 24 hours. PR blocked.',
+			indicator: '███░'
+		},
+		{
+			level: 'Medium',
+			color: '#f59e0b',
+			score: '4.0 — 6.9',
+			action: 'Fix within sprint. Warning issued.',
+			indicator: '██░░'
+		},
+		{
+			level: 'Low',
+			color: '#10b981',
+			score: '0.1 — 3.9',
+			action: 'Track and address in maintenance.',
+			indicator: '█░░░'
+		},
+		{
+			level: 'Info',
+			color: '#64748b',
+			score: '0.0',
+			action: 'Informational only. No action needed.',
+			indicator: '░░░░'
+		}
+	];
+
+	const exampleFinding = {
+		id: 'WO-2024-0847',
+		title: 'SQL Injection via unsanitized user input',
+		severity: 'Critical',
+		file: 'src/api/routes/users.js',
+		line: '47',
+		scanner: 'SAST',
+		cwe: 'CWE-89',
+		description:
+			'User-supplied input is concatenated directly into a SQL query string without parameterization, enabling SQL injection attacks.',
+		recommendation:
+			'Use parameterized queries or an ORM. Replace string concatenation with prepared statements.'
+	};
+
+	const maturityLevels = [
+		{
+			level: 1,
+			label: 'Initial',
+			desc: 'Ad-hoc scanning, no consistent process',
+			threshold: '0-20'
+		},
+		{ level: 2, label: 'Developing', desc: 'Regular scans on main branches', threshold: '21-40' },
+		{
+			level: 3,
+			label: 'Defined',
+			desc: 'Automated pipeline integration, SLA tracking',
+			threshold: '41-60'
+		},
+		{
+			level: 4,
+			label: 'Managed',
+			desc: 'Policy enforcement, trend analysis, remediation SLAs',
+			threshold: '61-80'
+		},
+		{
+			level: 5,
+			label: 'Optimizing',
+			desc: 'Proactive threat modeling, zero critical backlog',
+			threshold: '81-100'
+		}
+	];
 
 	onMount(() => {
-		setTimeout(() => (visible = true), 50);
+		isDarkMode.init();
 	});
 </script>
 
-<div class="gs-page {visible ? 'visible' : ''}">
-	<!-- Page Header -->
-	<div class="page-header">
-		<div class="breadcrumb">
-			<span class="bc-muted">Docs</span>
-			<span class="bc-sep">/</span>
-			<a href="/docs/getting-started" class="bc-link">Getting Started</a>
-			<span class="bc-sep">/</span>
-			<span class="bc-current">First Security Scan</span>
-		</div>
-		<h1 class="page-title" id="first-security-scan">First Security Scan</h1>
-		<p class="page-lead">
-			Run your first AI-powered security analysis and learn how to interpret the results to improve
-			your security posture.
+<div class="scan-page">
+	<!-- Header -->
+	<header class="page-header">
+		<div class="page-badge">REFERENCE</div>
+		<h1 class="page-title">First Security Scan</h1>
+		<p class="page-desc">
+			Understand how WithOps analyzes your code, what the results mean, and how to act on findings
+			to improve your security posture.
 		</p>
-	</div>
+	</header>
 
-	<!-- Overview -->
-	<h2 id="what-gets-scanned">What Gets Scanned</h2>
-	<p class="body-text">
-		When you initiate a security scan, WithOps analyzes your repository across multiple dimensions
-		simultaneously:
-	</p>
+	<!-- Scan Dimensions -->
+	<section class="dimensions-section" id="dimensions-section">
+		<h2 id="scan-dimensions" class="section-heading">
+			<span class="heading-marker">§</span>
+			Scan Dimensions
+		</h2>
+		<p class="section-intro">Each scan executes multiple analysis engines in parallel.</p>
 
-	<div class="scan-dimensions">
-		<div class="scan-dim">
-			<div class="dim-indicator purple"></div>
-			<div class="dim-content">
-				<h4>Static Analysis (SAST)</h4>
-				<p>
-					Source code scanning for vulnerabilities, insecure patterns, and code quality issues using
-					AST parsing
-				</p>
-			</div>
-		</div>
-		<div class="scan-dim">
-			<div class="dim-indicator blue"></div>
-			<div class="dim-content">
-				<h4>Dependency Audit</h4>
-				<p>
-					Third-party package vulnerability detection with CVE database matching and exploitability
-					scoring
-				</p>
-			</div>
-		</div>
-		<div class="scan-dim">
-			<div class="dim-indicator amber"></div>
-			<div class="dim-content">
-				<h4>Secret Detection</h4>
-				<p>
-					Scans for leaked API keys, tokens, credentials, and sensitive data using Gitleaks and
-					TruffleHog
-				</p>
-			</div>
-		</div>
-		<div class="scan-dim">
-			<div class="dim-indicator green"></div>
-			<div class="dim-content">
-				<h4>CI/CD Workflow Analysis</h4>
-				<p>
-					GitHub Actions YAML validation, security tool coverage assessment, and pipeline
-					optimization
-				</p>
-			</div>
-		</div>
-		<div class="scan-dim">
-			<div class="dim-indicator red"></div>
-			<div class="dim-content">
-				<h4>AI Threat Assessment</h4>
-				<p>
-					AI-powered risk evaluation using STRIDE methodology with automated remediation suggestions
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<!-- Running the scan -->
-	<h2 id="run-your-scan">Running Your First Scan</h2>
-
-	<div class="instruction-block">
-		<div class="instruction-number">1</div>
-		<div class="instruction-content">
-			<p>
-				Navigate to <strong>Organizations</strong> and select a repository from your connected organizations.
-			</p>
-		</div>
-	</div>
-
-	<div class="instruction-block">
-		<div class="instruction-number">2</div>
-		<div class="instruction-content">
-			<p>
-				Click <strong>"Run Security Analysis"</strong> on the repository detail page. The scan begins
-				immediately.
-			</p>
-			<div class="callout callout-info">
-				<div class="callout-icon">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line
-							x1="12"
-							y1="8"
-							x2="12.01"
-							y2="8"
-						/></svg
-					>
+		<div class="dim-grid">
+			{#each scanDimensions as dim}
+				<div class="dim-card">
+					<div class="dim-header">
+						<span class="dim-number" style="color: {dim.color}">{dim.num}</span>
+						<span class="dim-label">{dim.label}</span>
+					</div>
+					<h3 class="dim-title">{dim.title}</h3>
+					<p class="dim-desc">{dim.description}</p>
+					<div class="dim-indicator" style="background: {dim.color}"></div>
 				</div>
-				<div class="callout-content">
-					<strong>Scan duration</strong>
-					<p>
-						Initial scans typically complete in 30-90 seconds depending on repository size.
-						Subsequent scans are faster due to caching.
-					</p>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Interactive Scan Demo -->
+	<section class="demo-section" id="demo-section">
+		<h2 id="run-a-scan" class="section-heading">
+			<span class="heading-marker">§</span>
+			Run a Scan
+		</h2>
+		<p class="section-intro">See how a scan progresses through the analysis pipeline.</p>
+
+		<div class="scan-demo">
+			<div class="demo-header">
+				<div class="demo-title-row">
+					<span class="demo-label">SCAN SIMULATION</span>
+					<span class="demo-status" class:running={scanRunning} class:complete={scanComplete}>
+						{#if scanComplete}
+							COMPLETE
+						{:else if scanRunning}
+							ANALYZING...
+						{:else}
+							READY
+						{/if}
+					</span>
 				</div>
 			</div>
-		</div>
-	</div>
 
-	<div class="instruction-block">
-		<div class="instruction-number">3</div>
-		<div class="instruction-content">
-			<p>
-				Monitor progress in real-time. WithOps uses <strong>WebSocket</strong> connections to stream
-				scan status updates live to your browser.
-			</p>
-			<div class="progress-demo">
-				<div class="progress-stage completed">
-					<div class="stage-dot"></div>
-					<span>Repository cloned</span>
+			<div class="demo-body">
+				<div class="progress-track">
+					<div class="progress-fill" style="width: {scanProgress}%"></div>
 				</div>
-				<div class="progress-stage completed">
-					<div class="stage-dot"></div>
-					<span>Dependencies analyzed</span>
+				<div class="progress-info">
+					<span class="progress-pct">{Math.round(scanProgress)}%</span>
+					<span class="progress-stage">
+						{#if scanProgress === 0}
+							Waiting for input
+						{:else if scanProgress < 20}
+							Initializing scanners...
+						{:else if scanProgress < 40}
+							Static analysis (SAST)...
+						{:else if scanProgress < 60}
+							Dependency scanning (SCA)...
+						{:else if scanProgress < 80}
+							Secret detection...
+						{:else if scanProgress < 95}
+							Infrastructure scan (IaC)...
+						{:else}
+							Generating report...
+						{/if}
+					</span>
 				</div>
-				<div class="progress-stage completed">
-					<div class="stage-dot"></div>
-					<span>Static analysis complete</span>
-				</div>
-				<div class="progress-stage active">
-					<div class="stage-dot"></div>
-					<span>AI threat assessment</span>
-				</div>
-				<div class="progress-stage pending">
-					<div class="stage-dot"></div>
-					<span>Report generation</span>
-				</div>
+
+				{#if scanComplete}
+					<div class="scan-results-summary">
+						<div class="result-stat">
+							<span class="stat-value critical">2</span>
+							<span class="stat-label">Critical</span>
+						</div>
+						<div class="result-stat">
+							<span class="stat-value high">5</span>
+							<span class="stat-label">High</span>
+						</div>
+						<div class="result-stat">
+							<span class="stat-value medium">12</span>
+							<span class="stat-label">Medium</span>
+						</div>
+						<div class="result-stat">
+							<span class="stat-value low">23</span>
+							<span class="stat-label">Low</span>
+						</div>
+					</div>
+				{/if}
+
+				<button class="scan-btn" onclick={startScanDemo} disabled={scanRunning}>
+					{#if scanComplete}
+						Run Again
+					{:else if scanRunning}
+						<span class="btn-spinner"></span>
+						Scanning...
+					{:else}
+						Start Scan Demo
+					{/if}
+				</button>
 			</div>
 		</div>
-	</div>
-
-	<!-- Reading Results -->
-	<h2 id="reading-results">Understanding Your Results</h2>
-	<p class="body-text">
-		The scan report is organized into severity-ranked findings with actionable remediation guidance.
-	</p>
+	</section>
 
 	<!-- Severity Levels -->
-	<h3 id="severity-levels">Severity Levels</h3>
-	<div class="severity-table">
-		<div class="sev-row critical">
-			<div class="sev-badge">Critical</div>
-			<div class="sev-score">9.0 – 10.0</div>
-			<div class="sev-desc">Actively exploitable vulnerabilities requiring immediate attention</div>
+	<section class="severity-section" id="severity-section">
+		<h2 id="severity-levels" class="section-heading">
+			<span class="heading-marker">§</span>
+			Severity Classification
+		</h2>
+		<p class="section-intro">Findings are scored using CVSS v3.1 and mapped to action levels.</p>
+
+		<div class="severity-table">
+			<div class="severity-header">
+				<span class="sev-col-level">Level</span>
+				<span class="sev-col-score">CVSS Range</span>
+				<span class="sev-col-action">Required Action</span>
+			</div>
+			{#each severityLevels as sev}
+				<div class="severity-row">
+					<span class="sev-level">
+						<span class="sev-indicator" style="color: {sev.color}">{sev.indicator}</span>
+						<span class="sev-name" style="color: {sev.color}">{sev.level}</span>
+					</span>
+					<span class="sev-score">{sev.score}</span>
+					<span class="sev-action">{sev.action}</span>
+				</div>
+			{/each}
 		</div>
-		<div class="sev-row high">
-			<div class="sev-badge">High</div>
-			<div class="sev-score">7.0 – 8.9</div>
-			<div class="sev-desc">Significant risk — should be resolved within the current sprint</div>
-		</div>
-		<div class="sev-row medium">
-			<div class="sev-badge">Medium</div>
-			<div class="sev-score">4.0 – 6.9</div>
-			<div class="sev-desc">Moderate risk with conditional exploitability</div>
-		</div>
-		<div class="sev-row low">
-			<div class="sev-badge">Low</div>
-			<div class="sev-score">0.1 – 3.9</div>
-			<div class="sev-desc">Informational findings and best-practice suggestions</div>
-		</div>
-	</div>
+	</section>
 
 	<!-- Example Finding -->
-	<h3 id="example-finding">Example Finding</h3>
-	<p class="body-text">Here's what a typical finding looks like in the scan results:</p>
+	<section class="finding-section" id="finding-section">
+		<h2 id="example-finding" class="section-heading">
+			<span class="heading-marker">§</span>
+			Anatomy of a Finding
+		</h2>
+		<p class="section-intro">A detailed look at what a security finding contains.</p>
 
-	<div class="finding-example">
-		<div class="finding-header">
-			<div class="finding-severity high">HIGH</div>
-			<div class="finding-title">Hardcoded API Key in Configuration</div>
-		</div>
-		<div class="finding-body">
+		<div class="finding-card">
+			<div class="finding-header">
+				<div class="finding-id">{exampleFinding.id}</div>
+				<span class="finding-severity">{exampleFinding.severity.toUpperCase()}</span>
+			</div>
+			<h3 class="finding-title">{exampleFinding.title}</h3>
+
 			<div class="finding-meta">
 				<div class="meta-item">
-					<span class="meta-label">File</span>
-					<code>src/config/api.js:42</code>
+					<span class="meta-key">File</span>
+					<code class="meta-value">{exampleFinding.file}:{exampleFinding.line}</code>
 				</div>
 				<div class="meta-item">
-					<span class="meta-label">Rule</span>
-					<code>SEC-001</code>
+					<span class="meta-key">Scanner</span>
+					<span class="meta-value">{exampleFinding.scanner}</span>
 				</div>
 				<div class="meta-item">
-					<span class="meta-label">CVSS</span>
-					<span class="cvss-score">7.5</span>
+					<span class="meta-key">CWE</span>
+					<span class="meta-value">{exampleFinding.cwe}</span>
 				</div>
 			</div>
-			<div class="finding-code">
-				<div class="code-header">
-					<span class="code-lang">JavaScript</span>
-				</div>
-				<pre><code
-						><span class="code-line-num">41</span>  const config = {'{'}
-<span class="code-line-num">42</span>    <span class="code-highlight"
-							>apiKey: "sk-live-a1b2c3d4e5f6..."</span
-						>  <span class="code-comment">// ← Detected</span>
-<span class="code-line-num">43</span>  {'}'}</code
-					></pre>
-			</div>
-			<div class="finding-remediation">
-				<div class="remediation-label">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline
-							points="14 2 14 8 20 8"
-						/></svg
-					>
-					AI-Generated Fix
-				</div>
-				<p>
-					Move the API key to an environment variable and reference it via <code
-						>process.env.API_KEY</code
-					>. Add <code>.env</code> to your <code>.gitignore</code>.
-				</p>
-			</div>
-		</div>
-	</div>
 
-	<!-- DevSecOps Maturity -->
-	<h2 id="maturity-score">DevSecOps Maturity Score</h2>
-	<p class="body-text">
-		Beyond individual findings, WithOps generates a comprehensive maturity score for your repository
-		based on:
-	</p>
+			<div class="finding-body">
+				<div class="finding-block">
+					<div class="block-label">DESCRIPTION</div>
+					<p class="block-text">{exampleFinding.description}</p>
+				</div>
+				<div class="finding-block">
+					<div class="block-label">RECOMMENDATION</div>
+					<p class="block-text">{exampleFinding.recommendation}</p>
+				</div>
+			</div>
+		</div>
+	</section>
 
-	<div class="maturity-factors">
-		<div class="maturity-item">
-			<div class="maturity-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
-				>
-			</div>
-			<div>
-				<strong>Security Tool Coverage</strong>
-				<p>Which security tools are integrated in your CI/CD pipeline</p>
-			</div>
+	<!-- Security Maturity -->
+	<section class="maturity-section" id="maturity-section">
+		<h2 id="maturity-score" class="section-heading">
+			<span class="heading-marker">§</span>
+			Security Maturity Model
+		</h2>
+		<p class="section-intro">Track your team's security posture evolution over time.</p>
+
+		<div class="maturity-scale">
+			{#each maturityLevels as m}
+				<div class="maturity-item">
+					<div class="maturity-level-num">L{m.level}</div>
+					<div class="maturity-content">
+						<div class="maturity-bar-wrap">
+							<div class="maturity-bar" style="width: {m.level * 20}%"></div>
+						</div>
+						<div class="maturity-info">
+							<strong class="maturity-name">{m.label}</strong>
+							<span class="maturity-threshold">{m.threshold}</span>
+						</div>
+						<p class="maturity-desc">{m.desc}</p>
+					</div>
+				</div>
+			{/each}
 		</div>
-		<div class="maturity-item">
-			<div class="maturity-icon">
+	</section>
+
+	<!-- Completion Card -->
+	<section class="completion-section">
+		<div class="completion-card">
+			<div class="completion-check">
 				<svg
-					width="16"
-					height="16"
+					width="24"
+					height="24"
 					viewBox="0 0 24 24"
 					fill="none"
-					stroke="currentColor"
-					stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg
-				>
-			</div>
-			<div>
-				<strong>Vulnerability Trend</strong>
-				<p>How findings are trending over time — improving or degrading</p>
-			</div>
-		</div>
-		<div class="maturity-item">
-			<div class="maturity-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
+					stroke="var(--success)"
 					stroke-width="2"
-					><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg
 				>
+					<path d="M20 6L9 17l-5-5" />
+				</svg>
 			</div>
-			<div>
-				<strong>Best Practices Adoption</strong>
-				<p>Branch protection, code review policies, and dependency management</p>
-			</div>
-		</div>
-		<div class="maturity-item">
-			<div class="maturity-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
-				>
-			</div>
-			<div>
-				<strong>Remediation Velocity</strong>
-				<p>How quickly your team addresses identified vulnerabilities</p>
-			</div>
-		</div>
-	</div>
-
-	<!-- Congratulations -->
-	<div class="completion-card">
-		<div class="completion-icon">
-			<svg
-				width="28"
-				height="28"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.5"
-			>
-				<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-			</svg>
-		</div>
-		<div class="completion-text">
-			<h3>Getting Started Complete</h3>
-			<p>
-				You've connected your GitHub account, discovered your organizations, and run your first
-				security scan. You're now equipped to continuously monitor and improve your security posture
-				with WithOps.
+			<h3 class="completion-title">Getting Started — Complete</h3>
+			<p class="completion-desc">
+				You've covered the fundamentals. You now understand how to set up WithOps, connect your
+				repositories, run security scans, and interpret results.
 			</p>
+			<div class="completion-actions">
+				<a href="/dashboard" class="action-btn primary">
+					Go to Dashboard
+					<span class="action-arrow">→</span>
+				</a>
+				<a href="/docs/getting-started" class="action-btn secondary"> Back to Overview </a>
+			</div>
 		</div>
-	</div>
-
-	<!-- What's Next -->
-	<h2 id="continue-learning">Continue Learning</h2>
-	<p class="body-text">Explore more of the platform's capabilities:</p>
-
-	<div class="continue-grid">
-		<div class="continue-card disabled">
-			<span class="continue-badge">Coming Soon</span>
-			<h4>Threat Modeling</h4>
-			<p>Deep-dive into STRIDE analysis and attack surface mapping</p>
-		</div>
-		<div class="continue-card disabled">
-			<span class="continue-badge">Coming Soon</span>
-			<h4>API Reference</h4>
-			<p>Full REST API documentation for all 8 microservices</p>
-		</div>
-		<div class="continue-card disabled">
-			<span class="continue-badge">Coming Soon</span>
-			<h4>Self-Hosting Guide</h4>
-			<p>Deploy WithOps on your infrastructure with Docker or Kubernetes</p>
-		</div>
-	</div>
+	</section>
 </div>
 
 <style>
-	.gs-page {
-		opacity: 0;
-		transform: translateY(8px);
-		transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
-	}
-	.gs-page.visible {
-		opacity: 1;
-		transform: translateY(0);
+	.scan-page {
+		max-width: 720px;
 	}
 
+	/* ── Header ── */
 	.page-header {
 		margin-bottom: 2.5rem;
-		padding-bottom: 2rem;
-		border-bottom: 1px solid var(--border);
+		padding-bottom: 1.75rem;
+		border-bottom: 1px dashed var(--border);
 	}
 
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
+	.page-badge {
 		font-family: var(--font-mono);
-	}
-
-	.bc-muted {
-		color: var(--text-muted);
-	}
-	.bc-sep {
-		color: var(--text-muted);
-	}
-	.bc-current {
-		color: var(--text-secondary);
-	}
-	.bc-link {
-		color: var(--text-muted);
-		text-decoration: none;
-	}
-	.bc-link:hover {
-		color: var(--accent);
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--complement);
+		letter-spacing: 0.12em;
+		margin-bottom: 0.75rem;
 	}
 
 	.page-title {
-		font-family: var(--font-serif);
-		font-size: 2.25rem;
-		font-weight: 700;
+		font-size: 1.75rem;
+		font-weight: 800;
 		letter-spacing: -0.03em;
-		line-height: 1.2;
-		margin-bottom: 0.75rem;
 		color: var(--text-primary);
+		margin-bottom: 0.625rem;
 	}
 
-	.page-lead {
-		font-size: 1.05rem;
+	.page-desc {
+		font-size: 0.9rem;
 		color: var(--text-secondary);
-		line-height: 1.7;
-		max-width: 640px;
-		font-family: var(--font-serif);
+		line-height: 1.65;
+		max-width: 540px;
 	}
 
-	h2 {
-		font-family: var(--font-serif);
-		font-size: 1.375rem;
-		font-weight: 700;
-		letter-spacing: -0.02em;
-		margin-top: 3rem;
-		margin-bottom: 0.75rem;
-		color: var(--text-primary);
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--border);
-	}
-
-	h3 {
-		font-family: var(--font-serif);
+	/* ── Section Heading ── */
+	.section-heading {
 		font-size: 1.1rem;
-		font-weight: 600;
-		margin-top: 2rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
 		margin-bottom: 0.5rem;
 		color: var(--text-primary);
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
-	.body-text {
-		font-size: 0.9rem;
-		line-height: 1.75;
+	.heading-marker {
+		color: var(--complement);
+		font-weight: 400;
+		font-size: 1.05rem;
+		opacity: 0.6;
+	}
+
+	.section-intro {
+		font-size: 0.875rem;
 		color: var(--text-secondary);
-		margin-bottom: 1.25rem;
-		max-width: 640px;
+		margin-bottom: 1.5rem;
+		line-height: 1.6;
 	}
 
 	/* ── Scan Dimensions ── */
-	.scan-dimensions {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+	.dimensions-section {
+		margin-bottom: 2.5rem;
 	}
 
-	.scan-dim {
-		display: flex;
-		align-items: flex-start;
-		gap: 1rem;
-		padding: 1rem 1.25rem;
+	.dim-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.dim-card {
+		padding: 1.125rem;
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: var(--radius-sm);
 		background: var(--bg-surface);
-		transition: border-color 0.15s;
+		transition: all 0.2s var(--ease-premium);
+		position: relative;
+		overflow: hidden;
+		box-shadow: var(--card-shadow);
 	}
 
-	.scan-dim:hover {
+	.dim-card:hover {
 		border-color: var(--border-strong);
+		transform: translateY(-1px);
 	}
 
-	.dim-indicator {
-		width: 4px;
-		height: 100%;
-		min-height: 36px;
-		border-radius: 2px;
-		flex-shrink: 0;
+	.dim-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.625rem;
 	}
 
-	.dim-indicator.purple {
-		background: #a78bfa;
-	}
-	.dim-indicator.blue {
-		background: #60a5fa;
-	}
-	.dim-indicator.amber {
-		background: #fbbf24;
-	}
-	.dim-indicator.green {
-		background: #34d399;
-	}
-	.dim-indicator.red {
-		background: #f87171;
+	.dim-number {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		font-weight: 700;
 	}
 
-	.dim-content h4 {
+	.dim-label {
+		font-family: var(--font-mono);
+		font-size: 0.5rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+
+	.dim-title {
 		font-size: 0.85rem;
 		font-weight: 600;
 		color: var(--text-primary);
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.375rem;
 	}
 
-	.dim-content p {
-		font-size: 0.775rem;
-		color: var(--text-muted);
+	.dim-desc {
+		font-size: 0.725rem;
+		color: var(--text-secondary);
 		line-height: 1.5;
 	}
 
-	/* ── Instruction Blocks ── */
-	.instruction-block {
-		display: flex;
-		gap: 1rem;
-		padding: 1.25rem 0;
+	.dim-indicator {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		opacity: 0.35;
+		transition: opacity 0.2s;
+	}
+
+	.dim-card:hover .dim-indicator {
+		opacity: 0.75;
+	}
+
+	/* ── Scan Demo ── */
+	.demo-section {
+		margin-bottom: 2.5rem;
+	}
+
+	.scan-demo {
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		overflow: hidden;
+		background: var(--bg-surface);
+		box-shadow: var(--card-shadow);
+	}
+
+	.demo-header {
+		padding: 0.75rem 1.25rem;
 		border-bottom: 1px solid var(--border);
+		background: var(--bg-surface-alt);
 	}
 
-	.instruction-block:last-of-type {
-		border-bottom: none;
-	}
-
-	.instruction-number {
-		flex-shrink: 0;
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: var(--accent-soft);
-		border: 1px solid var(--accent-border);
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 700;
+	.demo-title-row {
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		justify-content: center;
 	}
 
-	.instruction-content {
-		flex: 1;
-		min-width: 0;
+	.demo-label {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
 	}
 
-	.instruction-content > p {
-		font-size: 0.875rem;
-		color: var(--text-secondary);
-		line-height: 1.6;
+	.demo-status {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.06em;
+	}
+
+	.demo-status.running {
+		color: var(--accent);
+	}
+
+	.demo-status.complete {
+		color: var(--success);
+	}
+
+	.demo-body {
+		padding: 1.25rem;
+	}
+
+	.progress-track {
+		height: 4px;
+		background: var(--bg-surface-alt);
+		border-radius: 2px;
+		overflow: hidden;
 		margin-bottom: 0.75rem;
 	}
 
-	.instruction-content > p strong {
-		color: var(--text-primary);
-		font-weight: 600;
+	.progress-fill {
+		height: 100%;
+		background: var(--accent);
+		border-radius: 2px;
+		transition: width 0.3s var(--ease-premium);
 	}
 
-	/* ── Progress Demo ── */
-	.progress-demo {
+	.progress-info {
 		display: flex;
-		flex-direction: column;
-		gap: 0;
-		padding: 1rem 1.25rem;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-surface);
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.25rem;
+	}
+
+	.progress-pct {
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: var(--accent);
 	}
 
 	.progress-stage {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.5rem 0;
-		font-size: 0.8rem;
-		position: relative;
-	}
-
-	.progress-stage:not(:last-child)::before {
-		content: '';
-		position: absolute;
-		left: 5px;
-		top: 24px;
-		bottom: -4px;
-		width: 1px;
-		background: var(--border);
-	}
-
-	.stage-dot {
-		width: 11px;
-		height: 11px;
-		border-radius: 50%;
-		flex-shrink: 0;
-		border: 2px solid;
-	}
-
-	.progress-stage.completed .stage-dot {
-		background: var(--callout-tip-text);
-		border-color: var(--callout-tip-text);
-	}
-
-	.progress-stage.completed span {
-		color: var(--text-secondary);
-	}
-	.progress-stage.completed:not(:last-child)::before {
-		background: var(--callout-tip-text);
-	}
-
-	.progress-stage.active .stage-dot {
-		background: var(--accent);
-		border-color: var(--accent);
-		animation: pulse-dot 1.5s ease-in-out infinite;
-	}
-
-	.progress-stage.active span {
-		color: var(--accent);
-		font-weight: 500;
-	}
-
-	.progress-stage.pending .stage-dot {
-		background: transparent;
-		border-color: var(--text-muted);
-	}
-
-	.progress-stage.pending span {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
 		color: var(--text-muted);
 	}
 
-	@keyframes pulse-dot {
-		0%,
-		100% {
-			box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.3);
-		}
-		50% {
-			box-shadow: 0 0 0 4px rgba(167, 139, 250, 0);
-		}
-	}
-
-	/* ── Callouts ── */
-	.callout {
+	.scan-results-summary {
 		display: flex;
-		gap: 0.75rem;
-		padding: 1rem 1.25rem;
-		border-radius: 8px;
-		margin: 1rem 0;
-		border: 1px solid;
+		gap: 1.5rem;
+		margin-bottom: 1.25rem;
+		padding: 1rem;
+		border: 1px dashed var(--border);
+		border-radius: var(--radius-sm);
 	}
 
-	.callout-info {
-		background: var(--callout-info-bg);
-		border-color: var(--callout-info-border);
-	}
-	.callout-info .callout-icon {
-		color: var(--callout-info-text);
-	}
-
-	.callout-icon {
-		flex-shrink: 0;
-		margin-top: 0.125rem;
+	.result-stat {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
 	}
 
-	.callout-content strong {
-		display: block;
+	.stat-value {
+		font-family: var(--font-mono);
+		font-size: 1.25rem;
+		font-weight: 800;
+	}
+
+	.stat-value.critical {
+		color: #ef4444;
+	}
+	.stat-value.high {
+		color: #f97316;
+	}
+	.stat-value.medium {
+		color: #f59e0b;
+	}
+	.stat-value.low {
+		color: #10b981;
+	}
+
+	.stat-label {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.scan-btn {
+		width: 100%;
+		padding: 0.75rem;
 		font-size: 0.825rem;
-		color: var(--text-primary);
-		margin-bottom: 0.25rem;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: var(--bg-app);
+		background: var(--accent);
+		border: none;
+		border-radius: var(--radius-sm);
+		cursor: pointer;
+		transition: all 0.15s var(--ease-premium);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
 	}
 
-	.callout-content p {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		line-height: 1.5;
+	.scan-btn:hover:not(:disabled) {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.scan-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.btn-spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
+		border-top-color: currentColor;
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* ── Severity Table ── */
+	.severity-section {
+		margin-bottom: 2.5rem;
+	}
+
 	.severity-table {
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		overflow: hidden;
-		margin: 1rem 0;
 	}
 
-	.sev-row {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.75rem 1.25rem;
+	.severity-header {
+		display: grid;
+		grid-template-columns: 1.2fr 0.8fr 1.8fr;
+		padding: 0.625rem 1.25rem;
+		background: var(--bg-surface-alt);
 		border-bottom: 1px solid var(--border);
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 	}
 
-	.sev-row:last-child {
+	.severity-row {
+		display: grid;
+		grid-template-columns: 1.2fr 0.8fr 1.8fr;
+		padding: 0.65rem 1.25rem;
+		border-bottom: 1px solid var(--border);
+		font-size: 0.8rem;
+		align-items: center;
+		transition: background 0.1s;
+	}
+
+	.severity-row:last-child {
 		border-bottom: none;
 	}
 
-	.sev-badge {
-		font-family: var(--font-mono);
-		font-size: 0.65rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		padding: 0.2rem 0.625rem;
-		border-radius: 4px;
-		min-width: 62px;
-		text-align: center;
+	.severity-row:hover {
+		background: var(--accent-soft);
 	}
 
-	.sev-row.critical .sev-badge {
-		background: rgba(239, 68, 68, 0.1);
-		color: #f87171;
-		border: 1px solid rgba(239, 68, 68, 0.2);
+	.sev-level {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
-	.sev-row.high .sev-badge {
-		background: rgba(251, 146, 60, 0.1);
-		color: #fb923c;
-		border: 1px solid rgba(251, 146, 60, 0.2);
+
+	.sev-indicator {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		letter-spacing: 0.05em;
 	}
-	.sev-row.medium .sev-badge {
-		background: rgba(250, 204, 21, 0.1);
-		color: #facc15;
-		border: 1px solid rgba(250, 204, 21, 0.2);
-	}
-	.sev-row.low .sev-badge {
-		background: rgba(96, 165, 250, 0.1);
-		color: #60a5fa;
-		border: 1px solid rgba(96, 165, 250, 0.2);
+
+	.sev-name {
+		font-weight: 600;
+		font-size: 0.8rem;
 	}
 
 	.sev-score {
 		font-family: var(--font-mono);
 		font-size: 0.75rem;
-		color: var(--text-muted);
-		min-width: 70px;
-	}
-
-	.sev-desc {
-		font-size: 0.8rem;
 		color: var(--text-secondary);
-		line-height: 1.4;
 	}
 
-	/* ── Finding Example ── */
-	.finding-example {
+	.sev-action {
+		font-size: 0.775rem;
+		color: var(--text-secondary);
+	}
+
+	/* ── Example Finding ── */
+	.finding-section {
+		margin-bottom: 2.5rem;
+	}
+
+	.finding-card {
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		overflow: hidden;
 		background: var(--bg-surface);
-		margin: 1rem 0;
+		box-shadow: var(--card-shadow);
 	}
 
 	.finding-header {
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.875rem 1.25rem;
+		padding: 0.75rem 1.25rem;
+		background: var(--bg-surface-alt);
 		border-bottom: 1px solid var(--border);
-		background: var(--bg-surface-2);
+	}
+
+	.finding-id {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		letter-spacing: 0.04em;
 	}
 
 	.finding-severity {
 		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 0.2rem 0.5rem;
+		color: #ef4444;
+		padding: 0.15rem 0.5rem;
+		background: rgba(239, 68, 68, 0.08);
 		border-radius: 3px;
-	}
-
-	.finding-severity.high {
-		background: rgba(251, 146, 60, 0.12);
-		color: #fb923c;
-		border: 1px solid rgba(251, 146, 60, 0.2);
+		letter-spacing: 0.06em;
 	}
 
 	.finding-title {
-		font-size: 0.85rem;
-		font-weight: 600;
+		padding: 1rem 1.25rem 0.75rem;
+		font-size: 0.95rem;
+		font-weight: 700;
 		color: var(--text-primary);
 	}
 
-	.finding-body {
-		padding: 1.25rem;
-	}
-
 	.finding-meta {
+		padding: 0 1.25rem;
 		display: flex;
-		gap: 1.5rem;
-		margin-bottom: 1rem;
 		flex-wrap: wrap;
+		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
 	.meta-item {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.775rem;
+		gap: 0.4rem;
 	}
 
-	.meta-label {
-		color: var(--text-muted);
-		font-weight: 500;
-	}
-
-	.meta-item code {
-		font-family: var(--font-mono);
-		font-size: 0.725rem;
-		color: var(--accent);
-		background: var(--accent-soft);
-		padding: 0.1rem 0.375rem;
-		border-radius: 3px;
-	}
-
-	.cvss-score {
-		font-family: var(--font-mono);
-		font-weight: 700;
-		color: #fb923c;
-	}
-
-	.finding-code {
-		border: 1px solid var(--code-border);
-		border-radius: 6px;
-		overflow: hidden;
-		margin-bottom: 1rem;
-	}
-
-	.code-header {
-		display: flex;
-		justify-content: space-between;
-		padding: 0.4rem 0.75rem;
-		border-bottom: 1px solid var(--code-border);
-		background: var(--bg-surface-2);
-	}
-
-	.code-lang {
+	.meta-key {
 		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		font-weight: 600;
 		color: var(--text-muted);
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
 	}
 
-	pre {
-		padding: 0.75rem;
-		margin: 0;
-		overflow-x: auto;
+	.meta-value {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
 	}
 
-	code {
+	code.meta-value {
 		font-family: var(--font-mono);
-		font-size: 0.775rem;
-		line-height: 1.7;
-		color: var(--text-primary);
+		font-size: 0.7rem;
+		padding: 0.1rem 0.35rem;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 3px;
+		color: var(--accent);
 	}
 
-	.code-line-num {
-		color: var(--text-muted);
-		margin-right: 1rem;
-		user-select: none;
-	}
-
-	.code-highlight {
-		background: rgba(251, 146, 60, 0.1);
-		padding: 0.1rem 0.25rem;
-		border-radius: 2px;
-		color: #fb923c;
-	}
-
-	.code-comment {
-		color: var(--text-muted);
-		font-style: italic;
-	}
-
-	.finding-remediation {
-		padding: 0.875rem 1rem;
-		background: var(--callout-tip-bg);
-		border: 1px solid var(--callout-tip-border);
-		border-radius: 6px;
-	}
-
-	.remediation-label {
+	.finding-body {
+		padding: 0 1.25rem 1.25rem;
 		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.725rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--callout-tip-text);
-		margin-bottom: 0.375rem;
+		flex-direction: column;
+		gap: 0.875rem;
 	}
 
-	.finding-remediation p {
+	.finding-block {
+		padding: 0.875rem;
+		border: 1px dashed var(--border);
+		border-radius: var(--radius-sm);
+	}
+
+	.block-label {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		margin-bottom: 0.4rem;
+	}
+
+	.block-text {
 		font-size: 0.8rem;
 		color: var(--text-secondary);
 		line-height: 1.55;
 	}
 
-	.finding-remediation code {
-		font-size: 0.75rem;
-		background: var(--accent-soft);
-		color: var(--accent);
-		padding: 0.1rem 0.375rem;
-		border-radius: 3px;
+	/* ── Security Maturity ── */
+	.maturity-section {
+		margin-bottom: 2.5rem;
 	}
 
-	/* ── Maturity Factors ── */
-	.maturity-factors {
+	.maturity-scale {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+		gap: 0.625rem;
 	}
 
 	.maturity-item {
 		display: flex;
 		align-items: flex-start;
-		gap: 0.75rem;
-		padding: 0.875rem 1rem;
+		gap: 1rem;
+		padding: 0.875rem 1.25rem;
 		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-surface);
+		border-radius: var(--radius-sm);
+		transition: background 0.1s;
 	}
 
-	.maturity-icon {
-		flex-shrink: 0;
-		width: 30px;
-		height: 30px;
-		border-radius: 6px;
+	.maturity-item:hover {
 		background: var(--accent-soft);
-		border: 1px solid var(--accent-border);
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	}
+
+	.maturity-level-num {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 700;
 		color: var(--accent);
-	}
-
-	.maturity-item strong {
-		display: block;
-		font-size: 0.825rem;
-		color: var(--text-primary);
-		margin-bottom: 0.125rem;
-	}
-
-	.maturity-item p {
-		font-size: 0.775rem;
-		color: var(--text-muted);
-		line-height: 1.4;
-	}
-
-	/* ── Completion Card ── */
-	.completion-card {
-		display: flex;
-		gap: 1.25rem;
-		padding: 1.75rem 2rem;
-		border: 1px solid var(--callout-tip-border);
-		border-radius: 12px;
-		background: var(--callout-tip-bg);
-		margin: 2.5rem 0;
-		align-items: flex-start;
-	}
-
-	.completion-icon {
 		flex-shrink: 0;
+		width: 24px;
+		margin-top: 2px;
+	}
+
+	.maturity-content {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.maturity-bar-wrap {
+		height: 3px;
+		background: var(--bg-surface-alt);
+		border-radius: 2px;
+		overflow: hidden;
+		margin-bottom: 0.5rem;
+	}
+
+	.maturity-bar {
+		height: 100%;
+		background: var(--accent);
+		border-radius: 2px;
+		transition: width 0.6s var(--ease-premium);
+	}
+
+	.maturity-info {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.2rem;
+	}
+
+	.maturity-name {
+		font-size: 0.825rem;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.maturity-threshold {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		color: var(--text-muted);
+	}
+
+	.maturity-desc {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.45;
+	}
+
+	/* ── Completion ── */
+	.completion-section {
+		margin-bottom: 1rem;
+	}
+
+	.completion-card {
+		text-align: center;
+		padding: 2.5rem 2rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		background: var(--bg-surface);
+		box-shadow: var(--card-shadow);
+	}
+
+	.completion-check {
+		margin: 0 auto 1rem;
 		width: 48px;
 		height: 48px;
-		border-radius: 50%;
-		background: rgba(16, 185, 129, 0.1);
-		border: 1px solid rgba(16, 185, 129, 0.2);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--callout-tip-text);
+		border: 2px solid rgba(16, 185, 129, 0.2);
+		border-radius: 50%;
+		background: rgba(16, 185, 129, 0.05);
 	}
 
-	.completion-text h3 {
-		font-family: var(--font-serif);
+	.completion-title {
 		font-size: 1.1rem;
 		font-weight: 700;
 		color: var(--text-primary);
-		margin-bottom: 0.375rem;
+		margin-bottom: 0.5rem;
 	}
 
-	.completion-text p {
-		font-size: 0.85rem;
+	.completion-desc {
+		font-size: 0.825rem;
 		color: var(--text-secondary);
-		line-height: 1.65;
+		line-height: 1.6;
+		max-width: 480px;
+		margin: 0 auto 1.5rem;
 	}
 
-	/* ── Continue Grid ── */
-	.continue-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+	.completion-actions {
+		display: flex;
 		gap: 0.75rem;
+		justify-content: center;
+		flex-wrap: wrap;
 	}
 
-	.continue-card {
-		padding: 1.25rem;
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		background: var(--bg-surface);
-		transition: border-color 0.15s;
-	}
-
-	.continue-card.disabled {
-		opacity: 0.5;
-	}
-
-	.continue-badge {
-		display: inline-block;
-		font-family: var(--font-mono);
-		font-size: 0.55rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--text-muted);
-		background: var(--bg-surface-3);
-		border: 1px solid var(--border);
-		border-radius: 3px;
-		padding: 0.1rem 0.4rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.continue-card h4 {
-		font-size: 0.85rem;
+	.action-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.625rem 1.25rem;
+		font-size: 0.825rem;
 		font-weight: 600;
+		border-radius: var(--radius-sm);
+		text-decoration: none;
+		transition: all 0.15s var(--ease-premium);
+		cursor: pointer;
+	}
+
+	.action-btn.primary {
+		background: var(--accent);
+		color: var(--bg-app);
+		border: none;
+	}
+
+	.action-btn.primary:hover {
+		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.action-btn.secondary {
+		background: transparent;
+		color: var(--text-secondary);
+		border: 1px solid var(--border);
+	}
+
+	.action-btn.secondary:hover {
+		border-color: var(--border-strong);
 		color: var(--text-primary);
-		margin-bottom: 0.25rem;
 	}
 
-	.continue-card p {
-		font-size: 0.775rem;
-		color: var(--text-muted);
-		line-height: 1.5;
+	.action-arrow {
+		transition: transform 0.15s;
 	}
 
-	@media (max-width: 768px) {
+	.action-btn:hover .action-arrow {
+		transform: translateX(3px);
+	}
+
+	/* ── Responsive ── */
+	@media (max-width: 640px) {
 		.page-title {
-			font-size: 1.75rem;
+			font-size: 1.35rem;
 		}
-		.sev-row {
+
+		.dim-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.severity-header,
+		.severity-row {
+			grid-template-columns: 1fr 0.7fr;
+			font-size: 0.7rem;
+		}
+
+		.sev-col-action,
+		.sev-action {
+			display: none;
+		}
+
+		.scan-results-summary {
 			flex-wrap: wrap;
+			gap: 1rem;
 		}
+
 		.finding-meta {
 			flex-direction: column;
 			gap: 0.5rem;
-		}
-		.continue-grid {
-			grid-template-columns: 1fr;
-		}
-		.completion-card {
-			flex-direction: column;
 		}
 	}
 </style>

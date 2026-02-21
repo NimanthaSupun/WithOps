@@ -1,910 +1,742 @@
 <script>
-	import { onMount } from 'svelte';
+	import { isDarkMode } from '$lib/stores.js';
 
-	let visible = $state(false);
+	let darkMode = $state(false);
+	isDarkMode.subscribe((v) => (darkMode = v));
 
-	onMount(() => {
-		setTimeout(() => (visible = true), 50);
-	});
+	const capabilities = [
+		{
+			num: '01',
+			label: 'SCANNING',
+			title: 'Code Scanning',
+			description:
+				'Automated SAST, DAST, and dependency vulnerability detection across your entire codebase.',
+			icon: 'scan',
+			color: '#00adef'
+		},
+		{
+			num: '02',
+			label: 'PIPELINE',
+			title: 'CI/CD Security',
+			description:
+				'Inject security gates into your build pipelines without disrupting developer velocity.',
+			icon: 'pipeline',
+			color: '#10b981'
+		},
+		{
+			num: '03',
+			label: 'COMPLIANCE',
+			title: 'Policy Engine',
+			description:
+				'Enforce organizational security policies with automated compliance verification and reporting.',
+			icon: 'policy',
+			color: '#d4a054'
+		},
+		{
+			num: '04',
+			label: 'THREAT MODEL',
+			title: 'Threat Modeling',
+			description:
+				'AI-assisted threat analysis that maps attack surfaces and generates mitigation strategies.',
+			icon: 'threat',
+			color: '#8b5cf6'
+		},
+		{
+			num: '05',
+			label: 'INTELLIGENCE',
+			title: 'Security Intel',
+			description:
+				'Real-time vulnerability feeds and contextual risk scoring across your dependency graph.',
+			icon: 'intel',
+			color: '#06b6d4'
+		},
+		{
+			num: '06',
+			label: 'REMEDIATION',
+			title: 'Auto-Remediation',
+			description:
+				'AI-generated fix suggestions with one-click pull request creation for identified vulnerabilities.',
+			icon: 'fix',
+			color: '#f43f5e'
+		}
+	];
+
+	const prerequisites = [
+		{ item: 'GitHub account with repository access', type: 'required' },
+		{ item: 'Node.js 18+ (for self-hosted deployment)', type: 'optional' },
+		{ item: 'Modern browser (Chrome, Firefox, Edge, Safari)', type: 'required' },
+		{ item: 'Organization admin access for GitHub App installation', type: 'recommended' }
+	];
 </script>
 
-<div class="gs-page {visible ? 'visible' : ''}">
-	<!-- Page Header -->
-	<div class="page-header">
-		<div class="breadcrumb">
-			<span class="bc-muted">Docs</span>
-			<span class="bc-sep">/</span>
-			<span class="bc-current">Getting Started</span>
+<div class="intro-page">
+	<!-- Hero -->
+	<header class="page-hero">
+		<div class="hero-badge">
+			<span class="badge-dot"></span>
+			DOCUMENTATION
 		</div>
-		<h1 class="page-title" id="introduction">Introduction</h1>
-		<p class="page-lead">
-			Everything you need to know to get started with the WithOps DevSecOps Platform — from
-			connecting your first repository to running your initial security analysis.
+		<h1 class="hero-title">
+			WithOps <span class="title-accent">DevSecOps</span> Platform
+		</h1>
+		<p class="hero-subtitle">
+			Integrate security into every phase of your development lifecycle. From code commit to
+			production deployment — continuous, automated, intelligent.
 		</p>
-	</div>
+	</header>
 
-	<!-- Welcome Card -->
-	<div class="notebook-card welcome-card">
-		<div class="card-ribbon"></div>
-		<div class="card-body">
-			<div class="card-icon">
-				<svg
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<path
-						d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
-					/>
-					<path
-						d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
-					/>
-					<path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-					<path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-				</svg>
+	<!-- Quick Path Cards -->
+	<section class="quick-paths" id="quick-paths">
+		<h2 id="getting-started" class="section-heading">
+			<span class="heading-marker">§</span>
+			Getting Started
+		</h2>
+		<p class="section-intro">Three steps to a fully secured development pipeline.</p>
+
+		<div class="path-grid">
+			<a href="/docs/getting-started/quick-start" class="path-card">
+				<div class="path-step">01</div>
+				<div class="path-content">
+					<h3 class="path-title">Quick Start</h3>
+					<p class="path-desc">
+						Set up your account, configure your environment, and deploy your first secured pipeline
+						in under 10 minutes.
+					</p>
+				</div>
+				<span class="path-arrow">→</span>
+			</a>
+			<a href="/docs/getting-started/connecting-github" class="path-card">
+				<div class="path-step">02</div>
+				<div class="path-content">
+					<h3 class="path-title">Connect GitHub</h3>
+					<p class="path-desc">
+						Link your repositories with fine-grained permission control. Choose OAuth or GitHub App
+						integration.
+					</p>
+				</div>
+				<span class="path-arrow">→</span>
+			</a>
+			<a href="/docs/getting-started/first-security-scan" class="path-card">
+				<div class="path-step">03</div>
+				<div class="path-content">
+					<h3 class="path-title">First Security Scan</h3>
+					<p class="path-desc">
+						Run your first comprehensive security analysis and understand the results, severity
+						levels, and remediation paths.
+					</p>
+				</div>
+				<span class="path-arrow">→</span>
+			</a>
+		</div>
+	</section>
+
+	<!-- Capabilities -->
+	<section class="capabilities-section" id="capabilities-section">
+		<h2 id="capabilities" class="section-heading">
+			<span class="heading-marker">§</span>
+			Platform Capabilities
+		</h2>
+		<p class="section-intro">
+			A comprehensive security toolkit built for modern engineering teams.
+		</p>
+
+		<div class="cap-grid">
+			{#each capabilities as cap}
+				<div class="cap-card">
+					<div class="cap-header">
+						<span class="cap-number" style="color: {cap.color}">{cap.num}</span>
+						<span class="cap-label">{cap.label}</span>
+					</div>
+					<h3 class="cap-title">{cap.title}</h3>
+					<p class="cap-desc">{cap.description}</p>
+					<div class="cap-indicator" style="background: {cap.color}"></div>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Prerequisites -->
+	<section class="prereq-section" id="prereq-section">
+		<h2 id="prerequisites" class="section-heading">
+			<span class="heading-marker">§</span>
+			Prerequisites
+		</h2>
+
+		<div class="prereq-table">
+			<div class="prereq-header-row">
+				<span class="prereq-col-item">Requirement</span>
+				<span class="prereq-col-type">Status</span>
 			</div>
-			<div class="card-text">
-				<h3>Welcome to WithOps</h3>
-				<p>
-					WithOps is an AI-powered DevSecOps platform that automates security analysis, threat
-					modeling, and CI/CD workflow monitoring — the complete <strong
-						>"Everything After Code"</strong
-					> solution for modern development teams.
-				</p>
+			{#each prerequisites as req}
+				<div class="prereq-row">
+					<span class="prereq-item">{req.item}</span>
+					<span
+						class="prereq-type"
+						class:required={req.type === 'required'}
+						class:optional={req.type === 'optional'}
+						class:recommended={req.type === 'recommended'}
+					>
+						{req.type.toUpperCase()}
+					</span>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Architecture Overview -->
+	<section class="arch-section" id="arch-section">
+		<h2 id="architecture" class="section-heading">
+			<span class="heading-marker">§</span>
+			How It Works
+		</h2>
+		<p class="section-intro">
+			WithOps operates as a security overlay across your existing development infrastructure.
+		</p>
+
+		<div class="arch-flow">
+			<div class="arch-node">
+				<div class="arch-node-num">1</div>
+				<div class="arch-node-label">Code Push</div>
+				<div class="arch-node-detail">Developer commits to repository</div>
+			</div>
+			<div class="arch-connector">
+				<div class="arch-connector-line"></div>
+			</div>
+			<div class="arch-node">
+				<div class="arch-node-num">2</div>
+				<div class="arch-node-label">Webhook Trigger</div>
+				<div class="arch-node-detail">WithOps receives event notification</div>
+			</div>
+			<div class="arch-connector">
+				<div class="arch-connector-line"></div>
+			</div>
+			<div class="arch-node">
+				<div class="arch-node-num">3</div>
+				<div class="arch-node-label">Security Analysis</div>
+				<div class="arch-node-detail">Multi-dimensional scan execution</div>
+			</div>
+			<div class="arch-connector">
+				<div class="arch-connector-line"></div>
+			</div>
+			<div class="arch-node">
+				<div class="arch-node-num">4</div>
+				<div class="arch-node-label">Report & Remediate</div>
+				<div class="arch-node-detail">Results, scoring, and auto-fix PRs</div>
 			</div>
 		</div>
-	</div>
+	</section>
 
-	<!-- What You'll Learn -->
-	<h2 id="what-youll-learn">What You'll Learn</h2>
-	<p class="body-text">
-		This guide covers the essential steps to get your environment ready and start leveraging the
-		platform's security intelligence capabilities.
-	</p>
-
-	<div class="steps-overview">
-		<a href="/docs/getting-started/quick-start" class="step-preview">
-			<div class="step-num">01</div>
-			<div class="step-info">
-				<h4>Quick Start</h4>
-				<p>Set up prerequisites and access the platform in under 2 minutes.</p>
-			</div>
-			<svg
-				class="step-arrow"
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
-			>
-		</a>
-		<a href="/docs/getting-started/connecting-github" class="step-preview">
-			<div class="step-num">02</div>
-			<div class="step-info">
-				<h4>Connecting GitHub</h4>
-				<p>Link your GitHub organizations and repositories for automated scanning.</p>
-			</div>
-			<svg
-				class="step-arrow"
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
-			>
-		</a>
-		<a href="/docs/getting-started/first-security-scan" class="step-preview">
-			<div class="step-num">03</div>
-			<div class="step-info">
-				<h4>First Security Scan</h4>
-				<p>Run your initial scan and interpret the results with AI-powered insights.</p>
-			</div>
-			<svg
-				class="step-arrow"
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
-			>
-		</a>
-	</div>
-
-	<!-- Platform Overview -->
-	<h2 id="platform-overview">Platform at a Glance</h2>
-	<p class="body-text">
-		WithOps integrates multiple security and DevOps capabilities into a single, unified platform.
-	</p>
-
-	<div class="capabilities-grid">
-		<div class="capability-card">
-			<div class="cap-icon purple">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-				</svg>
-			</div>
-			<h4>AI Security Analysis</h4>
-			<p>
-				Automated vulnerability detection with AI-generated remediation suggestions and CVSS
-				scoring.
+	<!-- Field Note CTA -->
+	<section class="cta-section">
+		<div class="cta-card">
+			<div class="cta-label">FIELD NOTE</div>
+			<h3 class="cta-title">Ready to begin?</h3>
+			<p class="cta-desc">
+				Start with the Quick Start guide to have your first secured pipeline running in minutes.
 			</p>
+			<a href="/docs/getting-started/quick-start" class="cta-button">
+				Start Quick Setup
+				<span class="cta-arrow">→</span>
+			</a>
 		</div>
-		<div class="capability-card">
-			<div class="cap-icon blue">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<path
-						d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-					/><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-				</svg>
-			</div>
-			<h4>Threat Modeling</h4>
-			<p>
-				STRIDE-based analysis with attack surface mapping and risk scoring for your architecture.
-			</p>
-		</div>
-		<div class="capability-card">
-			<div class="cap-icon green">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<path
-						d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-						fill="currentColor"
-						stroke="none"
-					/>
-				</svg>
-			</div>
-			<h4>GitHub Integration</h4>
-			<p>Deep integration with organizations, repos, PR automation, and Actions monitoring.</p>
-		</div>
-		<div class="capability-card">
-			<div class="cap-icon amber">
-				<svg
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-				</svg>
-			</div>
-			<h4>Workflow Orchestration</h4>
-			<p>
-				CI/CD pipeline analysis, security scanning integration, and real-time execution monitoring.
-			</p>
-		</div>
-	</div>
-
-	<!-- Prerequisites Callout -->
-	<h2 id="prerequisites">Prerequisites</h2>
-
-	<div class="callout callout-info">
-		<div class="callout-icon">
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line
-					x1="12"
-					y1="8"
-					x2="12.01"
-					y2="8"
-				/>
-			</svg>
-		</div>
-		<div class="callout-content">
-			<strong>Before you begin</strong>
-			<p>Make sure you have the following ready to get the most out of WithOps.</p>
-		</div>
-	</div>
-
-	<div class="prereq-list">
-		<div class="prereq-item">
-			<div class="prereq-check">
-				<svg
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-				>
-			</div>
-			<div>
-				<strong>GitHub Account</strong>
-				<span class="prereq-detail">— with access to at least one organization or repository</span>
-			</div>
-		</div>
-		<div class="prereq-item">
-			<div class="prereq-check">
-				<svg
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-				>
-			</div>
-			<div>
-				<strong>Modern Browser</strong>
-				<span class="prereq-detail">— Chrome, Firefox, Safari, or Edge (latest version)</span>
-			</div>
-		</div>
-		<div class="prereq-item">
-			<div class="prereq-check">
-				<svg
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-				>
-			</div>
-			<div>
-				<strong>GitHub Organization Admin</strong>
-				<span class="prereq-detail"
-					>— required for installing the WithOps GitHub App (optional for basic scanning)</span
-				>
-			</div>
-		</div>
-	</div>
-
-	<!-- Estimated Time -->
-	<div class="callout callout-tip">
-		<div class="callout-icon">
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-			</svg>
-		</div>
-		<div class="callout-content">
-			<strong>Estimated time: ~5 minutes</strong>
-			<p>From sign-up to your first security scan results.</p>
-		</div>
-	</div>
-
-	<!-- Architecture Brief -->
-	<h2 id="how-it-works">How It Works</h2>
-	<p class="body-text">
-		WithOps uses a microservices architecture with 8 specialized services coordinated through a Kong
-		API Gateway. Here's a simplified view of the data flow:
-	</p>
-
-	<div class="arch-flow">
-		<div class="flow-node">
-			<div class="flow-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line
-						x1="8"
-						y1="21"
-						x2="16"
-						y2="21"
-					/><line x1="12" y1="17" x2="12" y2="21" /></svg
-				>
-			</div>
-			<span>Your Browser</span>
-		</div>
-		<div class="flow-connector">
-			<svg width="24" height="12" viewBox="0 0 24 12"
-				><path d="M0 6h20M16 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" /></svg
-			>
-		</div>
-		<div class="flow-node highlight">
-			<div class="flow-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
-				>
-			</div>
-			<span>Kong Gateway</span>
-		</div>
-		<div class="flow-connector">
-			<svg width="24" height="12" viewBox="0 0 24 12"
-				><path d="M0 6h20M16 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" /></svg
-			>
-		</div>
-		<div class="flow-node">
-			<div class="flow-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect
-						x="2"
-						y="14"
-						width="20"
-						height="8"
-						rx="2"
-						ry="2"
-					/><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></svg
-				>
-			</div>
-			<span>Microservices</span>
-		</div>
-		<div class="flow-connector">
-			<svg width="24" height="12" viewBox="0 0 24 12"
-				><path d="M0 6h20M16 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" /></svg
-			>
-		</div>
-		<div class="flow-node">
-			<div class="flow-icon">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					><ellipse cx="12" cy="5" rx="9" ry="3" /><path
-						d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"
-					/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></svg
-				>
-			</div>
-			<span>AI + Data</span>
-		</div>
-	</div>
-
-	<!-- Next Step -->
-	<div class="next-step-card">
-		<div class="next-step-text">
-			<h3>Ready to begin?</h3>
-			<p>
-				Start with the Quick Start guide to set up your WithOps account and connect your first
-				repository.
-			</p>
-		</div>
-		<a href="/docs/getting-started/quick-start" class="next-step-btn">
-			Start Quick Start
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
-			>
-		</a>
-	</div>
+	</section>
 </div>
 
 <style>
-	/* ═══════════════════════════════
-	   GETTING STARTED — INTRODUCTION
-	   Sophisticated notebook styling
-	   ═══════════════════════════════ */
-
-	.gs-page {
-		opacity: 0;
-		transform: translateY(8px);
-		transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
-	}
-	.gs-page.visible {
-		opacity: 1;
-		transform: translateY(0);
+	.intro-page {
+		max-width: 720px;
 	}
 
-	/* Page Header */
-	.page-header {
-		margin-bottom: 2.5rem;
+	/* ── Hero ── */
+	.page-hero {
+		margin-bottom: 3.5rem;
 		padding-bottom: 2rem;
-		border-bottom: 1px solid var(--border);
+		border-bottom: 1px dashed var(--border);
 	}
 
-	.breadcrumb {
-		display: flex;
+	.hero-badge {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.375rem;
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
+		gap: 0.5rem;
 		font-family: var(--font-mono);
-	}
-
-	.bc-muted {
-		color: var(--text-muted);
-	}
-	.bc-sep {
-		color: var(--text-muted);
-	}
-	.bc-current {
-		color: var(--text-secondary);
-	}
-
-	.page-title {
-		font-family: var(--font-serif);
-		font-size: 2.25rem;
+		font-size: 0.6rem;
 		font-weight: 700;
+		color: var(--accent);
+		letter-spacing: 0.12em;
+		margin-bottom: 1rem;
+	}
+
+	.badge-dot {
+		width: 6px;
+		height: 6px;
+		background: var(--accent);
+		border-radius: 50%;
+		animation: pulse-dot 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse-dot {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+	}
+
+	.hero-title {
+		font-size: 2rem;
+		font-weight: 800;
 		letter-spacing: -0.03em;
-		line-height: 1.2;
-		margin-bottom: 0.75rem;
+		line-height: 1.15;
+		margin-bottom: 0.875rem;
 		color: var(--text-primary);
 	}
 
-	.page-lead {
-		font-size: 1.05rem;
+	.title-accent {
+		color: var(--accent);
+	}
+
+	.hero-subtitle {
+		font-size: 0.95rem;
 		color: var(--text-secondary);
 		line-height: 1.7;
-		max-width: 640px;
-		font-family: var(--font-serif);
+		max-width: 560px;
 	}
 
-	/* Headings */
-	h2 {
-		font-family: var(--font-serif);
-		font-size: 1.375rem;
+	/* ── Sections ── */
+	.section-heading {
+		font-size: 1.15rem;
 		font-weight: 700;
-		letter-spacing: -0.02em;
-		margin-top: 3rem;
-		margin-bottom: 0.75rem;
+		letter-spacing: -0.01em;
+		margin-bottom: 0.5rem;
 		color: var(--text-primary);
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.body-text {
-		font-size: 0.9rem;
-		line-height: 1.75;
-		color: var(--text-secondary);
-		margin-bottom: 1.25rem;
-		max-width: 640px;
-	}
-
-	/* ── Welcome Card ── */
-	.notebook-card {
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		overflow: hidden;
-		margin-bottom: 2rem;
-		background: var(--bg-surface);
-		box-shadow: var(--shadow-sm);
-		position: relative;
-	}
-
-	.card-ribbon {
-		height: 3px;
-		background: linear-gradient(90deg, var(--accent), transparent);
-	}
-
-	.card-body {
-		padding: 1.5rem;
-		display: flex;
-		gap: 1.25rem;
-		align-items: flex-start;
-	}
-
-	.card-icon {
-		flex-shrink: 0;
-		width: 40px;
-		height: 40px;
-		border-radius: 8px;
-		background: var(--accent-soft);
-		border: 1px solid var(--accent-border);
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		color: var(--accent);
+		gap: 0.5rem;
 	}
 
-	.card-text h3 {
-		font-family: var(--font-serif);
-		font-size: 1rem;
-		font-weight: 700;
-		margin-bottom: 0.375rem;
-		color: var(--text-primary);
+	.heading-marker {
+		color: var(--complement);
+		font-weight: 400;
+		font-size: 1.1rem;
+		opacity: 0.6;
 	}
 
-	.card-text p {
-		font-size: 0.85rem;
-		line-height: 1.65;
+	.section-intro {
+		font-size: 0.875rem;
 		color: var(--text-secondary);
+		margin-bottom: 1.5rem;
+		line-height: 1.6;
 	}
 
-	.card-text strong {
-		color: var(--accent);
-		font-weight: 600;
+	/* ── Quick Path Cards ── */
+	.quick-paths {
+		margin-bottom: 3.5rem;
 	}
 
-	/* ── Steps Overview ── */
-	.steps-overview {
+	.path-grid {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+		gap: 0.75rem;
 	}
 
-	.step-preview {
+	.path-card {
 		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem 1.25rem;
+		align-items: flex-start;
+		gap: 1.25rem;
+		padding: 1.25rem 1.5rem;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		text-decoration: none;
-		transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+		transition: all 0.2s var(--ease-premium);
 		background: var(--bg-surface);
+		box-shadow: var(--card-shadow);
 	}
 
-	.step-preview:hover {
+	.path-card:hover {
 		border-color: var(--accent-border);
 		background: var(--accent-soft);
 		transform: translateX(4px);
 	}
 
-	.step-num {
+	.path-step {
 		font-family: var(--font-mono);
-		font-size: 0.7rem;
+		font-size: 0.8rem;
 		font-weight: 700;
 		color: var(--accent);
-		background: var(--accent-soft);
-		border: 1px solid var(--accent-border);
-		border-radius: 6px;
-		width: 36px;
-		height: 36px;
+		flex-shrink: 0;
+		width: 28px;
+		height: 28px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex-shrink: 0;
+		border: 1.5px solid var(--accent-border);
+		border-radius: var(--radius-sm);
+		margin-top: 2px;
 	}
 
-	.step-info {
+	.path-content {
 		flex: 1;
 		min-width: 0;
 	}
 
-	.step-info h4 {
-		font-size: 0.875rem;
+	.path-title {
+		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--text-primary);
-		margin-bottom: 0.125rem;
+		margin-bottom: 0.3rem;
 	}
 
-	.step-info p {
-		font-size: 0.775rem;
-		color: var(--text-muted);
-		line-height: 1.4;
+	.path-desc {
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		line-height: 1.55;
 	}
 
-	.step-arrow {
+	.path-arrow {
 		color: var(--text-muted);
+		font-size: 1rem;
 		flex-shrink: 0;
-		transition: transform 0.15s;
+		transition: all 0.15s;
+		margin-top: 4px;
 	}
 
-	.step-preview:hover .step-arrow {
+	.path-card:hover .path-arrow {
 		color: var(--accent);
 		transform: translateX(3px);
 	}
 
 	/* ── Capabilities Grid ── */
-	.capabilities-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 0.75rem;
-		margin-bottom: 1rem;
+	.capabilities-section {
+		margin-bottom: 3.5rem;
 	}
 
-	.capability-card {
+	.cap-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 0.875rem;
+	}
+
+	.cap-card {
 		padding: 1.25rem;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		background: var(--bg-surface);
-		transition: border-color 0.15s;
+		transition: all 0.2s var(--ease-premium);
+		position: relative;
+		overflow: hidden;
+		box-shadow: var(--card-shadow);
 	}
 
-	.capability-card:hover {
+	.cap-card:hover {
 		border-color: var(--border-strong);
+		transform: translateY(-2px);
 	}
 
-	.cap-icon {
-		width: 32px;
-		height: 32px;
-		border-radius: 7px;
+	.cap-header {
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		gap: 0.5rem;
 		margin-bottom: 0.75rem;
 	}
 
-	.cap-icon.purple {
-		background: rgba(167, 139, 250, 0.1);
-		color: #a78bfa;
-		border: 1px solid rgba(167, 139, 250, 0.15);
-	}
-	.cap-icon.blue {
-		background: rgba(96, 165, 250, 0.1);
-		color: #60a5fa;
-		border: 1px solid rgba(96, 165, 250, 0.15);
-	}
-	.cap-icon.green {
-		background: rgba(52, 211, 153, 0.1);
-		color: #34d399;
-		border: 1px solid rgba(52, 211, 153, 0.15);
-	}
-	.cap-icon.amber {
-		background: rgba(251, 191, 36, 0.1);
-		color: #fbbf24;
-		border: 1px solid rgba(251, 191, 36, 0.15);
+	.cap-number {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 700;
 	}
 
-	.capability-card h4 {
-		font-size: 0.85rem;
+	.cap-label {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+
+	.cap-title {
+		font-size: 0.875rem;
 		font-weight: 600;
 		color: var(--text-primary);
-		margin-bottom: 0.375rem;
-	}
-
-	.capability-card p {
-		font-size: 0.775rem;
-		color: var(--text-muted);
-		line-height: 1.55;
-	}
-
-	/* ── Callouts ── */
-	.callout {
-		display: flex;
-		gap: 0.75rem;
-		padding: 1rem 1.25rem;
-		border-radius: 8px;
-		margin: 1.25rem 0;
-		border: 1px solid;
-	}
-
-	.callout-info {
-		background: var(--callout-info-bg);
-		border-color: var(--callout-info-border);
-	}
-
-	.callout-info .callout-icon {
-		color: var(--callout-info-text);
-	}
-
-	.callout-tip {
-		background: var(--callout-tip-bg);
-		border-color: var(--callout-tip-border);
-	}
-
-	.callout-tip .callout-icon {
-		color: var(--callout-tip-text);
-	}
-
-	.callout-icon {
-		flex-shrink: 0;
-		margin-top: 0.125rem;
-	}
-
-	.callout-content strong {
-		display: block;
-		font-size: 0.825rem;
-		color: var(--text-primary);
-		margin-bottom: 0.25rem;
-	}
-
-	.callout-content p {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		line-height: 1.5;
-	}
-
-	/* ── Prerequisites ── */
-	.prereq-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.625rem;
 		margin-bottom: 0.5rem;
 	}
 
-	.prereq-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem 1rem;
+	.cap-desc {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.55;
+	}
+
+	.cap-indicator {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		opacity: 0.4;
+		transition: opacity 0.2s;
+	}
+
+	.cap-card:hover .cap-indicator {
+		opacity: 0.8;
+	}
+
+	/* ── Prerequisites ── */
+	.prereq-section {
+		margin-bottom: 3.5rem;
+	}
+
+	.prereq-table {
 		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-surface);
-		font-size: 0.85rem;
-		transition: border-color 0.15s;
+		border-radius: var(--radius-sm);
+		overflow: hidden;
 	}
 
-	.prereq-item:hover {
-		border-color: var(--border-strong);
-	}
-
-	.prereq-check {
-		flex-shrink: 0;
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		background: var(--callout-tip-bg);
-		border: 1px solid var(--callout-tip-border);
+	.prereq-header-row {
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		justify-content: center;
-		color: var(--callout-tip-text);
-	}
-
-	.prereq-item strong {
-		color: var(--text-primary);
-		font-weight: 600;
-	}
-
-	.prereq-detail {
+		padding: 0.625rem 1.25rem;
+		background: var(--bg-surface-alt);
+		border-bottom: 1px solid var(--border);
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
 		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.prereq-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem 1.25rem;
+		border-bottom: 1px solid var(--border);
 		font-size: 0.8rem;
+		color: var(--text-primary);
+		transition: background 0.1s;
+	}
+
+	.prereq-row:last-child {
+		border-bottom: none;
+	}
+
+	.prereq-row:hover {
+		background: var(--accent-soft);
+	}
+
+	.prereq-item {
+		flex: 1;
+	}
+
+	.prereq-type {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		padding: 0.2rem 0.5rem;
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	.prereq-type.required {
+		color: var(--accent);
+		background: var(--accent-soft);
+	}
+
+	.prereq-type.optional {
+		color: var(--text-muted);
+		background: var(--bg-surface-alt);
+	}
+
+	.prereq-type.recommended {
+		color: var(--complement);
+		background: var(--complement-soft);
 	}
 
 	/* ── Architecture Flow ── */
+	.arch-section {
+		margin-bottom: 3.5rem;
+	}
+
 	.arch-flow {
 		display: flex;
-		align-items: center;
-		gap: 0.25rem;
+		align-items: flex-start;
+		gap: 0;
 		padding: 1.5rem;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		background: var(--bg-surface);
-		margin-bottom: 2rem;
 		overflow-x: auto;
-		scrollbar-width: thin;
+		box-shadow: var(--card-shadow);
 	}
 
-	.flow-node {
+	.arch-node {
+		flex: 1;
+		min-width: 120px;
+		text-align: center;
+		position: relative;
+	}
+
+	.arch-node-num {
+		width: 28px;
+		height: 28px;
+		margin: 0 auto 0.625rem;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-surface-2);
-		flex-shrink: 0;
-		min-width: 100px;
-		transition: border-color 0.15s;
-	}
-
-	.flow-node.highlight {
-		border-color: var(--accent-border);
-		background: var(--accent-soft);
-	}
-
-	.flow-icon {
-		color: var(--text-secondary);
-	}
-
-	.flow-node.highlight .flow-icon {
-		color: var(--accent);
-	}
-
-	.flow-node span {
+		justify-content: center;
+		font-family: var(--font-mono);
 		font-size: 0.7rem;
-		font-weight: 600;
-		color: var(--text-secondary);
-		white-space: nowrap;
-	}
-
-	.flow-node.highlight span {
-		color: var(--accent);
-	}
-
-	.flow-connector {
-		color: var(--text-muted);
-		flex-shrink: 0;
-	}
-
-	/* ── Next Step Card ── */
-	.next-step-card {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1.5rem;
-		padding: 1.5rem 2rem;
-		border: 1px solid var(--accent-border);
-		border-radius: 12px;
-		background: var(--accent-soft);
-		margin-top: 3rem;
-	}
-
-	.next-step-text h3 {
-		font-family: var(--font-serif);
-		font-size: 1.1rem;
 		font-weight: 700;
+		color: var(--accent);
+		border: 1.5px solid var(--accent-border);
+		border-radius: 50%;
+		background: var(--accent-soft);
+	}
+
+	.arch-node-label {
+		font-size: 0.8rem;
+		font-weight: 600;
 		color: var(--text-primary);
 		margin-bottom: 0.25rem;
 	}
 
-	.next-step-text p {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		line-height: 1.5;
+	.arch-node-detail {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		line-height: 1.4;
 	}
 
-	.next-step-btn {
+	.arch-connector {
+		display: flex;
+		align-items: center;
+		padding-top: 12px;
+		width: 40px;
+		flex-shrink: 0;
+	}
+
+	.arch-connector-line {
+		width: 100%;
+		height: 1px;
+		background: var(--border-strong);
+		position: relative;
+	}
+
+	.arch-connector-line::after {
+		content: '';
+		position: absolute;
+		right: -3px;
+		top: -3px;
+		width: 6px;
+		height: 6px;
+		border-right: 1.5px solid var(--accent);
+		border-bottom: 1.5px solid var(--accent);
+		transform: rotate(-45deg);
+	}
+
+	/* ── CTA ── */
+	.cta-section {
+		margin-bottom: 1rem;
+	}
+
+	.cta-card {
+		padding: 1.75rem 2rem;
+		border: 1px solid var(--complement-border);
+		border-radius: var(--radius-sm);
+		background: var(--complement-soft);
+		position: relative;
+	}
+
+	.cta-label {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--complement);
+		letter-spacing: 0.12em;
+		margin-bottom: 0.75rem;
+	}
+
+	.cta-title {
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		margin-bottom: 0.5rem;
+	}
+
+	.cta-desc {
+		font-size: 0.825rem;
+		color: var(--text-secondary);
+		margin-bottom: 1.25rem;
+		line-height: 1.6;
+	}
+
+	.cta-button {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.625rem 1.25rem;
-		border-radius: 8px;
-		background: var(--accent);
-		color: white;
 		font-size: 0.825rem;
 		font-weight: 600;
+		color: var(--bg-app);
+		background: var(--accent);
+		border: none;
+		border-radius: var(--radius-sm);
 		text-decoration: none;
-		white-space: nowrap;
-		transition: all 0.15s;
+		transition: all 0.15s var(--ease-premium);
+		cursor: pointer;
 	}
 
-	.next-step-btn:hover {
+	.cta-button:hover {
 		opacity: 0.9;
 		transform: translateY(-1px);
 	}
 
+	.cta-arrow {
+		transition: transform 0.15s;
+	}
+
+	.cta-button:hover .cta-arrow {
+		transform: translateX(3px);
+	}
+
 	/* ── Responsive ── */
-	@media (max-width: 768px) {
-		.page-title {
-			font-size: 1.75rem;
+	@media (max-width: 640px) {
+		.hero-title {
+			font-size: 1.5rem;
 		}
-		.capabilities-grid {
+
+		.cap-grid {
 			grid-template-columns: 1fr;
 		}
+
 		.arch-flow {
-			flex-wrap: wrap;
-			justify-content: center;
-		}
-		.flow-connector {
-			transform: rotate(90deg);
-		}
-		.next-step-card {
 			flex-direction: column;
-			text-align: center;
+			align-items: stretch;
+		}
+
+		.arch-connector {
+			width: auto;
+			height: 24px;
+			justify-content: center;
+			padding-top: 0;
+		}
+
+		.arch-connector-line {
+			width: 1px;
+			height: 100%;
+		}
+
+		.arch-connector-line::after {
+			right: -3px;
+			top: auto;
+			bottom: -3px;
+			transform: rotate(45deg);
+		}
+
+		.path-card {
+			padding: 1rem;
 		}
 	}
 </style>

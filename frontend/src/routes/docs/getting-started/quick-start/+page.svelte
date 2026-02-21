@@ -1,243 +1,109 @@
 <script>
-	import { onMount } from 'svelte';
+	import { isDarkMode } from '$lib/stores.js';
 
-	let visible = $state(false);
+	let darkMode = $state(false);
+	isDarkMode.subscribe((v) => (darkMode = v));
+
 	let activeTab = $state('cloud');
+	let copiedIdx = $state(-1);
 
-	onMount(() => {
-		setTimeout(() => (visible = true), 50);
-	});
+	const cloudSteps = [
+		{
+			num: '01',
+			title: 'Create your account',
+			desc: 'Sign up at withops.dev using your organization email or GitHub account.',
+			code: null
+		},
+		{
+			num: '02',
+			title: 'Install the GitHub App',
+			desc: 'Navigate to Settings → Integrations and install the WithOps GitHub App on your target organizations.',
+			code: null
+		},
+		{
+			num: '03',
+			title: 'Select repositories',
+			desc: 'Choose which repositories to monitor. You can start with a single repository and expand later.',
+			code: null
+		},
+		{
+			num: '04',
+			title: 'Trigger your first scan',
+			desc: 'Push a commit or manually trigger a scan from the dashboard to see results.',
+			code: null
+		}
+	];
+
+	const selfHostedSteps = [
+		{
+			num: '01',
+			title: 'Clone the repository',
+			desc: 'Pull the WithOps platform source code to your local machine.',
+			code: 'git clone https://github.com/withops/devsecops-platform.git\ncd devsecops-platform'
+		},
+		{
+			num: '02',
+			title: 'Configure environment',
+			desc: 'Copy the example configuration and fill in your API keys and database credentials.',
+			code: 'cp .env.example .env\n# Edit .env with your configuration\nnano .env'
+		},
+		{
+			num: '03',
+			title: 'Start services',
+			desc: 'Launch all services using Docker Compose. This will start the backend, frontend, and all supporting services.',
+			code: 'docker-compose up -d\n\n# Verify all services are running\ndocker-compose ps'
+		},
+		{
+			num: '04',
+			title: 'Access the platform',
+			desc: 'Open your browser and navigate to the local instance. Default port is 3000.',
+			code: '# Frontend:  http://localhost:3000\n# Backend:   http://localhost:9000\n# API Docs:  http://localhost:9000/docs'
+		}
+	];
+
+	const features = [
+		{ feature: 'Setup Time', cloud: '< 5 minutes', selfHosted: '15-30 minutes' },
+		{ feature: 'Infrastructure', cloud: 'Managed', selfHosted: 'Self-managed' },
+		{ feature: 'Data Residency', cloud: 'Cloud (US/EU)', selfHosted: 'Your infrastructure' },
+		{ feature: 'Scaling', cloud: 'Automatic', selfHosted: 'Manual' },
+		{ feature: 'Updates', cloud: 'Automatic', selfHosted: 'Manual pull' },
+		{ feature: 'Cost', cloud: 'Subscription', selfHosted: 'Infrastructure only' }
+	];
+
+	let activeSteps = $derived(activeTab === 'cloud' ? cloudSteps : selfHostedSteps);
+
+	function copyCode(code, idx) {
+		if (!code) return;
+		navigator.clipboard.writeText(code);
+		copiedIdx = idx;
+		setTimeout(() => (copiedIdx = -1), 2000);
+	}
 </script>
 
-<div class="gs-page {visible ? 'visible' : ''}">
-	<!-- Page Header -->
-	<div class="page-header">
-		<div class="breadcrumb">
-			<span class="bc-muted">Docs</span>
-			<span class="bc-sep">/</span>
-			<a href="/docs/getting-started" class="bc-link">Getting Started</a>
-			<span class="bc-sep">/</span>
-			<span class="bc-current">Quick Start</span>
-		</div>
-		<h1 class="page-title" id="quick-start">Quick Start</h1>
-		<p class="page-lead">
-			Get up and running with WithOps in under 2 minutes. Choose your deployment model and follow
-			the steps below.
+<div class="qs-page">
+	<!-- Header -->
+	<header class="page-header">
+		<div class="page-badge">PROCEDURE</div>
+		<h1 class="page-title">Quick Start</h1>
+		<p class="page-desc">
+			Get the WithOps platform running and connected to your repositories. Choose between
+			cloud-hosted or self-hosted deployment.
 		</p>
-	</div>
+	</header>
 
 	<!-- Deployment Toggle -->
-	<h2 id="choose-deployment">Choose Your Deployment</h2>
+	<section class="deploy-section" id="deploy-section">
+		<h2 id="deployment" class="section-heading">
+			<span class="heading-marker">§</span>
+			Choose Deployment
+		</h2>
 
-	<div class="tab-switcher">
-		<button
-			class="tab-btn {activeTab === 'cloud' ? 'active' : ''}"
-			onclick={() => (activeTab = 'cloud')}
-		>
-			<svg
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
+		<div class="tab-switcher">
+			<button
+				class="tab-btn"
+				class:active={activeTab === 'cloud'}
+				onclick={() => (activeTab = 'cloud')}
 			>
-				<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-			</svg>
-			Cloud (Recommended)
-		</button>
-		<button
-			class="tab-btn {activeTab === 'selfhost' ? 'active' : ''}"
-			onclick={() => (activeTab = 'selfhost')}
-		>
-			<svg
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect
-					x="2"
-					y="14"
-					width="20"
-					height="8"
-					rx="2"
-					ry="2"
-				/><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" />
-			</svg>
-			Self-Hosted
-		</button>
-	</div>
-
-	{#if activeTab === 'cloud'}
-		<!-- CLOUD PATH -->
-		<h2 id="step-1-sign-up">Step 1 — Sign Up</h2>
-		<p class="body-text">
-			Navigate to the WithOps platform and create your account using GitHub OAuth. This
-			automatically links your GitHub identity.
-		</p>
-
-		<div class="instruction-block">
-			<div class="instruction-number">1</div>
-			<div class="instruction-content">
-				<p>Visit the WithOps landing page and click <strong>"Connect GitHub"</strong></p>
-				<div class="code-block">
-					<div class="code-header">
-						<span class="code-lang">URL</span>
-					</div>
-					<pre><code>https://your-withops-instance.com</code></pre>
-				</div>
-			</div>
-		</div>
-
-		<div class="instruction-block">
-			<div class="instruction-number">2</div>
-			<div class="instruction-content">
-				<p>Authorize WithOps via Auth0. You'll be redirected to GitHub for OAuth consent.</p>
-				<div class="callout callout-tip">
-					<div class="callout-icon">
-						<svg
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
-						>
-					</div>
-					<div class="callout-content">
-						<strong>Secure by default</strong>
-						<p>
-							WithOps uses Auth0 with RS256 JWT tokens. Your credentials are never stored on our
-							servers.
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="instruction-block">
-			<div class="instruction-number">3</div>
-			<div class="instruction-content">
-				<p>
-					After authorization, you'll land on your <strong>Dashboard</strong> — your central command
-					center.
-				</p>
-			</div>
-		</div>
-
-		<h2 id="step-2-explore">Step 2 — Explore the Dashboard</h2>
-		<p class="body-text">
-			The dashboard surfaces your security posture at a glance. Here's what you'll see:
-		</p>
-
-		<div class="feature-table">
-			<div class="ft-row">
-				<div class="ft-label">GitHub Connectivity</div>
-				<div class="ft-desc">
-					Connection status, organization discovery, and account verification
-				</div>
-			</div>
-			<div class="ft-row">
-				<div class="ft-label">Command Center</div>
-				<div class="ft-desc">
-					Multi-org policy management, aggregated security insights, and team governance
-				</div>
-			</div>
-			<div class="ft-row">
-				<div class="ft-label">System Status</div>
-				<div class="ft-desc">
-					Real-time health monitoring of all connected services and pipelines
-				</div>
-			</div>
-		</div>
-	{:else}
-		<!-- SELF-HOSTED PATH -->
-		<h2 id="step-1-requirements">Step 1 — System Requirements</h2>
-		<p class="body-text">To self-host WithOps, you'll need the following infrastructure:</p>
-
-		<div class="prereq-list">
-			<div class="prereq-item">
-				<div class="prereq-check">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-					>
-				</div>
-				<div>
-					<strong>Docker & Docker Compose</strong>
-					<span class="prereq-detail">— v24+ with Compose v2</span>
-				</div>
-			</div>
-			<div class="prereq-item">
-				<div class="prereq-check">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-					>
-				</div>
-				<div>
-					<strong>8GB RAM minimum</strong>
-					<span class="prereq-detail">— 16GB recommended for AI services + Ollama</span>
-				</div>
-			</div>
-			<div class="prereq-item">
-				<div class="prereq-check">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2.5"><polyline points="20 6 9 17 4 12" /></svg
-					>
-				</div>
-				<div>
-					<strong>Node.js 18+ & Python 3.11+</strong>
-					<span class="prereq-detail">— for frontend and backend services</span>
-				</div>
-			</div>
-		</div>
-
-		<h2 id="step-2-docker-compose">Step 2 — Launch with Docker Compose</h2>
-		<p class="body-text">Clone the repository and start all services with a single command:</p>
-
-		<div class="code-block">
-			<div class="code-header">
-				<span class="code-lang">Terminal</span>
-				<button
-					class="code-copy"
-					onclick={(e) => {
-						navigator.clipboard.writeText(
-							'git clone https://github.com/your-org/withops.git\ncd withops\ndocker-compose up -d'
-						);
-						e.target.textContent = 'Copied!';
-						setTimeout(() => (e.target.textContent = 'Copy'), 1500);
-					}}>Copy</button
-				>
-			</div>
-			<pre><code
-					><span class="code-comment"># Clone the repository</span>
-<span class="code-cmd">git clone</span> https://github.com/your-org/withops.git
-<span class="code-cmd">cd</span> withops
-
-<span class="code-comment"># Start all services</span>
-<span class="code-cmd">docker-compose</span> up -d</code
-				></pre>
-		</div>
-
-		<div class="callout callout-info">
-			<div class="callout-icon">
 				<svg
 					width="14"
 					height="14"
@@ -245,167 +111,215 @@
 					fill="none"
 					stroke="currentColor"
 					stroke-width="2"
-					><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line
-						x1="12"
-						y1="8"
-						x2="12.01"
-						y2="8"
-					/></svg
 				>
-			</div>
-			<div class="callout-content">
-				<strong>Service Ports</strong>
-				<p>
-					Frontend runs on :5173, Kong Gateway on :9000, and microservices on the 91xx range. See
-					Deployment docs for the full port map.
-				</p>
-			</div>
-		</div>
-
-		<h2 id="step-3-configure">Step 3 — Configure Environment</h2>
-		<p class="body-text">Copy the environment template and fill in your credentials:</p>
-
-		<div class="code-block">
-			<div class="code-header">
-				<span class="code-lang">Terminal</span>
-			</div>
-			<pre><code
-					><span class="code-cmd">cp</span> .env.example .env
-
-<span class="code-comment"># Required variables:</span>
-AUTH0_DOMAIN=your-tenant.auth0.com
-AUTH0_CLIENT_ID=your-client-id
-SUPABASE_URL=your-supabase-url
-SUPABASE_KEY=your-supabase-key
-GITHUB_APP_ID=your-github-app-id</code
-				></pre>
-		</div>
-	{/if}
-
-	<!-- Common Next Steps -->
-	<h2 id="whats-next">What's Next</h2>
-	<p class="body-text">
-		Now that you're in the platform, the next step is to connect your GitHub organizations for
-		automated security scanning.
-	</p>
-
-	<div class="next-step-card">
-		<div class="next-step-text">
-			<h3>Connect Your GitHub Account</h3>
-			<p>
-				Link your organizations and repositories to enable automated vulnerability scanning and
-				workflow monitoring.
-			</p>
-		</div>
-		<a href="/docs/getting-started/connecting-github" class="next-step-btn">
-			Next: Connect GitHub
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
+					<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+				</svg>
+				Cloud Hosted
+			</button>
+			<button
+				class="tab-btn"
+				class:active={activeTab === 'self'}
+				onclick={() => (activeTab = 'self')}
 			>
-		</a>
-	</div>
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<rect x="2" y="2" width="20" height="8" rx="2" /><rect
+						x="2"
+						y="14"
+						width="20"
+						height="8"
+						rx="2"
+					/>
+					<circle cx="6" cy="6" r="1" /><circle cx="6" cy="18" r="1" />
+				</svg>
+				Self-Hosted
+			</button>
+		</div>
+	</section>
+
+	<!-- Steps -->
+	<section class="steps-section" id="steps-section">
+		<h2 id="installation-steps" class="section-heading">
+			<span class="heading-marker">§</span>
+			Installation Steps
+		</h2>
+
+		<div class="steps-list">
+			{#each activeSteps as step, i}
+				<div class="step-item">
+					<div class="step-rail">
+						<div class="step-num">{step.num}</div>
+						{#if i < activeSteps.length - 1}
+							<div class="step-line"></div>
+						{/if}
+					</div>
+					<div class="step-body">
+						<h3 class="step-title">{step.title}</h3>
+						<p class="step-desc">{step.desc}</p>
+						{#if step.code}
+							<div class="code-block">
+								<div class="code-header">
+									<span class="code-lang">terminal</span>
+									<button class="code-copy" onclick={() => copyCode(step.code, i)}>
+										{#if copiedIdx === i}
+											<svg
+												width="12"
+												height="12"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path d="M20 6L9 17l-5-5" />
+											</svg>
+											Copied
+										{:else}
+											<svg
+												width="12"
+												height="12"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<rect x="9" y="9" width="13" height="13" rx="2" /><path
+													d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+												/>
+											</svg>
+											Copy
+										{/if}
+									</button>
+								</div>
+								<pre class="code-content">{step.code}</pre>
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Feature Comparison -->
+	<section class="compare-section" id="compare-section">
+		<h2 id="comparison" class="section-heading">
+			<span class="heading-marker">§</span>
+			Deployment Comparison
+		</h2>
+
+		<div class="compare-table">
+			<div class="compare-header">
+				<span class="compare-col-feature">Feature</span>
+				<span class="compare-col">Cloud</span>
+				<span class="compare-col">Self-Hosted</span>
+			</div>
+			{#each features as f}
+				<div class="compare-row">
+					<span class="compare-feature">{f.feature}</span>
+					<span class="compare-value">{f.cloud}</span>
+					<span class="compare-value">{f.selfHosted}</span>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Annotation Note -->
+	<section class="note-section">
+		<div class="field-note">
+			<div class="note-marker">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+				</svg>
+			</div>
+			<div class="note-content">
+				<strong>Field Note</strong> — If you encounter port conflicts during local development, use
+				<code>--port 3000</code>
+				flag or modify the <code>.env</code> file to change default ports. See the troubleshooting section
+				for common setup issues.
+			</div>
+		</div>
+	</section>
 </div>
 
 <style>
-	/* ═══════════════════════════════
-	   QUICK START PAGE
-	   ═══════════════════════════════ */
-
-	.gs-page {
-		opacity: 0;
-		transform: translateY(8px);
-		transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
-	}
-	.gs-page.visible {
-		opacity: 1;
-		transform: translateY(0);
+	.qs-page {
+		max-width: 720px;
 	}
 
-	/* Page Header */
+	/* ── Header ── */
 	.page-header {
 		margin-bottom: 2.5rem;
-		padding-bottom: 2rem;
-		border-bottom: 1px solid var(--border);
+		padding-bottom: 1.75rem;
+		border-bottom: 1px dashed var(--border);
 	}
 
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
+	.page-badge {
 		font-family: var(--font-mono);
-	}
-
-	.bc-muted {
-		color: var(--text-muted);
-	}
-	.bc-sep {
-		color: var(--text-muted);
-	}
-	.bc-current {
-		color: var(--text-secondary);
-	}
-	.bc-link {
-		color: var(--text-muted);
-		text-decoration: none;
-	}
-	.bc-link:hover {
-		color: var(--accent);
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--complement);
+		letter-spacing: 0.12em;
+		margin-bottom: 0.75rem;
 	}
 
 	.page-title {
-		font-family: var(--font-serif);
-		font-size: 2.25rem;
-		font-weight: 700;
+		font-size: 1.75rem;
+		font-weight: 800;
 		letter-spacing: -0.03em;
-		line-height: 1.2;
-		margin-bottom: 0.75rem;
 		color: var(--text-primary);
+		margin-bottom: 0.625rem;
 	}
 
-	.page-lead {
-		font-size: 1.05rem;
-		color: var(--text-secondary);
-		line-height: 1.7;
-		max-width: 640px;
-		font-family: var(--font-serif);
-	}
-
-	h2 {
-		font-family: var(--font-serif);
-		font-size: 1.375rem;
-		font-weight: 700;
-		letter-spacing: -0.02em;
-		margin-top: 3rem;
-		margin-bottom: 0.75rem;
-		color: var(--text-primary);
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.body-text {
+	.page-desc {
 		font-size: 0.9rem;
-		line-height: 1.75;
 		color: var(--text-secondary);
-		margin-bottom: 1.25rem;
-		max-width: 640px;
+		line-height: 1.65;
+		max-width: 540px;
+	}
+
+	/* ── Section Heading ── */
+	.section-heading {
+		font-size: 1.1rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		margin-bottom: 1rem;
+		color: var(--text-primary);
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.heading-marker {
+		color: var(--complement);
+		font-weight: 400;
+		font-size: 1.05rem;
+		opacity: 0.6;
 	}
 
 	/* ── Tab Switcher ── */
+	.deploy-section {
+		margin-bottom: 2.5rem;
+	}
+
 	.tab-switcher {
 		display: flex;
-		gap: 0.375rem;
+		gap: 0.5rem;
 		padding: 0.25rem;
-		background: var(--bg-surface-2);
+		background: var(--bg-surface);
 		border: 1px solid var(--border);
-		border-radius: 10px;
-		margin-bottom: 0.5rem;
+		border-radius: var(--radius-sm);
 		width: fit-content;
 	}
 
@@ -414,15 +328,15 @@ GITHUB_APP_ID=your-github-app-id</code
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem 1rem;
-		border: 1px solid transparent;
-		border-radius: 7px;
-		background: transparent;
-		color: var(--text-secondary);
 		font-size: 0.8rem;
-		font-weight: 550;
-		cursor: pointer;
+		font-weight: 600;
 		font-family: var(--font-sans);
-		transition: all 0.15s;
+		color: var(--text-secondary);
+		background: transparent;
+		border: 1px solid transparent;
+		border-radius: 3px;
+		cursor: pointer;
+		transition: all 0.15s var(--ease-premium);
 	}
 
 	.tab-btn:hover {
@@ -430,311 +344,250 @@ GITHUB_APP_ID=your-github-app-id</code
 	}
 
 	.tab-btn.active {
-		background: var(--bg-surface);
-		border-color: var(--border);
-		color: var(--text-primary);
-		box-shadow: var(--shadow-sm);
+		color: var(--accent);
+		background: var(--accent-soft);
+		border-color: var(--accent-border);
 	}
 
-	/* ── Instruction Blocks ── */
-	.instruction-block {
+	/* ── Steps ── */
+	.steps-section {
+		margin-bottom: 2.5rem;
+	}
+
+	.steps-list {
 		display: flex;
-		gap: 1rem;
-		padding: 1.25rem 0;
-		border-bottom: 1px solid var(--border);
+		flex-direction: column;
 	}
 
-	.instruction-block:last-of-type {
-		border-bottom: none;
+	.step-item {
+		display: flex;
+		gap: 1.25rem;
 	}
 
-	.instruction-number {
+	.step-rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 		flex-shrink: 0;
 		width: 28px;
+	}
+
+	.step-num {
+		width: 28px;
 		height: 28px;
-		border-radius: 50%;
-		background: var(--accent-soft);
-		border: 1px solid var(--accent-border);
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 700;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--accent);
+		border: 1.5px solid var(--accent-border);
+		border-radius: 50%;
+		background: var(--accent-soft);
+		flex-shrink: 0;
 	}
 
-	.instruction-content {
+	.step-line {
 		flex: 1;
+		width: 1px;
+		background: var(--border);
+		min-height: 20px;
+	}
+
+	.step-body {
+		flex: 1;
+		padding-bottom: 1.75rem;
 		min-width: 0;
 	}
 
-	.instruction-content > p {
-		font-size: 0.875rem;
+	.step-title {
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		margin-bottom: 0.375rem;
+		line-height: 28px;
+	}
+
+	.step-desc {
+		font-size: 0.8rem;
 		color: var(--text-secondary);
-		line-height: 1.6;
+		line-height: 1.55;
 		margin-bottom: 0.75rem;
 	}
 
-	.instruction-content > p strong {
-		color: var(--text-primary);
-		font-weight: 600;
-	}
-
-	/* ── Code Blocks ── */
+	/* ── Code Block ── */
 	.code-block {
-		border: 1px solid var(--code-border);
-		border-radius: 8px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
 		overflow: hidden;
-		margin: 0.75rem 0;
-		background: var(--code-bg);
+		background: var(--bg-surface);
 	}
 
 	.code-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 0.5rem 0.875rem;
-		border-bottom: 1px solid var(--code-border);
-		background: var(--bg-surface-2);
+		padding: 0.4rem 0.75rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg-surface-alt);
 	}
 
 	.code-lang {
 		font-family: var(--font-mono);
-		font-size: 0.65rem;
+		font-size: 0.6rem;
 		font-weight: 600;
 		color: var(--text-muted);
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
 	}
 
 	.code-copy {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.2rem 0.5rem;
 		font-family: var(--font-mono);
-		font-size: 0.65rem;
+		font-size: 0.6rem;
 		color: var(--text-muted);
 		background: transparent;
 		border: 1px solid var(--border);
-		border-radius: 4px;
-		padding: 0.15rem 0.5rem;
+		border-radius: 3px;
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.code-copy:hover {
-		color: var(--text-primary);
+		color: var(--text-secondary);
 		border-color: var(--border-strong);
 	}
 
-	pre {
-		padding: 1rem;
+	.code-content {
+		padding: 0.875rem 1rem;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		line-height: 1.65;
+		color: var(--text-primary);
 		overflow-x: auto;
 		margin: 0;
+		white-space: pre;
 	}
 
-	code {
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
-		line-height: 1.7;
-		color: var(--text-primary);
+	/* ── Comparison Table ── */
+	.compare-section {
+		margin-bottom: 2.5rem;
 	}
 
-	.code-comment {
-		color: var(--text-muted);
-	}
-	.code-cmd {
-		color: var(--accent);
-		font-weight: 500;
-	}
-
-	/* ── Feature Table ── */
-	.feature-table {
+	.compare-table {
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-sm);
 		overflow: hidden;
-		margin: 1rem 0;
 	}
 
-	.ft-row {
-		display: flex;
-		gap: 1rem;
-		padding: 0.875rem 1.25rem;
+	.compare-header {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr 1fr;
+		padding: 0.625rem 1.25rem;
+		background: var(--bg-surface-alt);
 		border-bottom: 1px solid var(--border);
-		align-items: baseline;
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 	}
 
-	.ft-row:last-child {
+	.compare-row {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr 1fr;
+		padding: 0.65rem 1.25rem;
+		border-bottom: 1px solid var(--border);
+		font-size: 0.8rem;
+		transition: background 0.1s;
+	}
+
+	.compare-row:last-child {
 		border-bottom: none;
 	}
 
-	.ft-label {
-		font-size: 0.825rem;
-		font-weight: 600;
-		color: var(--text-primary);
-		min-width: 160px;
-		flex-shrink: 0;
-	}
-
-	.ft-desc {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		line-height: 1.5;
-	}
-
-	/* ── Callouts ── */
-	.callout {
-		display: flex;
-		gap: 0.75rem;
-		padding: 1rem 1.25rem;
-		border-radius: 8px;
-		margin: 1rem 0;
-		border: 1px solid;
-	}
-
-	.callout-info {
-		background: var(--callout-info-bg);
-		border-color: var(--callout-info-border);
-	}
-
-	.callout-info .callout-icon {
-		color: var(--callout-info-text);
-	}
-
-	.callout-tip {
-		background: var(--callout-tip-bg);
-		border-color: var(--callout-tip-border);
-	}
-
-	.callout-tip .callout-icon {
-		color: var(--callout-tip-text);
-	}
-
-	.callout-icon {
-		flex-shrink: 0;
-		margin-top: 0.125rem;
-	}
-
-	.callout-content strong {
-		display: block;
-		font-size: 0.825rem;
-		color: var(--text-primary);
-		margin-bottom: 0.25rem;
-	}
-
-	.callout-content p {
-		font-size: 0.8rem;
-		color: var(--text-secondary);
-		line-height: 1.5;
-	}
-
-	/* ── Prerequisites ── */
-	.prereq-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.625rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.prereq-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem 1rem;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-surface);
-		font-size: 0.85rem;
-	}
-
-	.prereq-check {
-		flex-shrink: 0;
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		background: var(--callout-tip-bg);
-		border: 1px solid var(--callout-tip-border);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--callout-tip-text);
-	}
-
-	.prereq-item strong {
-		color: var(--text-primary);
-		font-weight: 600;
-	}
-	.prereq-detail {
-		color: var(--text-muted);
-		font-size: 0.8rem;
-	}
-
-	/* ── Next Step Card ── */
-	.next-step-card {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1.5rem;
-		padding: 1.5rem 2rem;
-		border: 1px solid var(--accent-border);
-		border-radius: 12px;
+	.compare-row:hover {
 		background: var(--accent-soft);
-		margin-top: 2rem;
 	}
 
-	.next-step-text h3 {
-		font-family: var(--font-serif);
-		font-size: 1.1rem;
-		font-weight: 700;
+	.compare-feature {
 		color: var(--text-primary);
-		margin-bottom: 0.25rem;
+		font-weight: 500;
 	}
 
-	.next-step-text p {
+	.compare-value {
+		color: var(--text-secondary);
+	}
+
+	/* ── Field Note ── */
+	.note-section {
+		margin-bottom: 1rem;
+	}
+
+	.field-note {
+		display: flex;
+		gap: 0.875rem;
+		padding: 1rem 1.25rem;
+		border: 1px dashed var(--complement-border);
+		border-radius: var(--radius-sm);
+		background: var(--complement-soft);
+	}
+
+	.note-marker {
+		color: var(--complement);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.note-content {
 		font-size: 0.8rem;
 		color: var(--text-secondary);
-		line-height: 1.5;
+		line-height: 1.6;
 	}
 
-	.next-step-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.625rem 1.25rem;
-		border-radius: 8px;
-		background: var(--accent);
-		color: white;
-		font-size: 0.825rem;
-		font-weight: 600;
-		text-decoration: none;
-		white-space: nowrap;
-		transition: all 0.15s;
+	.note-content strong {
+		color: var(--complement);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
 	}
 
-	.next-step-btn:hover {
-		opacity: 0.9;
-		transform: translateY(-1px);
+	.note-content code {
+		font-family: var(--font-mono);
+		font-size: 0.73rem;
+		padding: 0.1rem 0.35rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 3px;
+		color: var(--accent);
 	}
 
-	@media (max-width: 768px) {
+	/* ── Responsive ── */
+	@media (max-width: 640px) {
 		.page-title {
-			font-size: 1.75rem;
+			font-size: 1.35rem;
 		}
+
 		.tab-switcher {
 			width: 100%;
 		}
+
 		.tab-btn {
 			flex: 1;
 			justify-content: center;
 		}
-		.ft-row {
-			flex-direction: column;
-			gap: 0.25rem;
-		}
-		.ft-label {
-			min-width: unset;
-		}
-		.next-step-card {
-			flex-direction: column;
-			text-align: center;
+
+		.compare-header,
+		.compare-row {
+			grid-template-columns: 1fr 1fr 1fr;
+			font-size: 0.7rem;
+			padding: 0.5rem 0.75rem;
 		}
 	}
 </style>
