@@ -508,10 +508,9 @@ features:
 			<span class="brand-name">WithOps</span>
 		</div>
 		<div class="nav-menu">
-			<a href="#home" class="nav-link">Product</a>
+			<a href="/docs" class="nav-link">Documentation</a>
 			<a href="#security" class="nav-link">Security</a>
 			<a href="#analytics" class="nav-link">Analytics</a>
-			<a href="#docs" class="nav-link">Docs</a>
 			<a href="#contact" class="nav-link">Pricing</a>
 		</div>
 		<div class="nav-actions">
