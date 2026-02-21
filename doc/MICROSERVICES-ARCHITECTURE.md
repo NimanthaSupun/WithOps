@@ -22,7 +22,7 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
        │
        ▼
 ┌─────────────────────────────────────────────┐
-│          Kong API Gateway (8000)            │
+│          Kong API Gateway (9000)            │
 │  Routes: /api/ai, /api/github, /api/auth    │
 └──────────────────┬──────────────────────────┘
                    │
@@ -30,17 +30,17 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
        │                       │
 ┌──────▼──────┐         ┌──────▼──────────┐
 │   Services  │         │  Events Hub     │
-│             │◄────────┤  (Backend:8000) │
+│             │◄────────┤ (Backend:9100)  │
 │             │  Events │  WebSocket      │
 └─────────────┘         └─────────────────┘
        │
        │
-┌──────┴────────────────── ──── ─── ───── ────┐
+┌──────┴──────────────────────────────────────┐
 │                                             │
 ▼                 ▼                 ▼         ▼
 ┌────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
 │  Redis │   │PostgreSQL│   │ Ollama   │   │  Auth0   │
-│ (6379) │   │(Supabase)│   │ (11434)  │   │   JWT    │
+│(16379) │   │(Supabase)│   │ (11434)  │   │   JWT    │
 └────────┘   └──────────┘   └──────────┘   └──────────┘
 ```
 
@@ -59,8 +59,8 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
 
 **Technology Stack**:
 
-- FastAPI for REST API
-- Ollama integration for AI models
+- FAST API for REST API
+- Claude 3 Opus, Groq (Llama 3), GPT-4, and Ollama integration
 - Redis for caching
 - Prometheus metrics on port 9101
 
@@ -109,11 +109,11 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
 
 **Key Features**:
 
-- STRIDE threat analysis
+- STRIDE, CIA, and LINDDUN threat analysis
 - Attack surface mapping
 - Risk scoring and prioritization
 - Threat mitigation recommendations
-- Integration with OWASP threat libraries
+- Integration with OWASP threat libraries and MITRE ATT&CK mapping
 
 **Technology Stack**:
 
@@ -241,12 +241,29 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
 
 ---
 
-### 8. Events Hub (Backend - Port 8000)
+### 8. AI RAG Service (Port 9108)
+
+**Purpose**: Conversational AI for DevSecOps intelligence using Retrieval-Augmented Generation
+
+**Key Features**:
+- Natural language queries about security best practices
+- Context-aware responses using vectorized knowledge base
+- Auto-indexing of documents and analysis results
+- Persistent conversation history
+
+**Technology Stack**:
+- FastAPI
+- Qdrant for vector storage
+- Ollama for embeddings
+- Redis for caching
+
+---
+
+### 9. Events Hub (Backend - Port 9100)
 
 **Purpose**: Central event bus and WebSocket manager for real-time notifications
 
 **Key Features**:
-
 - Redis pub/sub event bus
 - WebSocket connection management
 - Real-time event broadcasting to clients
@@ -254,15 +271,13 @@ WithOps is a comprehensive DevSecOps platform built on a modern microservices ar
 - Event routing and filtering
 
 **Technology Stack**:
-
 - FastAPI with WebSocket support
 - Redis for pub/sub messaging
 - Async event processing
 - Prometheus metrics on port 9100
 
 **Event Types**:
-
-- `analysis_complete` - Workspace analysis finished
+- `threat.analysis.completed` - Threat analysis finished
 - `threat_detected` - New security threat identified
 - `pr_created` - Pull request created
 - `scan_complete` - Security scan finished

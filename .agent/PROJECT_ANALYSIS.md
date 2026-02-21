@@ -83,7 +83,7 @@
 
 **User Features**:
 - **GitHub Actions Analysis**: YAML workflow parsing and validation
-- **Security Scanning**: Integrated Gitleaks, TruffleHog, Trivy
+- **Security Scanning**: Integrated via detection and suggested workflows (Gitleaks, TruffleHog, Trivy)
 - **Workflow Optimization**: Performance recommendations
 - **Visual Workflow Designer**: Canvas-based workflow creation
 - **Real-time Execution Monitoring**: SSE and WebSocket updates
@@ -195,7 +195,7 @@
 
 ### 2.2 Service Breakdown
 
-**Service Count**: 8 microservices + 1 Events Hub (formerly monolith backend)
+**Service Count**: 9 microservices (including Events Hub)
 
 1. **AI Service** (Port 9101): AI/ML operations, code analysis
 2. **GitHub Service** (Port 9102): GitHub integration, repository management

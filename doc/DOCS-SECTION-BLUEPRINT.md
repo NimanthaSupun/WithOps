@@ -30,7 +30,7 @@
 
 - **Frontend:** SvelteKit 2.16.0 + Svelte 5 + Tailwind CSS 4.0 + Vite 6.2.6
 - **Backend:** Python FastAPI (`backend/main.py`)
-- **8 Microservices:** ai-service, ai-rag-service, auth-service, github-service, threat-modeling-service, collaboration-service, workflow-orchestration-service, workspace-intelligence-service
+- **9 Microservices:** ai-service (Claude 3/Llama 3), ai-rag-service, auth-service, github-service, threat-modeling-service, collaboration-service, workflow-orchestration-service, workspace-intelligence-service, events-hub (backend monolith)
 - **Gateway:** Kong API Gateway
 - **Auth:** Auth0 SPA SDK (OAuth 2.0 + PKCE)
 - **Infrastructure:** Docker Compose, Kubernetes (k8s/), monitoring stack

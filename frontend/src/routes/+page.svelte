@@ -77,7 +77,7 @@ architecture:
 microservices:
   ai-service:
     purpose: "AI-powered threat analysis and intelligent security assessment"
-    technology: "OpenAI GPT-4 with custom fine-tuned models for security analysis"
+    technology: "Claude 3 Opus, GPT-4, and Llama 3 (Groq)"
     description: "Advanced machine learning service that analyzes code vulnerabilities, detects security threats, and provides automated remediation suggestions using state-of-the-art AI models"
     capabilities:
       - "Deep code vulnerability detection using static and dynamic analysis techniques"
@@ -86,9 +86,10 @@ microservices:
       - "Natural language queries for security insights and threat investigation"
       - "Continuous learning from historical data to improve detection accuracy"
     models:
+      - "Claude 3 Opus for complex reasoning and threat modeling"
+      - "Llama 3 (Groq) for ultra-fast, high-throughput security analysis"
       - "GPT-4 for natural language processing and code understanding"
       - "Custom BERT model for vulnerability pattern recognition"
-      - "Ensemble models for false positive reduction"
     
   github-service:
     purpose: "Comprehensive GitHub repository integration and management"
@@ -100,6 +101,29 @@ microservices:
       - "Comprehensive code scanning using CodeQL, Trivy, and custom security rules"
       - "Intelligent dependency tracking with automated vulnerability alerts and update recommendations"
       - "Branch protection enforcement and security policy compliance checking"
+
+  collaboration-service:
+    purpose: "Real-time team collaboration and shared security intelligence"
+    features:
+      - "Live collaborative threat modeling sessions with Yjs and WebSockets"
+      - "Team workspace sharing with fine-grained access control"
+      - "Enterprise messaging and security notification broadcasting"
+
+  ai-rag-service:
+    purpose: "Conversational AI for DevSecOps Intelligence"
+    tech: "Qdrant Vector DB + Ollama + RAG"
+    features:
+      - "Natural language queries about organizational security posture"
+      - "Automated indexing of documents and scan reports"
+      - "Context-aware security remediation advice"
+
+  events-hub:
+    purpose: "Core event-driven backbone and WebSocket coordinator"
+    tech: "Redis Pub/Sub + FastAPI WebSockets"
+    features:
+      - "Centralized event orchestration across all microservices"
+      - "Real-time state synchronization for low-latency dashboards"
+      - "Distributed event routing and message filtering"
     integrations:
       - "GitHub Apps with fine-grained permissions for enhanced security"
       - "Webhook handlers for real-time event processing"
@@ -116,9 +140,11 @@ microservices:
       - "Dynamic risk scoring based on exploitability, impact, and business context"
       - "Automated threat model generation from architecture diagrams and code analysis"
     methodologies:
-      - "STRIDE threat modeling framework"
+      - "STRIDE (Spoofing, Tampering, Repudiation, INFO, DoS, Elevation)"
+      - "CIA (Confidentiality, Integrity, Availability)"
+      - "LINDDUN (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure, Unawareness, Non-compliance)"
+      - "OWASP Top 10 mapping"
       - "PASTA risk-centric threat modeling"
-      - "Attack tree analysis"
     
   workspace-intelligence:
     purpose: "Intelligent code analysis and workspace optimization engine"

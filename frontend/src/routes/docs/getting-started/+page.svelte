@@ -135,7 +135,7 @@
 				</svg>
 			</div>
 			<h4>AI Security Analysis</h4>
-			<p>GPT-4 powered vulnerability detection with automated remediation suggestions and CVSS risk scoring.</p>
+			<p>Multi-model vulnerability detection (GPT-4, Claude 3, Llama 3) with automated remediation suggestions and CVSS risk scoring.</p>
 		</div>
 
 		<div class="capability-card">
@@ -146,7 +146,7 @@
 				</svg>
 			</div>
 			<h4>Threat Modeling</h4>
-			<p>Automated STRIDE analysis with attack surface mapping, dynamic risk scoring, and OWASP-aligned mitigation strategies.</p>
+			<p>Automated STRIDE, CIA, and LINDDUN analysis with attack surface mapping and OWASP-aligned mitigation strategies.</p>
 		</div>
 
 		<div class="capability-card">
@@ -252,7 +252,7 @@
         <span class="cm">▼</span>              <span class="cm">▼</span>              <span class="cm">▼</span>
 <span class="cm">┌──────────────┐┌──────────────┐┌──────────────┐</span>
 <span class="cm">│</span><span class="fn"> AI Service   </span><span class="cm">││</span><span class="fn"> GitHub Svc   </span><span class="cm">││</span><span class="fn"> Auth Service </span><span class="cm">│</span>
-<span class="cm">│</span> <span class="str">GPT-4 + ML</span>   <span class="cm">││</span> <span class="str">REST + GQL</span>   <span class="cm">││</span> <span class="str">Auth0 + JWT</span>  <span class="cm">│</span>
+<span class="cm">│</span> <span class="str">GPT4/Claude/L3</span><span class="cm">││</span> <span class="str">REST + GQL</span>   <span class="cm">││</span> <span class="str">Auth0 + JWT</span>  <span class="cm">│</span>
 <span class="cm">└──────────────┘└──────────────┘└──────────────┘</span>
         <span class="cm">│</span>              <span class="cm">│</span>              <span class="cm">│</span>
         <span class="cm">▼</span>              <span class="cm">▼</span>              <span class="cm">▼</span>
@@ -270,7 +270,7 @@
 	</div>
 
 	<div class="prose">
-		<h3 id="microservices">8 Microservices</h3>
+		<h3 id="microservices">9 Microservices</h3>
 		<p>
 			Each service is independently deployable, communicates via REST APIs and Redis pub/sub, and is containerised with Docker. The platform uses Auth0 for authentication with RS256 JWT tokens.
 		</p>
@@ -278,6 +278,13 @@
 
 	<!-- Service list -->
 	<div class="service-grid">
+		<div class="service-item">
+			<span class="service-port">9100</span>
+			<div>
+				<strong>Events Hub (Backend)</strong>
+				<span class="service-desc">Real-time WebSocket manager, event bus, and notification hub</span>
+			</div>
+		</div>
 		<div class="service-item">
 			<span class="service-port">9101</span>
 			<div>
