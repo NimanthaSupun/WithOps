@@ -102,12 +102,21 @@
 				{ title: 'Connecting GitHub', href: '/docs/getting-started/connecting-github' },
 				{ title: 'First Security Scan', href: '/docs/getting-started/first-security-scan' }
 			]
+		},
+		{
+			title: 'Features & Tools',
+			icon: 'cpu',
+			items: [
+				{ title: 'Workspace Intelligence', href: '/docs/features/workspace-intelligence' },
+				{ title: 'Threat Modeling Canvas', href: '/docs/features/threat-modeling' },
+				{ title: 'Action Audit', href: '/docs/features/action-audit' },
+				{ title: 'Canvas Builder', href: '/docs/features/canvas-builder' }
+			]
 		}
 	];
 
 	const placeholderSections = [
 		{ title: 'Platform Overview', icon: 'layers' },
-		{ title: 'Features & Tools', icon: 'cpu' },
 		{ title: 'API Reference', icon: 'code' },
 		{ title: 'Deployment Guide', icon: 'server' }
 	];
@@ -167,6 +176,14 @@
 								<path
 									d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09zM12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"
 								/>
+							</svg>
+						{:else if section.icon === 'cpu'}
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" />
+								<line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+								<line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+								<line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="15" x2="23" y2="15" />
+								<line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="15" x2="4" y2="15" />
 							</svg>
 						{/if}
 						{section.title}
