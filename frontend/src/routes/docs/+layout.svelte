@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import { isDarkMode } from '$lib/stores.js';
+	import CommandPalette from '$lib/components/CommandPalette.svelte';
 
 	let { children } = $props();
 
@@ -12,6 +13,7 @@
 	let tocItems = $state([]);
 	let activeTocId = $state('');
 	let contentWrapEl = $state(null);
+	let commandPaletteOpen = $state(false);
 	let observer = null;
 
 	// Subscribe to dark mode store
@@ -80,16 +82,29 @@
 		}
 	}
 
-	onMount(() => {
-		isDarkMode.init();
-		return () => {
-			if (observer) observer.disconnect();
-		};
-	});
-
 	function toggleTheme() {
 		isDarkMode.toggle();
 	}
+
+	// Keyboard shortcuts
+	function handleKeydown(e) {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+			e.preventDefault();
+			commandPaletteOpen = !commandPaletteOpen;
+		}
+	}
+
+	onMount(() => {
+		isDarkMode.init();
+		window.addEventListener('keydown', handleKeydown);
+		window.addEventListener('toggle-theme', toggleTheme);
+		return () => {
+			if (observer) observer.disconnect();
+			window.removeEventListener('keydown', handleKeydown);
+			window.removeEventListener('toggle-theme', toggleTheme);
+		};
+	});
+
 
 	// Navigation structure
 	const navigation = [
@@ -183,13 +198,13 @@
 		</div>
 
 		<div class="sidebar-search">
-			<div class="search-wrap">
+			<button class="search-wrap" onclick={() => commandPaletteOpen = true}>
 				<svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
 				</svg>
-				<input type="text" class="search-input" placeholder="Search docs…" />
+				<span class="search-input">Search docs…</span>
 				<span class="search-shortcut">⌘K</span>
-			</div>
+			</button>
 		</div>
 
 		<nav class="sidebar-nav">
@@ -307,35 +322,27 @@
 					{@render children()}
 
 					<!-- Chapter Navigation Footer -->
-					{#if navPair.prev || navPair.next}
-						<nav class="chapter-nav">
+					<footer class="docs-footer">
+						<div class="footer-nav">
 							{#if navPair.prev}
-								<a href={navPair.prev.href} class="chapter-btn prev">
-									<div class="chapter-btn-label">
-										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M19 12H5M12 19l-7-7 7-7"/>
-										</svg>
-										Previous
-									</div>
-									<div class="chapter-btn-title">{navPair.prev.title}</div>
+								<a href={navPair.prev.href} class="footer-nav-btn prev">
+									<span class="fn-label">← Previous Chapter</span>
+									<span class="fn-title">{navPair.prev.title}</span>
 								</a>
 							{:else}
-								<div class="spacer"></div>
+								<div class="footer-nav-spacer"></div>
 							{/if}
-
 							{#if navPair.next}
-								<a href={navPair.next.href} class="chapter-btn next">
-									<div class="chapter-btn-label">
-										Next
-										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M5 12h14M12 5l7 7-7 7"/>
-										</svg>
-									</div>
-									<div class="chapter-btn-title">{navPair.next.title}</div>
+								<a href={navPair.next.href} class="footer-nav-btn next">
+									<span class="fn-label">Next Chapter →</span>
+									<span class="fn-title">{navPair.next.title}</span>
 								</a>
 							{/if}
-						</nav>
-					{/if}
+						</div>
+						<div class="footer-meta">
+							<p>© 2024 WithOps DevSecOps Platform. Engineered for excellence.</p>
+						</div>
+					</footer>
 				</div>
 			</div>
 
@@ -364,6 +371,9 @@
 			{/if}
 		</main>
 	</div>
+
+	<!-- Command Palette Overlay -->
+	<CommandPalette bind:isOpen={commandPaletteOpen} {navigation} on:toggle-theme={toggleTheme} />
 </div>
 
 <style>
@@ -1194,17 +1204,21 @@
 		box-shadow: 0 0 8px var(--accent);
 	}
 
-	/* ── Chapter Navigation Footer ── */
-	.chapter-nav {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 24px;
+	/* ── Docs Footer ── */
+	.docs-footer {
 		margin-top: 80px;
 		padding-top: 40px;
 		border-top: 1px solid var(--border);
 	}
 
-	.chapter-btn {
+	.footer-nav {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 20px;
+		margin-bottom: 40px;
+	}
+
+	.footer-nav-btn {
 		display: flex;
 		flex-direction: column;
 		padding: 24px;
@@ -1213,44 +1227,57 @@
 		border-radius: 12px;
 		text-decoration: none;
 		transition: all 0.2s var(--ease-premium);
-		position: relative;
-		overflow: hidden;
 	}
 
-	.chapter-btn:hover {
-		border-color: var(--accent-subtle);
-		transform: translateY(-2px);
+	.footer-nav-btn:hover {
+		border-color: var(--accent);
 		background: var(--bg-surface-2);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+		transform: translateY(-2px);
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 	}
 
-	.chapter-btn.prev { align-items: flex-start; }
-	.chapter-btn.next { align-items: flex-end; text-align: right; }
+	.footer-nav-btn.next {
+		text-align: right;
+		align-items: flex-end;
+	}
 
-	.chapter-btn-label {
+	.fn-label {
 		font-family: var(--font-mono);
 		font-size: 10px;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: var(--text-muted);
-		display: flex;
-		align-items: center;
-		gap: 8px;
 		margin-bottom: 8px;
 	}
 
-	.chapter-btn-title {
+	.fn-title {
 		font-family: var(--font-serif);
 		font-size: 18px;
 		font-weight: 600;
 		color: var(--text-primary);
+		transition: color 0.2s;
 	}
 
-	.chapter-btn:hover .chapter-btn-title {
+	.footer-nav-btn:hover .fn-title {
 		color: var(--accent);
 	}
 
-	.spacer { flex: 1; }
+	.footer-meta {
+		padding: 40px 0;
+		text-align: center;
+		border-top: 1px solid var(--border);
+		opacity: 0.6;
+	}
+
+	.footer-meta p {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--text-muted);
+	}
+
+	.footer-nav-spacer {
+		flex: 1;
+	}
 
 	/* Scrollbar */
 	::-webkit-scrollbar {

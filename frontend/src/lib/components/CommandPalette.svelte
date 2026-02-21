@@ -92,6 +92,7 @@
 		onclick={() => isOpen = false}
 		role="dialog"
 		aria-modal="true"
+		tabindex="-1"
 	>
 		<div 
 			class="cmd-container" 
