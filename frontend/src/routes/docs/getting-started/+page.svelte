@@ -266,16 +266,16 @@
 			
 			<div class="arch-grid">
 				<div class="arch-sub-box">
-					<span class="arch-sub-name">Auth</span>
-					<span class="arch-sub-port">9106</span>
+					<span class="arch-sub-name">Events</span>
+					<span class="arch-sub-port">9100</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">AI</span>
+					<span class="arch-sub-port">9101</span>
 				</div>
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">GitHub</span>
 					<span class="arch-sub-port">9102</span>
-				</div>
-				<div class="arch-sub-box">
-					<span class="arch-sub-name">AI Engine</span>
-					<span class="arch-sub-port">8101</span>
 				</div>
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">Threat</span>
@@ -290,8 +290,16 @@
 					<span class="arch-sub-port">9105</span>
 				</div>
 				<div class="arch-sub-box">
+					<span class="arch-sub-name">Auth</span>
+					<span class="arch-sub-port">9106</span>
+				</div>
+				<div class="arch-sub-box">
 					<span class="arch-sub-name">Workflow</span>
 					<span class="arch-sub-port">9107</span>
+				</div>
+				<div class="arch-sub-box">
+					<span class="arch-sub-name">RAG</span>
+					<span class="arch-sub-port">9108</span>
 				</div>
 			</div>
 		</div>
@@ -314,11 +322,11 @@
 			<div class="arch-grid">
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">Prometheus</span>
-					<span class="arch-sub-port">9090</span>
+					<span class="arch-sub-port">9091</span>
 				</div>
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">Grafana</span>
-					<span class="arch-sub-port">3000</span>
+					<span class="arch-sub-port">3001</span>
 				</div>
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">Jaeger</span>
@@ -341,63 +349,63 @@
 			<span class="service-port">9100</span>
 			<div>
 				<strong>Events Hub (Backend)</strong>
-				<span class="service-desc">Real-time WebSocket manager, event bus, and notification hub</span>
+				<span class="service-desc">Real-time WebSocket synchronization engine using Redis Pub/Sub for live platform updates.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9101</span>
 			<div>
 				<strong>AI Service</strong>
-				<span class="service-desc">AI/ML operations, code analysis, vulnerability detection</span>
+				<span class="service-desc">Core reasoning engine interfacing with GPT-4, Claude, and local Ollama for code analysis.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9102</span>
 			<div>
 				<strong>GitHub Service</strong>
-				<span class="service-desc">Repository management, webhook handling, GraphQL</span>
+				<span class="service-desc">Unified GitHub integration handler for App/OAuth Auth, Webhooks, and Repo indexing.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9103</span>
 			<div>
 				<strong>Threat Modeling</strong>
-				<span class="service-desc">STRIDE analysis, attack surface mapping, risk scoring</span>
+				<span class="service-desc">Automated security design verification using STRIDE, CIA, and LINDDUN frameworks.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9104</span>
 			<div>
 				<strong>Workspace Intelligence</strong>
-				<span class="service-desc">Code analysis, maturity scoring, pattern detection</span>
+				<span class="service-desc">DevSecOps maturity assessment engine based on the OWASP DSOMM framework.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9105</span>
 			<div>
 				<strong>Collaboration</strong>
-				<span class="service-desc">Team messaging, workspace sharing, live notifications</span>
+				<span class="service-desc">Real-time team presence, workspace sharing, and collaborative security auditing.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9106</span>
 			<div>
 				<strong>Auth Service</strong>
-				<span class="service-desc">Authentication, SSO, RBAC, session management</span>
+				<span class="service-desc">Centralized Identity & Access Management (IAM) with Auth0 and RBAC enforcement.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9107</span>
 			<div>
 				<strong>Workflow Orchestration</strong>
-				<span class="service-desc">CI/CD management, GitHub Actions, security scanning</span>
+				<span class="service-desc">CI/CD pipeline manager orchestrating SAST, dependency auditing, and secret scanning.</span>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9108</span>
 			<div>
 				<strong>AI RAG Service</strong>
-				<span class="service-desc">Conversational AI, vector search, knowledge base</span>
+				<span class="service-desc">Retreival-Augmented Generation engine using Vector Search (Qdrant) for security chat.</span>
 			</div>
 		</div>
 	</div>

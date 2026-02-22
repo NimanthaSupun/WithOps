@@ -7,8 +7,17 @@
 	let isAuthenticated = false;
 	let user = null;
 	let typedCode = '';
+	let mobileMenuOpen = false;
 	let yamlBody;
 	let lineCount = 0;
+
+	function toggleMobileMenu() {
+		mobileMenuOpen = !mobileMenuOpen;
+	}
+
+	$: if (typeof document !== 'undefined') {
+		document.body.style.overflow = mobileMenuOpen ? 'hidden' : 'auto';
+	}
 
 	// Spotlight effect for cards
 	function spotlight(node) {
@@ -525,7 +534,7 @@ features:
 </script>
 
 <!-- Navigation Bar -->
-<nav class="navbar">
+<nav class="navbar" class:mobile-open={mobileMenuOpen}>
 	<div class="nav-container">
 		<div class="nav-brand">
 			<div class="nav-brand-icon">
@@ -533,11 +542,33 @@ features:
 			</div>
 			<span class="brand-name">WithOps</span>
 		</div>
-		<div class="nav-menu">
-			<a href="/docs" class="nav-link">Documentation</a>
-			<a href="#security" class="nav-link">Security</a>
-			<a href="#analytics" class="nav-link">Analytics</a>
-			<a href="#contact" class="nav-link">Pricing</a>
+
+		<button class="mobile-menu-btn" on:click={toggleMobileMenu} aria-label="Toggle menu">
+			<span class="hamburger-line" class:top={mobileMenuOpen}></span>
+			<span class="hamburger-line" class:middle={mobileMenuOpen}></span>
+			<span class="hamburger-line" class:bottom={mobileMenuOpen}></span>
+		</button>
+
+		<div class="nav-menu" class:show={mobileMenuOpen}>
+			<a href="/docs" class="nav-link" on:click={() => (mobileMenuOpen = false)}>Documentation</a>
+			<a href="#security" class="nav-link" on:click={() => (mobileMenuOpen = false)}>Security</a>
+			<a href="#analytics" class="nav-link" on:click={() => (mobileMenuOpen = false)}>Analytics</a>
+			<a href="#contact" class="nav-link" on:click={() => (mobileMenuOpen = false)}>Pricing</a>
+
+			<div class="nav-menu-actions">
+				{#if isAuthenticated}
+					<button class="nav-btn-primary" on:click={() => { goto('/dashboard'); mobileMenuOpen = false; }}>
+						Dashboard
+					</button>
+				{:else}
+					<button class="nav-btn-secondary" on:click={() => { handleSignIn(); mobileMenuOpen = false; }}>
+						Login
+					</button>
+					<button class="nav-btn-primary" on:click={() => { handleGetStarted(); mobileMenuOpen = false; }}>
+						Connect GitHub
+					</button>
+				{/if}
+			</div>
 		</div>
 		<div class="nav-actions">
 			{#if isAuthenticated}
@@ -1508,6 +1539,9 @@ features:
 		margin-left: 3rem;
 		align-items: center;
 	}
+	.nav-menu-actions {
+		display: none;
+	}
 	.nav-link {
 		font-size: 0.8125rem;
 		font-weight: 500;
@@ -1585,6 +1619,35 @@ features:
 		background: #0095cc;
 		box-shadow: 0 4px 20px rgba(0, 173, 239, 0.35);
 		transform: translateY(-1px);
+	}
+
+	.mobile-menu-btn {
+		display: none;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		padding: 0.5rem;
+		flex-direction: column;
+		gap: 6px;
+		z-index: 1001;
+	}
+
+	.hamburger-line {
+		width: 24px;
+		height: 2px;
+		background-color: var(--text-primary);
+		transition: all 0.3s var(--ease-premium);
+		display: block;
+	}
+
+	.hamburger-line.top {
+		transform: translateY(8px) rotate(45deg);
+	}
+	.hamburger-line.middle {
+		opacity: 0;
+	}
+	.hamburger-line.bottom {
+		transform: translateY(-8px) rotate(-45deg);
 	}
 
 	/* ============================================
@@ -3671,9 +3734,82 @@ features:
 	}
 
 	@media (max-width: 768px) {
+		.navbar.mobile-open {
+			height: 100vh;
+			background: rgba(0, 0, 0, 0.98);
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+			align-items: flex-start;
+			padding-top: 0;
+		}
+
+		.mobile-menu-btn {
+			display: flex;
+			z-index: 1100;
+			height: 64px;
+			align-items: center;
+		}
+
+		.nav-brand {
+			z-index: 1100;
+			height: 64px;
+			display: flex;
+			align-items: center;
+		}
+
 		.nav-menu {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.98);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			padding: 8rem 2rem 2rem;
+			gap: 2.5rem;
+			margin-left: 0;
+			z-index: 1000;
+			opacity: 0;
+			visibility: hidden;
+			transition: all 0.4s var(--ease-premium);
+			overflow-y: auto;
+		}
+
+		.nav-menu.show {
+			opacity: 1;
+			visibility: visible;
+		}
+
+		.nav-menu-actions {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			width: 100%;
+			max-width: 280px;
+			margin-top: 1rem;
+		}
+
+		.nav-menu-actions .nav-btn-primary,
+		.nav-menu-actions .nav-btn-secondary {
+			width: 100%;
+			justify-content: center;
+			padding: 0.75rem;
+		}
+
+		.nav-link {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: var(--text-primary);
+			letter-spacing: -0.02em;
+		}
+
+		.nav-actions {
 			display: none;
 		}
+
 		.hero {
 			padding: 5rem 0 3rem;
 		}
