@@ -54,6 +54,20 @@ services:
           - /api/github
         strip_path: false
 
+  # GitHub Webhooks Service (unauthenticated — GitHub sends these, not users)
+  # Receives app installation lifecycle events (deleted, suspend, unsuspend).
+  # Path: /webhooks/github → matches what's configured in GitHub App settings.
+  # No JWT/auth plugin — GitHub authenticates via HMAC-SHA256 webhook secret.
+  - name: github-webhook-service
+    url: http://github-service:8002
+    routes:
+      - name: github-webhook-route
+        paths:
+          - /webhooks/github
+        methods:
+          - POST
+        strip_path: false
+
   # Collaboration Service (extracted microservice)
   # Routes /api/collaboration/* to collaboration-service
   # Handles organization member listing, collaboration invites, and session management

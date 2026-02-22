@@ -275,6 +275,29 @@ class GitHubClient:
         
         return f"{base_url}?{query_string}"
     
+    def _clear_installation_cache(self, org_login: str = None):
+        """
+        Clear in-memory cache entries related to an installation.
+
+        Args:
+            org_login: Optional org name. If given, clears org-specific cache
+                       keys (workspace, user_orgs, discovery). Also always clears
+                       the global 'all_installations' cache so fresh data is fetched
+                       from GitHub on the next request.
+        """
+        # Always blow away the global installations list cache
+        self.cache.pop("all_installations", None)
+        print(f"🗑️ Cleared in-memory 'all_installations' cache")
+
+        if org_login:
+            keys_to_remove = [
+                k for k in list(self.cache.keys())
+                if org_login.lower() in k.lower()
+            ]
+            for key in keys_to_remove:
+                self.cache.pop(key, None)
+            print(f"🗑️ Cleared {len(keys_to_remove)} in-memory cache entries for '{org_login}'")
+
     async def _get_all_installations_cached(self) -> List[Dict]:
         """
         Get all GitHub App installations with aggressive caching

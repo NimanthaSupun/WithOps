@@ -127,9 +127,11 @@ async def add_metrics_middleware(request: Request, call_next):
 
 # Import routes
 from api.routes import github
+from api.routes import webhook
 
 # Register routes
 app.include_router(github.router)
+app.include_router(webhook.router)
 
 # Health check endpoint
 @app.get("/health")
