@@ -212,7 +212,7 @@
 	<!-- Header Navigation -->
 	<nav class="dashboard-header">
 		<div class="header-content">
-			<a href="/dashboard" class="nav-brand">
+			<a href="/" class="nav-brand">
 				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
 				<span class="brand-name">WithOps</span>
 			</a>

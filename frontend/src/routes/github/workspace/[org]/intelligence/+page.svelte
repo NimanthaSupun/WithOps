@@ -510,7 +510,7 @@
 
 		<!-- Technical Breadcrumb Bar -->
 		<div class="technical-bar">
-			<a href="/dashboard" class="bc-node">WithOps</a>
+			<a href="/" class="bc-node">WithOps</a>
 			<span class="bc-sep">/</span>
 			<a href="/organizations" class="bc-node">Organizations</a>
 			<span class="bc-sep">/</span>

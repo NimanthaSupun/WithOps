@@ -1678,7 +1678,7 @@ jobs:
 
 				<!-- Breadcrumb -->
 				<nav class="breadcrumb">
-					<a href="/dashboard" class="breadcrumb-link">Dashboard</a>
+					<a href="/" class="breadcrumb-link">Dashboard</a>
 					<span class="breadcrumb-separator">/</span>
 					<a href="/github/organizations" class="breadcrumb-link">Organizations</a>
 					<span class="breadcrumb-separator">/</span>
