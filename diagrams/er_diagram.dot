@@ -1,0 +1,108 @@
+graph ERDiagram {
+    // ================================================================
+    //  WithOps DevSecOps Platform — ER Diagram (Chen Notation)
+    // ================================================================
+
+    graph [
+        fontname="Segoe UI",
+        bgcolor="white",
+        label=<<B><FONT POINT-SIZE="36" COLOR="#0f172a">Figure 5.3 — Entity-Relationship Diagram</FONT></B>>,
+        labelloc=t,
+        pad="1.5,1.0",
+        nodesep=2.5,
+        ranksep=4.0,
+        splines=true,
+        overlap=false,
+        rankdir=TB,
+        dpi=200
+    ];
+
+    node [fontname="Segoe UI"];
+    edge [fontname="Segoe UI", fontsize=28, color="#475569", penwidth=3];
+
+    // ================================================================
+    //  ENTITIES  (Rectangles)
+    // ================================================================
+    node [shape=box, style="filled,bold", penwidth=5,
+          fontsize=48, margin="0.6,0.4", height=1.5, width=3.5];
+
+    users          [label="USERS",           fillcolor="#dbeafe", color="#2563eb", fontcolor="#1e3a5f"];
+    organizations  [label="ORGANIZATIONS",   fillcolor="#dbeafe", color="#2563eb", fontcolor="#1e3a5f"];
+    repositories   [label="REPOSITORIES",    fillcolor="#dbeafe", color="#2563eb", fontcolor="#1e3a5f"];
+    threat_models  [label="THREAT MODELS",   fillcolor="#dcfce7", color="#16a34a", fontcolor="#14532d"];
+    security_scans [label="SECURITY SCANS",  fillcolor="#fef3c7", color="#d97706", fontcolor="#78350f"];
+
+    // ================================================================
+    //  ATTRIBUTES  (Ovals — PK underlined)
+    // ================================================================
+    node [shape=ellipse, style=filled, fillcolor="white", color="#94a3b8",
+          fontcolor="#334155", fontsize=32, penwidth=2.5, height=1.0, width=2.8];
+
+    // Users
+    u_pk    [label=<<U><B>id</B></U>>,  fillcolor="#eff6ff", penwidth=3];
+    u_email [label="email"];
+
+    // Organizations
+    o_pk   [label=<<U><B>id</B></U>>,   fillcolor="#eff6ff", penwidth=3];
+    o_name [label="name"];
+
+    // Repositories
+    r_pk    [label=<<U><B>id</B></U>>,  fillcolor="#eff6ff", penwidth=3];
+    r_fname [label="full_name"];
+
+    // Threat Models
+    tm_pk   [label=<<U><B>id</B></U>>,  fillcolor="#eff6ff", penwidth=3];
+    tm_name [label="name"];
+
+    // Security Scans
+    ss_pk   [label=<<U><B>id</B></U>>,  fillcolor="#eff6ff", penwidth=3];
+    ss_type [label="scan_type"];
+
+    // ================================================================
+    //  ATTRIBUTE CONNECTIONS
+    // ================================================================
+    edge [color="#cbd5e1", penwidth=2.5, style=solid];
+
+    u_pk    -- users;
+    u_email -- users;
+
+    o_pk   -- organizations;
+    o_name -- organizations;
+
+    r_pk    -- repositories;
+    r_fname -- repositories;
+
+    tm_pk   -- threat_models;
+    tm_name -- threat_models;
+
+    ss_pk   -- security_scans;
+    ss_type -- security_scans;
+
+    // ================================================================
+    //  RELATIONSHIPS  (Diamonds)
+    // ================================================================
+    node [shape=diamond, style=filled, fillcolor="#fefce8", color="#ca8a04",
+          fontcolor="#713f12", fontsize=36, penwidth=4, height=2.0, width=3.0];
+
+    R1 [label="Belongs To"];
+    R2 [label="Contains"];
+    R3 [label="Creates"];
+    R4 [label="Scans"];
+
+    // ================================================================
+    //  RELATIONSHIP EDGES  (with cardinality)
+    // ================================================================
+    edge [color="#475569", penwidth=4, style=bold, fontsize=32];
+
+    users         -- R1 [label="  N ", fontcolor="#2563eb"];
+    R1 -- organizations [label="  M ", fontcolor="#2563eb"];
+
+    organizations -- R2 [label="  1 ", fontcolor="#2563eb"];
+    R2 -- repositories  [label="  N ", fontcolor="#2563eb"];
+
+    users         -- R3 [label="  1 ", fontcolor="#16a34a"];
+    R3 -- threat_models [label="  N ", fontcolor="#16a34a"];
+
+    repositories  -- R4 [label="  1 ", fontcolor="#d97706"];
+    R4 -- security_scans [label="  N ", fontcolor="#d97706"];
+}

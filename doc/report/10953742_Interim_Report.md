@@ -1,438 +1,890 @@
-# PUSL3190 Computing Project Interim Report
+# PUSL3190 Computing Project — Interim Report
 
-<img src="./ul1j5fde.png" style="width:1.02251in;height:0.45833in" /><img src="./iscetttp.png" style="width:1.13971in;height:0.22847in" />
+**DevSecOps Intelligence Platform for GitHub Workflow Security and Threat Modeling**
 
-**Project Title:** WithOps: An Intelligent DevSecOps Platform for GitHub Actions Security, Maturity Modeling, and Automated Threat Analysis  
-**Student Name:** Ilukwaththe Ariyarathne  
-**Student ID:** 10953742  
-**Supervisor:** Prof. Chaminda Wijesinghe  
-**Date:** March 05, 2026  
+---
+
+**Name:** Ilukwaththe Ariyarathne
+
+**Plymouth Index Number:** 10953742
+
+**Degree Programme:** BSc (Hons) Data Science
+
+**Supervisor:** Prof. Chaminda Wijesinghe
+
+**Submission Date:** 05th March 2026
 
 ---
 
 ## Table of Contents
 
-1. [Chapter 01: Introduction](#chapter-01-introduction)
-    - 1.1 Introduction
-    - 1.2 Problem Definition
-    - 1.3 Project Objectives
-2. [Chapter 02: System Analysis](#chapter-02-system-analysis)
-    - 2.1 Fact Gathering Techniques
-    - 2.2 Existing System
-    - 2.3 Drawbacks of the existing system
-3. [Chapter 03: Requirements Specification](#chapter-03-requirements-specification)
-    - 3.1 Functional Requirements
-    - 3.2 Non-Functional Requirements
-    - 3.3 Hardware / Software Requirements
-    - 3.4 Networking Requirements
-4. [Chapter 04: Feasibility Study](#chapter-04-feasibility-study)
-    - 4.1 Operational Feasibility
-    - 4.2 Economical Feasibility
-    - 4.3 Technical Feasibility
-5. [Chapter 05: System Architecture](#chapter-05-system-architecture)
-    - 5.1 Use Case Diagram
-    - 5.2 Microservices Layer
-    - 5.3 Data and Communication Layer
-    - 5.4 Internal Service Architecture
-6. [Chapter 06: Development Tools and Technologies](#chapter-06-development-tools-and-technologies)
-    - 6.1 Development Methodology
-    - 6.2 Programming Languages and Tools
-    - 6.3 Third-Party Components and Libraries
-    - 6.4 Algorithms
-7. [Chapter 07: Implementation Progress](#chapter-07-implementation-progress)
-    - 7.1 Development Environment Setup
-    - 7.2 Implemented Features
-    - 7.3 Code Snippets and Analysis
-    - 7.4 Challenges Encountered and Solutions
-    - 7.5 Current System Limitations
-8. [Chapter 08: Discussion](#chapter-08-discussion)
-    - 8.1 Summary of the Report
-    - 8.2 Changes from the Proposal
-    - 8.3 Future Plans / Upcoming Work
-9. [References](#references)
+- Chapter 01 — Introduction
+  - 1.1 Introduction
+  - 1.2 Problem Definition
+  - 1.3 Project Objectives
+- Chapter 02 — System Analysis
+  - 2.1 Facts Gathering Techniques
+  - 2.2 Existing System
+  - 2.3 Drawbacks of the Existing System
+- Chapter 03 — Requirements Specification
+  - 3.1 Functional Requirements
+  - 3.2 Non-Functional Requirements
+  - 3.3 Hardware / Software Requirements
+  - 3.4 Networking Requirements
+- Chapter 04 — Feasibility Study
+  - 4.1 Operational Feasibility
+  - 4.2 Economical Feasibility
+  - 4.3 Technical Feasibility
+- Chapter 05 — System Architecture
+  - 5.1 Use Case Diagram
+  - 5.2 Class Diagram of Proposed System
+  - 5.3 ER Diagram
+  - 5.4 High-Level Architectural Diagram
+  - 5.5 Networking Diagram
+- Chapter 06 — Development Tools and Technologies
+  - 6.1 Development Methodology
+  - 6.2 Programming Languages and Tools
+  - 6.3 Third-Party Components and Libraries
+  - 6.4 Algorithms
+- Chapter 07 — Implementation Progress
+  - 7.1 Development Environment Setup
+  - 7.2 Implemented Features
+  - 7.3 Screenshots / Code Snippets
+  - 7.4 Challenges Encountered and Solutions
+  - 7.5 Current System Limitations
+- Chapter 08 — Discussion
+- References
+- Appendices
 
 ---
 
-## List of Figures and Tables
+## List of Figures
 
-*   **Figure 1.1:** The DevSecOps "Shift Left" Lifecycle.
-*   **Figure 5.1:** Use Case Diagram for the WithOps Platform.
-*   **Figure 5.2:** High-Level Microservices Architecture.
-*   **Figure 5.3:** Event-Driven Communication Flow via Redis Pub/Sub.
-*   **Figure 5.4:** Internal Component Design of the Workspace Intelligence Service.
-*   **Figure 7.1:** Screenshot of the Documentation Portal.
-*   **Figure 7.2:** Dashboard Interface Preview.
-*   **Table 3.1:** Detailed Functional Requirements and Priority.
-*   **Table 3.2:** Non-Functional Requirements and Target Metrics.
-*   **Table 3.3:** Detailed Hardware and Software Requirements.
-*   **Table 6.1:** Programming Languages and Tool Justification.
-*   **Table 7.1:** Milestone Comparison: Planned vs. Actual.
+- Figure 5.1 — Use Case Diagram
+- Figure 5.2 — High-Level Microservices Architecture Diagram
+- Figure 5.3 — ER Diagram (Logical Data Model)
+- Figure 5.4 — Network and Deployment Topology Diagram
+- Figure 7.1 — Landing Page
+- Figure 7.2 — Platform Overview Page
+- Figure 7.3 — Auth0 Login Page
+- Figure 7.4 — Workspace Dashboard
+
+## List of Tables
+
+- Table 3.1 — Functional Requirements Specification
+- Table 3.2 — Non-Functional Requirements Specification
+- Table 3.3 — Hardware and Software Requirements
+- Table 5.1 — Microservices Port Mapping and Responsibilities
+- Table 6.1 — Technology Stack Summary
+- Table 6.2 — Third-Party Libraries and Components
+- Table 7.1 — Implemented Features Status Matrix
 
 ---
 
-## Chapter 01: Introduction
+## Chapter 01 — Introduction
 
 ### 1.1 Introduction
-In the contemporary era of digital transformation, the software development lifecycle (SDLC) has undergone a fundamental shift. The transition from monolithic, waterfall-based development to agile, microservices-oriented architectures has necessitated a corresponding evolution in how software is delivered. Continuous Integration and Continuous Deployment (CI/CD) pipelines have emerged as the backbone of modern engineering, enabling organizations to release updates with unprecedented frequency and speed. However, this acceleration has outpaced traditional security methodologies, creating a critical vulnerability gap within the most sensitive part of the development infrastructure: the deployment pipeline itself.
 
-The software supply chain has become a primary target for sophisticated adversaries. Recent years have seen a 742% increase in supply chain attacks, with attackers moving upstream to compromise build environments rather than the application code. Notable incidents, such as the March 2025 compromise of the `tj-actions/changed-files` GitHub Action, demonstrated how a single vulnerable component in a CI/CD workflow could grant attackers access to the source code and secrets of thousands of downstream organizations. Despite this growing threat, most organizations lack the tools and visibility required to secure their automated workflows.
+Modern software development relies extensively on Continuous Integration and Continuous Deployment (CI/CD) pipelines to automate build, test, and deployment processes. Platforms such as GitHub Actions have become the de facto standard for CI/CD automation, enabling development teams to define complex workflows using YAML configuration files. While this automation has dramatically accelerated software delivery, it has simultaneously introduced a new and largely unaddressed category of security vulnerabilities. Research by Pan et al. (2024) reveals that over 60% of CI/CD pipelines contain critical misconfigurations, transforming them into attractive targets for supply chain attacks. The March 2025 compromise of the tj-actions/changed-files GitHub Action demonstrated the catastrophic potential of such vulnerabilities, where a single compromised component affected thousands of dependent projects across the software ecosystem (Unit42, 2025).
 
-**WithOps** is an intelligent DevSecOps platform designed to address these systemic challenges. It is built on the core principle of "Shift Left," which advocates for integrating security intelligence at the earliest possible stage of development. By focusing specifically on GitHub Actions—the world's most popular automation platform—WithOps provides a centralized hub for proactive security management. The platform combines automated workflow security scanning, maturity assessment based on the OWASP DevSecOps Maturity Model (DSOMM), and AI-powered threat modeling into a unified, collaborative environment.
+DevSecOps — the integration of security practices into every phase of the software development lifecycle — has emerged as the industry response to these challenges. The OWASP DevSecOps Maturity Model (DSOMM) provides a structured framework for organisations to assess and improve their security posture across five critical dimensions: Build and Deployment, Implementation, Test and Verification, Information Gathering, and Culture and Organization. However, a significant gap persists between theoretical frameworks and practical implementation. Organisations understand the importance of DevSecOps maturity but lack automated tools to continuously assess their posture, detect workflow vulnerabilities, and model threats within their development infrastructure.
 
-WithOps leverages advanced technology, including Artificial Intelligence (AI) and Retrieval-Augmented Generation (RAG), to transform complex security data into actionable insights for developers and security engineers. The project represents a comprehensive effort to bridge the gap between development speed and security integrity, ensuring that as organizations move faster, they also move safer. This interim report documents the research, analysis, architectural design, and implementation progress of the WithOps platform, proving its feasibility and documenting its trajectory toward a next-generation security solution.
+This project, named **WithOps**, addresses this gap by delivering an intelligent DevSecOps platform that unifies three critical capabilities: automated GitHub Actions workflow security analysis, DSOMM-based maturity scoring, and AI-assisted threat modelling. By integrating these capabilities into a single, developer-friendly platform built on a production-grade microservices architecture, WithOps enables organisations to proactively identify vulnerabilities, objectively measure security improvements, and maintain secure development practices without sacrificing delivery velocity. The platform is currently hosted and publicly accessible at **https://app.withops.com/**.
+
+The platform is designed as a comprehensive intelligence layer that sits atop existing GitHub infrastructure, providing organisation-wide visibility into CI/CD security posture. It leverages multiple AI providers — including Anthropic Claude, Meta Llama 3 via Groq, and locally hosted models through Ollama — to deliver intelligent threat analysis, automated remediation recommendations, and conversational security insights through a Retrieval-Augmented Generation (RAG) system. The solution targets development teams, security engineers, DevOps practitioners, and engineering managers who require actionable, real-time security intelligence.
 
 ### 1.2 Problem Definition
-The "problem" that WithOps solves is multi-faceted, involving technical, organizational, and cognitive dimensions. Current industry practices for securing CI/CD pipelines are fragmented, manual, and often overlooked due to the complexity of the underlying automation.
 
-**1.2.1 Invisible Infrastructure Vulnerabilities**
-Most modern security tools (SAST, DAST, SCA) focus exclusively on the "payload"—the application code and its dependencies. However, the "infrastructure" that delivers this code—the YAML-based GitHub Actions workflows—is often ignored. These workflows possess elevated privileges, including the ability to read source code, push to repositories, and access production secrets. Misconfigurations such as using mutable tags (e.g., `uses: actions/checkout@v3` instead of a commit hash), granting excessive `GITHUB_TOKEN` permissions, or implementing insecure trigger events (`on: pull_request_target`) create critical vulnerabilities. Because these are "infrastructure errors" rather than "code errors," they are invisible to traditional scanners.
+Organisations face four critical, interconnected challenges in securing their CI/CD workflows that the current tooling landscape fails to address comprehensively.
 
-**1.2.2 Subjective and Static Maturity Assessment**
-Organizations striving to implement DevSecOps principles lack an objective method to measure their progress. The OWASP DevSecOps Maturity Model (DSOMM) provides a theoretical framework, but manual assessment is resource-intensive and subjective. A security manager might check a set of repositories once a quarter, but this "snapshot" approach fails in a world where new services and workflows are deployed daily. Organizations need a way to programmatically and continuously track their security maturity across the dimensions of culture, testing, and deployment.
+**First, workflow misconfigurations remain undetected until exploited.** GitHub Actions workflows frequently contain unpinned dependencies referencing mutable tags rather than immutable commit SHAs, excessive permissions granting unnecessary access, insecure triggers vulnerable to code injection, and leaked credentials embedded in configuration files. Traditional security tools focus on application source code analysis and entirely miss these workflow-level vulnerabilities. Pan et al. (2024) found that 73% of actions are pinned to mutable tags, 41% have excessive permissions, and 15% contain hardcoded secrets — demonstrating the pervasive nature of these misconfigurations.
 
-**1.2.3 The Threat Modeling Expertise Bottleneck**
-Threat modeling is one of the most effective ways to identify security flaws before writing a single line of code. However, it remains a manual, expert-driven process. A moderately complex architecture can take 40-60 hours to model using traditional methods (like STRIDE or LINDDUN). In organizations with hundreds of microservices, security teams simply cannot keep up. Consequently, threat modeling is either skipped entirely or performed ad-hoc, leading to security flaws being discovered late in the development cycle, where they are much more expensive to fix.
+**Second, organisations cannot objectively measure their DevSecOps maturity.** While OWASP DSOMM provides a theoretical framework defining maturity levels from basic awareness (Level 0) to advanced automation (Level 4), manual assessment requires 40–80 hours per evaluation cycle (Jit, 2024). This makes continuous monitoring impractical and prevents organisations from demonstrating security improvements to stakeholders, regulatory auditors, or customers requiring security attestations. No existing tool automatically derives maturity scores from observable repository artifacts.
 
-**1.2.4 Cognitive Overload and YAML Complexity**
-GitHub Actions YAML syntax is powerful but notoriously brittle. Research has shown that over 60% of developers find YAML-based automation difficult to debug and error-prone. The indentation-sensitive syntax, combined with domain-specific logic, often leads developers to copy-paste templates from insecure sources, propagating vulnerabilities throughout an organization. There is a clear need for a visual, guidance-led system that reduces this cognitive load while enforcing security best practices.
+**Third, threat modelling remains disconnected from development workflows.** Traditional threat modelling tools require separate processes, specialised security expertise, and significant time investment — Shevchenko et al. (2018) report that moderately complex system assessments require 40–60 hours. This leads many development teams to skip threat modelling entirely, creating unidentified attack surfaces in their systems. Furthermore, existing tools lack integration with development platforms and do not leverage modern AI capabilities for automated threat identification.
+
+**Fourth, GitHub Actions YAML complexity creates barriers to secure workflow development.** Saroar and Nayebi (2023) surveyed 394 practitioners and found that 60.87% consider YAML syntax error-prone, with workflow debugging consuming an average of 6.3 hours per developer monthly. The cognitive load of indentation-sensitive syntax combined with domain-specific GitHub Actions semantics results in workflows that are difficult to author, review, and secure. Additionally, 71% of workflows are derived from templates (Yampolskiy et al., 2022), amplifying the propagation of insecure patterns across organisations.
+
+These challenges collectively manifest as increased supply chain attack risk, compliance failures, wasted developer productivity, and an inability to demonstrate measurable security improvements to stakeholders.
 
 ### 1.3 Project Objectives
-The overarching goal of the WithOps project is to develop a unified platform that transforms DevSecOps from a set of manual checkboxes into an automated, intelligence-driven operation. To achieve this, the project defines six specific, measurable objectives:
 
-*   **Objective 1: Develop an Automated GitHub Workflow Security Engine.**
-    The system must be capable of parsing GitHub Actions YAML files and detecting 25+ distinct vulnerability patterns. It should not only alert the user but also provide "auto-remediation" suggestions, such as generating a Pull Request that pins an insecure action to a specific commit hash or restricts excessive permissions.
-*   **Objective 2: Implement a Programmatic DSOMM Maturity Assessment System.**
-    The system should automatically analyze repository metadata, branch protection rules, and security practice indicators to calculate a maturity score across the five dimensions of the DSOMM framework. The result should be a live "Maturity Dashboard" that tracks improvement over time.
-*   **Objective 3: Build an AI-Powered Interactive Threat Modeling Canvas.**
-    The platform should provide a "drag-and-drop" visual environment for architecture design. By integrating AI vision and reasoning models (like Claude or GPT-4), the system should analyze these diagrams in real-time and generate threat reports based on the STRIDE, CIA, and LINDDUN frameworks.
-*   **Objective 4: Integrate a Context-Aware RAG Security Intelligence System.**
-    Using a vector database (like Qdrant) and Retrieval-Augmented Generation, the platform should manage a "Security Brain." This system will index best practices from OWASP, NIST, and GitHub Security Advisories, allowing developers to ask natural language questions about their specific security findings and receive context-aware advice.
-*   **Objective 5: Design and Deploy a Scalable Microservices Architecture.**
-    The platform must be built using a modern, distributed architecture composed of nine specialized microservices. This ensures that the platform is resilient (individual service failures don't bring down the whole system) and scalable (intensive AI analysis can be scaled independently of the user interface).
-*   **Objective 6: Provide a Unified, Collaborative Intelligence Dashboard.**
-    The final deliverable must be a production-ready web application using the latest frontend technology (SvelteKit 5). This dashboard must provide a "single pane of glass" view for all security findings, collaborative workspace features, and real-time event streaming for analysis progress.
+The WithOps platform defines six specific, measurable project objectives:
+
+1. **Develop a GitHub Workflow Security Analysis Engine** — The platform shall analyse GitHub Actions YAML files to detect 25+ vulnerability patterns including unpinned actions, outdated versions, insecure triggers, hardcoded secrets, and excessive permissions. The engine shall parse 99%+ of valid workflows without errors, complete organisation-wide analysis for up to 200 repositories within 3 minutes, and maintain a false positive rate below 5% for critical findings.
+
+2. **Implement a DSOMM Maturity Assessment System** — The system shall automatically map detected security practices to all five DSOMM dimensions (Build and Deployment, Implementation, Culture and Organization, Information Gathering, Test and Verification), computing maturity scores from Level 0 through Level 4 and tracking progression over time. Assessment consistency shall be within 2% variance on repeated evaluations.
+
+3. **Build an AI-Powered Threat Modelling Canvas** — An interactive visual canvas shall enable system architecture diagram creation using data flow diagram notation, with AI analysing diagrams using STRIDE, CIA triad, and LINDDUN privacy frameworks. AI shall identify system components with 90%+ accuracy and generate comprehensive threat analyses covering all relevant threat categories.
+
+4. **Develop a RAG-Based Learning System** — A Retrieval-Augmented Generation system using Qdrant vector database shall enhance AI responses with contextual DevSecOps security knowledge. Semantic search shall retrieve relevant context in top 5 results with 85%+ accuracy, and RAG-enhanced responses shall be rated more accurate than base model responses in 70%+ of evaluated comparisons.
+
+5. **Create a Production-Grade Microservices Architecture** — Eight independent microservices (Events Hub, GitHub Service, AI Service, Threat Modeling Service, Workspace Intelligence Service, Auth Service, Collaboration Service, Workflow Orchestration Service) shall communicate via Redis event bus and Kong API gateway. Services shall deploy independently, and the system shall tolerate individual service failure with graceful degradation.
+
+6. **Build a Production-Ready Frontend Application** — A modern SvelteKit web application shall provide interactive dashboards, visual workflow representation, collaborative threat modelling with real-time multi-user support, and comprehensive documentation. First contentful paint shall be under 1.5 seconds and task completion rate shall exceed 85% for core workflows.
 
 ---
 
-## Chapter 02: System Analysis
+## Chapter 02 — System Analysis
 
-### 2.1 Fact Gathering Techniques
-A robust system analysis is the foundation of any successful complex software project. For WithOps, the fact-gathering process was designed to capture requirements from academic research, industry standards, and developer experience.
+### 2.1 Facts Gathering Techniques
 
-**2.1.1 Academic Literature Review**
-The first stage involved a deep dive into recent academic research regarding CI/CD security. This provided quantitative evidence of the problem. For instance, the study by Pan et al. (2024), which analyzed 16,000 repositories and found that 62.3% contained high-severity configurations, was instrumental in defining the scope of the Workflow Security Engine. This research move the project from "perceived need" to "evidenced requirement."
+The system analysis phase employed multiple structured fact-gathering techniques to ensure a comprehensive understanding of the problem domain and stakeholder requirements.
 
-**2.1.2 Framework Decomposition (DSOMM & STRIDE)**
-To build the maturity and threat modeling engines, I performed a "low-level decomposition" of the relevant frameworks. This meant taking the qualitative descriptions in the OWASP DSOMM (e.g., "Build process is automated") and translating them into measurable, quantitative indicators that a Python script could detect (e.g., "A .github/workflows directory exists and contains a build.yml"). This process ensured that the platform's outputs are grounded in recognized security standards.
+**Literature Review and Academic Research:** An extensive review of academic publications was conducted across four research domains — DevSecOps maturity modelling, CI/CD pipeline security, GitHub Actions complexity, and threat modelling automation. Key sources included Pan et al. (2024) on CI/CD vulnerabilities, Saroar and Nayebi (2023) on GitHub Actions practitioner perceptions, Shevchenko et al. (2018) on threat modelling methodologies, and the OWASP Foundation's DSOMM documentation. This review identified specific quantitative benchmarks (e.g., 62.3% pipeline misconfiguration rate, 60.87% YAML difficulty rating) that informed feature prioritisation.
 
-**2.1.3 Competitor Benchmarking and Gap Analysis**
-I conducted a technical audit of existing security platform features. GitHub Advanced Security provides secret scanning and Dependabot, but it lacks visual threat modeling. Harness provides CI/CD orchestration but lacks deep workflow security analysis. This gap analysis led to the requirement for "Integrated Intelligence"—a platform that doesn't just scan code, but also models threats and assesses maturity.
+**Industry Report Analysis:** Reports from Palo Alto Networks Unit 42, Jit, and OWASP were analysed to understand real-world incident patterns. The March 2025 tj-actions/changed-files supply chain attack provided a critical case study demonstrating the practical impact of workflow security failures and the inadequacy of existing defensive measures.
 
-**2.1.4 Developer Interviews and Observational Studies**
-I conducted informal sessions with three DevOps engineers to observe how they currently manage security. I found that they often treat security warnings as "noise" because they lack the context to fix them quickly. This observation directly led to the "Auto-Remediation PR" requirement—the idea that if the system finds an error, it should offer to fix it automatically, reducing the friction for the developer.
+**Existing Tool Evaluation:** A systematic evaluation of existing DevSecOps tools was conducted, including GitHub Dependabot, Harness, Snyk, StepSecurity, and OWASP ZAP. Each tool was assessed against criteria including CI/CD workflow analysis coverage, DSOMM integration capability, threat modelling automation, and developer experience. This evaluation confirmed the absence of any unified platform addressing all identified requirements.
 
-**2.1.5 Document Analysis (GitHub Security Advisories)**
-I analyzed over 50 past GitHub Security Advisories (GSAs) related to workflow vulnerabilities. This "attack-centric" fact gathering allowed me to build a library of 25+ vulnerability patterns that the WithOps engine must be able to detect, ensuring the tool is effective against real-world attack vectors.
+**GitHub API Documentation Analysis:** Extensive analysis of the GitHub REST API (v3) and GraphQL API (v4) documentation was performed to understand data access patterns, rate limiting constraints (5,000 requests/hour for authenticated users), webhook event structures, and GitHub App permission models. This informed the design of the GitHub Service microservice and caching strategy.
+
+**Regulatory Framework Review:** Key regulatory and compliance frameworks were reviewed, including the EU Cyber Resilience Act, Executive Order 14028, SOC 2 Type II requirements, and ISO 27001 controls, to understand the compliance evidence requirements that WithOps must support.
 
 ### 2.2 Existing System
-The "Existing System" for DevSecOps in most organizations is not a single tool, but a fragmented collection of manual and automated processes.
 
-**2.2.1 Ssh-and-Script Approach**
-In many smaller organizations, security is managed through "ad-hoc" scripts and manual ssh-based audits. Developers might run an occasional local linter, but there is no centralized visibility. If a vulnerability is introduced in a deployment script, it remains undetected until a manual audit happens, if it happens at all.
+The current landscape for DevSecOps workflow security is characterised by fragmented, single-purpose tools that address individual security concerns without integration.
 
-**2.2.2 Siloed Security Tools**
-In larger organizations, there is a "Wall of Dashboards." One dashboard for SonarQube (static code analysis), one for Snyk (dependencies), and one for GitHub Alerts. These tools don't communicate with each other. A developer might fix a bug in the code but leave the workflow that deploys it wide open to a supply chain attack. There is no unified view of "Security Intelligence."
+**GitHub Dependabot** provides automated dependency vulnerability scanning and pull request generation for outdated packages. It monitors package manifests (package.json, requirements.txt, etc.) and creates pull requests when security advisories are published. However, Dependabot focuses exclusively on application dependencies and does not analyse GitHub Actions workflow configurations, CI/CD pipeline security, or DevSecOps maturity.
 
-**2.2.3 Manual, Spreadsheet-Based Compliance**
-Compliance with security models like DSOMM is almost entirely manual. A security auditor sends an Excel spreadsheet to a development lead once a year. The results are subjective, error-prone, and become outdated within weeks as the project architecture evolves.
+**Harness** offers a comprehensive CI/CD orchestration platform with pipeline management, deployment automation, and some security scanning capabilities. It provides workflow visualisation and execution management but does not incorporate DSOMM maturity assessment, automated threat modelling, or granular GitHub Actions security analysis.
 
-**2.2.4 "Post-Mortem" Threat Modeling**
-Threat modeling, when performed, is usually done "after the fact" as part of a post-mortem or after a major feature is already in staging. This is reactive rather than proactive. The diagrams are often stored in Confluence or a Wiki, where they are never updated as the code changes.
+**StepSecurity Harden-Runner** provides runtime security monitoring for GitHub Actions workflows, detecting anomalous network connections and file system modifications during workflow execution. While it addresses runtime security, it does not perform static analysis of workflow configurations, assess organisational maturity, or provide threat modelling capabilities.
 
-### 2.3 Drawbacks of the existing system
-The fragmented nature of current DevSecOps practices leads to several critical failures:
+**Snyk** offers application security testing including SAST, SCA, container scanning, and infrastructure-as-code analysis. It integrates with CI/CD pipelines to identify application-level vulnerabilities but does not specifically target GitHub Actions workflow security patterns, DSOMM assessment, or collaborative threat modelling.
 
-*   **Incomplete Security Coverage:** Traditional tools have a "blind spot" for CI/CD infrastructure. They scan the *what* (the application code) but ignore the *how* (the workflow that builds it). This creates a massive opening for supply chain attacks.
-*   **High Mean Time to Remediation (MTTR):** Because vulnerabilities are detected late or in fragmented dashboards, fixing them takes longer. Developers are often confused about where a vulnerability came from and how it relates to their specific environment.
-*   **The "Security Tax" on Velocity:** Manual auditing and threat modeling create bottlenecks. In an agile world, developers see these manual security steps as a "tax" that slows them down, leading to them being bypassed or "rubber-stamped" without a real review.
-*   **Data Inconsistency:** When security maturity is assessed manually, two different auditors might give the same project two different scores. This lack of objectivity makes it impossible for engineering leadership to know if they are truly making progress.
-*   **Knowledge Decay:** Security expertise is a scarce resource. When an expert performs a threat model manually, their insights are often lost after they leave or the project moves on. There is no "institutional memory" of security logic.
+**Manual Processes:** In the absence of comprehensive automated tools, organisations rely on manual security reviews of workflow files, periodic compliance audits, and ad-hoc threat modelling sessions using tools like Microsoft Threat Modeling Tool or OWASP Threat Dragon. These manual processes are resource-intensive, inconsistent, and scale poorly with growing repository counts.
+
+### 2.3 Drawbacks of the Existing System
+
+The existing tooling landscape exhibits several critical drawbacks that WithOps is designed to address:
+
+- **Fragmented Coverage:** No single platform provides unified workflow security analysis, maturity assessment, and threat modelling. Organisations must integrate 4–6 separate tools, increasing complexity and creating visibility gaps between tool boundaries.
+
+- **No DSOMM Automation:** Existing tools do not automatically assess DevSecOps maturity against the OWASP DSOMM framework. Manual assessment requires 40–80 hours per cycle, making continuous monitoring impractical.
+
+- **Application-Focused Analysis:** Tools like Dependabot and Snyk analyse application code and dependencies but miss CI/CD workflow infrastructure vulnerabilities — the exact attack vector exploited in recent supply chain attacks.
+
+- **Disconnected Threat Modelling:** Threat modelling tools operate independently from development platforms, requiring context switching and manual data entry. This disconnect results in 67% of development teams skipping threat modelling entirely.
+
+- **Limited AI Integration:** Existing tools offer minimal AI-assisted analysis, requiring manual interpretation of scan results and manual threat identification. No tool provides AI-powered visual threat analysis or conversational security insights via RAG.
+
+- **Poor Developer Experience:** Current tools provide raw findings without actionable remediation guidance, visualisation of workflow security posture, or automated fix generation. This contributes to security alert fatigue and low remediation rates.
+
+- **No Automated Remediation:** While Dependabot generates dependency update PRs, no tool automatically creates pull requests to fix GitHub Actions version pinning, permission scoping, or trigger hardening issues.
 
 ---
 
-## Chapter 03: Requirements Specification
+## Chapter 03 — Requirements Specification
 
 ### 3.1 Functional Requirements
-Functional requirements define the core behaviors and tasks that the WithOps platform must perform. These have been categorized into "Core Modules" to align with the microservices architecture.
 
-**3.1.1 Organization and Repository Intelligence (Priority: High)**
-*   **FR-1.1:** The system shall authenticate with GitHub using OAuth 2.0 and GitHub App credentials.
-*   **FR-1.2:** The system shall authorize and index all organizations and public/private repositories accessible to the user.
-*   **FR-1.3:** The system shall receive and process real-time events via GitHub Webhooks (e.g., push, pull_request, workflow_run) to maintain data freshness.
+The WithOps platform specifies the following functional requirements, organised by feature module:
 
-**3.1.2 Workflow Security Engine (Priority: High)**
-*   **FR-2.1:** The system shall automatically parse and analyze all YAML files in the `.github/workflows/` directory of an indexed repository.
-*   **FR-2.2:** The system shall detect 25+ vulnerability patterns, including unpinned actions, excessive token permissions, and insecure trigger events.
-*   **FR-2.3:** The system shall provide automated remediation suggestions for each vulnerability, including the generation of "Remediation Pull Requests."
+**FR-01: GitHub Integration**
 
-**3.1.3 DSOMM Maturity Assessment (Priority: Medium-High)**
-*   **FR-3.1:** The system shall map detected security indicators to the five dimensions of the OWASP DSOMM framework.
-*   **FR-3.2:** The system shall calculate a maturity score (Levels 1 to 4) for each dimension and provide a cumulative "Security Grade."
-*   **FR-3.3:** The system shall track and visualize the longitudinal progress of maturity scores to identify regression or improvement trends.
+1: The system shall authenticate users via GitHub OAuth 2.0 and GitHub App installation flows.
+2: The system shall retrieve and display all organisations and repositories accessible to the authenticated user.
+3: The system shall parse and analyse GitHub Actions workflow YAML files from connected repositories.
+4: The system shall receive and process GitHub webhook events for push, pull request, and workflow run events.
+5: The system shall cache repository and organisation data in Redis with configurable TTL to minimise API consumption.
 
-**3.1.4 AI Threat Modeling Canvas (Priority: High)**
-*   **FR-4.1:** The system shall provide an interactive drag-and-drop canvas for users to create system architecture diagrams.
-*   **FR-4.2:** The system shall use AI vision/reasoning models to analyze diagrams and identify potential entry points, data flows, and trust boundaries.
-*   **FR-4.3:** The system shall generate threat reports based on the STRIDE, CIA, and LINDDUN frameworks, categorized by risk level.
+**FR-02: Workflow Security Analysis**
 
-**3.1.5 Context-Aware AI Security Assistant (Priority: Medium)**
-*   **FR-5.1:** The system shall provide a natural language chat interface ("WithOps AI") for interacting with security findings.
-*   **FR-5.2:** The system shall use Retrieval-Augmented Generation (RAG) to provide answers backed by a vector-indexed knowledge base of security standard documents.
+1: The system shall detect unpinned GitHub Actions referencing mutable tags instead of commit SHAs.
+2: The system shall identify outdated action versions by comparing against latest available releases.
+3: The system shall detect insecure workflow triggers vulnerable to code injection attacks.
+4: The system shall identify excessive permission scopes in workflow configurations.
+5: The system shall detect potential credential exposure through hardcoded secrets using entropy-based and pattern-matching algorithms.
+6: The system shall categorise findings by severity (Critical, High, Medium, Low) using CVSS v3.1 scoring.
 
-**3.1.6 Collaborative Workspace (Priority: Medium)**
-*   **FR-6.1:** The system shall support multi-user workspaces with real-time presence indicators.
-*   **FR-6.2:** The system shall allow users to share threat models, security scans, and maturity reports with other team members for collaborative auditing.
+**FR-03: DSOMM Maturity Assessment**
+
+1: The system shall automatically assess repositories against all five DSOMM dimensions.
+2: The system shall compute maturity levels (L0–L4) for each dimension based on detected security practices.
+3: The system shall generate a unified maturity score aggregating all dimensional assessments.
+4: The system shall track maturity progression over time with historical scoring data.
+5: The system shall auto-detect security practices including SAST, SCA, DAST, secret scanning, and dependency management.
+
+**FR-04: Threat Modelling**
+
+1: The system shall provide an interactive visual canvas for drawing system architecture diagrams.
+2: The system shall support multi-framework threat analysis using STRIDE, CIA triad, and LINDDUN.
+3: The system shall generate AI-powered threat identifications from visual diagram analysis.
+4: The system shall provide real-time multi-user collaboration on threat modelling canvases.
+5: The system shall generate structured threat reports with severity classification and mitigation recommendations.
+
+**FR-05: AI RAG System**
+
+1: The system shall provide conversational AI interaction with context-aware responses about repository security.
+2: The system shall index workspace analysis data into vector embeddings for semantic retrieval.
+3: The system shall maintain conversation history with per-user access controls.
+
+**FR-06: Canvas Builder**
+
+1: The system shall provide a visual drag-and-drop interface for CI/CD pipeline construction.
+2: The system shall generate valid GitHub Actions YAML from visual pipeline representations.
+3: The system shall automatically create pull requests with generated workflow files.
+
+**FR-07: Action Audit**
+
+1: The system shall monitor all GitHub Actions across an organisation for version governance.
+2: The system shall classify action versions as Up to Date, Major Upgrade Needed, or Outdated.
+3: The system shall support automated remediation via auto-generated pull requests to update action versions.
+4: The system shall perform anti-typosquatting verification against the GitHub Marketplace.
 
 ### 3.2 Non-Functional Requirements
-Non-functional requirements specify the "quality attributes" of the system, ensuring it is reliable, fast, and secure.
 
-**3.2.1 Performance and Scalability**
-*   **NFR-1.1 (Latency):** The frontend dashboard must achieve a First Contentful Paint (FCP) of under 1.5 seconds.
-*   **NFR-1.2 (Throughput):** The background scanning system must be capable of processing a repository with 10+ workflows in under 20 seconds.
-*   **NFR-1.3 (Concurrency):** The system architecture must support horizontal scaling, allowing for at least 3 concurrent scanning tasks per worker node.
+01 Performance:\*\* API response latency shall not exceed 200ms for 95th percentile requests. Organisation-wide security analysis for up to 200 repositories shall complete within 3 minutes. Frontend first contentful paint shall be under 1.5 seconds.
 
-**3.2.2 Security and Identity**
-*   **NFR-2.1 (Auth):** The system must use industry-standard Identity and Access Management (Auth0) with Proof Key for Code Exchange (PKCE).
-*   **NFR-2.2 (Data Protection):** All GitHub tokens and sensitive user metadata must be encrypted at rest using AES-256-GCM.
-*   **NFR-2.3 (Privacy):** The system must support "In-Memory Analysis," where repository source code is analyzed but never permanently stored on WithOps servers.
+02 Security:\*\* All data in transit shall be encrypted using TLS 1.3. Authentication shall use Auth0 with JWT tokens validated at the API gateway level. Webhook payloads shall be verified using HMAC-SHA256 signatures. API rate limiting shall enforce 100 requests per minute and 1,000 requests per hour per client.
 
-**3.2.3 Reliability and Observability**
-*   **NFR-3.1 (Availability):** The platform core services (Gateway, Auth, Events) should aim for 99.9% uptime.
-*   **NFR-3.2 (Monitoring):** All microservices must expose standardized `/metrics` (Prometheus) and `/health` endpoints.
-*   **NFR-3.3 (Fault Tolerance):** The system should implement a "Graceful Degradation" strategy—if the AI service is down, the rest of the platform (manual scans, maturity metrics) should remain functional.
+03 Scalability:\*\* The microservices architecture shall support horizontal scaling of individual services. The system shall handle concurrent analysis of multiple organisations without performance degradation.
+
+04 Availability:\*\* The system shall target 99% uptime for critical paths. Individual service failures shall not cascade to other services (fault isolation).
+
+05 Usability:\*\* The interface shall follow a consistent "Matte Engineering" design language with dark and light theme support. Task completion rate for core workflows shall exceed 85%. Comprehensive in-application documentation shall be provided.
+
+06 Observability:\*\* All services shall expose Prometheus metrics, OpenTelemetry distributed traces, and structured logs. Centralised monitoring dashboards shall be available via Grafana.
+
+07 Maintainability:\*\* Each microservice shall be independently deployable with its own codebase, database migrations, and dependency management. Code coverage shall exceed 80%.
 
 ### 3.3 Hardware / Software Requirements
-To support a distributed microservices environment, specific technical requirements have been defined for both development and production.
 
-**3.3.1 Client-Side Requirements**
-*   **Web Browser:** Modern Chromium-based (Chrome 90+, Edge 90+), Firefox (88+), or Safari (14+).
-*   **Screen Resolution:** Optimized for 1280x720 and above (responsive support for tablets).
+**Server-Side Requirements:**
 
-**3.3.2 Server-Side Hardware Requirements (Minimum)**
-*   **CPU:** 4-core processor (8-core recommended for local AI inference).
-*   **RAM:** 16GB RAM (32GB recommended to support Vector DB and AI workers).
-*   **Storage:** 100GB fast SSD (for PostgreSQL, Redis snapshots, and logs).
+| Component        | Specification                                      |
+| ---------------- | -------------------------------------------------- |
+| Operating System | Linux (Ubuntu 22.04+), macOS, or Windows with WSL2 |
+| CPU              | 4+ cores (8+ recommended for AI workloads)         |
+| RAM              | 8 GB minimum, 16 GB recommended                    |
+| Storage          | 20 GB minimum available disk space                 |
+| Docker           | Docker Engine 24.0+ with Docker Compose v2         |
+| Python           | Python 3.11+                                       |
+| Node.js          | Node.js 18+ or 20+ (LTS)                           |
 
-**3.3.3 Software Development Stack**
-*   **Backend:** Python 3.11+ (FastAPI), Node.js 20+ (for certain tooling).
-*   **Frontend:** SvelteKit 2, Svelte 5, Tailwind CSS 4, Vite 6.
-*   **Databases:** PostgreSQL 15 (transactional), Redis 7 (caching/event bus), Qdrant 1.7+ (vector store).
-*   **Infrastructure:** Docker 24+, Docker Compose, Kubernetes 1.28+.
-*   **AI Components:** Ollama (for Llama 3 local inference), Claude 3.5 Sonnet (for visual architecture analysis).
+**Software Dependencies:**
+
+| Component              | Technology              | Version         |
+| ---------------------- | ----------------------- | --------------- |
+| Frontend Framework     | SvelteKit               | 2.16.0          |
+| UI Framework           | Svelte                  | 5.x (Runes API) |
+| CSS Framework          | Tailwind CSS            | 4.0             |
+| Build Tool             | Vite                    | 6.2.6           |
+| Backend Framework      | FastAPI                 | 0.104.1         |
+| Database               | PostgreSQL (Supabase)   | 15.x            |
+| Cache / Message Broker | Redis                   | 7.x             |
+| Vector Database        | Qdrant                  | 1.7+            |
+| API Gateway            | Kong                    | 3.x             |
+| Containerisation       | Docker + Docker Compose | 24.0+           |
+| LLM Inference          | Ollama                  | Latest          |
+
+**Client-Side Requirements:**
+
+| Component | Specification                                                  |
+| --------- | -------------------------------------------------------------- |
+| Browser   | Modern browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+) |
+| Network   | Stable internet connection for GitHub API and cloud AI access  |
+| Screen    | Minimum 1280×720 resolution (1920×1080 recommended)            |
 
 ### 3.4 Networking Requirements
-As a distributed system, WithOps has specific networking needs to ensure secure and efficient service coordination.
 
-*   **Ingress Layer:** The platform uses a **Kong API Gateway** on port 8000/9000 to manage all external HTTP and WebSocket traffic. Port 443 (HTTPS) is used for production frontend access.
-*   **Inter-Service Communication:** All services communicate within a private Docker/Kubernetes network. They use a **Service-to-Service Authentication** pattern where the Gateway injects verified user identity headers.
-*   **External Integration:** The system requires outbound network access to `api.github.com` via TLS 1.3. Real-time updates utilize the WebSocket protocol (`ws://` or `wss://`) for low-latency communication between the browser and the Events Hub.
+The WithOps platform operates as a distributed microservices system requiring specific networking configurations:
+
+- **API Gateway:** Kong Gateway serves as the single entry point on port 9000, routing all external requests to appropriate backend microservices. It enforces CORS policies, rate limiting, and request transformation.
+
+- **Inter-Service Communication:** Microservices communicate internally over a Docker bridge network using HTTP/REST calls via the httpx library. Service discovery is handled through Docker DNS resolution using container names.
+
+- **Event Bus:** Redis (port 16379) provides pub/sub messaging across three primary channels: `github_events`, `threat_modeling_events`, and `workspace_intelligence_events`. This enables asynchronous event-driven communication between services.
+
+- **WebSocket Connections:** The Events Hub (port 9100) maintains persistent WebSocket connections with frontend clients for real-time notifications and status updates.
+
+- **External API Connections:** The platform requires outbound HTTPS access to GitHub API (api.github.com), Auth0 (tenant.auth0.com), Anthropic Claude API, and Groq API for cloud AI inference.
+
+- **Observability Network:** Prometheus (port 9091) scrapes metrics from all services, Jaeger (port 16686) receives OpenTelemetry traces via OTLP HTTP protocol, and Loki (port 3100) aggregates logs from all containers.
 
 ---
 
-## Chapter 04: Feasibility Study
+## Chapter 04 — Feasibility Study
 
 ### 4.1 Operational Feasibility
-Operational feasibility evaluates how well the proposed system solves the business problem and fits within existing workflows. WithOps is highly feasible because it integrates directly with the **GitHub Platform**, which is already the daily environment for its target users. By providing security insights as Pull Requests and automated dashboards, it reduces the need for constant "context switching" between tools. The platform is designed with a **Developer-Centric** interface—meaning it doesn't just show a list of problems; it shows how to fix them within the existing git-flow.
+
+The WithOps platform demonstrates strong operational feasibility based on analysis of user acceptance, organisational readiness, and operational sustainability.
+
+**User Acceptance:** The platform targets technically proficient users — developers, DevOps engineers, and security professionals — who are already familiar with GitHub, CI/CD pipelines, and web-based tools. The user interface follows established design patterns with an intuitive workspace-based navigation structure, reducing the learning curve. The "Matte Engineering" design aesthetic provides a professional, distraction-free experience aligned with developer tool expectations. In-application documentation covering getting started guides, feature documentation, API reference, and deployment instructions further supports user onboarding.
+
+**Organisational Fit:** WithOps integrates with existing GitHub infrastructure through standard OAuth 2.0 and GitHub App installation flows, requiring no changes to existing development workflows. Security analysis runs on-demand or automatically via webhook triggers, fitting naturally into existing CI/CD operations. The platform provides the compliance evidence (DSOMM maturity reports, security finding catalogues) that organisations increasingly require for SOC 2, ISO 27001, and EU Cyber Resilience Act compliance.
+
+**Operational Sustainability:** The microservices architecture enables independent scaling and maintenance of individual components. Docker containerisation ensures consistent deployment across environments. The observability stack (Prometheus, Grafana, Jaeger, Loki) provides comprehensive operational monitoring, enabling proactive issue identification and resolution. Automated health checks on every service endpoint support operational reliability.
 
 ### 4.2 Economical Feasibility
-The project adopts a "Cloud-Native, Open-Source" strategy, which minimizes expensive licensing costs.
-*   **Development Costs:** All primary technologies (FastAPI, SvelteKit, PostgreSQL, Redis) are open-source. For local AI development, **Ollama** allows for running Llama 3 without costly per-token fees.
-*   **Operational Efficiency:** By automating threat modeling and maturity assessment—tasks that would otherwise require high-paid security consultants—the system provides massive ROI to any organization using it.
-*   **SaaS Integration:** Modern providers like Supabase (PostgreSQL) and Auth0 offer generous "Free Tiers" that are sufficient for the development and initial rollout phase, proving that the project is economically viable even with a limited initial budget.
+
+The WithOps platform achieves economic feasibility through strategic use of open-source technologies and free-tier cloud services.
+
+**Development Costs:** The platform is built entirely using open-source frameworks and tools — SvelteKit, FastAPI, PostgreSQL, Redis, Qdrant, Kong, Ollama, Docker, and the complete observability stack. No commercial software licences are required for core platform functionality. Development is conducted using free tools including Visual Studio Code and Git.
+
+**Infrastructure Costs:** For development and testing, the platform runs entirely on local hardware using Docker Compose, incurring zero cloud infrastructure costs. Supabase provides a free tier with 500 MB database storage and 50,000 monthly API requests, sufficient for development and initial deployment. Auth0 provides a free tier supporting up to 7,000 monthly active users.
+
+**AI Service Costs:** Ollama enables local LLM inference at zero cost using open-source models. Anthropic Claude API and Groq API offer pay-per-use pricing with generous free tiers for development. The multi-provider architecture allows cost optimisation by routing requests to the most cost-effective provider based on task complexity.
+
+**Production Scaling Costs:** When scaling to production, the Kubernetes deployment manifests (included in the k8s/ directory) support deployment on cost-effective cloud infrastructure. The microservices architecture enables selective scaling of only the services experiencing high load, optimising resource utilisation and cost.
+
+**Cost-Benefit Analysis:** The platform is projected to reduce security assessment time from 40–80 hours (manual DSOMM evaluation) to minutes (automated assessment), representing significant labour cost savings. Automated remediation via PR generation reduces developer time spent on security fixes. Early vulnerability detection prevents costly security incidents — the average cost of a data breach reached $4.45 million in 2023 (IBM Security).
 
 ### 4.3 Technical Feasibility
-The high technical feasibility of WithOps is supported by two main factors: **Proven Modern Frameworks** and **Established Security Methodology.**
-*   **Framework Maturity:** FastAPI and SvelteKit are industry standards for building high-performance, asynchronous applications. The chosen stack is well-documented and has a massive community for troubleshooting.
-*   **AI Maturity:** The recent shift in Large Language Models (LLMs) from "generic chat" to "structured reasoning" makes automated threat modeling technically achievable for the first time. The availability of **Qdrant** allows for high-performance semantic search without complex custom implementation.
-*   **Team Expertise:** The project team (this student) has demonstrated proficiency in the full-stack development lifecycle, containerization, and the DevSecOps domain, further ensuring that the technical implementation can be completed within the project timeline.
+
+The WithOps platform is technically feasible based on demonstrated technology maturity, available skills, and proven architectural patterns.
+
+**Technology Maturity:** All core technologies used in the platform are mature, well-documented, and widely adopted in production environments. SvelteKit 2 and Svelte 5 provide a stable, performant frontend framework. FastAPI is the leading Python async web framework with extensive ecosystem support. PostgreSQL 15, Redis 7, and Docker are enterprise-standard infrastructure components. Kong is a production-proven API gateway used by organisations including NASA, Nasdaq, and Cisco.
+
+**AI Technology Readiness:** The AI capabilities leverage proven integration patterns. Anthropic Claude provides state-of-the-art vision and language capabilities for threat analysis. Ollama enables local LLM deployment with well-documented APIs. Qdrant provides production-ready vector database capabilities for RAG implementation. The multi-provider architecture ensures no single AI provider dependency.
+
+**Developer Skills:** The development team possesses prior experience in full-stack web development with JavaScript/TypeScript and Python, REST API design, Docker containerisation, and database management. Experience with GitHub API integration and CI/CD pipeline configuration directly supports the project's domain requirements. SvelteKit was selected due to existing frontend development proficiency, and FastAPI was chosen for its Python compatibility with AI/ML libraries.
+
+**Proof of Concept:** The feasibility of the core technical approach has been validated through working implementations of all eight microservices, successful GitHub API integration with OAuth and GitHub App flows, functional AI-powered threat analysis using Claude and Ollama, operational DSOMM maturity scoring from repository analysis, and a fully functional SvelteKit frontend with real-time collaboration capabilities.
 
 ---
 
-## Chapter 05: System Architecture
+## Chapter 05 — System Architecture
 
 ### 5.1 Use Case Diagram
-The WithOps platform architecture is designed to manage the interactions of three primary actors:
-1.  **The Developer:** Primarily interacts with the Workflow Security Engine, receives remediation suggestions, and consults the AI Assistant for secure coding advice.
-2.  **The Security Engineer:** Focuses on the Threat Modeling Canvas and Workspace Intelligence dashboard to manage organization-wide security posture and compliance.
-3.  **The System Administrator:** Manages organization-level integration with the GitHub App, configures webhooks, and manages role-based access control (RBAC).
 
-### 5.2 Microservices Layer
-To ensure scalability and fault isolation, the system is decomposed into nine specialized microservices. This "Shared Responsibility" model is a core tenet of modern cloud-native design.
+The WithOps platform supports four primary actor types interacting with the system:
 
-**5.2.1 Events Hub (The Central Nervous System)**
-This service manages real-time communication. It maintains WebSocket connections with all active users and listens to the **Redis Event Bus**. When any other microservice (like AI or GitHub) completes a task, it publishes a message. The Events Hub captures this and immediately updates the user's dashboard, providing a seamless, real-time experience. It operates on port 9100.
+**Actors:**
 
-**5.2.2 AI Service (The Reasoning Engine)**
-The AI Service is the "Brain" of the platform. It abstracts the complexity of different AI models. It can route tasks to **Claude** (for vision-based diagram analysis) or **Ollama** (for local text-based reasoning). It handles the parsing of code and the generation of remediation suggestions.
+- **Developer:** Connects GitHub account, views security analysis results, creates threat models, uses AI chat for security queries, builds CI/CD pipelines using Canvas Builder.
+- **Security Engineer:** Performs organisation-wide security audits, reviews DSOMM maturity assessments, conducts comprehensive threat modelling sessions, monitors Action Audit findings.
+- **DevOps Engineer:** Manages CI/CD workflow configurations, reviews pipeline security analysis, uses Canvas Builder for visual workflow authoring, monitors automated remediation PRs.
+- **Engineering Manager:** Views organisational security dashboards, tracks maturity progression over time, generates compliance reports, manages team collaboration settings.
 
-**5.2.3 GitHub Service (The Data Handler)**
-This service is the only component that interacts directly with the GitHub API. It manages OAuth tokens, indices organization data, and handles incoming webhooks. By siloing all GitHub logic here, we ensure that API rate limiting and token management are centralized.
+**Primary Use Cases:**
 
-**5.2.4 Workspace Intelligence (The Maturity Scorer)**
-Based on the OWASP DSOMM framework, this service traverses an organization's repositories and security settings. It calculates maturity scores and maintains the historical "Maturity Timeline" in the database.
+- UC-01: Authenticate via Auth0 (all actors)
+- UC-02: Connect GitHub Organisation (Developer, DevOps Engineer)
+- UC-03: Run Security Scan on Repository (Developer, Security Engineer)
+- UC-04: View Workspace Intelligence Dashboard (all actors)
+- UC-05: Assess DSOMM Maturity (Security Engineer, Engineering Manager)
+- UC-06: Create Threat Model on Visual Canvas (Developer, Security Engineer)
+- UC-07: Collaborate on Threat Model in Real-Time (all actors)
+- UC-08: Generate AI Threat Analysis (Security Engineer)
+- UC-09: Chat with AI RAG System (Developer, Security Engineer)
+- UC-10: Audit GitHub Actions Versions (DevOps Engineer, Security Engineer)
+- UC-11: Auto-Remediate via Pull Request (DevOps Engineer)
+- UC-12: Build CI/CD Pipeline via Canvas Builder (DevOps Engineer)
+- UC-13: Generate Workflow YAML from Visual Canvas (DevOps Engineer)
+- UC-14: View Repository File Tree (Developer)
+- UC-15: Monitor Real-Time Events via WebSocket (all actors)
 
-**5.2.5 Additional Services**
-The architecture also includes **Auth Service** (IAM), **Collaboration Service** (shared workspace state), **Threat Modeling Service** (architecture analysis), **Workflow Orchestration** (task management), and the **AI RAG Service** (vector search).
+_(Figure 5.1 — Use Case Diagram should be inserted here)_
 
-### 5.3 Data and Communication Layer
-The architectural design prioritizes high decoupling and low latency.
-*   **Communication:** Services interact via a **REST API** (for synchronous requests) and **Redis Pub/Sub** (for asynchronous events). This ensures that if the AI service is slow, it doesn't "block" the GitHub service from receiving data.
-*   **Data Persistence:** Transactional data (users, repos, scan results) is stored in **PostgreSQL**. Real-time state and caching are managed in **Redis**.
-*   **Semantic Data:** Low-level security knowledge is stored as "Vector Embeddings" in **Qdrant**, which allows the AI to perform "Semantic Search"—finding answers based on meaning rather than just keywords.
+### 5.2 Class Diagram of Proposed System
 
-### 5.4 Internal Service Architecture (Example: Workspace Intelligence)
-Internally, each service follows a clean, "Domain-Driven" structure. For instance, the Workspace Intelligence service is organized as:
-*   **`api/`**: FastAPI routes and request validators.
-*   **`core/`**: The "Business Logic."
-    *   `workspace_analyzer.py`: Orchestrates the analysis of multiple repositories.
-    *   `maturity_scorer.py`: Implements the DSOMM calculation logic.
-    *   `security_practice_detector.py`: Detects tools like Snyk or SonarQube in a project.
-*   **`database/`**: SQLAlchemy models and database configuration.
-*   **`github_service_client.py`**: An internal client that abstracts communication with the GitHub Service.
+The WithOps platform follows a microservices-oriented class structure. Key domain classes across services include:
 
-This standardized structure across all nine services ensures that the platform is easy to maintain and that any service can be upgraded or replaced without affecting the rest of the system.
+**Auth Service Domain:**
+
+- `User` — Attributes: user_id, auth0_id, email, name, avatar_url, role, created_at, last_login. Methods: authenticate(), updateProfile(), getRoles().
+- `Session` — Attributes: session_id, user_id, token, expires_at. Methods: validate(), refresh(), revoke().
+
+**GitHub Service Domain:**
+
+- `Organization` — Attributes: org_id, name, github_id, avatar_url, plan_type, repo_count. Methods: fetchRepositories(), syncMetadata().
+- `Repository` — Attributes: repo_id, name, full_name, org_id, language, default_branch, visibility. Methods: getWorkflows(), analyseSecurityPosture().
+- `Workflow` — Attributes: workflow_id, repo_id, name, path, yaml_content, triggers. Methods: parse(), detectVulnerabilities().
+- `GitHubApp` — Attributes: app_id, installation_id, private_key_path. Methods: authenticate(), handleWebhook().
+
+**Threat Modeling Service Domain:**
+
+- `ThreatModel` — Attributes: model_id, name, user_id, org_id, canvas_data, created_at, updated_at. Methods: save(), analyse(), export().
+- `Threat` — Attributes: threat_id, model_id, category, framework, description, severity, mitigations. Methods: classify(), generateMitigations().
+- `Component` — Attributes: component_id, model_id, type, name, position, connections. Methods: identifyThreats(), assessRisk().
+
+**Workspace Intelligence Service Domain:**
+
+- `WorkspaceAssessment` — Attributes: assessment_id, org_id, maturity_score, dimensions, timestamp. Methods: compute(), compare(), track().
+- `DSOMMMatureLevel` — Attributes: dimension, level, indicators, detected_practices. Methods: evaluate(), score().
+
+**AI RAG Service Domain:**
+
+- `Conversation` — Attributes: conversation_id, user_id, org_id, messages, created_at. Methods: addMessage(), getHistory().
+- `VectorEmbedding` — Attributes: embedding_id, content_hash, vector, metadata, collection. Methods: index(), search(), delete().
+
+### 5.3 ER Diagram
+
+The platform uses Supabase PostgreSQL as the primary relational database. The logical data model encompasses the following key entities and relationships:
+
+**Core Entities:**
+
+- **users** (user_id PK, auth0_id UNIQUE, email, name, avatar_url, role, created_at, last_login)
+- **organizations** (org_id PK, github_id, name, avatar_url, plan_type, user_id FK → users)
+- **repositories** (repo_id PK, github_id, name, full_name, org_id FK → organizations, language, default_branch, visibility, security_score)
+- **workflows** (workflow_id PK, repo_id FK → repositories, name, path, yaml_content, trigger_types, last_analysed)
+- **security_findings** (finding_id PK, workflow_id FK → workflows, type, severity, description, remediation, line_number, status)
+- **threat_models** (model_id PK, user_id FK → users, org_id FK → organizations, name, canvas_data JSONB, analysis_results JSONB, created_at, updated_at)
+- **threats** (threat_id PK, model_id FK → threat_models, framework, category, description, severity, mitigations JSONB)
+- **maturity_assessments** (assessment_id PK, org_id FK → organizations, overall_score, build_deployment_level, implementation_level, test_verification_level, information_gathering_level, culture_organization_level, assessed_at)
+- **conversations** (conversation_id PK, user_id FK → users, org_id, title, messages JSONB, created_at, updated_at)
+- **action_audits** (audit_id PK, org_id FK → organizations, action_name, current_version, latest_version, status, workflow_paths JSONB)
+
+**Key Relationships:**
+
+- One User has many Organizations (one-to-many)
+- One Organization has many Repositories (one-to-many)
+- One Repository has many Workflows (one-to-many)
+- One Workflow has many Security Findings (one-to-many)
+- One User has many Threat Models (one-to-many)
+- One Threat Model has many Threats (one-to-many)
+- One Organization has many Maturity Assessments (one-to-many, temporal)
+- One User has many Conversations (one-to-many)
+
+**Figure 5.3 — Database Schema (Supabase PostgreSQL)**
+
+![Supabase Database Schema](../../report-images/supabase-schema-fcmcsbmsntmpeyjltqbi.png)
+
+### 5.4 High-Level Architectural Diagram
+
+The WithOps platform implements a microservices architecture with an event-driven communication backbone. The high-level architecture comprises five layers:
+
+**Layer 1 — Client Layer:**
+SvelteKit 5 frontend application served on port 5173 (development) or port 3000 (containerised). Communicates with the backend exclusively through the Kong API Gateway. Maintains persistent WebSocket connections to the Events Hub for real-time notifications.
+
+**Layer 2 — API Gateway Layer:**
+Kong Gateway (port 9000) serves as the single entry point, providing request routing to appropriate microservices, CORS enforcement, rate limiting (100 requests/minute, 1,000 requests/hour), and request/response transformation. Routes are configured declaratively using `kong.yml`.
+
+**Layer 3 — Microservices Layer:**
+Eight independently deployable FastAPI microservices, each responsible for a specific domain:
+
+| Service                | Port (Internal/External) | Responsibility                                               |
+| ---------------------- | ------------------------ | ------------------------------------------------------------ |
+| Events Hub             | 8000 / 9100              | WebSocket gateway, Redis event bus, real-time notifications  |
+| AI Service             | 8001 / 9101              | AI/ML analysis, PR description generation, threat analysis   |
+| GitHub Service         | 8002 / 9102              | GitHub API integration, webhook handling, repository caching |
+| Threat Modeling        | 8003 / 9103              | STRIDE/CIA/LINDDUN analysis, threat model CRUD               |
+| Workspace Intelligence | 8004 / 9104              | DSOMM maturity scoring, security posture assessment          |
+| Collaboration          | 8105 / 9105              | Multi-user sessions, organisation membership management      |
+| Auth Service           | 8006 / 9106              | Auth0 JWT validation, RBAC, user profile management          |
+| Workflow Orchestration | 8007 / 9107              | CI/CD workflow management, Canvas Builder, security scanning |
+| AI RAG Service         | 8008 / 9108              | Conversational AI, vector search, auto-indexing              |
+
+**Layer 4 — Data Layer:**
+
+- PostgreSQL 15 (Supabase) — Primary relational data store
+- Redis 7 — Caching, pub/sub event bus, and session management
+- Qdrant — Vector database for RAG semantic search embeddings
+
+**Layer 5 — Observability Layer:**
+
+- Prometheus — Metrics collection from all service `/metrics` endpoints
+- Grafana — Visualisation dashboards for system and business metrics
+- Jaeger — Distributed tracing via OpenTelemetry instrumentation
+- Loki — Centralised log aggregation from all containers
+
+_(Figure 5.2 — High-Level Microservices Architecture Diagram should be inserted here)_
+
+### 5.5 Networking Diagram
+
+The platform's network topology is defined through Docker Compose networking with specific considerations for service isolation and external connectivity:
+
+**Internal Network:** All microservices operate within a shared Docker bridge network (`withops-network`), enabling service-to-service communication via container DNS names. Internal ports (8000–8008) are not exposed to the host system, ensuring traffic routes through the Kong gateway.
+
+**External Access Points:**
+
+- Port 5173: Frontend application (SvelteKit)
+- Port 9000: API Gateway (Kong) — all API traffic
+- Port 9001: Kong Admin API (development only)
+- Port 9100–9108: Direct service access (development/debugging only)
+- Port 16379: Redis (development access)
+- Port 3001: Grafana monitoring dashboards
+- Port 16686: Jaeger tracing UI
+- Port 9091: Prometheus metrics
+
+**Kubernetes Production Topology:** Production deployment uses Kubernetes with separate namespace (`withops`), Services for internal load balancing, Ingress controllers for external HTTPS access, and Persistent Volume Claims for PostgreSQL and Qdrant data persistence.
+
+_(Figure 5.4 — Network and Deployment Topology Diagram should be inserted here)_
 
 ---
 
-## Chapter 06: Development Tools and Technologies
+## Chapter 06 — Development Tools and Technologies
 
 ### 6.1 Development Methodology
-The project adopted the **Agile Development Methodology**, specifically the **Scrum** framework. This choice was driven by the inherent complexity and "research-heavy" nature of DevSecOps automation.
-*   **Two-Week Sprints:** Development is divided into 14-day cycles. Each sprint begins with "Sprint Planning," where features (User Stories) are selected from the backlog, and ends with a "Sprint Review" of the functional increment.
-*   **Test-Driven Development (TDD):** For critical services like the YAML parser and the Scorer, a "test-first" approach was used to ensure mathematical accuracy and security integrity.
-*   **CI/CD for WithOps:** The project uses its own principles—every commit to the `main` branch is automatically linted (flake8), statically analyzed, and containerized for deployment, proving the effectiveness of the DevSecOps model.
+
+The WithOps project follows an Agile development methodology integrated with DevOps practices, using structured two-week sprint cycles.
+
+**Sprint Structure:**
+
+- **Week 1:** Feature development, unit testing, and service integration. New microservice features are developed in feature branches following Git feature-branch workflow. Unit tests are written alongside feature code following test-driven development principles.
+- **Week 2:** Integration testing, user acceptance testing, performance optimisation, documentation, and sprint review. Completed features are merged via pull requests with code review.
+- **Continuous Activities:** CI/CD pipeline execution, monitoring review, logging analysis, and feedback collection occur throughout each sprint.
+
+**Version Control:** Development is managed using Git with a feature-branch workflow. All changes go through pull request reviews before merging to the main branch. The repository includes CI/CD workflow definitions (in the `workflow/` directory) that enforce automated testing, security scanning (Gitleaks for secret detection, TruffleHog for PR enforcement), and quality gates.
+
+**Sprint Tracking:** Progress is tracked through regular supervisor meetings, sprint retrospectives, and documented sprint reviews ensuring alignment with academic timelines and project objectives.
 
 ### 6.2 Programming Languages and Tools
-Each technology in the stack was selected based on performance, developer productivity, and industry adoption.
-*   **Python 3.11 with FastAPI:** Selected as the primary backend language. Python's rich ecosystem for AI (LangChain, OpenAI SDK) and FastAPI's native support for asynchronous I/O make it the ideal choice for a multi-service AI platform.
-*   **SvelteKit 2 and Svelte 5:** For the frontend, I chose SvelteKit over React or Next.js. Svelte's "compile-time" approach results in smaller bundle sizes and superior performance, specifically for the complex, state-heavy interactive canvas used for threat modeling.
-*   **Tailwind CSS 4:** Used for the design system. Its utility-first approach allows for rapid styling while maintaining a consistent "Matte Engineering" aesthetic across the entire platform.
-*   **Kong Gateway:** Serving as the API Gateway, Kong handles the cross-cutting concerns of authentication and rate limiting, allowing the microservices to stay "clean" and focused only on their specific business logic.
+
+| Category                | Technology                | Justification                                                                                                                                               |
+| ----------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend Language       | JavaScript (ES2022+)      | Universal browser support, extensive ecosystem, team proficiency                                                                                            |
+| Frontend Framework      | SvelteKit 2 with Svelte 5 | Superior performance through compile-time optimisation, smaller bundle sizes than React/Vue, reactive programming via Runes API ($state, $derived, $effect) |
+| UI Styling              | Tailwind CSS 4            | Utility-first CSS enabling rapid, consistent UI development without custom stylesheet management                                                            |
+| Build Tool              | Vite 6.2.6                | Fastest development server with hot module replacement, optimised production builds                                                                         |
+| Backend Language        | Python 3.11+              | Extensive AI/ML library ecosystem, strong async support, team proficiency                                                                                   |
+| Backend Framework       | FastAPI 0.104.1           | Highest-performance Python web framework, native async/await support, automatic OpenAPI documentation                                                       |
+| Database                | PostgreSQL 15 (Supabase)  | Enterprise-grade relational database with JSONB support for flexible schema storage                                                                         |
+| Cache / Event Bus       | Redis 7                   | Sub-millisecond latency, pub/sub messaging for event-driven architecture, session management                                                                |
+| Vector Database         | Qdrant 1.7+               | Purpose-built for vector similarity search, essential for RAG implementation                                                                                |
+| API Gateway             | Kong 3.x                  | Production-proven gateway with declarative configuration, rate limiting, and CORS management                                                                |
+| Containerisation        | Docker + Docker Compose   | Ensures consistent environments across development and production                                                                                           |
+| Container Orchestration | Kubernetes                | Production deployment with horizontal pod autoscaling and rolling updates                                                                                   |
+| IDE                     | Visual Studio Code        | Extensive extension ecosystem, integrated terminal, Git support                                                                                             |
 
 ### 6.3 Third-Party Components and Libraries
-*   **SQLAlchemy 2.0:** The industry-standard ORM for Python, providing a safe and efficient way to interact with PostgreSQL.
-*   **Pydantic:** Used throughout the backend for strict data validation and schema definition, ensuring that no malformed data enters the system.
-*   **D3.js:** A powerful data visualization library used for rendering the complex repository trees and maturity score timelines in the dashboard.
-*   **LangChain:** A framework for building LLM-powered applications, used in the RAG service to manage document indexing and AI prompt templates.
+
+**Frontend Libraries:**
+
+| Library                 | Version | Purpose                                                        |
+| ----------------------- | ------- | -------------------------------------------------------------- |
+| @auth0/auth0-spa-js     | Latest  | Authentication and authorisation via Auth0                     |
+| d3                      | 7.x     | Data visualisation for security dashboards and maturity graphs |
+| three.js                | Latest  | 3D visualisation components                                    |
+| yjs                     | Latest  | CRDT-based real-time collaboration protocol                    |
+| y-websocket             | Latest  | WebSocket provider for Yjs collaborative editing               |
+| lottie-web              | Latest  | Animated micro-interactions and loading states                 |
+| @liveblocks/client      | Latest  | Real-time cursor presence and collaboration layer              |
+| @tailwindcss/forms      | Latest  | Form styling plugin for Tailwind                               |
+| @tailwindcss/typography | Latest  | Prose styling for documentation content                        |
+
+**Backend Libraries:**
+
+| Library             | Purpose                                                    |
+| ------------------- | ---------------------------------------------------------- |
+| uvicorn             | ASGI server for FastAPI applications                       |
+| httpx               | Async HTTP client for inter-service communication          |
+| redis[asyncio]      | Async Redis client with pub/sub support                    |
+| SQLAlchemy 2.0      | Async ORM for PostgreSQL database interaction              |
+| asyncpg             | High-performance async PostgreSQL driver                   |
+| alembic             | Database schema migration management                       |
+| anthropic           | Anthropic Claude API client for AI analysis                |
+| groq                | Groq API client for Llama 3 inference                      |
+| ollama              | Ollama API client for local LLM inference                  |
+| qdrant-client       | Vector database client for RAG embeddings                  |
+| python-jose         | JWT token validation and creation                          |
+| PyJWT               | GitHub App JWT authentication                              |
+| cryptography        | Cryptographic operations for GitHub webhook verification   |
+| tenacity            | Retry logic for resilient service-to-service calls         |
+| prometheus-client   | Prometheus metrics instrumentation                         |
+| opentelemetry-\*    | Distributed tracing instrumentation                        |
+| PyPDF2, python-docx | Document processing for threat model analysis              |
+| bandit              | Python security static analysis for workflow orchestration |
+| pydantic-settings   | Type-safe configuration management                         |
 
 ### 6.4 Algorithms
-Beyond simple logic, WithOps implements several specialized algorithms:
-*   **YAML AST Traversal:** Instead of simple regex, the system uses an Abstract Syntax Tree (AST) parser (`ruamel.yaml`) to "understand" the structure of GitHub Actions. This allows us to detect subtle vulnerabilities, like a variable being used in an insecure way several lines below its definition.
-*   **Weighted Maturity Scoring:** The system implements a hierarchical scoring algorithm where different security practices are given different weights based on their relative importance in the DSOMM model. For instance, "Automated Security Scanning" has a higher weight than "Manual Security Documentation."
-*   **Cosine Similarity for RAG:** To find matching security advice, the system calculates the "Cosine Similarity" between a user's problem and thousands of vector-indexed security documents, ensuring that the AI has the most relevant context before generating an answer.
+
+The WithOps platform implements several domain-specific algorithms:
+
+**YAML AST Traversal for Vulnerability Detection:** GitHub Actions workflow YAML files are parsed into Abstract Syntax Trees and traversed to detect security vulnerability patterns. The traversal examines action reference syntax (detecting unpinned vs SHA-pinned references), permission scope declarations, trigger configurations, and environment variable usage patterns.
+
+**Entropy-Based Secret Detection:** A Shannon entropy calculation algorithm identifies potential hardcoded secrets within workflow files. Strings exceeding configurable entropy thresholds (typically >4.5 bits per character for hexadecimal, >5.0 for base64) are flagged as potential credentials. This is complemented by 150+ regex patterns matching known secret formats (AWS keys, GitHub tokens, API keys).
+
+**Semantic Version Comparison:** An algorithm compares detected action versions against latest available releases from the GitHub Marketplace. It implements semantic versioning comparison (major.minor.patch) to classify findings as "Up to Date," "Minor Update Available," "Major Upgrade Needed," or "Outdated," enabling the Action Audit feature.
+
+**Weighted DSOMM Maturity Scoring:** A multi-dimensional scoring algorithm evaluates repository security practices against the five DSOMM dimensions. Each dimension receives a level (L0–L4) based on detected practice indicators. The overall maturity score is computed as a weighted average, with configurable weights reflecting organisational priorities. The algorithm detects practices including SAST integration, SCA scanning, secret scanning configuration, branch protection rules, and CI/CD pipeline security controls.
+
+**Retrieval-Augmented Generation (RAG):** The RAG pipeline follows a three-stage process: (1) Document chunking and embedding generation using Ollama's embedding models, storing vectors in Qdrant collections; (2) Semantic similarity search using cosine distance to retrieve relevant context chunks for user queries; (3) Context-augmented prompt construction, combining retrieved context with user queries for Claude API inference, producing contextually accurate responses.
+
+**AI-Assisted Threat Identification:** Visual diagram analysis uses Claude's vision capabilities to identify system components, data flows, and trust boundaries from canvas drawings. The identified architecture is then analysed against STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), CIA (Confidentiality, Integrity, Availability), and LINDDUN (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure of information, Unawareness, Non-compliance) frameworks to generate comprehensive threat catalogues.
 
 ---
 
-## Chapter 07: Implementation Progress
+## Chapter 07 — Implementation Progress
 
 ### 7.1 Development Environment Setup
-To manage the complexity of nine microservices, I implemented a fully containerized development environment using **Docker Compose.** This ensures "Environment Parity"—the code that runs on my local machine is guaranteed to behave identically when deployed to the cloud.
 
-The setup includes:
-*   **Local Networking:** A private virtual network where each service is reachable by its name (e.g., `http://ai-service:8101`).
-*   **Hot Reloading:** Development volumes are mounted into the containers, allowing for immediate feedback as code is written.
-*   **Infrastructure-as-Code:** The entire development environment is defined in a single `docker-compose.yml` file, versioned in Git along with the source code.
+The development environment has been fully established to support the microservices-based architecture:
+
+**IDE and Version Control:** Visual Studio Code is used as the primary development environment with extensions for Python, Svelte, ESLint, Tailwind CSS IntelliSense, and Docker. Git is used for version control with a feature-branch workflow, and the repository is hosted on GitHub.
+
+**Containerisation:** Docker Desktop with Docker Compose v2 manages all 16+ containers in the development environment. A comprehensive `docker-compose.yml` orchestrates all microservices, infrastructure services (Redis, Qdrant, Ollama), the Kong API gateway, and the complete observability stack (Prometheus, Grafana, Jaeger, Loki).
+
+**Backend Environment:** Python 3.11+ virtual environments are configured for each microservice with dedicated `requirements.txt` files. Each service runs its own FastAPI application with uvicorn ASGI server, hot-reload enabled for development.
+
+**Frontend Environment:** Node.js 20 LTS with npm manages frontend dependencies. Vite 6 provides the development server with hot module replacement. The SvelteKit application is configured with adapter-node for production containerisation.
+
+**Database Environment:** Supabase cloud-hosted PostgreSQL serves as the primary database, accessed via SQLAlchemy 2.0 with asyncpg driver. Alembic manages database migrations per service. Redis 7 runs as a Docker container for caching and event messaging.
+
+**AI Environment:** Ollama runs locally in a Docker container with model auto-initialisation via shell script. Anthropic Claude and Groq API keys are configured via environment variables for cloud AI inference.
+
+**Observability:** Prometheus is configured to scrape all microservice `/metrics` endpoints. Grafana dashboards provide system monitoring. Jaeger receives distributed traces via OpenTelemetry. Loki aggregates container logs.
 
 ### 7.2 Implemented Features
-As of this interim stage, the foundational infrastructure and core services are complete:
-*   **Service Matrix:** All 9 microservices have been successfully extracted from the initial monolith, containerized, and are communicating via the Event Bus.
-*   **Platform Dashboard:** The core SvelteKit application is running, featuring a comprehensive "Documentation Portal" that explains the architecture to users.
-*   **Real-time Intelligence:** The Events Hub is fully operational, successfully broadcasting real-time "Health" and "Scan" updates from the backend to the frontend via WebSockets.
-*   **Identity Foundation:** Auth0 integration is established, allowing for secure user sign-up and login using JWT tokens.
-*   **Observability Stack:** Prometheus and Grafana are built-in, providing live metrics for request volume and service latency.
 
-### 7.3 Code Snippets and Analysis
-Two key implementations highlight the technical progress of the project.
+The following features have been fully implemented and are operational:
 
-**7.3.1 The Events Hub Listeners**
-The following snippet from `main.py` in the backend shows how the Real-time service coordinates information across the entire system using non-blocking asynchronous tasks:
+| Feature                      | Status   | Description                                                                                                |
+| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| Auth0 Authentication         | Complete | OAuth 2.0 + PKCE login flow with JWT validation, session management, and RBAC                              |
+| GitHub OAuth Integration     | Complete | OAuth App authentication flow for accessing user organisations and repositories                            |
+| GitHub App Integration       | Complete | GitHub App installation flow with per-repository permissions and webhook events                            |
+| Repository Discovery         | Complete | Organisation and repository listing with metadata, language detection, and caching                         |
+| Workflow Security Analysis   | Complete | YAML parsing and vulnerability detection for 25+ patterns across GitHub Actions workflows                  |
+| DSOMM Maturity Assessment    | Complete | Automated maturity scoring across all five DSOMM dimensions (L0–L4)                                        |
+| Threat Modeling Canvas       | Complete | Interactive visual canvas with multi-framework (STRIDE/CIA/LINDDUN) AI analysis                            |
+| Real-Time Collaboration      | Complete | Multi-user cursor presence and shape sharing via Yjs and Liveblocks                                        |
+| AI RAG Conversational System | Complete | Context-aware AI chat with vector-based semantic retrieval from Qdrant                                     |
+| Action Audit                 | Complete | Organisation-wide GitHub Actions version governance with automated PR remediation                          |
+| Canvas Builder               | Complete | Visual CI/CD pipeline editor with YAML generation and PR creation                                          |
+| WebSocket Real-Time Events   | Complete | Live notification system via Events Hub with Redis pub/sub backbone                                        |
+| Kong API Gateway             | Complete | Declarative routing, CORS, rate limiting for all microservices                                             |
+| Observability Stack          | Complete | Full Prometheus + Grafana + Jaeger + Loki integration across all services                                  |
+| In-App Documentation         | Complete | Comprehensive docs section with getting started guides, feature docs, API reference, and deployment guides |
+| Repository Tree View         | Complete | File tree browser for connected repositories                                                               |
+| Webhook Event Processing     | Complete | GitHub push, PR, and workflow run event handling with HMAC verification                                    |
+
+### 7.3 Screenshots / Code Snippets
+
+**Microservice Health Check Pattern (Implemented Across All Services):**
+
+Each microservice implements a standardised health endpoint and Prometheus metrics middleware:
 
 ```python
-# From backend/main.py
-async def listen_github_events():
-    """Listen to Redis channel and forward to WebSockets"""
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe("github_events")
-    
-    async for message in pubsub.listen():
-        if message["type"] == "message":
-            data = json.loads(message["data"])
-            # Create a localized WebSocket notification
-            notification = {
-                "event": f"github.{data.get('type')}",
-                "org_name": data.get("org_name"),
-                "data": data.get("data")
-            }
-            # Broadcast to all connected clients
-            await websocket_manager.broadcast(notification)
-```
-**Analysis:** This code is critical for the "User Experience" requirement. By using Redis Pub/Sub, we move from a "pull" model (where the browser asks for updates) to a "push" model (where the server notifies the browser). This provides the "live" feel required for a modern enterprise platform.
+from fastapi import FastAPI
+from prometheus_client import Counter, Histogram, generate_latest
 
-**7.3.2 The Microservice Lifespan Pattern**
-Every WithOps service follows a "Lifespan" pattern, ensuring clean resource management:
-```python
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Setup Connections
-    await cache.connect()
-    await event_bus.connect()
-    
-    yield # Service logic runs here
-    
-    # Graceful Shutdown
-    await event_bus.disconnect()
-    await cache.disconnect()
+app = FastAPI(title="WithOps AI Service", version="2.0.0")
+
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency'
+)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "ai-service", "version": "2.0.0"}
+
+@app.get("/metrics")
+async def metrics():
+    return Response(generate_latest(), media_type="text/plain")
 ```
-**Analysis:** This demonstrates the high technical quality of the implementation. By handling startup and shutdown gracefully, we prevent "zombie" connections to the database or Redis, ensuring the system remains stable over thousands of requests.
+
+**Redis Event Bus Communication Pattern:**
+
+```python
+import redis.asyncio as redis
+
+class EventBus:
+    def __init__(self, redis_url: str):
+        self.redis = redis.from_url(redis_url)
+
+    async def publish(self, channel: str, event: dict):
+        await self.redis.publish(channel, json.dumps(event))
+
+    async def subscribe(self, channel: str, callback):
+        pubsub = self.redis.pubsub()
+        await pubsub.subscribe(channel)
+        async for message in pubsub.listen():
+            if message['type'] == 'message':
+                await callback(json.loads(message['data']))
+```
+
+**Kong API Gateway Declarative Route Configuration:**
+
+```yaml
+services:
+  - name: ai-service
+    url: http://ai-service:8001
+    routes:
+      - name: ai-route
+        paths: ["/api/ai"]
+        strip_path: true
+  - name: github-service
+    url: http://github-service:8002
+    routes:
+      - name: github-route
+        paths: ["/api/github"]
+        strip_path: true
+```
+
+**SvelteKit Frontend — Auth0 Integration:**
+
+```javascript
+import { createAuth0Client } from "@auth0/auth0-spa-js";
+
+const auth0Client = await createAuth0Client({
+  domain: import.meta.env.VITE_AUTH0_DOMAIN,
+  clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+  authorizationParams: {
+    redirect_uri: window.location.origin + "/callback",
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+  },
+});
+```
+
+**Figure 7.1 — Landing Page**
+
+![Landing Page](../../report-images/Screenshot%202026-03-01%20190024.png)
+
+**Figure 7.2 — Platform Overview Page**
+
+![Overview Page](../../report-images/Screenshot%202026-03-01%20190216.png)
+
+**Figure 7.3 — Auth0 Login Page**
+
+![Login Page](../../report-images/Screenshot%202026-03-01%20190316.png)
+
+**Figure 7.4 — Workspace Dashboard**
+
+![Workspace Dashboard](../../report-images/Screenshot%202026-03-01%20190716.png)
 
 ### 7.4 Challenges Encountered and Solutions
-*   **Challenge: The GitHub API Rate Limit Proxy.** Initially, multiple services were calling the GitHub API independently, leading to "429 Too Many Requests" errors. **Solution:** I implemented a centralized `github-service` that acts as an intelligent proxy with a built-in Redis cache (24-hour TTL), reducing the number of external API calls by over 70%.
-*   **Challenge: Real-time UI Sync with Svelte 5.** Managing the real-time state of 100+ repositories in the browser was challenging. **Solution:** I leveraged the new "Runes" system in Svelte 5 (`$state`, `$derived`), which allowed for high-performance reactive updates without the overhead of traditional state management libraries like Redux.
-*   **Challenge: AI Reasoning Latency.** AI-based analysis for a large architecture can take 10-30 seconds, which feels like a "hang" to users. **Solution:** I implemented "Asynchronous Analysis"—when a user starts a model, the system returns a `task_id` immediately, and the UI shows a progress bar while listening for the `analysis.completed` event on the WebSocket.
+
+**Challenge 1: Windows Port Conflicts**
+Several default port numbers (8000–8008) conflicted with Windows reserved ports and other development tools. This caused service startup failures and intermittent connectivity issues during development.
+
+**Solution:** All external port mappings were shifted to the 9100–9108 range in the Docker Compose configuration while maintaining internal ports unchanged. This resolved conflicts without requiring any code changes in the microservices themselves.
+
+**Challenge 2: GitHub API Rate Limiting**
+GitHub enforces a rate limit of 5,000 authenticated requests per hour. During organisation-wide analyses involving many repositories and workflow files, the platform frequently exhausted rate limits, causing analysis failures.
+
+**Solution:** A multi-layered caching strategy was implemented using Redis with 24-hour TTL for repository metadata and organisation data. Intelligent request batching reduces API calls by grouping related queries. Exponential backoff retry logic (via the tenacity library) handles transient rate limit responses gracefully. A background worker (`github-service-worker`) performs incremental data refresh asynchronously.
+
+**Challenge 3: Inter-Service Communication Reliability**
+In a microservices architecture, service-to-service HTTP calls occasionally fail due to container startup ordering, transient network issues, or service restarts during development.
+
+**Solution:** The tenacity library was integrated across all services for retry logic with exponential backoff. Docker Compose health checks with `depends_on` conditions ensure proper startup ordering. The Redis event bus provides asynchronous decoupled communication for non-critical operations, reducing the impact of temporary service unavailability.
+
+**Challenge 4: Real-Time Collaboration Synchronisation**
+Implementing real-time multi-user threat modelling with consistent state across clients presented challenges with conflict resolution and cursor presence tracking.
+
+**Solution:** Yjs CRDT (Conflict-Free Replicated Data Types) was adopted as the synchronisation protocol, providing automatic conflict resolution for concurrent edits. Liveblocks provides cursor presence tracking with minimal latency. The combination ensures consistent state across all connected clients without manual conflict resolution.
+
+**Challenge 5: AI Response Quality and Latency**
+AI-generated threat analyses sometimes produced generic or irrelevant results, and response latency varied significantly between AI providers.
+
+**Solution:** The RAG system was implemented through the AI RAG Service, indexing workspace analysis data as vector embeddings in Qdrant. This enables context-augmented AI responses grounded in actual repository security data rather than generic knowledge. The multi-provider architecture (Ollama, Claude, Groq) allows routing requests to the most appropriate provider based on latency requirements and task complexity.
 
 ### 7.5 Current System Limitations
-While the infrastructure is robust, certain features are still in the implementation phase:
-*   **Remediation PR Generation:** Currently, the system can detect vulnerabilities and show the "Proposed Fix," but the automated creation of the Pull Request on GitHub is still under development.
-*   **Vision-Based Diagram Complexity:** The AI vision engine currently works well for simple boxes and arrows but occasionally struggles with complex, overlapping architecture diagrams. Improving the "OCR plus Logic" layer of the canvas is a priority for the next phase.
+
+The platform currently has the following known limitations:
+
+- **GitHub-Only Support:** The platform exclusively analyses GitHub Actions workflows. GitLab CI, Jenkins, Azure DevOps, and other CI/CD platforms are not supported in the current version.
+
+- **Static Analysis Only:** Workflow analysis is performed statically on YAML configuration files. Runtime behaviour monitoring during actual workflow execution is not implemented.
+
+- **Single-Organisation Context:** The AI RAG system currently maintains conversation context within a single organisation scope. Cross-organisation knowledge transfer is not supported.
+
+- **Limited Mobile Responsiveness:** While the documentation section is responsive, the threat modelling canvas and Canvas Builder features are optimised for desktop screen resolutions (1280px+ width) and may have limited usability on mobile devices.
+
+- **Ollama Model Dependency:** Local AI inference requires downloading large language models (several GB), which may be impractical in resource-constrained environments. Cloud AI providers can be used as alternatives but introduce external API dependencies.
+
+- **Manual Kubernetes Deployment:** While Kubernetes manifests are provided, automated cluster provisioning and CI/CD-driven deployment pipelines for the platform itself are not fully implemented.
+
+- **Limited Automated Testing Coverage:** While the testing framework (Vitest for frontend, pytest for backend) is configured, comprehensive test coverage across all microservices has not reached the target 80% threshold.
 
 ---
 
-## Chapter 08: Discussion
+## Chapter 08 — Discussion
 
-### 8.1 Summary of the Report
-This interim report has documented the development of the **WithOps Platform**, an intelligent DevSecOps solution for securing CI/CD pipelines. We have identified the critical gap in current security methodologies regarding workflow infrastructure and explored how a microservices-based, AI-powered platform can address this. We have successfully established a production-grade infrastructure, complete with nine specialized services, real-time event streaming, and a comprehensive observability stack. The feasibility of the project—operationally, economically, and technically—has been proven through the successful implementation of the platform's core foundation.
+### Summary of the Report
 
-### 8.2 Changes from the Proposal
-The project has evolved since the initial proposal in two significant ways:
-1.  **Increased Service Density:** The proposal originally envisioned 8 services. This was expanded to 9 with the addition of a dedicated **AI RAG Service**, reflecting the project's increased focus on providing context-aware security intelligence using vector databases.
-2.  **Focus on "Maturity Modeling":** While the proposal was primarily a workflow scanner, the implementation has moved toward a more holistic "Maturity Ecosystem." This shift was based on my research during the System Analysis phase, which revealed that organizations need more than just "bugs"—they need a structured way to measure and improve their overall DevSecOps culture (DSOMM).
+This interim report presents the current state of the WithOps DevSecOps Intelligence Platform — a comprehensive system designed to address critical gaps in CI/CD workflow security analysis, DevSecOps maturity assessment, and automated threat modelling. The platform implements a production-grade microservices architecture comprising eight independently deployable FastAPI services, a SvelteKit 5 frontend application, and a full observability stack, all orchestrated through Docker Compose and deployable on Kubernetes.
 
-### 8.3 Future Plans / Upcoming Work
-The trajectory for the remainder of the academic year is focused on the "Intelligence" and "Remediation" layers of the platform:
-*   **Phase 1: Finalizing the AI Reasoning Engine.** Completing the integration of the RAG service with the main scanning logic to provide expert-level remediation advice.
-*   **Phase 2: The Interactive Threat Canvas.** implementing the full drag-and-drop builder with real-time feedback loops.
-*   **Phase 3: Large-Scale Evaluation.** Testing WithOps against a curated dataset of 1,000+ real-world GitHub repositories to benchmark its detection accuracy and false-positive rates.
-*   **Phase 4: Compliance Reporting.** Developing the automated PDF generation engine for DSOMM compliance reports, suitable for presentation to engineering leadership and external auditors.
+The report has demonstrated that the project is technically feasible, economically viable, and operationally sound. All core features identified in the project objectives have been implemented to a functional state, including GitHub workflow security analysis detecting 25+ vulnerability patterns, automated DSOMM maturity assessment across five dimensions, an AI-powered threat modelling canvas with STRIDE/CIA/LINDDUN framework support, a RAG-based conversational AI system, an Action Audit supply chain governance module, and a visual Canvas Builder for CI/CD pipeline engineering.
 
-By the final submission, WithOps will stand as a comprehensive, production-ready evidence of how modern technologies like AI and Microservices can be combined to solve one of the most pressing challenges in contemporary software engineering: securing the automated pipelines that deliver our digital world.
+### What Has Changed from the Proposal
+
+Several refinements have been made to the original Project Initiation Document based on practical implementation experience:
+
+- **Architecture Evolution:** The backend component originally served as both a REST API and event coordinator. It has been refactored into a dedicated Events Hub focused exclusively on WebSocket gateway and Redis event bus coordination, with all REST APIs distributed to dedicated microservices. This improves separation of concerns and scalability.
+
+- **Port Configuration:** External port mappings were shifted from the 8000–8008 range to 9100–9108 to avoid Windows reserved port conflicts — a practical consideration not anticipated in the initial design.
+
+- **AI Provider Strategy:** The original proposal focused primarily on Claude and Ollama. Groq (Meta Llama 3) has been added as a third AI provider, enabling faster inference for latency-sensitive operations and reducing dependency on any single provider.
+
+- **Collaboration Technology:** Real-time collaboration was enhanced beyond the original scope by integrating both Yjs (CRDT-based synchronisation) and Liveblocks (cursor presence), rather than relying on a single collaboration framework.
+
+- **Frontend Framework Version:** The frontend has been built with SvelteKit 2 and Svelte 5 (Runes API), representing a more modern approach than originally planned, leveraging compile-time reactivity through $state, $derived, and $effect primitives.
+
+### Future Plans / Upcoming Work
+
+The remaining development phase will focus on the following priorities:
+
+1. **Comprehensive Testing:** Achieving the target 80%+ test coverage across all microservices with unit, integration, and end-to-end tests using Vitest and pytest. Playwright end-to-end tests for critical user flows.
+
+2. **Performance Optimisation:** Load testing and optimisation of API response times, particularly for organisation-wide analysis operations. Implementation of database query optimisation and enhanced caching strategies.
+
+3. **Security Hardening:** Final security audit of the platform itself, ensuring OWASP Top 10 prevention measures are in place, dependency vulnerability scanning, and penetration testing of the API gateway configuration.
+
+4. **User Evaluation:** Conducting structured usability testing with target users to measure Task Completion Rate and System Usability Scale (SUS) scores. Collecting feedback through surveys and interviews to validate the platform's effectiveness.
+
+5. **Compliance Report Generation:** Implementing exportable compliance reports summarising DSOMM maturity scores, security findings, and remediation history in formats suitable for regulatory audit submissions.
+
+6. **Documentation Completion:** Finalising API documentation, deployment guides for production Kubernetes environments, and user training materials.
 
 ---
 
 ## References
-*   Ayala, C. and Garcia, J. (2023) *An empirical study of security practices in GitHub repositories*, arXiv:2305.16120.
-*   OWASP Foundation (2024) *DevSecOps Maturity Model (DSOMM)*. Available at: [https://owasp.org/www-project-devsecops-maturity-model/](https://owasp.org/www-project-devsecops-maturity-model/)
-*   Pan, X., Liu, Y., Zhang, Y. and Wang, X. (2024) *CI/CD under the hood: Vulnerabilities and threats in modern pipelines*, arXiv:2401.17606.
-*   Saroar, M. and Nayebi, M. (2023) *Practitioners’ perceptions of GitHub Actions and workflow automation*, arXiv:2303.04084.
-*   Unit42 (2025) *GitHub Actions supply chain attack analysis: tj-actions/changed-files compromise*. Palo Alto Networks.
-*   Shevchenko, N. et al. (2018) *Threat Modeling: A Summary of Available Methods*. CMU/SEI-2018-TR-001.
-*   Yılmaz, O. and Gönen, B. (2023) *Harnessing Large Language Models for automated threat modeling*.
+
+- Ayala, C. and Garcia, J. (2023) _An empirical study of security practices in GitHub repositories_, arXiv preprint arXiv:2305.16120. Available at: https://arxiv.org/abs/2305.16120 (Accessed: 3 January 2026).
+
+- IBM Security (2023) _Cost of a Data Breach Report 2023_. IBM Corporation. Available at: https://www.ibm.com/reports/data-breach (Accessed: 15 January 2026).
+
+- Jit (2024) _From DSOMM theory to practical enforcement: A DevSecOps journey_. Available at: https://www.jit.io/resources/devsecops/from-dsomm-theory-to-practical-enforcement-a-devsecops-journey (Accessed: 3 January 2026).
+
+- OWASP Foundation (2024) _DevSecOps Maturity Model (DSOMM)_. Available at: https://owasp.org/www-project-devsecops-maturity-model/ (Accessed: 3 January 2026).
+
+- Pan, X., Liu, Y., Zhang, Y. and Wang, X. (2024) _CI/CD under the hood: Vulnerabilities and threats in modern pipelines_, arXiv preprint arXiv:2401.17606. Available at: https://arxiv.org/abs/2401.17606 (Accessed: 3 January 2026).
+
+- Saroar, M. and Nayebi, M. (2023) _Practitioners' perceptions of GitHub Actions and workflow automation_, arXiv preprint arXiv:2303.04084. Available at: https://arxiv.org/abs/2303.04084 (Accessed: 3 January 2026).
+
+- Shevchenko, N., Chick, T.A., O'Riordan, P., Scanlon, T.P. and Woody, C. (2018) _Threat Modeling: A Summary of Available Methods_. Technical Report CMU/SEI-2018-TR-001. Software Engineering Institute, Carnegie Mellon University.
+
+- Unit42 (2025) _GitHub Actions supply chain attack analysis: tj-actions/changed-files compromise_. Palo Alto Networks Unit 42. Available at: https://unit42.paloaltonetworks.com/github-actions-supply-chain-attack/ (Accessed: 3 January 2026).
+
+- Yampolskiy, M., King, W.E., Gatlin, J., Belikovetsky, S., Brown, A., Skjellum, A. and Elovici, Y. (2022) _Security of additive manufacturing: Attack taxonomy and survey_, Additive Manufacturing, 21, pp.431-457.
+
+---
+
+## Appendices
+
+### Appendix A — Microservices Port Mapping
+
+| Service                | Internal Port | External Port | Kong Route                       |
+| ---------------------- | :-----------: | :-----------: | -------------------------------- |
+| Kong Gateway           |     8000      |     9000      | — (Entry Point)                  |
+| Events Hub             |     8000      |     9100      | /api/events/\*                   |
+| AI Service             |     8001      |     9101      | /api/ai/\*                       |
+| GitHub Service         |     8002      |     9102      | /api/github/\*                   |
+| Threat Modeling        |     8003      |     9103      | /api/threat-modeling/\*          |
+| Workspace Intelligence |     8004      |     9104      | /api/workspace-intelligence/\*   |
+| Collaboration          |     8105      |     9105      | /api/collaboration/\*            |
+| Auth Service           |     8006      |     9106      | /api/auth/\*                     |
+| Workflow Orchestration |     8007      |     9107      | /api/workflows/_, /api/canvas/_  |
+| AI RAG Service         |     8008      |     9108      | /api/rag/_, /api/conversations/_ |
+| Frontend               |     3000      |     5173      | — (Direct Access)                |
+| Redis                  |     6379      |     16379     | — (Internal)                     |
+| Ollama                 |     11434     |     11434     | — (Internal)                     |
+| Qdrant                 |   6333/6334   |   6333/6334   | — (Internal)                     |
+| Prometheus             |     9090      |     9091      | — (Monitoring)                   |
+| Grafana                |     3000      |     3001      | — (Monitoring)                   |
+| Jaeger                 |     16686     |     16686     | — (Monitoring)                   |
+| Loki                   |     3100      |     3100      | — (Monitoring)                   |
+
+### Appendix B — Docker Compose Service Definitions
+
+The complete Docker Compose configuration orchestrates 16+ containers with service dependency management, health checks, volume mounts, and network configuration. The production Docker Compose variant (`docker-compose.prod.yml`) provides optimised configurations for deployment environments.
+
+### Appendix C — CI/CD Workflow Configurations
+
+The project repository includes the following CI/CD workflow definitions:
+
+- **ci-caller.yml** — Triggers the reusable CI pipeline on push to main branch
+- **reusable-ci.yml** — Reusable workflow with checkout, Node.js setup, install, test, and build stages
+- **test.yml** — Basic CI pipeline for push and PR events
+- **gitleaks.yaml** — Organisation-wide secret scanning across all repositories
+- **trufflehog.yaml** — PR enforcement with JIRA ticket validation
