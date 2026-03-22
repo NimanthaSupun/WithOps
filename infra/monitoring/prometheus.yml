@@ -100,3 +100,11 @@ scrape_configs:
       - targets: ["localhost:9090"]
         labels:
           service: "prometheus"
+
+  # FastAPI K8s App (DevOps Assignment)
+  - job_name: "fastapi-k8s"
+    static_configs:
+      - targets: ["host.docker.internal:80"]
+        labels:
+          service: "fastapi-k8s"
+    metrics_path: "/metrics"

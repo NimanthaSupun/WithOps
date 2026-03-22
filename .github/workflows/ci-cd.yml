@@ -1,0 +1,227 @@
+name: CI/CD Pipeline
+
+# ============================================================
+# Trigger: every push to the main branch + manual dispatch
+# ============================================================
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # e.g.  ghcr.io/your-org/your-repo/frontend:latest
+  IMAGE_REPO: ${{ github.repository }}
+
+# ============================================================
+# JOBS
+# ============================================================
+jobs:
+
+  # ----------------------------------------------------------
+  # 1. SECRET SCANNING
+  #    Scan the full git history for leaked credentials.
+  # ----------------------------------------------------------
+  secret-scan:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0   # Full history required by Gitleaks
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ----------------------------------------------------------
+  # 2. FRONTEND CI
+  #    Lint, unit-test and validate the SvelteKit frontend.
+  # ----------------------------------------------------------
+  frontend-ci:
+    name: Frontend CI (SvelteKit / Node 20)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Required for vitest browser-mode tests (uses Playwright under the hood)
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint (Prettier + ESLint)
+        run: npm run lint
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+  # ----------------------------------------------------------
+  # 3. BACKEND & SERVICES CI
+  #    Install dependencies and lint each Python service with
+  #    Ruff.  Uses a matrix so all 9 services run in parallel.
+  # ----------------------------------------------------------
+  backend-ci:
+    name: Python CI — ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: backend,                        path: backend }
+          - { name: ai-service,                     path: services/ai-service }
+          - { name: ai-rag-service,                 path: services/ai-rag-service }
+          - { name: auth-service,                   path: services/auth-service }
+          - { name: collaboration-service,          path: services/collaboration-service }
+          - { name: github-service,                 path: services/github-service }
+          - { name: threat-modeling-service,        path: services/threat-modeling-service }
+          - { name: workflow-orchestration-service, path: services/workflow-orchestration-service }
+          - { name: workspace-intelligence-service, path: services/workspace-intelligence-service }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ${{ matrix.service.path }}/requirements.txt
+
+      - name: Install service dependencies
+        run: pip install --no-cache-dir -r ${{ matrix.service.path }}/requirements.txt
+
+      - name: Install Ruff linter
+        run: pip install ruff==0.3.0
+
+      - name: Lint with Ruff
+        # E501 = line-too-long; suppress until codebase is formatted
+        run: ruff check ${{ matrix.service.path }}/ --ignore E501
+
+  # ----------------------------------------------------------
+  # 4. BUILD & PUSH DOCKER IMAGES
+  #    All images are published to GitHub Container Registry
+  #    (GHCR) only after every CI gate passes.
+  #
+  #    Tags produced per image:
+  #      sha-<short-sha>   – immutable build identifier
+  #      latest            – always points to the most recent
+  #                          successful main-branch build
+  #
+  #    Required repository secrets:
+  #      GITHUB_APP_PRIVATE_KEY  – PEM content of your GitHub
+  #        App private key (used by backend + github-service).
+  #        If absent, a throw-away key is generated so the
+  #        Docker build succeeds (DO NOT use in production).
+  # ----------------------------------------------------------
+  build-and-push:
+    name: Docker — ${{ matrix.service.name }}
+    needs: [secret-scan, frontend-ci, backend-ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: frontend,                        dockerfile: frontend/Dockerfile }
+          - { name: backend,                         dockerfile: backend/Dockerfile }
+          - { name: ai-service,                      dockerfile: services/ai-service/Dockerfile }
+          - { name: ai-rag-service,                  dockerfile: services/ai-rag-service/Dockerfile }
+          - { name: auth-service,                    dockerfile: services/auth-service/Dockerfile }
+          - { name: collaboration-service,           dockerfile: services/collaboration-service/Dockerfile }
+          - { name: github-service,                  dockerfile: services/github-service/Dockerfile }
+          - { name: threat-modeling-service,         dockerfile: services/threat-modeling-service/Dockerfile }
+          - { name: workflow-orchestration-service,  dockerfile: services/workflow-orchestration-service/Dockerfile }
+          - { name: workspace-intelligence-service,  dockerfile: services/workspace-intelligence-service/Dockerfile }
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v5.6.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.service.name }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # The backend and github-service Dockerfiles copy *.pem private key
+      # files from backend/config/keys/.  Store your GitHub App private key
+      # PEM content in the GITHUB_APP_PRIVATE_KEY repository secret.
+      # If the secret is absent a temporary key is generated so the build
+      # can complete (replace with a real key before going to production).
+      - name: Prepare GitHub App private key
+        if: matrix.service.name == 'backend' || matrix.service.name == 'github-service'
+        env:
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+        run: |
+          mkdir -p backend/config/keys
+          if [ -n "$GITHUB_APP_PRIVATE_KEY" ]; then
+            printf '%s' "$GITHUB_APP_PRIVATE_KEY" > backend/config/keys/withops-app.pem
+          else
+            echo "⚠️  GITHUB_APP_PRIVATE_KEY secret not set – generating placeholder key for CI build."
+            openssl genrsa -out backend/config/keys/withops-app.pem 2048 2>/dev/null
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.12.0
+        with:
+          context: .
+          dockerfile: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Layer cache scoped per service to prevent cache collisions
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
+
+  # ----------------------------------------------------------
+  # 5. DEPLOY  (placeholder – configure for your target)
+  #    Uncomment and adapt to your deployment strategy:
+  #      • SSH + docker compose pull && up
+  #      • kubectl set image ...
+  #      • Helm upgrade ...
+  # ----------------------------------------------------------
+  # deploy:
+  #   name: Deploy to Production
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   environment: production          # uses GitHub Environments for approval gates
+  #   steps:
+  #     - name: Deploy via kubectl
+  #       run: |
+  #         echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig.yaml
+  #         export KUBECONFIG=kubeconfig.yaml
+  #         kubectl set image deployment/frontend \
+  #           frontend=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/frontend:sha-${{ github.sha }}
+  #         # Repeat for each service ...
