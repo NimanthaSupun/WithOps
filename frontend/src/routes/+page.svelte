@@ -435,16 +435,13 @@ features:
 			if (paused) return;
 
 			if (lineIdx >= lines.length) {
-				// All done — pause then restart
-				paused = true;
-				pauseTimer = setTimeout(() => {
-					lineIdx = 0;
-					charIdx = 0;
-					completedLines = [];
-					typedCode = '';
-					paused = false;
-					if (yamlBody) yamlBody.scrollTop = 0;
-				}, RESTART_PAUSE);
+				// Restart instantly as requested
+				lineIdx = 0;
+				charIdx = 0;
+				completedLines = [];
+				typedCode = '';
+				lineCount = 0; // Reset line count to avoid scrolling gaps
+				if (yamlBody) yamlBody.scrollTop = 0;
 				return;
 			}
 

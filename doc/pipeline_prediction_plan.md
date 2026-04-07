@@ -58,11 +58,11 @@ pipeline-prediction-service
 │                              │                          │
 │                              ▼                          │
 │                     Training Pipeline                   │
-│                     (scikit-learn / XGBoost)             │
+│                     (scikit-learn / XGBoost)            │
 │                              │                          │
 │                              ▼                          │
-│                    models/model_v{N}.joblib              │
-│                    + models/metadata.json                │
+│                    models/model_v{N}.joblib             │
+│                    + models/metadata.json               │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
@@ -75,14 +75,14 @@ pipeline-prediction-service
 │              │                                          │
 │              ▼                                          │
 │         Extract features from request                   │
-│         + fetch live context from github-service         │
+│         + fetch live context from github-service        │
 │              │                                          │
 │              ▼                                          │
 │         model.predict_proba(features)                   │
 │              │                                          │
 │              ▼                                          │
 │         Return { probability, risk_level,               │
-│                  risk_factors[], recommendation }        │
+│                  risk_factors[], recommendation }       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -125,7 +125,6 @@ services/pipeline-prediction-service/
     ├── test_predictor.py
     └── test_api.py
 ```
-
 ---
 
 ## 5. Database Schema

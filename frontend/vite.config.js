@@ -6,6 +6,10 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		proxy: {
+			'/api/pipeline-prediction': {
+				target: 'http://localhost:9109',
+				changeOrigin: true
+			},
 			'/api': {
 				target: 'http://localhost:8000',
 				changeOrigin: true

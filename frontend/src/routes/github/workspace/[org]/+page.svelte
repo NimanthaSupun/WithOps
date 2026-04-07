@@ -853,6 +853,15 @@
 					>
 					{#if !sidebarCollapsed}<span>Treeview</span>{/if}
 				</a>
+				<a href="/github/workspace/{orgName}/predictor" class="sidebar-link" title="Pipeline Predictor">
+					<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+						<path d="M13 10V3L4 14h7v7l9-11h-7z" />
+					</svg>
+					{#if !sidebarCollapsed}
+						<span>Predictor</span>
+						<span class="new-badge">NEW</span>
+					{/if}
+				</a>
 			</nav>
 		</aside>
 
@@ -3647,6 +3656,37 @@
 		.tree-panel,
 		.preview-panel {
 			padding: 1rem;
+		}
+	}
+
+	.new-badge {
+		background: #00adef;
+		color: white;
+		font-size: 0.6rem;
+		font-weight: 800;
+		padding: 2px 5px;
+		border-radius: 4px;
+		margin-left: auto;
+		letter-spacing: 0.05em;
+		box-shadow: 0 2px 8px rgba(0, 173, 239, 0.4);
+		animation: pulse-glow 2s infinite;
+		flex-shrink: 0;
+		display: inline-block;
+		line-height: 1;
+	}
+
+	@keyframes pulse-glow {
+		0% {
+			transform: scale(1);
+			box-shadow: 0 2px 8px rgba(0, 173, 239, 0.4);
+		}
+		50% {
+			transform: scale(1.05);
+			box-shadow: 0 2px 12px rgba(0, 173, 239, 0.6);
+		}
+		100% {
+			transform: scale(1);
+			box-shadow: 0 2px 8px rgba(0, 173, 239, 0.4);
 		}
 	}
 </style>

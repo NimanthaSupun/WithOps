@@ -171,6 +171,15 @@ services:
   #         - /api/workspace-intelligence
   #       strip_path: false
 
+  # Pipeline Prediction Service - ML CI/CD failure prediction
+  - name: pipeline-prediction-service
+    url: http://pipeline-prediction-service:8009
+    routes:
+      - name: pipeline-prediction-routes
+        paths:
+          - /api/pipeline-prediction
+        strip_path: false
+
 # Global plugins
 plugins:
   - name: cors

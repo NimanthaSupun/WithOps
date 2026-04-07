@@ -93,6 +93,7 @@ jobs:
           - { name: threat-modeling-service,        path: services/threat-modeling-service }
           - { name: workflow-orchestration-service, path: services/workflow-orchestration-service }
           - { name: workspace-intelligence-service, path: services/workspace-intelligence-service }
+          - { name: pipeline-prediction-service,    path: services/pipeline-prediction-service }
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
@@ -151,6 +152,7 @@ jobs:
           - { name: threat-modeling-service,         dockerfile: services/threat-modeling-service/Dockerfile }
           - { name: workflow-orchestration-service,  dockerfile: services/workflow-orchestration-service/Dockerfile }
           - { name: workspace-intelligence-service,  dockerfile: services/workspace-intelligence-service/Dockerfile }
+          - { name: pipeline-prediction-service,     dockerfile: services/pipeline-prediction-service/Dockerfile }
 
     steps:
       - name: Checkout code

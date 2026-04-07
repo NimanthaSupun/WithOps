@@ -108,3 +108,10 @@ scrape_configs:
         labels:
           service: "fastapi-k8s"
     metrics_path: "/metrics"
+
+  - job_name: "pipeline-prediction-service"
+    static_configs:
+      - targets: ["pipeline-prediction-service:8009"]
+        labels:
+          service: "pipeline-prediction-service"
+    metrics_path: "/metrics"
