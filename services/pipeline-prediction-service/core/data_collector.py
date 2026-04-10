@@ -68,5 +68,76 @@ class DataCollector:
             logger.error(f"❌ Error fetching commit details: {e}")
             return None
 
+    async def fetch_workflow_runs_by_commit(self, org_name: str, repo_name: str, commit_sha: str) -> List[Dict[str, Any]]:
+        """
+        Fetch workflow runs associated with a specific commit SHA.
+        
+        Used for outcome reconciliation to find actual pipeline conclusions.
+        
+        Args:
+            org_name: GitHub organization name
+            repo_name: Repository name
+            commit_sha: Commit SHA (40 hex chars)
+            
+        Returns:
+            List of workflow run objects (filtered by commit)
+        """
+        logger.info(f"🔍 Fetching workflow runs for commit {commit_sha[:8]}...")
+        
+        try:
+            # First, try direct query to github-service if available
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                url = f"{self.github_service_url}/api/github/workspace/{org_name}/repositories/{repo_name}/runs"
+                params = {
+                    "commit_sha": commit_sha,
+                    "limit": 10
+                }
+                response = await client.get(url, params=params)
+                
+                if response.status_code == 200:
+                    runs = response.json().get("workflow_runs", [])
+                    logger.info(f"✅ Found {len(runs)} runs for commit {commit_sha[:8]}")
+                    return runs
+                else:
+                    # Fallback: query GitHub API directly
+                    logger.debug(f"GitHub service returned {response.status_code}, trying direct API")
+                    return await self._fetch_from_github_api(org_name, repo_name, commit_sha)
+        
+        except Exception as e:
+            logger.warning(f"⚠️ Error fetching workflow runs for commit: {e}")
+            return []
+
+    async def _fetch_from_github_api(self, org_name: str, repo_name: str, commit_sha: str) -> List[Dict[str, Any]]:
+        """
+        Fallback: Query GitHub API directly for workflow runs by commit.
+        Requires GitHub App credentials.
+        """
+        github_token = os.getenv("GITHUB_TOKEN", "")
+        if not github_token:
+            logger.warning("No GITHUB_TOKEN available for direct GitHub API access")
+            return []
+        
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                url = f"https://api.github.com/repos/{org_name}/{repo_name}/commits/{commit_sha}/check-runs"
+                headers = {
+                    "Authorization": f"Bearer {github_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+                
+                response = await client.get(url, headers=headers)
+                
+                if response.status_code == 200:
+                    check_runs = response.json().get("check_runs", [])
+                    logger.info(f"✅ Found {len(check_runs)} check runs via GitHub API")
+                    return check_runs
+                else:
+                    logger.warning(f"GitHub API returned {response.status_code}")
+                    return []
+        
+        except Exception as e:
+            logger.error(f"❌ Error fetching from GitHub API: {e}")
+            return []
+
 # Global instance
 data_collector = DataCollector()

@@ -262,8 +262,63 @@ async def service_info():
 # ============================================================================
 from api.routes.training import router as training_router
 from api.routes.prediction import router as prediction_router
+from api.routes.webhook import router as webhook_router  # Phase 1: NEW
+from api.routes.metrics import router as metrics_router  # Phase 1: NEW
+
 app.include_router(training_router, prefix="/api/pipeline-prediction")
 app.include_router(prediction_router, prefix="/api/pipeline-prediction")
+app.include_router(webhook_router)  # Phase 1: No prefix, routes are at /webhook/*
+app.include_router(metrics_router)  # Phase 1: Routes at /api/pipeline-prediction/metrics/*
+
+
+# ============================================================================
+# SCHEDULER SETUP (Phase 1: Outcome Reconciliation)
+# ============================================================================
+def setup_scheduler():
+    """Initialize APScheduler for background jobs."""
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.cron import CronTrigger
+    from core.outcome_reconciler import schedule_reconciliation
+    
+    try:
+        scheduler = AsyncIOScheduler()
+        
+        # Run outcome reconciliation daily at 2 AM UTC
+        scheduler.add_job(
+            schedule_reconciliation,
+            trigger=CronTrigger(hour=2, minute=0),
+            id="reconcile_outcomes_daily",
+            name="Daily outcome reconciliation",
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1
+        )
+        
+        scheduler.start()
+        logger.info("✅ Background scheduler started")
+        logger.info("   ⏰ Outcome reconciliation: Daily at 02:00 UTC")
+        
+        return scheduler
+    except Exception as e:
+        logger.warning(f"⚠️ Scheduler setup error (non-critical): {e}")
+        return None
+
+
+# Initialize scheduler on startup
+_scheduler = None
+
+@app.on_event("startup")
+async def startup_scheduler():
+    global _scheduler
+    _scheduler = setup_scheduler()
+
+
+@app.on_event("shutdown")
+async def shutdown_scheduler():
+    global _scheduler
+    if _scheduler and _scheduler.running:
+        _scheduler.shutdown()
+        logger.info("✅ Scheduler shutdown")
 
 
 # Main entry point (for local dev)
