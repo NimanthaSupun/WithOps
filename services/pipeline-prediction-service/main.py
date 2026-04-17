@@ -279,11 +279,15 @@ def setup_scheduler():
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     from apscheduler.triggers.cron import CronTrigger
     from core.outcome_reconciler import schedule_reconciliation
+    from core.model_evaluator import schedule_evaluation
+    from core.auto_trainer import schedule_retraining
     
     try:
         scheduler = AsyncIOScheduler()
         
-        # Run outcome reconciliation daily at 2 AM UTC
+        # ════════════════════════════════════════════════════════════════════════
+        # Phase 1: Outcome Reconciliation (Daily)
+        # ════════════════════════════════════════════════════════════════════════
         scheduler.add_job(
             schedule_reconciliation,
             trigger=CronTrigger(hour=2, minute=0),
@@ -294,9 +298,37 @@ def setup_scheduler():
             max_instances=1
         )
         
+        # ════════════════════════════════════════════════════════════════════════
+        # Phase 2: Model Evaluation (Weekly - Thursday 04:00 UTC)
+        # ════════════════════════════════════════════════════════════════════════
+        scheduler.add_job(
+            schedule_evaluation,
+            trigger=CronTrigger(day_of_week="thu", hour=4, minute=0),
+            id="evaluate_models_weekly",
+            name="Weekly model evaluation",
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1
+        )
+        
+        # ════════════════════════════════════════════════════════════════════════
+        # Phase 2: Auto-Retraining (Bi-weekly - Sunday 03:00 UTC)
+        # ════════════════════════════════════════════════════════════════════════
+        scheduler.add_job(
+            schedule_retraining,
+            trigger=CronTrigger(day_of_week="sun", hour=3, minute=0),
+            id="retrain_models_biweekly",
+            name="Bi-weekly model retraining",
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1
+        )
+        
         scheduler.start()
         logger.info("✅ Background scheduler started")
-        logger.info("   ⏰ Outcome reconciliation: Daily at 02:00 UTC")
+        logger.info("   ⏰ Phase 1 - Outcome reconciliation: Daily at 02:00 UTC")
+        logger.info("   ⏰ Phase 2 - Model evaluation: Weekly (Thursday) at 04:00 UTC")
+        logger.info("   ⏰ Phase 2 - Model retraining: Bi-weekly (Sunday) at 03:00 UTC")
         
         return scheduler
     except Exception as e:
