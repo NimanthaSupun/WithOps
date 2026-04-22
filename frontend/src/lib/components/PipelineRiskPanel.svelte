@@ -35,11 +35,8 @@
         deletions,
         commit_message: commitMessage
       });
-      if (result.success) {
-        prediction = result.prediction;
-      } else {
-        error = result.error;
-      }
+      // The API returns the PredictResponse directly, no 'success' field wrapper
+      prediction = result;
     } catch (e) {
       console.error('Prediction failed:', e);
       error = e.message;

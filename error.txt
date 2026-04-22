@@ -1,1 +1,30 @@
-﻿
+﻿🔔 GitHub cache notification listener mounted
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for workflows/.github/workflows/trufflehog.yaml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)
+ve @ 26.nYYBiMi1.js:1Understand this error
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for workflows/.github/workflows/reusable-ci.yml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)
+ve @ 26.nYYBiMi1.js:1Understand this error
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for workflows/.github/workflows/gitleaks.yaml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)
+ve @ 26.nYYBiMi1.js:1Understand this error
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for workflows/.github/workflows/test.yml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)
+ve @ 26.nYYBiMi1.js:1Understand this error
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for workflows/.github/workflows/ci-caller.yml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)
+ve @ 26.nYYBiMi1.js:1Understand this error
+:9000/api/pipeline-prediction/predict:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+26.nYYBiMi1.js:1 Failed to get prediction for WithOps/.github/workflows/ci-cd.yml: Error: X has 27 features, but RandomForestClassifier is expecting 19 features as input.
+    at ke (26.nYYBiMi1.js:1:1395)
+    at async ve (26.nYYBiMi1.js:1:18952)

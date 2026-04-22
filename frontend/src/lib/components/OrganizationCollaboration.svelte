@@ -4,7 +4,7 @@
     import { writable } from 'svelte/store';
     import { getAuthClient } from '$lib/auth.js';
     
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9060';
     
     export let isOpen = false;
     export let currentUser = null;

@@ -125,7 +125,7 @@ export async function getAccuracyByRiskLevel(orgName, days = 7) {
  */
 export async function getFeatureImportance(orgName) {
 	try {
-		return await fetchWithAuth(`/api/pipeline-prediction/features/${orgName}`);
+		return await fetchWithAuth(`/api/pipeline-prediction/feature-importance/${orgName}`);
 	} catch (error) {
 		console.warn('Feature importance endpoint not available:', error);
 		return { features: [] };

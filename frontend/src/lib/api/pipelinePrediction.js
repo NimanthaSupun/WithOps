@@ -1,7 +1,9 @@
 /**
  * API client for Pipeline Prediction Service
  */
-const BASE_URL = '/api/pipeline-prediction';
+import { API_BASE_URL } from '../config.js';
+
+const BASE_URL = `${API_BASE_URL}/api/pipeline-prediction`;
 
 async function request(endpoint, method = 'GET', body = null) {
   // Use auth0_token from localStorage (standard for this app)

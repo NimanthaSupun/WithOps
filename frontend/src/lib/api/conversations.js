@@ -5,7 +5,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 	? `${import.meta.env.VITE_API_BASE_URL}/api`
-	: 'http://localhost:9000/api';
+	: 'http://localhost:9060/api';
 
 export const conversationsAPI = {
 	/**

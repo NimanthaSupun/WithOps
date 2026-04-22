@@ -117,7 +117,7 @@
 			const client = await getAuthClient();
 			const token = await client.getTokenSilently();
 
-			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9060';
 			const response = await fetch(`${apiBase}/api/auth/dashboard`, {
 				headers: {
 					Authorization: `Bearer ${token}`
@@ -159,7 +159,7 @@
 			const client = await getAuthClient();
 			const token = await client.getTokenSilently();
 
-			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+			const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9060';
 			const response = await fetch(`${apiBase}/api/github/my-organizations`, {
 				headers: {
 					Authorization: `Bearer ${token}`
