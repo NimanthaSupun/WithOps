@@ -859,7 +859,7 @@
 					</svg>
 					{#if !sidebarCollapsed}
 						<span>Predictor</span>
-						<span class="new-badge">NEW</span>
+						<!-- <span class="new-badge">NEW</span> -->
 					{/if}
 				</a>
 			</nav>

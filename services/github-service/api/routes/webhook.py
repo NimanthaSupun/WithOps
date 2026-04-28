@@ -10,6 +10,7 @@ Webhook URL configured in GitHub App settings:
 Supported events:
   - installation (action: created, deleted, suspend, unsuspend)
   - installation_repositories (action: added, removed)
+  - workflow_run (action: completed → forwarded to pipeline-prediction-service)
   - ping
 
 Security: Every request is verified using HMAC-SHA256 with the shared
@@ -144,6 +145,9 @@ async def handle_github_webhook(
 
         elif event_type == "installation_repositories":
             await _handle_installation_repositories_event(payload, action)
+
+        elif event_type == "workflow_run":
+            await _handle_workflow_run_event(payload, action, raw_body, x_hub_signature_256)
 
         else:
             logger.info(f"ℹ️ Ignoring unhandled event type: {event_type}")
@@ -387,6 +391,114 @@ async def _handle_installation_repositories_event(payload: dict, action: str):
             "action": action,
             "repositories_added": repos_added,
             "repositories_removed": repos_removed,
+        },
+        "source": "github-service-webhook",
+    })
+
+
+# ---------------------------------------------------------------------------
+# Workflow Run handler — forwards to Pipeline Prediction Service
+# ---------------------------------------------------------------------------
+
+async def _handle_workflow_run_event(
+    payload: dict,
+    action: str,
+    raw_body: bytes,
+    signature: Optional[str],
+):
+    """
+    Handle workflow_run events from GitHub Actions.
+
+    When a workflow run completes, we:
+    1. Forward the payload to the pipeline-prediction-service so it can
+       update prediction outcomes (close the ML feedback loop)
+    2. Publish a Redis event so the Events Hub can push real-time
+       notifications to the predictor dashboard
+
+    Actions:
+        completed  — Workflow finished (success, failure, cancelled, etc.)
+        requested  — New workflow run was requested
+        in_progress — Workflow run started executing
+    """
+    workflow_run = payload.get("workflow_run", {})
+    conclusion = workflow_run.get("conclusion", "")
+    repo_full_name = workflow_run.get("repository", {}).get("full_name", "")
+    run_id = workflow_run.get("id")
+    workflow_name = workflow_run.get("name", "")
+
+    logger.info(
+        f"⚡ workflow_run event | action={action} | repo={repo_full_name} "
+        f"| run_id={run_id} | conclusion={conclusion} | workflow={workflow_name}"
+    )
+
+    # Only forward completed runs to the prediction service
+    if action != "completed":
+        logger.debug(f"Skipping workflow_run action={action} (not completed)")
+        return
+
+    # ── 1. Forward to pipeline-prediction-service ──
+    prediction_service_url = os.getenv(
+        "PIPELINE_PREDICTION_SERVICE_URL",
+        "http://pipeline-prediction-service:8009"
+    )
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                f"{prediction_service_url}/webhook/github/workflow-complete",
+                content=raw_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Hub-Signature-256": signature or "",
+                    "X-GitHub-Event": "workflow_run",
+                },
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                predictions_updated = result.get("predictions_updated", 0)
+                logger.info(
+                    f"✅ Pipeline prediction service notified | "
+                    f"run_id={run_id} | predictions_updated={predictions_updated}"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Pipeline prediction service returned {response.status_code}: "
+                    f"{response.text[:200]}"
+                )
+
+    except ImportError:
+        logger.warning(
+            "⚠️ httpx not installed — cannot forward to pipeline-prediction-service. "
+            "Install with: pip install httpx"
+        )
+    except Exception as e:
+        logger.warning(
+            f"⚠️ Failed to forward workflow_run to pipeline-prediction-service: {e}"
+        )
+
+    # ── 2. Publish Redis event for real-time UI updates ──
+    org_name = repo_full_name.split("/")[0] if "/" in repo_full_name else ""
+    repo_name = repo_full_name.split("/")[1] if "/" in repo_full_name else ""
+
+    await event_bus.publish({
+        "type": "github.workflow_run.completed",
+        "org_name": org_name,
+        "data": {
+            "run_id": run_id,
+            "repo_name": repo_name,
+            "repo_full_name": repo_full_name,
+            "workflow_name": workflow_name,
+            "conclusion": conclusion,
+            "head_branch": workflow_run.get("head_branch", ""),
+            "head_sha": workflow_run.get("head_commit", {}).get("sha", ""),
+            "actor": workflow_run.get("actor", {}).get("login", ""),
+            "event": workflow_run.get("event", ""),
+            "run_number": workflow_run.get("run_number"),
+            "created_at": workflow_run.get("created_at"),
+            "updated_at": workflow_run.get("updated_at"),
         },
         "source": "github-service-webhook",
     })

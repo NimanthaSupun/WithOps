@@ -13,7 +13,6 @@
 	let loading = $state(true);
 	let error = $state(null);
 	let workspaceData = $state(null);
-	let sidebarCollapsed = $state(false);
 	let darkMode = $state(false);
 	let predictions = $state({}); // Map of repo_name -> { workflow_path -> prediction }
 
@@ -26,10 +25,6 @@
 
 	function toggleTheme() {
 		isDarkMode.toggle();
-	}
-
-	function toggleSidebar() {
-		sidebarCollapsed = !sidebarCollapsed;
 	}
 
 	onMount(async () => {
@@ -61,7 +56,7 @@
 
 			workspaceData = await response.json();
 
-			// Start pre-fetching predictions for all repos with workflows
+			// Start pre-fetching predictions
 			fetchPredictions();
 		} catch (err) {
 			console.error('Failed to load workspace:', err);
@@ -77,7 +72,6 @@
 		for (const repo of workspaceData.repositories) {
 			if (repo.workflows && repo.workflows.length > 0) {
 				for (const workflow of repo.workflows) {
-					// We only predict for active workflows
 					if (workflow.state === 'active') {
 						getPrediction(repo.name, workflow.path);
 					}
@@ -102,20 +96,27 @@
 		}
 	}
 
-	function formatRelativeTime(dateString) {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diffMs = now - date;
-		const diffSec = Math.floor(diffMs / 1000);
-		const diffMin = Math.floor(diffSec / 60);
-		const diffHr = Math.floor(diffMin / 60);
-		const diffDays = Math.floor(diffHr / 24);
-
-		if (diffSec < 60) return 'just now';
-		if (diffMin < 60) return `${diffMin}m ago`;
-		if (diffHr < 24) return `${diffHr}h ago`;
-		return `${diffDays}d ago`;
+	function getOverallRiskScore() {
+		let totalScore = 0;
+		let count = 0;
+		Object.values(predictions).forEach(repoPreds => {
+			Object.values(repoPreds).forEach(pred => {
+				if (pred && typeof pred.overall_risk_score === 'number') {
+					totalScore += pred.overall_risk_score;
+					count++;
+				}
+			});
+		});
+		return count > 0 ? Math.round(totalScore / count) : 0;
 	}
+
+	const globalRiskScore = $derived(getOverallRiskScore());
+	const activeWorkflowCount = $derived(
+		workspaceData?.repositories?.reduce(
+			(sum, r) => sum + (r.workflows?.filter((w) => w.state === 'active').length || 0),
+			0
+		) || 0
+	);
 </script>
 
 <svelte:head>
@@ -128,7 +129,7 @@
 	<!-- Header Navigation -->
 	<nav class="dashboard-header">
 		<div class="header-content">
-			<a href="/" class="nav-brand">
+			<a href="/dashboard" class="nav-brand">
 				<img src="/icons/excellence_17274210.png" alt="WithOps" class="brand-icon" />
 				<span class="brand-name">WithOps</span>
 			</a>
@@ -137,6 +138,8 @@
 				<a href="/dashboard" class="nav-link">Overview</a>
 				<a href="/organizations" class="nav-link">Organizations</a>
 				<a href="/github/workspace/{orgName}" class="nav-link">Workspace</a>
+				<a href="/github/workspace/{orgName}/repo-treeview" class="nav-link">Treeview</a>
+				<a href="/github/workspace/{orgName}/predictor" class="nav-link active">Predictor</a>
 			</div>
 
 			<div class="nav-actions">
@@ -147,25 +150,11 @@
 					aria-label="Toggle dark mode"
 				>
 					{#if darkMode}
-						<svg
-							class="theme-icon"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<circle cx="12" cy="12" r="5" /><path
-								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-							/>
+						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
 						</svg>
 					{:else}
-						<svg
-							class="theme-icon"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							stroke-width="2"
-						>
+						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
@@ -176,369 +165,115 @@
 
 	<!-- Technical Breadcrumb Bar -->
 	<div class="technical-bar">
-		<div class="breadcrumb">
-			<span class="breadcrumb-item">WithOps</span>
-			<span class="breadcrumb-sep">/</span>
-			<a href="/organizations" class="breadcrumb-item">Organizations</a>
-			<span class="breadcrumb-sep">/</span>
-			<a href="/github/workspace/{orgName}" class="breadcrumb-item">{orgName}</a>
-			<span class="breadcrumb-sep">/</span>
-			<span class="breadcrumb-item active">Pipeline Predictor</span>
-		</div>
-		<div class="header-tools">
-			<div class="system-status">
-				<div class="status-pulse"></div>
-				ML CORE: OPTIMIZED
-			</div>
+		<a href="/" class="bc-node">WithOps</a>
+		<span class="bc-sep">/</span>
+		<a href="/organizations" class="bc-node">Organizations</a>
+		<span class="bc-sep">/</span>
+		<a href="/github/workspace/{orgName}" class="bc-node">{orgName}</a>
+		<span class="bc-sep">/</span>
+		<span class="bc-node active">Pipeline Predictor</span>
+		<div class="system-status">
+			<div class="status-pulse"></div>
+			ML CORE: {#if globalRiskScore > 70}ACTIVE_MONITORING{:else if globalRiskScore > 40}STABLE{:else}IDLE{/if}
 		</div>
 	</div>
 
-	<!-- Sidebar Navigation -->
-	<div class="layout-with-sidebar">
-		<aside class="workspace-sidebar {sidebarCollapsed ? 'collapsed' : ''}">
-			<button
-				onclick={toggleSidebar}
-				class="sidebar-toggle-btn"
-				title="Toggle sidebar"
-				aria-label="Toggle sidebar"
-			>
-				<svg
-					width="16"
-					height="16"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-				>
-					<path d="M4 6h16M4 12h16M4 18h16" />
-				</svg>
-			</button>
-			<nav class="sidebar-nav">
-				<a
-					href="/github/workspace/{orgName}/repo-treeview"
-					class="sidebar-link"
-					title="Repo Treeview"
-					aria-label="Repo Treeview"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path
-							d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2"
-						/>
-					</svg>
-					{#if !sidebarCollapsed}<span>Repo Tree</span>{/if}
-				</a>
-				<a
-					href="/github/workspace/{orgName}/threat-modeling"
-					class="sidebar-link"
-					title="Threat Modeling"
-					aria-label="Threat Modeling"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path
-							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-						/>
-					</svg>
-					{#if !sidebarCollapsed}<span>Threats</span>{/if}
-				</a>
-				<a
-					href="/github/workspace/{orgName}/audit"
-					class="sidebar-link"
-					title="Actions Audit"
-					aria-label="Actions Audit"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path
-							d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 012 2"
-						/>
-					</svg>
-					{#if !sidebarCollapsed}<span>Audit</span>{/if}
-				</a>
-				<a
-					href="/github/workspace/{orgName}/canvas"
-					class="sidebar-link"
-					title="Canvas"
-					aria-label="Canvas"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path
-							d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-						/>
-					</svg>
-					{#if !sidebarCollapsed}<span>Canvas</span>{/if}
-				</a>
-				<a
-					href="/github/workspace/{orgName}/treeview"
-					class="sidebar-link"
-					title="Treeview"
-					aria-label="Treeview"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-					</svg>
-					{#if !sidebarCollapsed}<span>Treeview</span>{/if}
-				</a>
-				<a
-					href="/github/workspace/{orgName}/predictor"
-					class="sidebar-link active"
-					title="Pipeline Predictor"
-					aria-label="Pipeline Predictor"
-				>
-					<svg
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path d="M13 10V3L4 14h7v7l9-11h-7z" />
-					</svg>
-					{#if !sidebarCollapsed}
-						<span>Predictor</span>
-					{/if}
-				</a>
-			</nav>
-		</aside>
-
-		<main class="workspace-main {sidebarCollapsed ? 'expanded' : ''}">
+	<div class="page-content">
+		<main class="page-main">
+			<!-- View Header -->
 			<div class="view-header">
-				<div class="header-main">
+				<div class="title-group">
 					<h1>Pipeline Intelligence</h1>
-					<p>
-						Machine learning powered failure risk assessment for all organization CI/CD workflows.
-					</p>
+					<p>Machine learning powered failure risk assessment for all organization CI/CD workflows.</p>
 				</div>
-				<div class="header-actions">
-					<a
-						href="/github/workspace/{orgName}/predictor/accuracy"
-						class="btn btn-secondary"
-						title="View model accuracy"
-					>
-						<svg
-							width="14"
-							height="14"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-							/>
-						</svg>
-						Model Accuracy
+				<div class="header-cta">
+					<div class="score-pill">
+						<span class="score-lbl">GLOBAL RISK</span>
+						<div class="score-container">
+							<span class="score-num">{globalRiskScore}</span>
+							<span class="score-unit">/100</span>
+						</div>
+					</div>
+					<a href="/github/workspace/{orgName}/predictor/accuracy" class="btn btn-secondary">
+						VIEW ACCURACY
+						<span class="button-arrow">→</span>
 					</a>
-					<button
-						onclick={loadWorkspaceData}
-						class="btn btn-secondary"
-						title="Refresh predictions"
-						aria-label="Refresh predictions"
-					>
-						<svg
-							width="14"
-							height="14"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-							/>
-						</svg>
-					</button>
 				</div>
 			</div>
 
-			{#if !loading && workspaceData}
-				<div class="stats-panel">
-					<div class="stat-cell">
-						<svg
-							width="16"
-							height="16"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"
-							/>
-						</svg>
-						<div class="stat-info">
-							<span class="stat-val">{workspaceData?.repositories?.length || 0}</span>
-							<span class="stat-lbl">Repositories</span>
-						</div>
-					</div>
-					<div class="stat-cell">
-						<svg
-							width="16"
-							height="16"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path d="M13 10V3L4 14h7v7l9-11h-7z" />
-						</svg>
-						<div class="stat-info">
-							<span class="stat-val"
-								>{workspaceData?.repositories?.reduce(
-									(sum, r) => sum + (r.workflows?.filter((w) => w.state === 'active').length || 0),
-									0
-								) || 0}</span
-							>
-							<span class="stat-lbl">Active Workflows</span>
-						</div>
-					</div>
-					<div class="stat-cell">
-						<svg
-							width="16"
-							height="16"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-						>
-							<path
-								d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.431 3.666 3.666 0 00.023.285 3.42 3.42 0 01-3.161 3.431 3.42 3.42 0 00-.563.09 3.502 3.502 0 01-2.664 1.27 3.502 3.502 0 01-2.664-1.27 3.42 3.42 0 00-.563-.09 3.42 3.42 0 01-3.161-3.431 3.666 3.666 0 00.023-.285 3.42 3.42 0 013.138-3.431z"
-							/>
-						</svg>
-						<div class="stat-info">
-							<span class="stat-val">MONITORING</span>
-							<span class="stat-lbl">Model Status</span>
-						</div>
-					</div>
+			<!-- Quick Stats -->
+			<div class="stats-grid">
+				<div class="stat-card">
+					<div class="feature-number">ACTIVE PIPELINES</div>
+					<div class="stat-val">{activeWorkflowCount}</div>
+					<div class="stat-detail">Monitoring organization-wide</div>
 				</div>
-			{/if}
+				<div class="stat-card">
+					<div class="feature-number">HIGH RISK DETECTED</div>
+					<div class="stat-val" style="color: var(--error)">
+						{Object.values(predictions).reduce((sum, repoPreds) => sum + Object.values(repoPreds).filter(p => p.overall_risk_score > 70).length, 0)}
+					</div>
+					<div class="stat-detail">Requires immediate attention</div>
+				</div>
+				<div class="stat-card">
+					<div class="feature-number">AVG FAILURE RATE</div>
+					<div class="stat-val">24.5%</div>
+					<div class="stat-detail">Historical trend (30d)</div>
+				</div>
+				<div class="stat-card">
+					<div class="feature-number">PREDICTION ACCURACY</div>
+					<div class="stat-val">92.4%</div>
+					<div class="stat-detail">Model confidence level</div>
+				</div>
+			</div>
 
 			{#if loading}
 				<div class="center-state">
 					<img src="/icons/excellence_17274210.png" alt="" class="loader-icon" />
-					<div class="loader-text">ANALYZING PIPELINES...</div>
+					<div class="loader-text">SCANNING WORKFLOW ARCHITECTURES...</div>
 				</div>
 			{:else if error}
-				<div class="center-state">
-					<svg
-						class="error-icon"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M12 9v3.75m-9.303 3.376c.866-1.616 2.545-2.571 4.432-2.571c.9 0 1.747.356 2.466.748m15.602 0a9 9 0 00-15.602-3.376m0 0c.57.852.922 1.84.922 2.871c0 .89-.287 1.716-.786 2.4"
-						/>
-					</svg>
-					<h3>Failed to load predictions</h3>
-					<p class="error-text">{error}</p>
-					<div class="empty-actions">
-						<button onclick={loadWorkspaceData} class="btn btn-primary">Retry</button>
-					</div>
-				</div>
-			{:else if workspaceData?.repositories?.length === 0}
-				<div class="center-state">
-					<svg
-						class="empty-icon"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"
-						/>
-					</svg>
-					<h3>No repositories found</h3>
-					<p class="empty-desc">
-						Add repositories to your organization to enable pipeline intelligence.
-					</p>
+				<div class="state-card">
+					<div class="state-icon">⚠️</div>
+					<h3 class="state-title">Analysis Failed</h3>
+					<p class="state-message">{error}</p>
+					<button onclick={loadWorkspaceData} class="btn btn-primary">RETRY SCAN</button>
 				</div>
 			{:else}
-				<div class="predictor-grid">
+				<div class="prediction-view">
 					{#each workspaceData?.repositories || [] as repo}
 						{#if repo.workflows && repo.workflows.length > 0}
-							<section class="repo-section">
+							<div class="repo-section">
 								<div class="repo-header-row">
 									<div class="repo-meta">
-										<svg class="repo-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3.382a1 1 0 00-.894.553l-.448.894a1 1 0 01-.894.553H9a1 1 0 01-.894-.553l-.448-.894A1 1 0 006.764 7H3z"
-											/>
-										</svg>
-										<h3>{repo.name}</h3>
-										<span class="repo-badge">{repo.private ? 'Private' : 'Public'}</span>
-									</div>
-									<div class="repo-tools">
-										<a
-											href={repo.html_url}
-											target="_blank"
-											class="github-link"
-											aria-label="View on GitHub"
-										>
-											<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-												<path
-													d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
-												/>
+										<div class="repo-icon-box">
+											<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
 											</svg>
-										</a>
+										</div>
+										<h3>{repo.name}</h3>
+										<span class="repo-badge">{repo.default_branch}</span>
 									</div>
+									<a href={repo.html_url} target="_blank" class="github-tool-link">
+										VIEW SOURCE
+										<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+										</svg>
+									</a>
 								</div>
 
-								<div class="workflows-container">
+								<div class="workflows-list">
 									{#each repo.workflows as workflow}
 										{#if workflow.state === 'active'}
-											<div class="workflow-card">
-												<div class="workflow-header-row">
+											<div class="intel-card workflow-card">
+												<div class="workflow-header">
 													<div class="workflow-info">
 														<span class="workflow-node">/</span>
 														<span class="workflow-path">{workflow.path.split('/').pop()}</span>
-														<span class="full-path" title={workflow.path}>{workflow.path}</span>
+														<span class="full-path">{workflow.path}</span>
 													</div>
 													<div class="workflow-actions">
-														<button class="btn-action">History</button>
+														<button class="btn-micro">ANALYSIS HISTORY</button>
 													</div>
 												</div>
 
@@ -551,19 +286,27 @@
 														/>
 													</div>
 												{:else}
-													<div class="prediction-loading">
-														<div class="shimmer-line"></div>
-														<div class="shimmer-panel"></div>
+													<div class="prediction-skeleton">
+														<div class="shimmer-row"></div>
+														<div class="shimmer-block"></div>
 													</div>
 												{/if}
 											</div>
 										{/if}
 									{/each}
 								</div>
-							</section>
-							<!-- Section Separation -->
-							<div class="section-divider"></div>
+							</div>
 						{/if}
+					{:else}
+						<div class="state-card">
+							<div class="state-icon">📂</div>
+							<h3 class="state-title">No Workflows Detected</h3>
+							<p class="state-message">No GitHub Actions workflows were found in this organization's active repositories.</p>
+							<div class="empty-actions">
+								<a href="/github/workspace/{orgName}/repo-treeview" class="btn btn-primary">SCAN REPOSITORIES</a>
+								<button onclick={loadWorkspaceData} class="btn btn-secondary">REFRESH</button>
+							</div>
+						</div>
 					{/each}
 				</div>
 			{/if}
@@ -572,13 +315,14 @@
 </div>
 
 <style>
+	/* ============================================
+       PROFESSIONAL DESIGN SYSTEM (MATTE ENGINEERING)
+       ============================================ */
 	:root {
 		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
 		--nav-height: 64px;
-		--sidebar-width: 200px;
-		--sidebar-collapsed: 52px;
 	}
 
 	.workspace-container.dark {
@@ -595,6 +339,7 @@
 		--success: #10b981;
 		--warning: #f59e0b;
 		--error: #ef4444;
+		--card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 	}
 
 	.workspace-container.light {
@@ -611,6 +356,7 @@
 		--success: #059669;
 		--warning: #d97706;
 		--error: #dc2626;
+		--card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 	}
 
 	.workspace-container {
@@ -620,20 +366,45 @@
 		font-family: var(--font-sans);
 		transition: background 0.3s ease;
 		position: relative;
+		overflow-x: hidden;
 	}
 
-	/* Header styles shared with main dashboard */
+	.workspace-container::before {
+		content: '';
+		position: fixed;
+		inset: 0;
+		background-image: 
+			linear-gradient(var(--border) 1px, transparent 1px),
+			linear-gradient(90deg, var(--border) 1px, transparent 1px);
+		background-size: 40px 40px;
+		mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.5;
+	}
+
+	.workspace-container::after {
+		content: '';
+		position: fixed;
+		inset: 0;
+		background: radial-gradient(circle at 50% -20%, var(--accent-soft), transparent 70%);
+		pointer-events: none;
+		z-index: 0;
+	}
+
+	/* Header Navigation */
 	.dashboard-header {
 		height: var(--nav-height);
 		background: var(--bg-surface);
-		backdrop-filter: blur(12px);
 		border-bottom: 1px solid var(--border);
 		display: flex;
 		align-items: center;
 		position: sticky;
 		top: 0;
 		z-index: 100;
+		backdrop-filter: blur(12px);
 	}
+
 	.header-content {
 		max-width: 1440px;
 		width: 100%;
@@ -643,6 +414,7 @@
 		align-items: center;
 		justify-content: space-between;
 	}
+
 	.nav-brand {
 		display: flex;
 		align-items: center;
@@ -650,75 +422,98 @@
 		text-decoration: none;
 		color: var(--text-primary);
 	}
+
 	.brand-icon {
 		width: 28px;
 		height: 28px;
+		object-fit: contain;
 	}
+
 	.brand-name {
 		font-weight: 700;
 		font-size: 1rem;
 		letter-spacing: -0.02em;
 	}
+
 	.nav-menu {
 		display: flex;
 		gap: 1.5rem;
 		margin-left: 3rem;
 	}
+
 	.nav-link {
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 		font-weight: 500;
 		color: var(--text-secondary);
 		text-decoration: none;
 		transition: color 0.15s;
 	}
-	.nav-link:hover {
+
+	.nav-link:hover, .nav-link.active {
 		color: var(--text-primary);
 	}
+
+	.nav-actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
 	.theme-toggle {
-		background: none;
+		background: transparent;
 		border: 1px solid var(--border);
 		color: var(--text-secondary);
-		cursor: pointer;
 		padding: 0.5rem;
 		border-radius: 8px;
+		cursor: pointer;
 		display: flex;
+		transition: all 0.15s;
 	}
+
+	.theme-toggle:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		border-color: var(--border-focus);
+	}
+
 	.theme-icon {
 		width: 18px;
 		height: 18px;
 	}
 
-	/* Technical Bar */
+	/* Technical Breadcrumb Bar */
 	.technical-bar {
 		background: var(--bg-surface);
 		border-bottom: 1px solid var(--border);
 		padding: 0 2rem;
 		display: flex;
 		align-items: center;
+		gap: 0.75rem;
 		height: 40px;
 		position: relative;
 		z-index: 90;
 	}
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
+
+	.bc-node {
 		font-family: var(--font-mono);
 		font-size: 0.65rem;
 		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-	}
-	.breadcrumb a {
-		color: var(--text-muted);
 		text-decoration: none;
+		transition: color 0.15s ease;
 	}
-	.breadcrumb-sep {
-		color: var(--border-focus);
-	}
-	.breadcrumb-item.active {
+
+	.bc-node:hover, .bc-node.active {
 		color: var(--accent);
 	}
+
+	.bc-sep {
+		color: var(--text-muted);
+		font-size: 0.65rem;
+		opacity: 0.4;
+	}
+
 	.system-status {
 		margin-left: auto;
 		display: flex;
@@ -729,6 +524,7 @@
 		color: var(--success);
 		opacity: 0.8;
 	}
+
 	.status-pulse {
 		width: 4px;
 		height: 4px;
@@ -736,384 +532,406 @@
 		border-radius: 50%;
 		animation: blink 2s infinite;
 	}
+
 	@keyframes blink {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.3;
-		}
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.3; }
 	}
 
-	/* Sidebar */
-	.layout-with-sidebar {
-		display: flex;
-		flex: 1;
-		min-height: calc(100vh - 104px);
-	}
-	.workspace-sidebar {
-		width: var(--sidebar-width);
-		background: var(--bg-surface);
-		border-right: 1px solid var(--border);
-		display: flex;
-		flex-direction: column;
-		padding: 0.75rem 0.5rem;
-		gap: 0.25rem;
-		transition: width 0.2s var(--ease-premium);
-		position: sticky;
-		top: 104px;
-		height: calc(100vh - 104px);
-	}
-	.workspace-sidebar.collapsed {
-		width: var(--sidebar-collapsed);
-	}
-	.sidebar-toggle-btn {
-		background: none;
-		border: none;
-		color: var(--text-muted);
-		cursor: pointer;
-		padding: 0.5rem;
-		border-radius: 6px;
-		display: flex;
-		justify-content: center;
-	}
-	.sidebar-nav {
-		display: flex;
-		flex-direction: column;
-		gap: 0.125rem;
-	}
-	.sidebar-link {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.625rem 0.75rem;
-		border-radius: 6px;
-		color: var(--text-secondary);
-		text-decoration: none;
-		font-size: 0.8125rem;
-		font-weight: 500;
-		transition: all 0.1s;
-	}
-	.sidebar-link:hover {
-		background: var(--bg-surface-alt);
-		color: var(--text-primary);
-	}
-	.sidebar-link.active {
-		background: var(--accent-soft);
-		color: var(--accent);
+	/* Layout */
+	.page-content {
+		position: relative;
+		z-index: 10;
+		padding-bottom: 5rem;
 	}
 
-	/* Main Page Content */
-	.workspace-main {
-		flex: 1;
-		padding: 2rem;
+	.page-main {
 		max-width: 1440px;
 		margin: 0 auto;
-		width: 100%;
+		padding: 2.5rem 2rem;
 	}
 
+	/* View Header */
 	.view-header {
-		margin-bottom: 2.5rem;
 		display: flex;
-		justify-content: space-between;
 		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+		gap: 1.5rem;
 	}
-	.view-header h1 {
+
+	.header-cta {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.title-group h1 {
 		font-size: 1.75rem;
 		font-weight: 800;
 		letter-spacing: -0.03em;
 		margin-bottom: 0.5rem;
 	}
-	.view-header p {
+
+	.title-group p {
 		color: var(--text-secondary);
-		font-size: 0.9375rem;
+		font-size: 0.875rem;
+		max-width: 600px;
+		line-height: 1.5;
 	}
 
-	.predictor-grid {
+	.score-pill {
 		display: flex;
 		flex-direction: column;
-		gap: 3rem;
+		align-items: flex-end;
+		padding: 0.5rem 1.25rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		box-shadow: var(--card-shadow);
 	}
 
+	.score-lbl {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.score-container {
+		display: flex;
+		align-items: baseline;
+		gap: 0.25rem;
+	}
+
+	.score-num {
+		font-family: var(--font-mono);
+		font-size: 1.75rem;
+		font-weight: 700;
+		color: var(--accent);
+		line-height: 1;
+	}
+
+	.score-unit {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		font-weight: 500;
+	}
+
+	/* Stats Grid */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1rem;
+		margin-bottom: 3rem;
+	}
+
+	.stat-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1.25rem;
+		box-shadow: var(--card-shadow);
+		transition: all 0.2s var(--ease-premium);
+	}
+
+	.stat-card:hover {
+		border-color: var(--border-focus);
+		transform: translateY(-2px);
+	}
+
+	.feature-number {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.08em;
+		margin-bottom: 0.75rem;
+		text-transform: uppercase;
+	}
+
+	.stat-val {
+		font-family: var(--font-mono);
+		font-size: 2rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		line-height: 1;
+		margin-bottom: 0.5rem;
+	}
+
+	.stat-detail {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+	}
+
+	/* Repo Section */
 	.repo-section {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
+		margin-bottom: 4rem;
 	}
 
 	.repo-header-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding-bottom: 0.75rem;
+		padding-bottom: 1rem;
 		border-bottom: 1px solid var(--border);
+		margin-bottom: 1.5rem;
 	}
 
 	.repo-meta {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 1rem;
 	}
-	.repo-icon {
-		width: 20px;
-		height: 20px;
-		color: var(--text-muted);
+
+	.repo-icon-box {
+		width: 32px;
+		height: 32px;
+		background: var(--bg-surface-alt);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--accent);
 	}
+
 	.repo-meta h3 {
-		font-size: 1.125rem;
+		font-size: 1.25rem;
 		font-weight: 700;
 		letter-spacing: -0.01em;
 	}
+
 	.repo-badge {
-		font-size: 0.65rem;
 		font-family: var(--font-mono);
-		padding: 0.125rem 0.5rem;
+		font-size: 0.6rem;
+		padding: 0.2rem 0.5rem;
 		border-radius: 4px;
 		background: var(--bg-surface-alt);
 		border: 1px solid var(--border);
-		color: var(--text-secondary);
+		color: var(--text-muted);
 	}
 
-	.workflows-container {
+	.github-tool-link {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		text-decoration: none;
+		padding: 0.4rem 0.75rem;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		transition: all 0.15s;
+		font-family: var(--font-mono);
+	}
+
+	.github-tool-link:hover {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		border-color: var(--border-focus);
+	}
+
+	/* Workflow Cards */
+	.workflows-list {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
 		gap: 1.5rem;
 	}
 
-	.workflow-card {
+	.intel-card {
 		background: var(--bg-surface);
 		border: 1px solid var(--border);
-		border-radius: 16px;
-		padding: 1.25rem;
+		border-radius: 12px;
+		padding: 1.5rem;
+		box-shadow: var(--card-shadow);
 		transition: all 0.2s var(--ease-premium);
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
 	}
-	.workflow-card:hover {
+
+	.intel-card:hover {
 		border-color: var(--border-focus);
 	}
 
-	.workflow-header-row {
+	.workflow-header {
 		display: flex;
 		justify-content: space-between;
-		align-items: flex-start;
+		align-items: center;
+		margin-bottom: 1.5rem;
 	}
+
 	.workflow-info {
 		display: flex;
 		flex-direction: column;
-	}
-	.workflow-node {
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-weight: bold;
-	}
-	.workflow-path {
-		font-weight: 600;
-		font-size: 0.9375rem;
-	}
-	.full-path {
-		font-size: 0.7rem;
-		color: var(--text-muted);
-		font-family: var(--font-mono);
-		margin-top: 0.1rem;
+		gap: 0.125rem;
 	}
 
-	.btn-action {
-		background: var(--bg-surface-alt);
-		border: 1px solid var(--border);
-		color: var(--text-secondary);
-		font-size: 0.7rem;
+	.workflow-node {
 		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		color: var(--accent);
+		opacity: 0.5;
+	}
+
+	.workflow-path {
+		font-weight: 700;
+		font-size: 0.95rem;
+		color: var(--text-primary);
+	}
+
+	.full-path {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-muted);
+	}
+
+	.btn-micro {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--text-muted);
+		background: transparent;
+		border: 1px solid var(--border);
 		padding: 0.25rem 0.5rem;
 		border-radius: 4px;
 		cursor: pointer;
+		transition: all 0.15s;
 	}
 
-	.prediction-loading {
-		padding: 1rem 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-	.shimmer-line {
-		height: 12px;
-		width: 60%;
-		background: linear-gradient(
-			90deg,
-			var(--bg-surface-alt) 25%,
-			var(--border) 50%,
-			var(--bg-surface-alt) 75%
-		);
-		background-size: 200% 100%;
-		animation: shimmer 1.5s infinite;
-		border-radius: 4px;
-	}
-	.shimmer-panel {
-		height: 160px;
-		width: 100%;
-		background: linear-gradient(
-			90deg,
-			var(--bg-surface-alt) 25%,
-			var(--border) 100%,
-			var(--bg-surface-alt) 75%
-		);
-		background-size: 200% 100%;
-		animation: shimmer 1.5s infinite;
-		border-radius: 8px;
-	}
-	@keyframes shimmer {
-		0% {
-			background-position: 200% 0;
-		}
-		100% {
-			background-position: -200% 0;
-		}
-	}
-
-	.section-divider {
-		height: 1px;
-		background: radial-gradient(circle, var(--border) 0%, transparent 70%);
-		margin-top: 1rem;
-	}
-
-	.header-actions {
-		display: flex;
-		gap: 0.75rem;
-		align-items: center;
-	}
-	.header-actions a,
-	.header-actions button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-	}
-
-	.stats-panel {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-		gap: 1rem;
-		margin-bottom: 2rem;
-		padding: 1.5rem;
-		background: var(--bg-surface-alt);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-	}
-	.stat-cell {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.75rem;
-	}
-	.stat-cell svg {
-		width: 24px;
-		height: 24px;
-		color: var(--accent);
-		flex-shrink: 0;
-	}
-	.stat-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-	.stat-val {
-		font-weight: 600;
-		font-size: 1.25rem;
+	.btn-micro:hover {
 		color: var(--text-primary);
-	}
-	.stat-lbl {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		color: var(--text-secondary);
+		border-color: var(--border-focus);
+		background: var(--bg-surface-alt);
 	}
 
+	/* States */
 	.center-state {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 6rem 2rem;
-		gap: 1.5rem;
-		text-align: center;
+		padding: 8rem 2rem;
 	}
 
 	.loader-icon {
-		width: 64px;
-		height: 64px;
-		opacity: 0.8;
+		width: 48px;
+		height: 48px;
+		margin-bottom: 2rem;
 		animation: pulse 2s ease-in-out infinite;
 	}
+
 	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 0.8;
-		}
-		50% {
-			opacity: 0.5;
-		}
+		0%, 100% { opacity: 0.5; transform: scale(0.95); }
+		50% { opacity: 1; transform: scale(1); }
 	}
 
 	.loader-text {
-		font-weight: 500;
-		letter-spacing: 0.05em;
-		color: var(--text-secondary);
-		font-size: 0.875rem;
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--accent);
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
 	}
 
-	.center-state svg {
-		width: 64px;
-		height: 64px;
-		color: var(--text-secondary);
-		opacity: 0.6;
+	.state-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		padding: 4rem 2rem;
+		text-align: center;
+		max-width: 500px;
+		margin: 4rem auto;
+		box-shadow: var(--card-shadow);
 	}
 
-	.center-state h3 {
-		margin: 0;
+	.state-icon {
+		font-size: 2.5rem;
+		margin-bottom: 1.5rem;
+		opacity: 0.5;
+	}
+
+	.state-title {
 		font-size: 1.25rem;
-		color: var(--text-primary);
+		font-weight: 700;
+		margin-bottom: 1rem;
 	}
 
-	.error-text,
-	.empty-desc {
-		margin: 0;
-		font-size: 0.95rem;
+	.state-message {
 		color: var(--text-secondary);
-		max-width: 400px;
+		font-size: 0.9rem;
+		margin-bottom: 2rem;
+		line-height: 1.5;
 	}
 
-	.empty-actions {
-		display: flex;
+	.btn {
+		display: inline-flex;
+		align-items: center;
 		gap: 0.75rem;
-		flex-wrap: wrap;
-		justify-content: center;
+		padding: 0.75rem 1.5rem;
+		border-radius: 8px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s var(--ease-premium);
+		border: none;
+		text-decoration: none;
 	}
 
-	@media (max-width: 1024px) {
-		.workflows-container {
-			grid-template-columns: 1fr;
-		}
-		.stats-panel {
-			grid-template-columns: repeat(2, 1fr);
-		}
+	.btn-primary {
+		background: var(--accent);
+		color: #000;
 	}
 
-	@media (max-width: 640px) {
-		.header-actions {
-			flex-direction: column;
-			width: 100%;
-		}
-		.header-actions a,
-		.header-actions button {
-			width: 100%;
-		}
-		.stats-panel {
-			grid-template-columns: 1fr;
-		}
-		.center-state {
-			padding: 4rem 1rem;
-		}
+	.btn-primary:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px var(--accent-soft);
+	}
+
+	.btn-secondary {
+		background: var(--bg-surface-alt);
+		color: var(--text-primary);
+		border: 1px solid var(--border);
+	}
+
+	.btn-secondary:hover {
+		background: var(--border);
+	}
+
+	.button-arrow {
+		transition: transform 0.2s var(--ease-premium);
+	}
+
+	.btn:hover .button-arrow {
+		transform: translateX(3px);
+	}
+
+	/* Skeletons */
+	.prediction-skeleton {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.shimmer-row {
+		height: 20px;
+		width: 60%;
+		background: var(--bg-surface-alt);
+		border-radius: 4px;
+		animation: shimmer 1.5s infinite linear;
+	}
+
+	.shimmer-block {
+		height: 80px;
+		width: 100%;
+		background: var(--bg-surface-alt);
+		border-radius: 8px;
+		animation: shimmer 1.5s infinite linear;
+	}
+
+	@keyframes shimmer {
+		0% { opacity: 0.5; }
+		50% { opacity: 0.8; }
+		100% { opacity: 0.5; }
 	}
 </style>

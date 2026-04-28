@@ -44,7 +44,7 @@ RUN mkdir -p /app/models
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8009/health')" || exit 1
+    CMD python -c "import http.client; conn = http.client.HTTPConnection('localhost', 8009); conn.request('GET', '/health'); resp = conn.getresponse(); exit(0 if resp.status == 200 else 1)" || exit 1
 
 # Run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8009"]
