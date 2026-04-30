@@ -99,8 +99,8 @@
 	function getOverallRiskScore() {
 		let totalScore = 0;
 		let count = 0;
-		Object.values(predictions).forEach(repoPreds => {
-			Object.values(repoPreds).forEach(pred => {
+		Object.values(predictions).forEach((repoPreds) => {
+			Object.values(repoPreds).forEach((pred) => {
 				if (pred && typeof pred.overall_risk_score === 'number') {
 					totalScore += pred.overall_risk_score;
 					count++;
@@ -150,11 +150,25 @@
 					aria-label="Toggle dark mode"
 				>
 					{#if darkMode}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
 						</svg>
 					{:else}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
@@ -184,7 +198,9 @@
 			<div class="view-header">
 				<div class="title-group">
 					<h1>Pipeline Intelligence</h1>
-					<p>Machine learning powered failure risk assessment for all organization CI/CD workflows.</p>
+					<p>
+						Machine learning powered failure risk assessment for all organization CI/CD workflows.
+					</p>
 				</div>
 				<div class="header-cta">
 					<div class="score-pill">
@@ -211,7 +227,11 @@
 				<div class="stat-card">
 					<div class="feature-number">HIGH RISK DETECTED</div>
 					<div class="stat-val" style="color: var(--error)">
-						{Object.values(predictions).reduce((sum, repoPreds) => sum + Object.values(repoPreds).filter(p => p.overall_risk_score > 70).length, 0)}
+						{Object.values(predictions).reduce(
+							(sum, repoPreds) =>
+								sum + Object.values(repoPreds).filter((p) => p.overall_risk_score > 70).length,
+							0
+						)}
 					</div>
 					<div class="stat-detail">Requires immediate attention</div>
 				</div>
@@ -247,8 +267,17 @@
 								<div class="repo-header-row">
 									<div class="repo-meta">
 										<div class="repo-icon-box">
-											<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-												<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+											<svg
+												width="18"
+												height="18"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path
+													d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+												/>
 											</svg>
 										</div>
 										<h3>{repo.name}</h3>
@@ -256,8 +285,16 @@
 									</div>
 									<a href={repo.html_url} target="_blank" class="github-tool-link">
 										VIEW SOURCE
-										<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+										<svg
+											width="12"
+											height="12"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+											/>
 										</svg>
 									</a>
 								</div>
@@ -301,9 +338,13 @@
 						<div class="state-card">
 							<div class="state-icon">📂</div>
 							<h3 class="state-title">No Workflows Detected</h3>
-							<p class="state-message">No GitHub Actions workflows were found in this organization's active repositories.</p>
+							<p class="state-message">
+								No GitHub Actions workflows were found in this organization's active repositories.
+							</p>
 							<div class="empty-actions">
-								<a href="/github/workspace/{orgName}/repo-treeview" class="btn btn-primary">SCAN REPOSITORIES</a>
+								<a href="/github/workspace/{orgName}/repo-treeview" class="btn btn-primary"
+									>SCAN REPOSITORIES</a
+								>
 								<button onclick={loadWorkspaceData} class="btn btn-secondary">REFRESH</button>
 							</div>
 						</div>
@@ -373,7 +414,7 @@
 		content: '';
 		position: fixed;
 		inset: 0;
-		background-image: 
+		background-image:
 			linear-gradient(var(--border) 1px, transparent 1px),
 			linear-gradient(90deg, var(--border) 1px, transparent 1px);
 		background-size: 40px 40px;
@@ -449,7 +490,8 @@
 		transition: color 0.15s;
 	}
 
-	.nav-link:hover, .nav-link.active {
+	.nav-link:hover,
+	.nav-link.active {
 		color: var(--text-primary);
 	}
 
@@ -504,7 +546,8 @@
 		transition: color 0.15s ease;
 	}
 
-	.bc-node:hover, .bc-node.active {
+	.bc-node:hover,
+	.bc-node.active {
 		color: var(--accent);
 	}
 
@@ -534,8 +577,13 @@
 	}
 
 	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.3; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
 	/* Layout */
@@ -822,8 +870,15 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 0.5; transform: scale(0.95); }
-		50% { opacity: 1; transform: scale(1); }
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 
 	.loader-text {
@@ -930,8 +985,14 @@
 	}
 
 	@keyframes shimmer {
-		0% { opacity: 0.5; }
-		50% { opacity: 0.8; }
-		100% { opacity: 0.5; }
+		0% {
+			opacity: 0.5;
+		}
+		50% {
+			opacity: 0.8;
+		}
+		100% {
+			opacity: 0.5;
+		}
 	}
 </style>

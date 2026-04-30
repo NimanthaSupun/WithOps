@@ -12,8 +12,8 @@
 	// Flatten navigation for searching
 	const searchableItems = $derived.by(() => {
 		const items = [];
-		navigation.forEach(section => {
-			section.items.forEach(item => {
+		navigation.forEach((section) => {
+			section.items.forEach((item) => {
 				items.push({
 					...item,
 					section: section.title,
@@ -38,10 +38,13 @@
 		if (!searchQuery) return searchableItems.slice(0, 8); // Show recent or first 8
 
 		const query = searchQuery.toLowerCase();
-		return searchableItems.filter(item => 
-			item.title.toLowerCase().includes(query) || 
-			(item.section && item.section.toLowerCase().includes(query))
-		).slice(0, 10);
+		return searchableItems
+			.filter(
+				(item) =>
+					item.title.toLowerCase().includes(query) ||
+					(item.section && item.section.toLowerCase().includes(query))
+			)
+			.slice(0, 10);
 	});
 
 	$effect(() => {
@@ -71,7 +74,7 @@
 
 	function selectItem(item) {
 		if (!item) return;
-		
+
 		if (item.href) {
 			goto(item.href);
 			isOpen = false;
@@ -86,30 +89,38 @@
 {#if isOpen}
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<div 
-		class="cmd-backdrop" 
+	<div
+		class="cmd-backdrop"
 		transition:fade={{ duration: 150 }}
-		onclick={() => isOpen = false}
+		onclick={() => (isOpen = false)}
 		role="dialog"
 		aria-modal="true"
 		tabindex="-1"
 	>
-		<div 
-			class="cmd-container" 
+		<div
+			class="cmd-container"
 			transition:fly={{ y: -20, duration: 250 }}
 			onclick={(e) => e.stopPropagation()}
 			role="document"
 		>
 			<div class="cmd-input-wrap">
-				<svg class="cmd-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="cmd-search-icon"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
 				</svg>
-				<input 
+				<input
 					bind:this={inputEl}
 					bind:value={searchQuery}
 					onkeydown={handleKeydown}
-					type="text" 
-					class="cmd-input" 
+					type="text"
+					class="cmd-input"
 					placeholder="Type a command or search docs..."
 				/>
 				<div class="cmd-esc-badge">ESC</div>
@@ -121,19 +132,37 @@
 						{searchQuery ? 'Search Results' : 'Quick Actions'}
 					</div>
 					{#each filteredItems as item, i}
-						<button 
+						<button
 							class="cmd-item {i === selectedIndex ? 'selected' : ''}"
 							onclick={() => selectItem(item)}
-							onmouseenter={() => selectedIndex = i}
+							onmouseenter={() => (selectedIndex = i)}
 						>
 							<div class="cmd-item-icon">
 								{#if item.type === 'action'}
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path
+											d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+										/>
 									</svg>
 								{:else}
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline
+											points="14 2 14 8 20 8"
+										/>
 									</svg>
 								{/if}
 							</div>
@@ -146,7 +175,14 @@
 							{#if i === selectedIndex}
 								<div class="cmd-item-enter" in:fade>
 									<span>Enter</span>
-									<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<svg
+										width="10"
+										height="10"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
 										<polyline points="9 10 4 15 9 20" /><path d="M20 4v7a4 4 0 01-4 4H4" />
 									</svg>
 								</div>
@@ -155,8 +191,20 @@
 					{/each}
 				{:else}
 					<div class="cmd-empty">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-							<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /><line x1="8" y1="8" x2="14" y2="14" /><line x1="14" y1="8" x2="8" y2="14" />
+						<svg
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+						>
+							<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /><line
+								x1="8"
+								y1="8"
+								x2="14"
+								y2="14"
+							/><line x1="14" y1="8" x2="8" y2="14" />
 						</svg>
 						<p>No results found for "{searchQuery}"</p>
 					</div>
@@ -193,7 +241,9 @@
 		background: var(--bg-surface);
 		border: 1px solid var(--border);
 		border-radius: 12px;
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+		box-shadow:
+			0 20px 50px rgba(0, 0, 0, 0.3),
+			0 0 0 1px rgba(255, 255, 255, 0.05);
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;

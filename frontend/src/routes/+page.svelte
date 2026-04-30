@@ -554,14 +554,32 @@ features:
 
 			<div class="nav-menu-actions">
 				{#if isAuthenticated}
-					<button class="nav-btn-primary" on:click={() => { goto('/dashboard'); mobileMenuOpen = false; }}>
+					<button
+						class="nav-btn-primary"
+						on:click={() => {
+							goto('/dashboard');
+							mobileMenuOpen = false;
+						}}
+					>
 						Dashboard
 					</button>
 				{:else}
-					<button class="nav-btn-secondary" on:click={() => { handleSignIn(); mobileMenuOpen = false; }}>
+					<button
+						class="nav-btn-secondary"
+						on:click={() => {
+							handleSignIn();
+							mobileMenuOpen = false;
+						}}
+					>
 						Login
 					</button>
-					<button class="nav-btn-primary" on:click={() => { handleGetStarted(); mobileMenuOpen = false; }}>
+					<button
+						class="nav-btn-primary"
+						on:click={() => {
+							handleGetStarted();
+							mobileMenuOpen = false;
+						}}
+					>
 						Connect GitHub
 					</button>
 				{/if}

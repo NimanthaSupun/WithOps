@@ -956,7 +956,10 @@
 						Add Repository
 					</button>
 
-					<button onclick={() => goto(`/github/workspace/${orgName}/intelligence`)} class="btn btn-primary btn-full btn-sm">
+					<button
+						onclick={() => goto(`/github/workspace/${orgName}/intelligence`)}
+						class="btn btn-primary btn-full btn-sm"
+					>
 						<svg
 							width="14"
 							height="14"

@@ -20,7 +20,10 @@
 
 <svelte:head>
 	<title>Getting Started — WithOps Documentation</title>
-	<meta name="description" content="Learn how to set up WithOps, the AI-powered DevSecOps platform. Connect your GitHub account and run your first security scan in minutes." />
+	<meta
+		name="description"
+		content="Learn how to set up WithOps, the AI-powered DevSecOps platform. Connect your GitHub account and run your first security scan in minutes."
+	/>
 </svelte:head>
 
 <div class="getting-started {visible ? 'visible' : ''}">
@@ -35,8 +38,17 @@
 
 	<!-- Chapter tag -->
 	<div class="chapter-tag">
-		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09zM12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z" />
+		<svg
+			width="14"
+			height="14"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+		>
+			<path
+				d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09zM12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"
+			/>
 		</svg>
 		Chapter I
 	</div>
@@ -44,7 +56,8 @@
 	<!-- Title -->
 	<h1 class="page-title" id="introduction">Getting Started with WithOps</h1>
 	<p class="page-subtitle">
-		Everything you need to set up the AI-powered DevSecOps platform and run your first automated security analysis.
+		Everything you need to set up the AI-powered DevSecOps platform and run your first automated
+		security analysis.
 	</p>
 
 	<hr class="divider" />
@@ -52,7 +65,14 @@
 	<!-- Meta row -->
 	<div class="meta-row">
 		<span class="meta-reading">
-			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="12"
+				height="12"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
 			</svg>
 			8 min read
@@ -65,30 +85,46 @@
 	<!-- Welcome prose -->
 	<div class="prose">
 		<p>
-			Welcome to <strong>WithOps</strong> — an enterprise-grade, AI-powered DevSecOps platform that automates security analysis, threat modeling, and compliance assessment for your development workflow. This guide walks you through the fundamentals — from creating your account to running your first security scan.
+			Welcome to <strong>WithOps</strong> — an enterprise-grade, AI-powered DevSecOps platform that automates
+			security analysis, threat modeling, and compliance assessment for your development workflow. This
+			guide walks you through the fundamentals — from creating your account to running your first security
+			scan.
 		</p>
 		<p>
-			WithOps follows the principle of <em>"Everything After Code"</em> — intelligent automation that empowers development teams to ship code faster, safer, and smarter. By the end of this guide, you'll have a fully connected workspace ready to analyse your repositories.
+			WithOps follows the principle of <em>"Everything After Code"</em> — intelligent automation that
+			empowers development teams to ship code faster, safer, and smarter. By the end of this guide, you'll
+			have a fully connected workspace ready to analyse your repositories.
 		</p>
 	</div>
 
 	<!-- Callout: Before you begin -->
 	<div class="callout info">
 		<div class="callout-icon">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
 			</svg>
 		</div>
 		<div class="callout-content">
 			<div class="callout-label">Before you begin</div>
-			<p>You'll need a <strong>GitHub account</strong> with at least one repository, and a modern browser (Chrome, Firefox, Safari, or Edge). No local installation is required for the cloud-hosted version.</p>
+			<p>
+				You'll need a <strong>GitHub account</strong> with at least one repository, and a modern browser
+				(Chrome, Firefox, Safari, or Edge). No local installation is required for the cloud-hosted version.
+			</p>
 		</div>
 	</div>
 
 	<!-- What You'll Learn — 3 Step preview cards -->
 	<h2 class="section-heading" id="what-youll-learn">What You'll Learn</h2>
 	<p class="prose-text">
-		This Getting Started guide is divided into three focused chapters. Complete them in order to go from zero to your first comprehensive security report.
+		This Getting Started guide is divided into three focused chapters. Complete them in order to go
+		from zero to your first comprehensive security report.
 	</p>
 
 	<div class="steps">
@@ -96,7 +132,10 @@
 			<div class="step-num">1</div>
 			<div class="step-content">
 				<h4>Quick Start</h4>
-				<p>Set up your account and choose between cloud-hosted or self-hosted deployment. Get the platform running in under five minutes.</p>
+				<p>
+					Set up your account and choose between cloud-hosted or self-hosted deployment. Get the
+					platform running in under five minutes.
+				</p>
 				<span class="step-arrow">→</span>
 			</div>
 		</a>
@@ -105,7 +144,10 @@
 			<div class="step-num">2</div>
 			<div class="step-content">
 				<h4>Connecting GitHub</h4>
-				<p>Link your GitHub account using OAuth or GitHub App. Configure organization access and repository permissions.</p>
+				<p>
+					Link your GitHub account using OAuth or GitHub App. Configure organization access and
+					repository permissions.
+				</p>
 				<span class="step-arrow">→</span>
 			</div>
 		</a>
@@ -114,7 +156,10 @@
 			<div class="step-num">3</div>
 			<div class="step-content">
 				<h4>First Security Scan</h4>
-				<p>Run a comprehensive scan covering SAST, dependency audit, secret detection, CI/CD analysis, and AI-powered threat assessment.</p>
+				<p>
+					Run a comprehensive scan covering SAST, dependency audit, secret detection, CI/CD
+					analysis, and AI-powered threat assessment.
+				</p>
 				<span class="step-arrow">→</span>
 			</div>
 		</a>
@@ -123,63 +168,116 @@
 	<!-- Platform Capabilities -->
 	<h2 class="section-heading" id="platform-capabilities">Platform Capabilities</h2>
 	<p class="prose-text">
-		WithOps combines multiple security disciplines into a single, cohesive platform. Each capability is powered by AI models and integrates directly with your development workflow.
+		WithOps combines multiple security disciplines into a single, cohesive platform. Each capability
+		is powered by AI models and integrates directly with your development workflow.
 	</p>
 
 	<div class="capability-grid">
 		<div class="capability-card">
 			<div class="cap-icon-wrap blue">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+				>
 					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
 					<path d="M9 12l2 2 4-4" />
 				</svg>
 			</div>
 			<h4>AI Security Analysis</h4>
-			<p>Multi-model vulnerability detection (GPT-4, Claude 3, Llama 3) with automated remediation suggestions and CVSS risk scoring.</p>
+			<p>
+				Multi-model vulnerability detection (GPT-4, Claude 3, Llama 3) with automated remediation
+				suggestions and CVSS risk scoring.
+			</p>
 		</div>
 
 		<div class="capability-card">
 			<div class="cap-icon-wrap green">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+				>
+					<path
+						d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+					/>
 					<line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
 				</svg>
 			</div>
 			<h4>Threat Modeling</h4>
-			<p>Automated STRIDE, CIA, and LINDDUN analysis with attack surface mapping and OWASP-aligned mitigation strategies.</p>
+			<p>
+				Automated STRIDE, CIA, and LINDDUN analysis with attack surface mapping and OWASP-aligned
+				mitigation strategies.
+			</p>
 		</div>
 
 		<div class="capability-card">
 			<div class="cap-icon-wrap amber">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+				>
+					<path
+						d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+					/>
 				</svg>
 			</div>
 			<h4>GitHub Integration</h4>
-			<p>Deep integration for repository management, PR automation, workflow monitoring, and real-time dependency tracking.</p>
+			<p>
+				Deep integration for repository management, PR automation, workflow monitoring, and
+				real-time dependency tracking.
+			</p>
 		</div>
 
 		<div class="capability-card">
 			<div class="cap-icon-wrap purple">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+				>
 					<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
 				</svg>
 			</div>
 			<h4>Workflow Orchestration</h4>
-			<p>CI/CD workflow analysis, GitHub Actions YAML validation, integrated security scanning, and performance recommendations.</p>
+			<p>
+				CI/CD workflow analysis, GitHub Actions YAML validation, integrated security scanning, and
+				performance recommendations.
+			</p>
 		</div>
 	</div>
 
 	<!-- Prerequisites -->
 	<h2 class="section-heading" id="prerequisites">Prerequisites</h2>
 	<p class="prose-text">
-		Before you begin, ensure you have the following ready. The cloud-hosted version requires no local installation — just a browser and a GitHub account.
+		Before you begin, ensure you have the following ready. The cloud-hosted version requires no
+		local installation — just a browser and a GitHub account.
 	</p>
 
 	<div class="prereq-grid">
 		<div class="prereq-item">
 			<div class="prereq-check">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+				>
 					<polyline points="20 6 9 17 4 12" />
 				</svg>
 			</div>
@@ -190,7 +288,14 @@
 		</div>
 		<div class="prereq-item">
 			<div class="prereq-check">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+				>
 					<polyline points="20 6 9 17 4 12" />
 				</svg>
 			</div>
@@ -201,7 +306,14 @@
 		</div>
 		<div class="prereq-item">
 			<div class="prereq-check">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+				>
 					<polyline points="20 6 9 17 4 12" />
 				</svg>
 			</div>
@@ -215,20 +327,33 @@
 	<!-- Self-Hosted callout -->
 	<div class="callout tip">
 		<div class="callout-icon">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
 			</svg>
 		</div>
 		<div class="callout-content">
 			<div class="callout-label">Self-Hosted Deployment</div>
-			<p>For self-hosted installations, you'll also need <strong>Docker 24+</strong>, <strong>8GB+ RAM</strong>, <strong>Node.js 18+</strong>, and <strong>Python 3.11+</strong>. See the <a href="/docs/getting-started/quick-start">Quick Start</a> guide for detailed setup instructions.</p>
+			<p>
+				For self-hosted installations, you'll also need <strong>Docker 24+</strong>,
+				<strong>8GB+ RAM</strong>, <strong>Node.js 18+</strong>, and <strong>Python 3.11+</strong>.
+				See the <a href="/docs/getting-started/quick-start">Quick Start</a> guide for detailed setup
+				instructions.
+			</p>
 		</div>
 	</div>
 
 	<!-- Architecture Overview -->
 	<h2 class="section-heading" id="architecture">Architecture Overview</h2>
 	<p class="prose-text">
-		WithOps uses a microservices architecture with an API Gateway pattern. Here's how requests flow through the system:
+		WithOps uses a microservices architecture with an API Gateway pattern. Here's how requests flow
+		through the system:
 	</p>
 
 	<div class="arch-container">
@@ -263,7 +388,7 @@
 		<div class="arch-box microservices">
 			<span class="arch-title">Microservices Layer</span>
 			<span class="arch-name">Core Domain Services</span>
-			
+
 			<div class="arch-grid">
 				<div class="arch-sub-box">
 					<span class="arch-sub-name">Events</span>
@@ -339,7 +464,8 @@
 	<div class="prose">
 		<h3 id="microservices">9 Microservices</h3>
 		<p>
-			Each service is independently deployable, communicates via REST APIs and Redis pub/sub, and is containerised with Docker. The platform uses Auth0 for authentication with RS256 JWT tokens.
+			Each service is independently deployable, communicates via REST APIs and Redis pub/sub, and is
+			containerised with Docker. The platform uses Auth0 for authentication with RS256 JWT tokens.
 		</p>
 	</div>
 
@@ -349,63 +475,81 @@
 			<span class="service-port">9100</span>
 			<div>
 				<strong>Events Hub (Backend)</strong>
-				<span class="service-desc">Real-time WebSocket synchronization engine using Redis Pub/Sub for live platform updates.</span>
+				<span class="service-desc"
+					>Real-time WebSocket synchronization engine using Redis Pub/Sub for live platform updates.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9101</span>
 			<div>
 				<strong>AI Service</strong>
-				<span class="service-desc">Core reasoning engine interfacing with GPT-4, Claude, and local Ollama for code analysis.</span>
+				<span class="service-desc"
+					>Core reasoning engine interfacing with GPT-4, Claude, and local Ollama for code analysis.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9102</span>
 			<div>
 				<strong>GitHub Service</strong>
-				<span class="service-desc">Unified GitHub integration handler for App/OAuth Auth, Webhooks, and Repo indexing.</span>
+				<span class="service-desc"
+					>Unified GitHub integration handler for App/OAuth Auth, Webhooks, and Repo indexing.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9103</span>
 			<div>
 				<strong>Threat Modeling</strong>
-				<span class="service-desc">Automated security design verification using STRIDE, CIA, and LINDDUN frameworks.</span>
+				<span class="service-desc"
+					>Automated security design verification using STRIDE, CIA, and LINDDUN frameworks.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9104</span>
 			<div>
 				<strong>Workspace Intelligence</strong>
-				<span class="service-desc">DevSecOps maturity assessment engine based on the OWASP DSOMM framework.</span>
+				<span class="service-desc"
+					>DevSecOps maturity assessment engine based on the OWASP DSOMM framework.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9105</span>
 			<div>
 				<strong>Collaboration</strong>
-				<span class="service-desc">Real-time team presence, workspace sharing, and collaborative security auditing.</span>
+				<span class="service-desc"
+					>Real-time team presence, workspace sharing, and collaborative security auditing.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9106</span>
 			<div>
 				<strong>Auth Service</strong>
-				<span class="service-desc">Centralized Identity & Access Management (IAM) with Auth0 and RBAC enforcement.</span>
+				<span class="service-desc"
+					>Centralized Identity & Access Management (IAM) with Auth0 and RBAC enforcement.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9107</span>
 			<div>
 				<strong>Workflow Orchestration</strong>
-				<span class="service-desc">CI/CD pipeline manager orchestrating SAST, dependency auditing, and secret scanning.</span>
+				<span class="service-desc"
+					>CI/CD pipeline manager orchestrating SAST, dependency auditing, and secret scanning.</span
+				>
 			</div>
 		</div>
 		<div class="service-item">
 			<span class="service-port">9108</span>
 			<div>
 				<strong>AI RAG Service</strong>
-				<span class="service-desc">Retreival-Augmented Generation engine using Vector Search (Qdrant) for security chat.</span>
+				<span class="service-desc"
+					>Retreival-Augmented Generation engine using Vector Search (Qdrant) for security chat.</span
+				>
 			</div>
 		</div>
 	</div>
@@ -413,17 +557,26 @@
 	<!-- Quick Install for Self-Hosted -->
 	<h2 class="section-heading" id="quick-install">Quick Install (Self-Hosted)</h2>
 	<p class="prose-text">
-		For those who prefer self-hosted deployment, here's a quick overview. The full step-by-step guide is available in <a href="/docs/getting-started/quick-start">Quick Start</a>.
+		For those who prefer self-hosted deployment, here's a quick overview. The full step-by-step
+		guide is available in <a href="/docs/getting-started/quick-start">Quick Start</a>.
 	</p>
 
 	<div class="code-block">
 		<div class="code-header">
 			<span class="code-lang">bash</span>
-			<button class="copy-btn" onclick={() => copyCode('clone', 'git clone https://github.com/withops/platform.git\ncd platform\ncp .env.example .env\ndocker compose up -d')}>
+			<button
+				class="copy-btn"
+				onclick={() =>
+					copyCode(
+						'clone',
+						'git clone https://github.com/withops/platform.git\ncd platform\ncp .env.example .env\ndocker compose up -d'
+					)}
+			>
 				{copiedStates['clone'] ? '✓ Copied' : 'Copy'}
 			</button>
 		</div>
-		<pre><code><span class="cm"># Clone the repository</span>
+		<pre><code
+				><span class="cm"># Clone the repository</span>
 <span class="fn">git</span> clone https://github.com/withops/platform.git
 <span class="fn">cd</span> platform
 
@@ -437,26 +590,43 @@
 <span class="cm"># Access the platform</span>
 <span class="cm"># Frontend:  http://localhost:5173</span>
 <span class="cm"># API:       http://localhost:9000</span>
-<span class="cm"># Grafana:   http://localhost:3001</span></code></pre>
+<span class="cm"># Grafana:   http://localhost:3001</span></code
+			></pre>
 	</div>
 
 	<div class="callout warn">
 		<div class="callout-icon">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path
+					d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+				/>
 				<line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
 			</svg>
 		</div>
 		<div class="callout-content">
 			<div class="callout-label">Environment Variables</div>
-			<p>Never commit your <code>.env</code> file. It contains sensitive API keys for Auth0, GitHub, Supabase, and AI providers. The <code>.env.example</code> file includes all required variables with placeholder values.</p>
+			<p>
+				Never commit your <code>.env</code> file. It contains sensitive API keys for Auth0, GitHub,
+				Supabase, and AI providers. The <code>.env.example</code> file includes all required variables
+				with placeholder values.
+			</p>
 		</div>
 	</div>
 
 	<!-- Tech Stack Summary -->
 	<h2 class="section-heading" id="tech-stack">Technology Stack</h2>
 	<div class="prose">
-		<p>WithOps is built with a modern, production-grade technology stack designed for scalability and developer experience.</p>
+		<p>
+			WithOps is built with a modern, production-grade technology stack designed for scalability and
+			developer experience.
+		</p>
 	</div>
 
 	<div class="tech-grid">
@@ -485,7 +655,6 @@
 			<span class="tech-value">Prometheus · Grafana · Jaeger · Loki · OpenTelemetry</span>
 		</div>
 	</div>
-
 </div>
 
 <style>
@@ -509,9 +678,15 @@
 		font-size: 11px;
 		margin-bottom: 24px;
 	}
-	.bc-muted { color: var(--text-muted); }
-	.bc-sep { color: var(--border-focus); }
-	.bc-current { color: var(--accent); }
+	.bc-muted {
+		color: var(--text-muted);
+	}
+	.bc-sep {
+		color: var(--border-focus);
+	}
+	.bc-current {
+		color: var(--accent);
+	}
 
 	/* ── Chapter tag ── */
 	.chapter-tag {
@@ -593,15 +768,21 @@
 	.prose {
 		animation: fadeSlide 0.5s ease 0.2s both;
 	}
-	.prose p, .prose-text {
+	.prose p,
+	.prose-text {
 		font-family: 'Lora', serif;
 		font-size: 15px;
 		line-height: 1.85;
 		color: var(--text-primary);
 		margin-bottom: 16px;
 	}
-	.prose strong { font-weight: 600; }
-	.prose em { font-style: italic; color: var(--text-secondary); }
+	.prose strong {
+		font-weight: 600;
+	}
+	.prose em {
+		font-style: italic;
+		color: var(--text-secondary);
+	}
 	.prose-text a {
 		color: var(--accent);
 		text-decoration: none;
@@ -648,9 +829,15 @@
 		flex-shrink: 0;
 		margin-top: 2px;
 	}
-	.callout.info .callout-icon { color: var(--callout-info-text); }
-	.callout.tip .callout-icon { color: var(--callout-tip-text); }
-	.callout.warn .callout-icon { color: var(--callout-warn-text); }
+	.callout.info .callout-icon {
+		color: var(--callout-info-text);
+	}
+	.callout.tip .callout-icon {
+		color: var(--callout-tip-text);
+	}
+	.callout.warn .callout-icon {
+		color: var(--callout-warn-text);
+	}
 	.callout-label {
 		font-family: 'DM Mono', monospace;
 		font-size: 10px;
@@ -658,9 +845,15 @@
 		text-transform: uppercase;
 		margin-bottom: 4px;
 	}
-	.callout.info .callout-label { color: var(--callout-info-text); }
-	.callout.tip .callout-label { color: var(--callout-tip-text); }
-	.callout.warn .callout-label { color: var(--callout-warn-text); }
+	.callout.info .callout-label {
+		color: var(--callout-info-text);
+	}
+	.callout.tip .callout-label {
+		color: var(--callout-tip-text);
+	}
+	.callout.warn .callout-label {
+		color: var(--callout-warn-text);
+	}
 	.callout-content p {
 		font-family: 'Lora', serif;
 		font-size: 13.5px;
@@ -789,10 +982,22 @@
 		justify-content: center;
 		margin-bottom: 12px;
 	}
-	.cap-icon-wrap.blue { background: rgba(0, 173, 239, 0.08); color: var(--accent); }
-	.cap-icon-wrap.green { background: rgba(16, 185, 129, 0.08); color: var(--success); }
-	.cap-icon-wrap.amber { background: rgba(245, 158, 11, 0.08); color: var(--warn); }
-	.cap-icon-wrap.purple { background: rgba(139, 92, 246, 0.08); color: #8b5cf6; }
+	.cap-icon-wrap.blue {
+		background: rgba(0, 173, 239, 0.08);
+		color: var(--accent);
+	}
+	.cap-icon-wrap.green {
+		background: rgba(16, 185, 129, 0.08);
+		color: var(--success);
+	}
+	.cap-icon-wrap.amber {
+		background: rgba(245, 158, 11, 0.08);
+		color: var(--warn);
+	}
+	.cap-icon-wrap.purple {
+		background: rgba(139, 92, 246, 0.08);
+		color: #8b5cf6;
+	}
 
 	.capability-card h4 {
 		font-family: 'Inter', sans-serif;
@@ -932,8 +1137,14 @@
 
 	/* ── Animations ── */
 	@keyframes fadeSlide {
-		from { opacity: 0; transform: translateY(10px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	/* ── Responsive ── */

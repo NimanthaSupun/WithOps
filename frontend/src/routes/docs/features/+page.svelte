@@ -66,19 +66,95 @@
 </div>
 
 <style>
-	.getting-started { opacity: 0; transform: translateY(10px); transition: all 0.5s ease; }
-	.getting-started.visible { opacity: 1; transform: translateY(0); }
-	.breadcrumb { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; margin-bottom: 24px; }
-	.bc-link { color: var(--text-muted); text-decoration: none; }
-	.bc-current { color: var(--accent); }
-	.page-title { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: var(--text-primary); }
-	.page-subtitle { font-family: 'Lora', serif; font-style: italic; font-size: 15px; color: var(--text-secondary); }
-	.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-	.steps { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
-	.step-card { display: flex; gap: 18px; padding: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.2s; position: relative; }
-	.step-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-	.step-num { width: 32px; height: 32px; background: var(--bg-surface-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-family: 'Playfair Display', serif; }
-	.step-content h4 { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
-	.step-content p { font-size: 14px; color: var(--text-secondary); margin: 0; }
-	.step-arrow { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+	.getting-started {
+		opacity: 0;
+		transform: translateY(10px);
+		transition: all 0.5s ease;
+	}
+	.getting-started.visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-family: 'DM Mono', monospace;
+		font-size: 11px;
+		margin-bottom: 24px;
+	}
+	.bc-link {
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+	.bc-current {
+		color: var(--accent);
+	}
+	.page-title {
+		font-family: 'Playfair Display', serif;
+		font-size: 38px;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+	.page-subtitle {
+		font-family: 'Lora', serif;
+		font-style: italic;
+		font-size: 15px;
+		color: var(--text-secondary);
+	}
+	.divider {
+		border: none;
+		border-top: 1px solid var(--border);
+		margin: 24px 0;
+	}
+	.steps {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-top: 32px;
+	}
+	.step-card {
+		display: flex;
+		gap: 18px;
+		padding: 24px;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		text-decoration: none;
+		color: inherit;
+		transition: all 0.2s;
+		position: relative;
+	}
+	.step-card:hover {
+		border-color: var(--accent);
+		transform: translateY(-2px);
+	}
+	.step-num {
+		width: 32px;
+		height: 32px;
+		background: var(--bg-surface-2);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--accent);
+		font-family: 'Playfair Display', serif;
+	}
+	.step-content h4 {
+		font-weight: 600;
+		font-size: 16px;
+		margin-bottom: 4px;
+	}
+	.step-content p {
+		font-size: 14px;
+		color: var(--text-secondary);
+		margin: 0;
+	}
+	.step-arrow {
+		position: absolute;
+		right: 24px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--text-muted);
+	}
 </style>

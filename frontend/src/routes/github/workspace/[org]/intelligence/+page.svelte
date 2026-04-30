@@ -472,9 +472,9 @@
 				<div class="nav-menu">
 					<a href="/dashboard" class="nav-link">Overview</a>
 					<a href="/organizations" class="nav-link">Organizations</a>
-				<a href="/github/workspace/{org}" class="nav-link">Workspace</a>
-				<a href="/github/workspace/{org}/repo-treeview" class="nav-link">Treeview</a>
-				<a href="/github/workspace/{org}/intelligence" class="nav-link active">Intelligence</a>
+					<a href="/github/workspace/{org}" class="nav-link">Workspace</a>
+					<a href="/github/workspace/{org}/repo-treeview" class="nav-link">Treeview</a>
+					<a href="/github/workspace/{org}/intelligence" class="nav-link active">Intelligence</a>
 					<button
 						onclick={() => isDarkMode.set(!$isDarkMode)}
 						class="theme-toggle"

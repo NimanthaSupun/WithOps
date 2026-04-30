@@ -105,7 +105,6 @@
 		};
 	});
 
-
 	// Navigation structure
 	const navigation = [
 		{
@@ -155,8 +154,8 @@
 
 	// Calculate Prev/Next chapters
 	let navPair = $derived.by(() => {
-		const allItems = navigation.flatMap(s => s.items);
-		const currentIndex = allItems.findIndex(item => item.href === $page.url.pathname);
+		const allItems = navigation.flatMap((s) => s.items);
+		const currentIndex = allItems.findIndex((item) => item.href === $page.url.pathname);
 		return {
 			prev: currentIndex > 0 ? allItems[currentIndex - 1] : null,
 			next: currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null
@@ -198,8 +197,16 @@
 		</div>
 
 		<div class="sidebar-search">
-			<button class="search-wrap" onclick={() => commandPaletteOpen = true}>
-				<svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<button class="search-wrap" onclick={() => (commandPaletteOpen = true)}>
+				<svg
+					class="search-icon"
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
 				</svg>
 				<span class="search-input">Search docs…</span>
@@ -211,8 +218,17 @@
 			<!-- Home Link -->
 			<div class="nav-section">
 				<a href="/" class="nav-item home-nav">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline
+							points="9 22 9 12 15 12 15 22"
+						/>
 					</svg>
 					Landing Page
 				</a>
@@ -222,18 +238,46 @@
 				<div class="nav-section">
 					<div class="nav-section-label">
 						{#if section.icon === 'rocket'}
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<path
 									d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09zM12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"
 								/>
 							</svg>
 						{:else if section.icon === 'layers'}
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" />
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline
+									points="2 17 12 22 22 17"
+								/><polyline points="2 12 12 17 22 12" />
 							</svg>
 						{:else if section.icon === 'cpu'}
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" />
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<rect x="4" y="4" width="16" height="16" rx="2" /><rect
+									x="9"
+									y="9"
+									width="6"
+									height="6"
+								/>
 								<line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
 								<line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
 								<line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="15" x2="23" y2="15" />
@@ -243,7 +287,11 @@
 						{section.title}
 					</div>
 					{#each section.items as item}
-						<a href={item.href} class="nav-item {isActive(item.href) ? 'active' : ''}" onclick={closeSidebar}>
+						<a
+							href={item.href}
+							class="nav-item {isActive(item.href) ? 'active' : ''}"
+							onclick={closeSidebar}
+						>
 							<div class="nav-dot"></div>
 							{item.title}
 						</a>
@@ -273,8 +321,13 @@
 		<header class="docs-topbar">
 			<div class="topbar-left">
 				<button class="mobile-menu-btn" onclick={toggleSidebar} aria-label="Toggle navigation menu">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-						><path d="M3 12h18M3 6h18M3 18h18" /></svg
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg
 					>
 				</button>
 				<a href="/" class="topbar-brand">
@@ -286,7 +339,14 @@
 			</div>
 			<div class="topbar-right">
 				<a href="/" class="topbar-link back-to-site">
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+					<svg
+						width="12"
+						height="12"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
 						<path d="M19 12H5M12 19l-7-7 7-7" />
 					</svg>
 					Back to Website
@@ -294,13 +354,25 @@
 				<a href="/dashboard" class="topbar-link">Dashboard</a>
 				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 					{#if darkMode}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<circle cx="12" cy="12" r="5" /><path
 								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
 							/>
 						</svg>
 					{:else}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
@@ -366,7 +438,14 @@
 			{#if tocItems.length > 0}
 				<aside class="toc-rail">
 					<div class="toc-label">
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							width="12"
+							height="12"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<line x1="3" y1="6" x2="21" y2="6" />
 							<line x1="3" y1="12" x2="15" y2="12" />
 							<line x1="3" y1="18" x2="18" y2="18" />
@@ -376,7 +455,9 @@
 					<nav class="toc-nav">
 						{#each tocItems as item}
 							<button
-								class="toc-item {item.level === 3 ? 'h3' : ''} {activeTocId === item.id ? 'active' : ''}"
+								class="toc-item {item.level === 3 ? 'h3' : ''} {activeTocId === item.id
+									? 'active'
+									: ''}"
 								onclick={() => scrollToHeading(item.id)}
 							>
 								{item.text}
@@ -644,8 +725,7 @@
 		position: relative;
 		flex-shrink: 0;
 		border-right: 1px solid var(--border);
-		background-image: 
-			linear-gradient(90deg, var(--sidebar-grid) 1px, transparent 1px);
+		background-image: linear-gradient(90deg, var(--sidebar-grid) 1px, transparent 1px);
 		background-size: 20px 100%;
 	}
 
@@ -658,7 +738,7 @@
 		background: var(--bg-sidebar);
 		border-left: 1px solid var(--spine-stitch);
 		z-index: 10;
-		box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+		box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
 	}
 
 	.sidebar-spine::after {
@@ -668,7 +748,13 @@
 		right: 1px;
 		width: 1px;
 		height: 100%;
-		background: repeating-linear-gradient(0deg, transparent, transparent 10px, var(--spine-stitch) 10px, var(--spine-stitch) 11px);
+		background: repeating-linear-gradient(
+			0deg,
+			transparent,
+			transparent 10px,
+			var(--spine-stitch) 10px,
+			var(--spine-stitch) 11px
+		);
 	}
 
 	.sidebar-header {
@@ -844,7 +930,7 @@
 		background: #ffffff;
 		font-weight: 600;
 		border-right: 3px solid var(--accent);
-		box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+		box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
 		margin-right: -1px;
 		z-index: 5;
 	}
@@ -1088,7 +1174,11 @@
 		content: '';
 		position: absolute;
 		inset: 0;
-		background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+		background-image: radial-gradient(
+			circle at 1px 1px,
+			rgba(255, 255, 255, 0.03) 1px,
+			transparent 0
+		);
 		background-size: 24px 24px;
 		pointer-events: none;
 	}
@@ -1104,7 +1194,7 @@
 		position: relative;
 		z-index: 2;
 		backdrop-filter: blur(8px);
-		box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 	}
 
 	:global(.arch-box.microservices) {
@@ -1215,11 +1305,21 @@
 	}
 
 	/* Syntax tokens for code blocks */
-	:global(.kw) { color: #c8956e; }
-	:global(.str) { color: #a5c985; }
-	:global(.cm) { color: #5a6e4a; }
-	:global(.fn) { color: #8bb8d4; }
-	:global(.num) { color: #c884a0; }
+	:global(.kw) {
+		color: #c8956e;
+	}
+	:global(.str) {
+		color: #a5c985;
+	}
+	:global(.cm) {
+		color: #5a6e4a;
+	}
+	:global(.fn) {
+		color: #8bb8d4;
+	}
+	:global(.num) {
+		color: #c884a0;
+	}
 
 	/* ── Responsive ── */
 	@media (max-width: 1200px) {

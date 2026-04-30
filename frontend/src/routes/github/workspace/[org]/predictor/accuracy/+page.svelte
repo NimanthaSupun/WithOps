@@ -38,9 +38,12 @@
 		await loadAccuracyData();
 
 		if (autoRefreshEnabled) {
-			const refreshInterval = setInterval(() => {
-				loadAccuracyData();
-			}, 5 * 60 * 1000);
+			const refreshInterval = setInterval(
+				() => {
+					loadAccuracyData();
+				},
+				5 * 60 * 1000
+			);
 			return () => clearInterval(refreshInterval);
 		}
 	});
@@ -124,11 +127,25 @@
 			<div class="nav-actions">
 				<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 					{#if darkMode}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="5" /><path
+								d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+							/>
 						</svg>
 					{:else}
-						<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<svg
+							class="theme-icon"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 						</svg>
 					{/if}
@@ -160,7 +177,10 @@
 			<div class="view-header">
 				<div class="title-group">
 					<h1>Model Intelligence</h1>
-					<p>Real-time monitoring of ML model performance and prediction accuracy across all organization pipelines.</p>
+					<p>
+						Real-time monitoring of ML model performance and prediction accuracy across all
+						organization pipelines.
+					</p>
 				</div>
 				<div class="header-cta">
 					<select bind:value={selectedDays} onchange={loadAccuracyData} class="technical-select">
@@ -234,7 +254,12 @@
 									</div>
 									<div class="risk-bar-container">
 										<div class="risk-bar">
-											<div class="risk-bar-fill" style="width: {data.accuracy * 100}%; background: {getStatusColor(data.accuracy)}"></div>
+											<div
+												class="risk-bar-fill"
+												style="width: {data.accuracy * 100}%; background: {getStatusColor(
+													data.accuracy
+												)}"
+											></div>
 										</div>
 										<span class="risk-percent">{formatPercent(data.accuracy)}</span>
 									</div>
@@ -292,17 +317,25 @@
 										<td class="mono">{day.predictions}</td>
 										<td>
 											<div class="accuracy-cell">
-												<div class="indicator" style="background: {getStatusColor(day.accuracy)}"></div>
+												<div
+													class="indicator"
+													style="background: {getStatusColor(day.accuracy)}"
+												></div>
 												<span class="mono">{formatPercent(day.accuracy)}</span>
 											</div>
 										</td>
 										<td>
 											<div class="confidence-bar">
-												<div class="conf-fill" style="width: {(day.accuracy * 100) - 5}%"></div>
+												<div class="conf-fill" style="width: {day.accuracy * 100 - 5}%"></div>
 											</div>
 										</td>
 										<td>
-											<span class="status-badge" style="background: {getStatusColor(day.accuracy)}20; color: {getStatusColor(day.accuracy)}">
+											<span
+												class="status-badge"
+												style="background: {getStatusColor(day.accuracy)}20; color: {getStatusColor(
+													day.accuracy
+												)}"
+											>
 												{#if day.accuracy > 0.75}OPTIMIZED{:else if day.accuracy > 0.65}STABLE{:else}CRITICAL{/if}
 											</span>
 										</td>
@@ -348,7 +381,9 @@
 				<!-- Footer Info -->
 				<div class="report-footer">
 					<div class="footer-meta">
-						<span class="meta-item">REPORT_ID: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+						<span class="meta-item"
+							>REPORT_ID: {Math.random().toString(36).substring(7).toUpperCase()}</span
+						>
 						<span class="meta-item">GENERATED_AT: {lastUpdated?.toISOString()}</span>
 					</div>
 				</div>
@@ -416,7 +451,7 @@
 		content: '';
 		position: fixed;
 		inset: 0;
-		background-image: 
+		background-image:
 			linear-gradient(var(--border) 1px, transparent 1px),
 			linear-gradient(90deg, var(--border) 1px, transparent 1px);
 		background-size: 40px 40px;
@@ -492,7 +527,8 @@
 		transition: color 0.15s;
 	}
 
-	.nav-link:hover, .nav-link.active {
+	.nav-link:hover,
+	.nav-link.active {
 		color: var(--text-primary);
 	}
 
@@ -541,7 +577,8 @@
 		transition: color 0.15s ease;
 	}
 
-	.bc-node:hover, .bc-node.active {
+	.bc-node:hover,
+	.bc-node.active {
 		color: var(--accent);
 	}
 
@@ -571,8 +608,13 @@
 	}
 
 	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.3; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
 	/* Layout */
@@ -735,9 +777,16 @@
 		background: var(--bg-surface-alt);
 	}
 
-	.risk-tag.low { color: var(--success); }
-	.risk-tag.medium { color: var(--warning); }
-	.risk-tag.high, .risk-tag.critical { color: var(--error); }
+	.risk-tag.low {
+		color: var(--success);
+	}
+	.risk-tag.medium {
+		color: var(--warning);
+	}
+	.risk-tag.high,
+	.risk-tag.critical {
+		color: var(--error);
+	}
 
 	.risk-count {
 		font-size: 0.75rem;
@@ -829,7 +878,9 @@
 		font-size: 0.8125rem;
 	}
 
-	.mono { font-family: var(--font-mono); }
+	.mono {
+		font-family: var(--font-mono);
+	}
 
 	.accuracy-cell {
 		display: flex;
@@ -938,8 +989,15 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 0.5; transform: scale(0.95); }
-		50% { opacity: 1; transform: scale(1); }
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 
 	.loader-text {
@@ -976,14 +1034,16 @@
 	.btn-spinner {
 		width: 14px;
 		height: 14px;
-		border: 2px solid rgba(0,0,0,0.1);
+		border: 2px solid rgba(0, 0, 0, 0.1);
 		border-top-color: #000;
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}
 
 	@keyframes spin {
-		to { transform: rotate(360deg); }
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.button-arrow {

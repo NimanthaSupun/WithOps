@@ -930,7 +930,9 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		transition: transform 0.25s ease, opacity 0.2s ease;
+		transition:
+			transform 0.25s ease,
+			opacity 0.2s ease;
 	}
 
 	.sidebar.hidden {
@@ -1725,12 +1727,20 @@
 		animation: typing 1.4s infinite;
 	}
 
-	.typing-indicator span:nth-child(1) { animation-delay: 0s; }
-	.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-	.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+	.typing-indicator span:nth-child(1) {
+		animation-delay: 0s;
+	}
+	.typing-indicator span:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+	.typing-indicator span:nth-child(3) {
+		animation-delay: 0.4s;
+	}
 
 	@keyframes typing {
-		0%, 60%, 100% {
+		0%,
+		60%,
+		100% {
 			transform: translateY(0);
 			opacity: 0.3;
 		}
@@ -1834,8 +1844,12 @@
 	}
 
 	@keyframes spin {
-		from { transform: rotate(0deg); }
-		to { transform: rotate(360deg); }
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.input-hint {
@@ -1890,9 +1904,18 @@
 			height: 64px;
 		}
 
-		.ring-1 { width: 64px; height: 64px; }
-		.ring-2 { width: 52px; height: 52px; }
-		.ring-3 { width: 40px; height: 40px; }
+		.ring-1 {
+			width: 64px;
+			height: 64px;
+		}
+		.ring-2 {
+			width: 52px;
+			height: 52px;
+		}
+		.ring-3 {
+			width: 40px;
+			height: 40px;
+		}
 
 		.orb-icon {
 			width: 24px;
@@ -1926,4 +1949,3 @@
 		}
 	}
 </style>
-

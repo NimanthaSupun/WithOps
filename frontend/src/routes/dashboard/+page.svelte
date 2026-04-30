@@ -250,7 +250,6 @@
 	}
 </script>
 
-
 <svelte:head>
 	<title>Dashboard - WithOps DevSecOps Platform</title>
 </svelte:head>
@@ -283,12 +282,26 @@
 				<div class="nav-actions">
 					<button onclick={toggleTheme} class="theme-toggle" title="Toggle theme">
 						{#if darkMode}
-							<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<circle cx="12" cy="12" r="5" /><path
+									d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+								/>
 							</svg>
 						{:else}
-							<svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+							<svg
+								class="theme-icon"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 							</svg>
 						{/if}
 					</button>
@@ -317,8 +330,15 @@
 								</div>
 								<div class="dropdown-divider"></div>
 								<button onclick={logout} class="dropdown-logout-button">
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
 									</svg>
 									Sign Out
 								</button>
@@ -347,7 +367,8 @@
 					Welcome back, <span class="title-highlight">{user?.name?.split(' ')[0] || 'User'}</span>
 				</h1>
 				<p class="hero-description">
-					Manage your secure development pipelines and organizational security posture from a single, high-fidelity command center.
+					Manage your secure development pipelines and organizational security posture from a
+					single, high-fidelity command center.
 				</p>
 			</header>
 
@@ -357,7 +378,8 @@
 					<div class="feature-number">01 / INTEGRATION</div>
 					<h3 class="card-title">GitHub Connectivity</h3>
 					<p class="card-description">
-						Bridge your development lifecycle with automated security intelligence and real-time scanning.
+						Bridge your development lifecycle with automated security intelligence and real-time
+						scanning.
 					</p>
 
 					<ul class="feature-list">
@@ -407,7 +429,8 @@
 					<div class="feature-number">02 / MANAGEMENT</div>
 					<h3 class="card-title">Command Center</h3>
 					<p class="card-description">
-						Govern your organization-wide security policies and monitor continuous deployment health.
+						Govern your organization-wide security policies and monitor continuous deployment
+						health.
 					</p>
 
 					<ul class="feature-list">
@@ -425,7 +448,6 @@
 		</main>
 	</div>
 {/if}
-
 
 <style>
 	/* ============================================
@@ -491,7 +513,7 @@
 		content: '';
 		position: fixed;
 		inset: 0;
-		background-image: 
+		background-image:
 			linear-gradient(var(--border) 1px, transparent 1px),
 			linear-gradient(90deg, var(--border) 1px, transparent 1px);
 		background-size: 40px 40px;
@@ -534,8 +556,15 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 0.5; transform: scale(0.95); }
-		50% { opacity: 1; transform: scale(1); }
+		0%,
+		100% {
+			opacity: 0.5;
+			transform: scale(0.95);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 
 	.progress-bar {
@@ -554,9 +583,17 @@
 	}
 
 	@keyframes load {
-		0% { transform: translateX(-100%); width: 20%; }
-		50% { width: 50%; }
-		100% { transform: translateX(300%); width: 20%; }
+		0% {
+			transform: translateX(-100%);
+			width: 20%;
+		}
+		50% {
+			width: 50%;
+		}
+		100% {
+			transform: translateX(300%);
+			width: 20%;
+		}
 	}
 
 	/* Sub-Header / Breadcrumbs */
@@ -611,8 +648,13 @@
 	}
 
 	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.3; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
 	}
 
 	/* Header Navigation */
@@ -672,7 +714,8 @@
 		position: relative;
 	}
 
-	.nav-link:hover, .nav-link.active {
+	.nav-link:hover,
+	.nav-link.active {
 		color: var(--text-primary);
 	}
 
@@ -998,7 +1041,9 @@
 	}
 
 	@keyframes spin {
-		to { transform: rotate(360deg); }
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* Responsive */
@@ -1023,4 +1068,3 @@
 		}
 	}
 </style>
-
