@@ -89,6 +89,15 @@ async def lifespan(app: FastAPI):
         await event_listeners.register_all_handlers()
         logger.info("✅ Event handlers registered")
         
+        # Register DORA event handler for workflow_run events
+        from core.dora_event_handler import dora_event_handler
+        event_bus.register_handler(
+            "github.workflow_run.completed",
+            dora_event_handler.handle_workflow_run_completed
+        )
+        await event_bus.subscribe("github_events", None)
+        logger.info("✅ DORA event handler registered (listening to github_events)")
+        
         # Start listening to events in background
         import asyncio
         listening_task = asyncio.create_task(event_bus.start_listening())
@@ -174,11 +183,13 @@ async def metrics_middleware(request: Request, call_next):
 
 # Include routers
 from api.routes import workspace_intelligence, repository_tree
+from api.routes.dora_metrics import router as dora_router
 
 app.include_router(workspace_intelligence.router, prefix="/api", tags=["workspace-intelligence"])
 app.include_router(repository_tree.router, tags=["repository-tree"])
+app.include_router(dora_router, tags=["dora-metrics"])
 
-logger.info("✅ API routers included")
+logger.info("✅ API routers included (workspace-intelligence, repository-tree, dora-metrics)")
 
 
 @app.get("/")

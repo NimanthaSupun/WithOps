@@ -80,8 +80,8 @@ services:
         strip_path: false
 
   # Workspace Intelligence Service (extracted microservice)
-  # Routes /api/workspace-intelligence/* and /api/repository-tree/*
-  # Handles workspace analysis, DevSecOps maturity scoring, and repository tree management
+  # Routes /api/workspace-intelligence/*, /api/repository-tree/*, /api/dora/*
+  # Handles workspace analysis, DevSecOps maturity scoring, repository tree management, and DORA metrics
   - name: workspace-intelligence-service
     url: http://workspace-intelligence-service:8004
     routes:
@@ -89,6 +89,7 @@ services:
         paths:
           - /api/workspace-intelligence
           - /api/repository-tree
+          - /api/dora
         strip_path: false
 
   # Workflow Orchestration Service (extracted microservice)
