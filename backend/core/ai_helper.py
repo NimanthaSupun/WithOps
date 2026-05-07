@@ -3,9 +3,8 @@ AI Helper for generating PR descriptions and commit messages
 Uses Ollama or other local AI models for content generation
 """
 import asyncio
-import json
 import aiohttp
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 import os
 
 class AIHelper:
@@ -39,10 +38,10 @@ class AIHelper:
                 # Wait only 5 seconds for AI response
                 ai_description = await asyncio.wait_for(ai_task, timeout=5.0)
                 if ai_description:
-                    print(f"✅ AI generated PR description in <5s")
+                    print("✅ AI generated PR description in <5s")
                     return ai_description
             except asyncio.TimeoutError:
-                print(f"⏱️ AI timeout after 5s, using fallback (background task continues)")
+                print("⏱️ AI timeout after 5s, using fallback (background task continues)")
                 # Cancel the AI task to free resources
                 ai_task.cancel()
             
@@ -72,10 +71,10 @@ class AIHelper:
                 # Wait only 5 seconds for AI response
                 ai_description = await asyncio.wait_for(ai_task, timeout=5.0)
                 if ai_description:
-                    print(f"✅ AI generated bulk PR description in <5s")
+                    print("✅ AI generated bulk PR description in <5s")
                     return ai_description
             except asyncio.TimeoutError:
-                print(f"⏱️ AI timeout after 5s, using fallback (background task continues)")
+                print("⏱️ AI timeout after 5s, using fallback (background task continues)")
                 # Cancel the AI task to free resources
                 ai_task.cancel()
             

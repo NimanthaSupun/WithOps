@@ -5,7 +5,6 @@ FastAPI application for ML-based CI/CD pipeline failure prediction.
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os

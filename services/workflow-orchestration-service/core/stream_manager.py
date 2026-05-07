@@ -8,8 +8,7 @@ import json
 import logging
 from typing import Dict, Set, AsyncGenerator, Any
 from datetime import datetime
-from sse_starlette.sse import EventSourceResponse
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 

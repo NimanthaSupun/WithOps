@@ -216,11 +216,11 @@ class AnalysisChunker:
                 content_parts.append(f"  • Secret Scanning: {', '.join(practices['secret_tools'])}")
             
             if practices.get("has_ci_cd"):
-                content_parts.append(f"  • CI/CD: Enabled")
+                content_parts.append("  • CI/CD: Enabled")
             if practices.get("uses_reusable_workflows"):
-                content_parts.append(f"  • Reusable Workflows: Yes")
+                content_parts.append("  • Reusable Workflows: Yes")
             if practices.get("branch_protection_enabled"):
-                content_parts.append(f"  • Branch Protection: Enabled")
+                content_parts.append("  • Branch Protection: Enabled")
         
         content = "\n".join(content_parts)
         

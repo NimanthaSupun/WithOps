@@ -3,7 +3,6 @@ Background Job Queue for Installation Verification
 Uses Redis for job queuing and processing
 """
 import json
-import asyncio
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any

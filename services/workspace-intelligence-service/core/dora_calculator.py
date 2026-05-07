@@ -14,15 +14,14 @@ State of DevOps Report research (Forsgren, Humble & Kim).
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 
-from sqlalchemy import select, func, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
 
 from database import db_manager
-from database.dora_models import DeploymentEvent, DORAMetricSnapshot
+from database.dora_models import DeploymentEvent
 
 logger = logging.getLogger(__name__)
 

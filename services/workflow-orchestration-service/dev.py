@@ -3,8 +3,6 @@ Development helper script for Workflow Orchestration Service
 Quick commands for common development tasks
 """
 
-import os
-import sys
 import subprocess
 from pathlib import Path
 

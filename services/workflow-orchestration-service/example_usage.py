@@ -5,8 +5,6 @@ Demonstrates all major endpoints and features
 
 import httpx
 import asyncio
-import json
-from typing import Dict, Any
 
 
 BASE_URL = "http://localhost:8107"  # Or via Kong: http://localhost:8000
@@ -59,7 +57,7 @@ jobs:
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Scan completed!")
+            print("✅ Scan completed!")
             print(f"  Risk Level: {result['risk_level']}")
             print(f"  Risk Score: {result['risk_score']}/100")
             print(f"  Total Issues: {result['total_issues']}")
@@ -67,7 +65,7 @@ jobs:
             print(f"  - High: {result['high']}")
             print(f"  - Medium: {result['medium']}")
             print(f"  - Low: {result['low']}")
-            print(f"\n  Recommendations:")
+            print("\n  Recommendations:")
             for rec in result['recommendations'][:3]:
                 print(f"    • {rec}")
         else:
@@ -120,7 +118,7 @@ async def save_project_tree():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Tree saved!")
+            print("✅ Tree saved!")
             print(f"  Organization: {result['org_name']}")
             print(f"  Total Nodes: {result['node_count']}")
             print(f"  Workflows: {result['workflow_count']}")
@@ -142,7 +140,7 @@ async def get_project_tree():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Tree retrieved!")
+            print("✅ Tree retrieved!")
             print(f"  Workflows found: {result['workflow_count']}")
         elif response.status_code == 404:
             print("ℹ️  No tree found for this organization")
@@ -206,7 +204,7 @@ async def save_canvas_design():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Canvas saved!")
+            print("✅ Canvas saved!")
             print(f"  Canvas ID: {result['canvas_id']}")
             print(f"  Nodes: {len(design_data['nodes'])}")
             print(f"  Version: {result['version']}")
@@ -248,18 +246,18 @@ async def get_security_overview():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Security Overview:")
+            print("✅ Security Overview:")
             print(f"  Total Scans: {result.get('total_scans', 0)}")
             print(f"  Total Issues: {result.get('total_issues', 0)}")
             
             risk_dist = result.get('risk_distribution', {})
             if risk_dist:
-                print(f"  Risk Distribution:")
+                print("  Risk Distribution:")
                 for level, count in risk_dist.items():
                     if count > 0:
                         print(f"    - {level}: {count}")
         else:
-            print(f"ℹ️  No security data available yet")
+            print("ℹ️  No security data available yet")
     print()
 
 

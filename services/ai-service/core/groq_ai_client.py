@@ -4,8 +4,8 @@ import asyncio
 import aiohttp
 import hashlib
 import time
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
+from typing import Dict, List, Any
+from dataclasses import dataclass
 from enum import Enum
 
 class GroqRateLimiter:
@@ -109,7 +109,7 @@ class GroqAIClient:
         canvas_components = canvas_context.get('components', []) if canvas_context else []
         canvas_connections = canvas_context.get('connections', []) if canvas_context else []
         
-        print(f"🔍 DEBUG: Component Analysis Request:")
+        print("🔍 DEBUG: Component Analysis Request:")
         print(f"   Component: {component_data.get('name', 'unnamed')} ({component_data.get('type', 'unknown')})")
         print(f"   Methodology from request: {methodology}")
         print(f"   Canvas context: {bool(canvas_context)}")
@@ -264,7 +264,7 @@ ONLY use {methodology} methodology threats. Be PRECISE and reference the actual 
         # Target component's role in system
         target_id = target_component.get('id')
         target_connections = self._get_component_connections(target_id, connections)
-        context_parts.append(f"\nTARGET COMPONENT ROLE:")
+        context_parts.append("\nTARGET COMPONENT ROLE:")
         context_parts.append(f"- Connections: {target_connections}")
         
         return "\n".join(context_parts)
@@ -348,7 +348,7 @@ ONLY use {methodology} methodology threats. Be PRECISE and reference the actual 
         # List actual components on canvas
         if canvas_components:
             component_types = [f"- {comp.get('type', 'unknown')} ({comp.get('name', 'unnamed')})" for comp in canvas_components]
-            context_parts.append(f"Components on Canvas:\n" + "\n".join(component_types))
+            context_parts.append("Components on Canvas:\n" + "\n".join(component_types))
         else:
             context_parts.append("Components on Canvas: Only the target component")
         
@@ -366,7 +366,7 @@ ONLY use {methodology} methodology threats. Be PRECISE and reference the actual 
                 source_comp = next((c for c in canvas_components if c.get('id') == conn.get('source')), {})
                 target_comp = next((c for c in canvas_components if c.get('id') == conn.get('target')), {})
                 conn_details.append(f"- {source_comp.get('type', 'unknown')} → {target_comp.get('type', 'unknown')} ({conn.get('protocol', 'unknown protocol')})")
-            context_parts.append(f"Data Flows:\n" + "\n".join(conn_details))
+            context_parts.append("Data Flows:\n" + "\n".join(conn_details))
         else:
             context_parts.append("Data Flows: No connections yet")
         
@@ -505,19 +505,19 @@ Focus on ACTIONABLE, specific guidance with real implementation details.
         """Build comprehensive Jira task description"""
         
         description_parts = [
-            f"*Threat Overview:*",
+            "*Threat Overview:*",
             f"Title: {threat_data.get('title', 'Unknown')}",
             f"Severity: {threat_data.get('severity', 'Medium')}",
             f"Category: {threat_data.get('category', 'Unknown')}",
             f"Component(s): {', '.join(threat_data.get('component_ids', []))}",
             "",
-            f"*Description:*",
+            "*Description:*",
             threat_data.get('description', 'No description available'),
             "",
-            f"*Mitigation Approach:*",
+            "*Mitigation Approach:*",
             mitigation_data.get('description', 'See implementation steps'),
             "",
-            f"*Implementation Steps:*"
+            "*Implementation Steps:*"
         ]
         
         # Add implementation steps
@@ -526,13 +526,13 @@ Focus on ACTIONABLE, specific guidance with real implementation details.
         
         description_parts.extend([
             "",
-            f"*Tools Required:*",
+            "*Tools Required:*",
             "* " + "\n* ".join(mitigation_data.get('tools_required', ['TBD'])),
             "",
             f"*Estimated Effort:* {mitigation_data.get('estimated_effort_hours', 'TBD')}",
             f"*Skill Level:* {mitigation_data.get('skill_level_required', 'TBD')}",
             "",
-            f"*Acceptance Criteria:*"
+            "*Acceptance Criteria:*"
         ])
         
         # Add acceptance criteria
@@ -739,7 +739,7 @@ Respond in plain text, not JSON format.
         
         # Apply rate limiting before making request
         await self._rate_limiter.acquire()
-        print(f"🚦 Rate limit check passed, making API request...")
+        print("🚦 Rate limit check passed, making API request...")
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -768,7 +768,7 @@ Respond in plain text, not JSON format.
                 timeout=aiohttp.ClientTimeout(total=12)  # Increased timeout for rate-limited requests
             ) as response:
                 if response.status == 429:
-                    print(f"⚠️ Rate limit hit (429), backing off for 30 seconds...")
+                    print("⚠️ Rate limit hit (429), backing off for 30 seconds...")
                     await asyncio.sleep(30)
                     # Retry once after backoff
                     return await self._make_request(prompt, max_tokens)
@@ -782,7 +782,7 @@ Respond in plain text, not JSON format.
             raise Exception("Request timeout - Groq API taking too long")
         except Exception as e:
             if "429" in str(e):
-                print(f"⚠️ Rate limit error caught, backing off...")
+                print("⚠️ Rate limit error caught, backing off...")
                 await asyncio.sleep(30)
                 # Don't retry again to avoid infinite loop
                 raise Exception("Rate limit exceeded - please wait before making more requests")
@@ -944,7 +944,7 @@ Respond in plain text, not JSON format.
             
             # Parse JSON
             data = json.loads(response)
-            print(f"   ✅ JSON parsed successfully")
+            print("   ✅ JSON parsed successfully")
             
             # Handle both array format and object format
             if isinstance(data, list):
@@ -979,7 +979,7 @@ Respond in plain text, not JSON format.
         except json.JSONDecodeError as e:
             print(f"❌ JSON parsing error for {methodology}: {e}")
             print(f"   Raw response: {response}")
-            print(f"   Parsed threats: 0")
+            print("   Parsed threats: 0")
             return []
         except Exception as e:
             print(f"❌ General parsing error for {methodology}: {e}")

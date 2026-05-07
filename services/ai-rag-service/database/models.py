@@ -4,7 +4,7 @@ Database Models for Chat Conversations
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 
 

@@ -3,9 +3,8 @@ Database models for Workflow Orchestration Service
 Handles workflow trees, executions, security scans, and canvas designs
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON, ForeignKey, Float, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON, Float, Enum
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 import enum

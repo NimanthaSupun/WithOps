@@ -1,7 +1,5 @@
 import jwt
 import time
-from datetime import datetime, timedelta
-from typing import Optional
 import os
 from dotenv import load_dotenv
 

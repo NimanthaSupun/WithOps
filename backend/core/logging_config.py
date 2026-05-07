@@ -3,8 +3,6 @@ import logging
 import logging.handlers
 import os
 import sys
-from datetime import datetime
-import atexit
 
 class SafeFormatter(logging.Formatter):
     """Custom formatter that handles Unicode encoding errors gracefully"""

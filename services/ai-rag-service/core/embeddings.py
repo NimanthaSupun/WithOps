@@ -4,7 +4,7 @@ Embedding Service - Handles text embedding generation using Ollama
 
 import httpx
 import logging
-from typing import List, Optional
+from typing import List
 import os
 
 logger = logging.getLogger(__name__)

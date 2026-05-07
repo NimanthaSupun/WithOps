@@ -9,7 +9,7 @@ Provides actionable insights for model retraining decisions.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from datetime import datetime, timedelta
 from sqlalchemy import select, and_, desc
 

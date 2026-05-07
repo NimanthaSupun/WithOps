@@ -6,7 +6,7 @@ Expose model accuracy, prediction correctness, and drift metrics.
 
 import logging
 from fastapi import APIRouter, HTTPException
-from typing import Dict, List, Any, Optional
+from typing import Optional
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ async def get_org_metrics(org_name: str, days: int = 7):
     """
     from database.config import db_manager
     from database.models import PredictionHistory
-    from sqlalchemy import select, func
+    from sqlalchemy import select
     
     try:
         async with db_manager.get_session() as session:
@@ -209,7 +209,7 @@ async def get_completion_status(org_name: str):
     """
     from database.config import db_manager
     from database.models import PredictionHistory
-    from sqlalchemy import select, func
+    from sqlalchemy import select
     
     try:
         async with db_manager.get_session() as session:

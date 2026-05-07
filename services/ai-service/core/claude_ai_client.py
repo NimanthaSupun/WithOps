@@ -9,10 +9,8 @@ This service integrates with Anthropic's Claude API to provide:
 """
 
 import os
-import base64
-import json
 import re
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from anthropic import Anthropic
 from datetime import datetime
 
@@ -964,7 +962,7 @@ OUTPUT FORMAT - LINDDUN Privacy Threat Modeling Template:
             print(f"🤝 DEBUG: Found user threat context with {user_threat_context['total_threats']} threats")
             print(f"🎯 DEBUG: Threat categories: {list(user_threat_context.get('threats_by_category', {}).keys())}")
             
-            prompt += f"\n\n🛡️ EXISTING USER THREAT ANALYSIS (COLLABORATIVE MODE)\n"
+            prompt += "\n\n🛡️ EXISTING USER THREAT ANALYSIS (COLLABORATIVE MODE)\n"
             prompt += f"The user has already identified {user_threat_context['total_threats']} threats using {user_threat_context['methodology']} methodology.\n"
             
             # Add threats by category
@@ -1216,7 +1214,7 @@ OUTPUT FORMAT - LINDDUN Privacy Threat Modeling Template:
             
             return threats
             
-        except Exception as e:
+        except Exception:
             # Return empty list if parsing fails
             return []
     

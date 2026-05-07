@@ -56,7 +56,7 @@ class DORAEventHandler:
             head_branch = data.get("head_branch", "")
 
             if not run_id or not conclusion:
-                logger.warning(f"⚠️ DORA: Skipping event with missing run_id or conclusion")
+                logger.warning("⚠️ DORA: Skipping event with missing run_id or conclusion")
                 return
 
             # Skip cancelled/skipped runs — they don't count as deployments

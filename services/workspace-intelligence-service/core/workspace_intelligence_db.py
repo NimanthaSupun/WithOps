@@ -6,13 +6,12 @@ Handles saving and retrieving analysis results
 from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, select
+from sqlalchemy import select
 import logging
 
 from database.models import (
     WorkspaceAnalysis,
-    ProjectAnalysis,
-    RepositoryTree
+    ProjectAnalysis
 )
 
 logger = logging.getLogger(__name__)

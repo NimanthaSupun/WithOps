@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import create_engine, text
 from database.config import SupabaseConfig
-from database.models import Base, RepositoryTree
+from database.models import RepositoryTree
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +26,7 @@ def run_migration():
         # Get database URL
         config = SupabaseConfig()
         database_url = config.database_url
-        logger.info(f"Connecting to database...")
+        logger.info("Connecting to database...")
         
         # Create engine
         engine = create_engine(database_url)

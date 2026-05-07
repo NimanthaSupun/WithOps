@@ -6,9 +6,8 @@ Handles caching of workflow actions data for fast loading
 import redis.asyncio as redis
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional, Any
-import asyncio
 
 class RedisCache:
     """

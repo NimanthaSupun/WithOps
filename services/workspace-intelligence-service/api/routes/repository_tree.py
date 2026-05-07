@@ -47,7 +47,7 @@ async def resolve_user_uuid(auth_user_id: str, session) -> str:
         logger.warning(f"⚠️ No UUID found for auth_user_id: {auth_user_id}")
         raise HTTPException(
             status_code=404, 
-            detail=f"User not found in database. Please login to backend first."
+            detail="User not found in database. Please login to backend first."
         )
     
     logger.info(f"✅ Resolved {auth_user_id} → {user_uuid}")

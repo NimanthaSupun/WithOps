@@ -9,7 +9,7 @@ Maintains rollback capability.
 
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timedelta
 from sqlalchemy import select, and_, desc
 
@@ -96,9 +96,7 @@ class AutoTrainer:
             Retraining result with decision
         """
         from database.config import db_manager
-        from database.models import PredictionHistory, MLModelRegistry
-        from core.trainer import Trainer
-        from core.feature_engineer import feature_engineer
+        from database.models import PredictionHistory
         from core.model_manager import model_manager
         from sklearn.model_selection import train_test_split
         from sklearn.metrics import (

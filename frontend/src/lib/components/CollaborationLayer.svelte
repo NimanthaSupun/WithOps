@@ -1,11 +1,9 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import {
 		others,
-		myPresence,
 		isConnected,
 		onlineUsersCount,
-		userColors,
 		updatePresence,
 		addComment
 	} from '$lib/stores/collaboration-yjs.js';
@@ -119,7 +117,7 @@
 			</div>
 
 			<!-- Other Users -->
-			{#each $others as user}
+			{#each $others as user (user.id ?? user.presence?.userInfo?.name)}
 				{#if user.presence?.userInfo}
 					<div class="user-item">
 						<div class="user-avatar" style="background-color: {user.presence.userInfo.color}">
@@ -143,7 +141,7 @@
 	on:mousemove={handleMouseMove}
 	on:contextmenu={handleRightClick}
 >
-	{#each $others as user}
+	{#each $others as user (user.id ?? user.presence?.userInfo?.name)}
 		{#if user.presence?.cursor && user.presence?.userInfo}
 			<div
 				class="live-cursor"

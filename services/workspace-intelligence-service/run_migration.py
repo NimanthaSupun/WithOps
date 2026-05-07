@@ -18,7 +18,6 @@ def run_migration():
         print("❌ psycopg2 not installed. Installing...")
         os.system(f"{sys.executable} -m pip install psycopg2-binary")
         import psycopg2
-        from psycopg2 import sql
     
     # Get database URL from environment
     database_url = os.getenv('DATABASE_URL')
@@ -27,7 +26,7 @@ def run_migration():
         print("❌ DATABASE_URL not found in environment")
         return
     
-    print(f"🔄 Connecting to database...")
+    print("🔄 Connecting to database...")
     
     try:
         # Connect to the database

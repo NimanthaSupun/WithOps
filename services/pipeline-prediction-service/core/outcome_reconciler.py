@@ -8,10 +8,8 @@ Runs daily to reconcile predictions older than 24 hours without outcomes.
 """
 
 import logging
-import os
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
-import asyncio
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class OutcomeReconciler:
         """
         from database.config import db_manager
         from database.models import PredictionHistory
-        from sqlalchemy import select, func
+        from sqlalchemy import select
         
         results = {}
         

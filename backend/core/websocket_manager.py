@@ -1,10 +1,9 @@
 """
 WebSocket manager for real-time communication with frontend
 """
-import json
 import logging
 from typing import Dict, Set
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class ConnectionManager:
         
         if user_id not in self.active_connections:
             logger.warning(f"⚠️ No active connections for user: {user_id}")
-            logger.warning(f"🔍 User ID comparison:")
+            logger.warning("🔍 User ID comparison:")
             for key in self.active_connections.keys():
                 logger.warning(f"  - Key: '{key}' (len={len(key)}) == '{user_id}' (len={len(user_id)}): {key == user_id}")
             return

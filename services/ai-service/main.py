@@ -5,7 +5,6 @@ Handles PR description generation, threat analysis using Ollama, Claude, and Gro
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os

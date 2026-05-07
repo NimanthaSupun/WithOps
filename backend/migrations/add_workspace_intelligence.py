@@ -10,10 +10,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 from database.config import SupabaseConfig
 from database.models import (
-    Base, 
     ProjectAnalysis, 
     RepositoryFinding, 
     MaturityScore, 
@@ -32,7 +30,7 @@ def run_migration():
         # Get database URL
         config = SupabaseConfig()
         database_url = config.database_url
-        logger.info(f"Connecting to database...")
+        logger.info("Connecting to database...")
         
         # Create engine
         engine = create_engine(database_url)

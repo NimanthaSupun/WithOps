@@ -1,19 +1,17 @@
 # api/routes/threat_modeling.py
 
-import asyncio
-from fastapi import APIRouter, HTTPException, Depends, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Depends
 from core.security import get_current_user
 from core.redis_cache import cache
 from database.config import db_manager
 from database.models import (
     ThreatModel, ThreatModelElement, ThreatAssessment, 
-    ThreatModelCollaborator, ThreatModelVersion, ThreatLibrary,
+    ThreatModelCollaborator, ThreatLibrary,
     User, Organization, Repository
 )
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 import json
@@ -58,13 +56,6 @@ async def get_all_threats():
         raise HTTPException(status_code=500, detail=f"Error fetching threats: {str(e)}")
 
 # (Removed invalid decorator and misplaced code)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import selectinload
-from typing import List, Dict, Optional
-from datetime import datetime, timedelta
-from pydantic import BaseModel
-import json
 import logging
 
 router = APIRouter()

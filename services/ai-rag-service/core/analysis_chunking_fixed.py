@@ -106,9 +106,9 @@ class AnalysisChunker:
             content_parts = [
                 f"📊 DevSecOps Maturity Analysis for {project_name}",
                 f"Organization: {org_name}",
-                f"",
+                "",
                 f"🎯 Overall Maturity Score: {overall_score}/100 (Level {maturity_level})",
-                f""
+                ""
             ]
             
             # Domain scores
@@ -133,7 +133,7 @@ class AnalysisChunker:
             # Repository stats
             total_repos = analysis.get("total_repositories", 0)
             total_workflows = analysis.get("total_workflows", 0)
-            content_parts.append(f"📦 Repository Statistics:")
+            content_parts.append("📦 Repository Statistics:")
             content_parts.append(f"  • Total Repositories: {total_repos}")
             content_parts.append(f"  • Total Workflows: {total_workflows}")
             
@@ -167,9 +167,9 @@ class AnalysisChunker:
             content_parts = [
                 f"🔒 Security Findings for {project_name}",
                 f"Organization: {org_name}",
-                f"",
+                "",
                 f"Total Findings: {len(findings)}",
-                f""
+                ""
             ]
             
             # Group findings by severity
@@ -218,7 +218,7 @@ class AnalysisChunker:
             content_parts = [
                 f"🛠️ Detected Security Practices for {project_name}",
                 f"Organization: {org_name}",
-                f""
+                ""
             ]
             
             # Tool detection

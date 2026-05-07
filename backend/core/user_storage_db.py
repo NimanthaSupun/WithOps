@@ -4,7 +4,6 @@ Replaces the in-memory storage with proper database operations
 """
 
 from typing import Optional, Dict, List
-import asyncio
 from database.operations import (
     user_repo, github_token_repo, organization_repo, 
     installation_repo, audit_repo

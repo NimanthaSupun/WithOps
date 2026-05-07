@@ -8,7 +8,6 @@ import time
 import uuid
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-import json
 
 
 class BackgroundTaskManager:

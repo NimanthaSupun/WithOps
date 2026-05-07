@@ -5,7 +5,7 @@ HTTP client to communicate with the GitHub microservice
 import httpx
 import os
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)

@@ -3,10 +3,8 @@ Ollama Client for AI-Powered PR Description Generation
 Integrates with local Ollama Docker container for generating GitHub PR descriptions
 """
 import httpx
-import json
 import os
-from typing import Dict, List, Optional
-import asyncio
+from typing import Dict, List
 
 class OllamaClient:
     """

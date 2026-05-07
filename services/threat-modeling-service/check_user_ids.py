@@ -1,7 +1,7 @@
 """Check what user_ids exist in threat_models table"""
 import asyncio
-from sqlalchemy import select, text
-from database import db_manager, ThreatModel
+from sqlalchemy import text
+from database import db_manager
 
 async def check_user_ids():
     """Check user_ids in threat_models table"""
@@ -32,7 +32,7 @@ async def check_user_ids():
             )
             sample = sample_result.fetchone()
             if sample:
-                print(f"\n🔍 Sample model:")
+                print("\n🔍 Sample model:")
                 print(f"  ID: {sample[0]}")
                 print(f"  Name: {sample[1]}")
                 print(f"  User ID: {sample[2]}")

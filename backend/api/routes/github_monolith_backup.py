@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from core.security import get_current_user, security
 from fastapi.security import HTTPAuthorizationCredentials
 from core.github_client import github_client
-from sqlalchemy import select, func, and_, or_, update, delete
+from sqlalchemy import select, func
 import os
 import httpx
 from core.redis_cache import RedisCache
@@ -14,11 +14,10 @@ from core.user_storage_db import (
     record_organization_installation,
     get_user_installed_organizations,
     is_user_authorized_for_organization,
-    get_organization_installer,
     remove_organization_installation
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import List, Dict, Optional
+from fastapi.security import HTTPBearer
+from typing import Optional
 from datetime import datetime
 import json
 
@@ -52,7 +51,7 @@ async def start_organization_discovery(current_user: str = Depends(get_current_u
         cached_url = github_client._get_cached(cache_key)
         
         if cached_url:
-            print(f"🚀 Using cached discovery URL for instant response")
+            print("🚀 Using cached discovery URL for instant response")
             return {
                 "message": "Organization discovery initiated (cached)",
                 "oauth_url": cached_url.get('oauth_url'),
@@ -89,7 +88,7 @@ async def handle_organization_discovery_callback(
     Uses aggressive caching and parallel processing for blazing fast responses
     """
     try:
-        print(f"🔄 Organization callback received:")
+        print("🔄 Organization callback received:")
         print(f"🔄 Code: {code[:10]}...")
         print(f"🔄 State: {state}")
         print(f"🔄 Current user: {current_user}")
@@ -99,13 +98,13 @@ async def handle_organization_discovery_callback(
         cached_result = github_client._get_cached(cache_key)
         
         if cached_result:
-            print(f"🚀 Using cached organization callback result for ultra-fast response")
+            print("🚀 Using cached organization callback result for ultra-fast response")
             return cached_result
         
         # For now, let's be more lenient with state verification
         # The state might contain additional OAuth provider info
         if not state or (state != current_user and not state.endswith(current_user.split('|')[-1])):
-            print(f"⚠️  State verification relaxed - proceeding anyway")
+            print("⚠️  State verification relaxed - proceeding anyway")
             # Don't raise error, just warn
         
         # Exchange code for access token (OAuth App - for discovery only)
@@ -304,7 +303,7 @@ async def handle_installation_callback(
         try:
             # We should have org_login by now from installation details or state
             if not org_login:
-                print(f"❌ Cannot record installation - missing organization information")
+                print("❌ Cannot record installation - missing organization information")
                 raise HTTPException(
                     status_code=400,
                     detail="Cannot determine organization from installation. Please try again."
@@ -314,11 +313,11 @@ async def handle_installation_callback(
                 await record_organization_installation(current_user, org_login, installation_data)
                 print(f"✅ Installation recorded in database for {org_login} by user {current_user}")
             else:
-                print(f"⚠️ Cannot record installation - missing user or organization information")
+                print("⚠️ Cannot record installation - missing user or organization information")
                 if not current_user:
                     print(f"⚠️ Missing user ID - state: {state}")
                 if not org_login:
-                    print(f"⚠️ Missing organization login")
+                    print("⚠️ Missing organization login")
         except Exception as db_error:
             print(f"❌ CRITICAL: Database recording failed: {db_error}")
             # This is critical for security - fail the installation if DB fails
@@ -656,7 +655,6 @@ async def get_my_organizations(
                     user_id = user_info.id if user_info else None
                     
                     # Check if any installations exist in the database at all
-                    from database.operations import installation_repo
                     from database.models import OrganizationInstallation
                     
                     stmt = select(func.count(OrganizationInstallation.id))
@@ -2239,7 +2237,7 @@ async def debug_jwt_test():
     Debug endpoint to test JWT generation without authentication
     """
     try:
-        print(f"🔧 Debug: Testing JWT generation...")
+        print("🔧 Debug: Testing JWT generation...")
         
         # Try to generate a JWT
         jwt_token = github_client._generate_app_jwt()
@@ -2602,7 +2600,7 @@ async def get_predefined_actions(
         ]
         
         return {
-            "message": f"Predefined actions for Canvas Workflow Builder",
+            "message": "Predefined actions for Canvas Workflow Builder",
             "organization": org_name,
             "actions": predefined_actions,
             "total_actions": len(predefined_actions),
@@ -3687,7 +3685,7 @@ async def check_jwt_token_generation(
                 
                 async with httpx.AsyncClient() as client:
                     app_response = await client.get(
-                        f"https://api.github.com/app",
+                        "https://api.github.com/app",
                         headers=headers
                     )
                     

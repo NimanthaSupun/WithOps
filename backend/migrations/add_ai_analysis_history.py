@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from database.config import db_manager
-from database.models import Base, AIAnalysisHistory
+from database.models import AIAnalysisHistory
 from sqlalchemy import inspect
 
 def run_migration():

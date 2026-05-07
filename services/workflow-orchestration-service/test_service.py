@@ -5,8 +5,6 @@ Run with: pytest test_service.py -v
 
 import pytest
 import httpx
-import asyncio
-from datetime import datetime
 
 
 BASE_URL = "http://localhost:8107"

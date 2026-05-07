@@ -8,10 +8,9 @@ This service handles:
 - Integration with threat models
 """
 
-import os
 import io
 import uuid
-from typing import Dict, List, Optional, Any, BinaryIO
+from typing import Dict, Optional, Any
 from datetime import datetime
 import logging
 from pathlib import Path

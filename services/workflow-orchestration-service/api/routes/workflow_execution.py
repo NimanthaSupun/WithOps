@@ -4,8 +4,7 @@ Handles workflow triggering, status monitoring, and execution history
 """
 
 from fastapi import APIRouter, HTTPException, Header
-from fastapi.responses import StreamingResponse
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from pydantic import BaseModel
 import logging
 import os

@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, or_, select
 from datetime import datetime
 import logging
-import json
 
 from database.models import RepositoryTree, Organization
 from core.event_bus import event_bus
@@ -84,7 +83,7 @@ class RepositoryTreeManager:
                     try:
                         tree_data = json.loads(tree_data)
                     except json.JSONDecodeError:
-                        logger.warning(f"Failed to parse tree_data as JSON, using empty list")
+                        logger.warning("Failed to parse tree_data as JSON, using empty list")
                         tree_data = []
                 elif tree_data is None:
                     tree_data = []

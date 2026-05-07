@@ -1,12 +1,11 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from sqlalchemy import select, update, delete, and_, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
-import json
 import logging
 
-from .models import User, GitHubToken, Organization, OrganizationInstallation, Repository, Workflow, AuditLog
+from .models import User, GitHubToken, Organization, OrganizationInstallation, AuditLog
 from .config import db_manager
 
 logger = logging.getLogger(__name__)

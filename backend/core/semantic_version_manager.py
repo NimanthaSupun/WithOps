@@ -4,7 +4,7 @@ Handles proper semantic versioning (major.minor.patch) with production-grade rec
 """
 
 import re
-from typing import Tuple, Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from enum import Enum
 

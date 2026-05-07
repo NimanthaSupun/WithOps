@@ -2,7 +2,6 @@
 Event Bus for AI Service - Worker that processes threat analysis tasks
 """
 import json
-import asyncio
 import logging
 from typing import Dict, Any, Optional
 import redis.asyncio as redis

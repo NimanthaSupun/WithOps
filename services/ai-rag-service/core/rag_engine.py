@@ -6,7 +6,6 @@ import anthropic
 from typing import List, Dict, Optional, Any
 import logging
 import os
-import json
 
 from core.embeddings import EmbeddingService
 from core.vector_store import VectorStore

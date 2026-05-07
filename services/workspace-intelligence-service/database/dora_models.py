@@ -5,7 +5,7 @@ DevOps performance measurement (Deployment Frequency, Lead Time,
 Change Failure Rate, Mean Time to Recovery).
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, Float, Date, BigInteger, Text
+from sqlalchemy import Column, String, Integer, DateTime, Float, Date, BigInteger
 from datetime import datetime
 import uuid
 

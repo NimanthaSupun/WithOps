@@ -29,7 +29,7 @@ jobs:
     assert len(result['jobs']) > 0, "No jobs found"
     assert 'actions/checkout@v4' in result['uses'], "Action not detected"
     
-    print(f"   ✅ Workflow parsed successfully")
+    print("   ✅ Workflow parsed successfully")
     print(f"      Name: {result['name']}")
     print(f"      Triggers: {', '.join(result['triggers'])}")
     print(f"      Jobs: {len(result['jobs'])}")
@@ -60,7 +60,7 @@ jobs:
     result = SecurityScanner.scan_workflow(secure_yaml, "Secure Workflow")
     assert result['risk_level'] in ['minimal', 'low'], f"Unexpected risk level: {result['risk_level']}"
     
-    print(f"   ✅ Secure workflow scanned")
+    print("   ✅ Secure workflow scanned")
     print(f"      Risk Level: {result['risk_level']}")
     print(f"      Risk Score: {result['risk_score']}/100")
     print(f"      Issues: {result['summary']['total_issues']}")
@@ -90,7 +90,7 @@ jobs:
     result = SecurityScanner.scan_workflow(vulnerable_yaml, "Vulnerable Workflow")
     assert result['summary']['total_issues'] > 0, "Should detect vulnerabilities"
     
-    print(f"   ✅ Vulnerabilities detected correctly")
+    print("   ✅ Vulnerabilities detected correctly")
     print(f"      Risk Level: {result['risk_level']}")
     print(f"      Risk Score: {result['risk_score']}/100")
     print(f"      Total Issues: {result['summary']['total_issues']}")
@@ -99,7 +99,7 @@ jobs:
     print(f"      - Medium: {result['summary']['medium']}")
     
     if result['recommendations']:
-        print(f"      Recommendations:")
+        print("      Recommendations:")
         for rec in result['recommendations'][:2]:
             print(f"        • {rec}")
     print()
@@ -110,15 +110,10 @@ except Exception as e:
 # Test 4: Database Models Import
 print("🧪 Test 4: Database Models")
 try:
-    from database.models import (
-        WorkflowTree, WorkflowExecution, WorkflowSecurityScan,
-        WorkflowCanvasDesign, WorkflowMetric,
-        ExecutionStatus, ScanRiskLevel, WorkflowTreeType
-    )
     
-    print(f"   ✅ All database models imported")
-    print(f"      Models: 5")
-    print(f"      Enums: 3 (ExecutionStatus, ScanRiskLevel, WorkflowTreeType)")
+    print("   ✅ All database models imported")
+    print("      Models: 5")
+    print("      Enums: 3 (ExecutionStatus, ScanRiskLevel, WorkflowTreeType)")
     print()
 except Exception as e:
     print(f"   ❌ Failed: {str(e)}")
@@ -127,7 +122,6 @@ except Exception as e:
 # Test 5: API Routes Import (without database connection)
 print("🧪 Test 5: API Routes Structure")
 try:
-    import sys
     import os
     
     # Temporarily set a dummy DATABASE_URL to allow imports

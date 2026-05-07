@@ -3,8 +3,7 @@ Pydantic models for API request/response validation
 """
 
 from pydantic import BaseModel
-from typing import Optional, Dict, List
-from datetime import datetime
+from typing import Optional, Dict
 
 
 class ThreatModelCreate(BaseModel):

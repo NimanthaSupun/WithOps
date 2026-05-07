@@ -5,7 +5,6 @@ Handles Supabase PostgreSQL connection and session management
 
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator

@@ -1,5 +1,4 @@
 import asyncio
-import json
 from database.config import DatabaseManager
 from database.models import ProjectAnalysis
 from sqlalchemy import select
@@ -20,7 +19,7 @@ async def check():
         print('=== UNIFIED ANALYSIS ===')
         print(f'Overall Maturity: {a.overall_maturity_score}')
         print(f'Analysis ID: {a.id}')
-        print(f'\n=== PROJECT_ANALYSES STRUCTURE ===')
+        print('\n=== PROJECT_ANALYSES STRUCTURE ===')
         
         pa = a.analysis_data.get('project_analyses', []) if a.analysis_data else []
         print(f'Number of projects: {len(pa)}')

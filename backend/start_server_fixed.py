@@ -3,7 +3,6 @@
 Fixed server startup script that properly handles logging with uvicorn
 """
 import os
-import sys
 import uvicorn
 from pathlib import Path
 

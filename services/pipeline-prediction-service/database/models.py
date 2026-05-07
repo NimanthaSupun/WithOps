@@ -3,7 +3,6 @@ Database models for Pipeline Prediction Service
 """
 import uuid
 from datetime import datetime
-from typing import List, Dict, Any, Optional
 
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON, Float, BigInteger, Index
 from sqlalchemy.orm import DeclarativeBase

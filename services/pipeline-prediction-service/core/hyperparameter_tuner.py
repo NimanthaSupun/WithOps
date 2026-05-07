@@ -12,10 +12,9 @@ Tested algorithms:
 
 import logging
 import time
-from typing import Dict, Any, Optional, Tuple
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from typing import Dict, Any
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.metrics import make_scorer, f1_score
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,6 @@ from typing import Dict
 from datetime import datetime
 
 from core.event_bus import event_bus
-from core.workspace_analyzer import WorkspaceAnalyzer
 from core.repository_tree_manager import RepositoryTreeManager
 from database import db_manager
 

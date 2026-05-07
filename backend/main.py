@@ -1,21 +1,18 @@
 # backend/main.py
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.websockets import WebSocket, WebSocketDisconnect
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 # All API routes now handled by dedicated microservices via Kong Gateway
 import os
 import asyncio
 import json
 import time
-from typing import Dict, Set
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from core.logging_config import setup_logging
-from core.rate_limiter import rate_limit_middleware
 
 # Monitoring and observability imports
 from prometheus_client import Counter, Histogram, make_asgi_app
@@ -262,7 +259,6 @@ async def lifespan(app: FastAPI):
     print("👋 Shutting down WithOps Events Hub")
     
     # Close GitHub Service Client
-    from core.github_service_client import github_service_client
     await github_service_client.close()
     print("✅ GitHub Service Client closed")
     

@@ -5,7 +5,6 @@ Handles Auth0 callbacks, user profiles, and authentication status
 
 from fastapi import APIRouter, Header, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
 import logging
 import time

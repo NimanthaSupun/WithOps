@@ -9,10 +9,9 @@ Orchestrates comprehensive analysis of entire workspace including:
 """
 
 import asyncio
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 import logging
-import hashlib
 import re
 from collections import defaultdict
 
@@ -307,7 +306,7 @@ class WorkspaceAnalyzer:
         """
         # TODO: Implement GitHub API calls for additional data
         # For now, we'll work with what we have from the tree
-        logger.info(f"ℹ️ GitHub metadata fetch not yet implemented (using tree data)")
+        logger.info("ℹ️ GitHub metadata fetch not yet implemented (using tree data)")
         return {}
     
     async def _analyze_all_projects(self,

@@ -5,7 +5,7 @@ Extracts security-relevant information and detects tools/practices
 
 import yaml
 import re
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 from datetime import datetime
 import logging
 

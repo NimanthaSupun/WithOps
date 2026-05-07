@@ -10,7 +10,7 @@ from datetime import datetime
 from sqlalchemy import select
 
 from core.redis_cache import cache
-from core.queue_config import RefreshChannel, RefreshJobType
+from core.queue_config import RefreshChannel
 from core.github_client import github_client
 from core.event_bus import event_bus
 from core.job_queue import verification_queue

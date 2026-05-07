@@ -35,7 +35,7 @@ async def show_users_and_migrate():
         models_result = await session.execute(select(ThreatModel))
         all_models = models_result.scalars().all()
         
-        print(f"\n" + "="*70)
+        print("\n" + "="*70)
         print(f"📊 Total threat models in database: {len(all_models)}")
         print("="*70)
         
@@ -75,7 +75,7 @@ async def show_users_and_migrate():
             return
         
         # Confirm migration
-        print(f"\n" + "="*70)
+        print("\n" + "="*70)
         print("MIGRATION PLAN")
         print("="*70)
         print(f"Will reassign {len(models_to_migrate)} models to: {target_user.email}")
@@ -90,7 +90,7 @@ async def show_users_and_migrate():
             return
         
         # Perform migration
-        print(f"\n🔄 Migrating...")
+        print("\n🔄 Migrating...")
         for model in models_to_migrate:
             old_id = model.user_id
             model.user_id = target_user.id

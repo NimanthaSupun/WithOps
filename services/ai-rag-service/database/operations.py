@@ -2,10 +2,9 @@
 Database Operations for Chat Conversations
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from uuid import UUID
 import logging
-from datetime import datetime
 import json
 
 from .config import db_config
@@ -135,7 +134,7 @@ class ConversationOperations:
             if not updates:
                 return await ConversationOperations.get_conversation(conversation_id, user_id)
             
-            updates.append(f"updated_at = NOW()")
+            updates.append("updated_at = NOW()")
             params.extend([conversation_id, user_id])
             
             query = f"""

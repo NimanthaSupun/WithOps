@@ -6,7 +6,6 @@ Handles saving and retrieving analysis results, findings, and maturity scores
 from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 import logging
 
 from database.models import (

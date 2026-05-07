@@ -14,8 +14,7 @@ Orchestrates the full ML training flow:
 import logging
 import time
 import numpy as np
-from typing import Dict, Any, Optional, Tuple
-from datetime import datetime
+from typing import Dict, Any, Optional
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -26,7 +25,6 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score,
     confusion_matrix,
-    classification_report,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,7 +120,7 @@ class Trainer:
             metrics = self._evaluate(model, X_test, y_test)
             result["progress"]["evaluation"] = "completed"
 
-            logger.info(f"   📊 Metrics:")
+            logger.info("   📊 Metrics:")
             logger.info(f"      Accuracy:  {metrics['accuracy']:.4f}")
             logger.info(f"      Precision: {metrics['precision']:.4f}")
             logger.info(f"      Recall:    {metrics['recall']:.4f}")
@@ -132,7 +130,7 @@ class Trainer:
             # ── Step 6: Feature importance ──
             importance = self._get_feature_importance(model, feature_names)
 
-            logger.info(f"   🔍 Top 5 Features:")
+            logger.info("   🔍 Top 5 Features:")
             sorted_imp = sorted(importance.items(), key=lambda x: x[1], reverse=True)
             for fname, imp in sorted_imp[:5]:
                 logger.info(f"      {fname}: {imp:.4f}")

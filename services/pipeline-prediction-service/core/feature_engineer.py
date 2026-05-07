@@ -42,7 +42,6 @@ Feature Vector Layout:
 
 import logging
 import numpy as np
-import pandas as pd
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timedelta
 

@@ -4,7 +4,7 @@ Handles project tree management for workflow visualization
 """
 
 from fastapi import APIRouter, HTTPException, Header
-from typing import Optional, Dict, Any
+from typing import Optional
 from pydantic import BaseModel
 import logging
 

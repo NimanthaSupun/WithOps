@@ -13,7 +13,6 @@ Endpoints:
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Query, HTTPException
 

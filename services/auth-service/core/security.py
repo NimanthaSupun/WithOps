@@ -9,7 +9,7 @@ import httpx
 from typing import Optional
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+from jose import jwt
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -114,7 +114,7 @@ async def verify_token(token: str) -> dict:
                 issuer=f"https://{AUTH0_DOMAIN}/",
                 options={"verify_aud": False}
             )
-            logger.warning(f"Token decoded without audience validation")
+            logger.warning("Token decoded without audience validation")
             return payload
         except Exception as e2:
             logger.error(f"Token decode failed completely: {str(e2)}")

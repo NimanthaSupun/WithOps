@@ -43,7 +43,7 @@ async def populate_organization_names():
         result = await session.execute(verify_query)
         rows = result.fetchall()
         
-        logger.info(f"\n📊 Verification - Repository Trees:")
+        logger.info("\n📊 Verification - Repository Trees:")
         for row in rows:
             logger.info(f"  Tree ID: {row[0]}")
             logger.info(f"    Org ID: {row[1]}")

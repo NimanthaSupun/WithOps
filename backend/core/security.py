@@ -133,7 +133,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             # Clear any global caches that might leak data
             github_client.clear_all_cache()  # Nuclear option - clear all cache
             
-            print(f"🔐 CRITICAL: All caches cleared for user switch")
+            print("🔐 CRITICAL: All caches cleared for user switch")
             
             # Reset session tracking
             _user_session_data.clear()

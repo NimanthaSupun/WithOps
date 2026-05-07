@@ -26,11 +26,9 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, Header
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from database import db_manager, Organization, OrganizationInstallation
-from database.config import get_db_session
+from database import db_manager, OrganizationInstallation
 from core.event_bus import event_bus
 from core.redis_cache import cache
 from core.github_client import github_client

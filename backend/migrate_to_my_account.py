@@ -43,7 +43,7 @@ async def migrate_to_nimantha():
         
         await session.commit()
         
-        print(f"\n✅ Success!")
+        print("\n✅ Success!")
         print(f"   Migrated: {migrated} models")
         print(f"   Total models for NimanthaSupun: {len(all_models)}")
         print("\n🔄 Refresh your browser to see all {len(all_models)} threat models!")

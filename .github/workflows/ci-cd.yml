@@ -29,7 +29,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0   # Full history required by Gitleaks
 
@@ -50,10 +50,10 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
 
       - name: Setup Node.js 20
-        uses: actions/setup-node@v4.1.0
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -96,10 +96,10 @@ jobs:
           - { name: pipeline-prediction-service,    path: services/pipeline-prediction-service }
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5.3.0
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -112,8 +112,8 @@ jobs:
         run: pip install ruff==0.3.0
 
       - name: Lint with Ruff
-        # E501 = line-too-long; suppress until codebase is formatted
-        run: ruff check ${{ matrix.service.path }}/ --ignore E501
+        # Ignore-rules are centralized in ruff.toml at project root
+        run: ruff check ${{ matrix.service.path }}/
 
   # ----------------------------------------------------------
   # 4. BUILD & PUSH DOCKER IMAGES
@@ -156,7 +156,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.8.0

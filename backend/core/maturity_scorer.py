@@ -16,7 +16,7 @@ Domains:
 3. People (SSG, Champions, Training, Executive Sponsorship)
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 import logging
 from datetime import datetime
 

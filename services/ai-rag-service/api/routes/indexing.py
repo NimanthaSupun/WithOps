@@ -2,9 +2,9 @@
 Indexing Routes - Manages document indexing into vector store
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional
 import logging
 from core.embeddings import EmbeddingService
 from core.vector_store import VectorStore

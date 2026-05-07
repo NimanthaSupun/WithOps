@@ -12,7 +12,6 @@ backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
 from database.config import db_manager
-from database.models import Base
 import logging
 
 logging.basicConfig(level=logging.INFO)

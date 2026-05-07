@@ -1,7 +1,7 @@
 """
 Database models for Collaboration Service
 """
-from sqlalchemy import Column, String, DateTime, Boolean, Integer, JSON, ForeignKey, Float
+from sqlalchemy import Column, String, DateTime, Integer, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import uuid

@@ -5,7 +5,7 @@ Listens to analysis completion events and auto-indexes data
 
 import json
 import logging
-from typing import Dict, Any, Optional, Callable
+from typing import Callable
 import redis.asyncio as redis
 import os
 import asyncio

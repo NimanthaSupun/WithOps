@@ -1,1 +1,92 @@
-﻿
+﻿Annotations
+20 errors and 23 warnings
+Python CI — collaboration-service
+Process completed with exit code 1.
+Python CI — ai-rag-service
+Process completed with exit code 1.
+Python CI — ai-service
+Process completed with exit code 1.
+Python CI — workspace-intelligence-service
+Process completed with exit code 1.
+Python CI — threat-modeling-service
+Process completed with exit code 1.
+Python CI — auth-service
+Process completed with exit code 1.
+Python CI — github-service
+Process completed with exit code 1.
+Python CI — workflow-orchestration-service
+Process completed with exit code 1.
+Python CI — backend
+Process completed with exit code 1.
+Python CI — pipeline-prediction-service
+Process completed with exit code 1.
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/CollaborationLayer.svelte#L122
+Each block should have a key
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/CollaborationLayer.svelte#L8
+'userColors' is defined but never used
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/CollaborationLayer.svelte#L5
+'myPresence' is defined but never used
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/CollaborationLayer.svelte#L2
+'onMount' is defined but never used
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L689
+Each block should have a key
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L603
+'i' is defined but never used
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L603
+Each block should have a key
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L581
+Each block should have a key
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L334
+Each block should have a key
+Frontend CI (SvelteKit / Node 20): frontend/src/lib/components/ChatModal.svelte#L2
+'onMount' is defined but never used
+Secret Scanning (Gitleaks)
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, gitleaks/gitleaks-action@v2.3.9. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — collaboration-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — collaboration-service
+Failed to restore: Cache service responded with 400
+Python CI — ai-rag-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — ai-rag-service
+Failed to restore: Cache service responded with 400
+Python CI — ai-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — ai-service
+Failed to restore: Cache service responded with 400
+Python CI — workspace-intelligence-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — workspace-intelligence-service
+Failed to restore: Cache service responded with 400
+Python CI — threat-modeling-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — threat-modeling-service
+Failed to restore: Cache service responded with 400
+Python CI — auth-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — auth-service
+Failed to restore: Cache service responded with 400
+Python CI — github-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — github-service
+Failed to restore: Cache service responded with 400
+Python CI — workflow-orchestration-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — workflow-orchestration-service
+Failed to restore: Cache service responded with 400
+Python CI — backend
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — backend
+Failed to restore: Cache service responded with 400
+Python CI — pipeline-prediction-service
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-python@v5.3.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Python CI — pipeline-prediction-service
+Failed to restore: Cache service responded with 400
+Frontend CI (SvelteKit / Node 20)
+Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4.2.2, actions/setup-node@v4.1.0. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Frontend CI (SvelteKit / Node 20)
+Failed to restore: Cache service responded with 400
+Artifacts
+Produced during runtime
+Name	Size	Digest	
+gitleaks-results.sarif

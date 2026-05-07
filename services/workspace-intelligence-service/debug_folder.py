@@ -1,5 +1,4 @@
 import asyncio
-import json
 from database.config import DatabaseManager
 from database.models import ProjectAnalysis
 from sqlalchemy import select
@@ -23,7 +22,7 @@ async def check():
         print(f'Project: {a.project_name}')
         
         # Show analysis_data structure
-        print(f'\n=== ANALYSIS_DATA KEYS ===')
+        print('\n=== ANALYSIS_DATA KEYS ===')
         if a.analysis_data:
             print('Keys:', list(a.analysis_data.keys()))
             

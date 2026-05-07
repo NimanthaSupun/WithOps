@@ -3,7 +3,6 @@ Document Processing Service
 Handles PDF, DOCX, TXT file processing and text extraction
 """
 
-import os
 import logging
 from typing import Dict, Any
 from datetime import datetime

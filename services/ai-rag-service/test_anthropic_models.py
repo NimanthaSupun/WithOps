@@ -2,7 +2,6 @@
 Test script to find available Anthropic models
 """
 import anthropic
-import os
 
 # Your API key
 api_key = "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"

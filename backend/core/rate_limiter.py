@@ -1,10 +1,9 @@
 # core/rate_limiter.py
 
-import asyncio
 import time
 from typing import Dict, Optional
 from collections import defaultdict, deque
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.responses import JSONResponse
 import logging
 

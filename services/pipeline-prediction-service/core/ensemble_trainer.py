@@ -276,7 +276,7 @@ class EnsembleTrainer:
             reverse=True
         ))
         
-        logger.info(f"📊 Ensemble Feature Importance (Top 10):")
+        logger.info("📊 Ensemble Feature Importance (Top 10):")
         for i, (feature, imp) in enumerate(list(sorted_imp.items())[:10], 1):
             logger.info(f"   {i:2d}. {feature:30s}: {imp:.4f}")
         

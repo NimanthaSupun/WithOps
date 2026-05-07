@@ -15,7 +15,7 @@ import logging
 import hashlib
 import hmac
 from fastapi import APIRouter, Request, HTTPException, Header
-from typing import Optional, Dict, Any
+from typing import Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ async def handle_workflow_completion(
     import os
     from database.config import db_manager
     from database.models import WorkflowRunHistory, PredictionHistory
-    from sqlalchemy import select, update
+    from sqlalchemy import select
     
     try:
         # 1. Verify webhook signature

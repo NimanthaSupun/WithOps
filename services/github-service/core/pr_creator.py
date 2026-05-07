@@ -2,11 +2,9 @@
 Pull Request Creator for GitHub Actions Updates
 Handles creating pull requests to update outdated GitHub Actions
 """
-import yaml
 import re
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-import asyncio
 
 class PRCreator:
     """
@@ -190,7 +188,7 @@ class PRCreator:
                 print(f"🔍 DEBUG: First 200 chars: {content[:200]}")
                 return content
             
-            print(f"❌ No content found in response")
+            print("❌ No content found in response")
             return None
             
         except Exception as e:
@@ -203,7 +201,7 @@ class PRCreator:
         """
         try:
             print(f"🔍 DEBUG: Updating action {action_name} from {current_version} to {latest_version}")
-            print(f"🔍 DEBUG: Workflow content preview (first 500 chars):")
+            print("🔍 DEBUG: Workflow content preview (first 500 chars):")
             print(workflow_content[:500])
             print(f"🔍 DEBUG: Looking for pattern: {action_name}@{current_version}")
             

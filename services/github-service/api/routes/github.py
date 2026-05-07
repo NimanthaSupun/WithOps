@@ -2,10 +2,10 @@
 API routes for GitHub Service
 """
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 import httpx
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict
 from datetime import datetime
 import logging
 import base64
@@ -55,7 +55,7 @@ async def resolve_user_uuid(auth_user_id: str, session) -> str:
         logger.warning(f"⚠️ No UUID found for auth_user_id: {auth_user_id}")
         raise HTTPException(
             status_code=404, 
-            detail=f"User not found in database. Please login to backend first."
+            detail="User not found in database. Please login to backend first."
         )
     
     logger.info(f"✅ Resolved {auth_user_id} → {user_uuid}")
@@ -988,7 +988,7 @@ async def get_my_organizations(
             # ===== END AUTO-LINK =====
             
             # Query organizations where user is owner OR in linked_users
-            from sqlalchemy import or_, cast, String, func
+            from sqlalchemy import or_, cast
             from sqlalchemy.dialects.postgresql import JSONB
             
             user_uuid_str = str(user_uuid)
@@ -1147,7 +1147,7 @@ async def get_my_organizations(
                                     print(f"✅ Auto-synced installation for {_org_login} (ID: {_inst_id})")
                                 print(f"💾 Committing {_synced_count} new installations to DB...")
                                 await session.commit()
-                                print(f"💾 Commit successful!")
+                                print("💾 Commit successful!")
                                 # Re-query
                                 result = await session.execute(query)
                                 installations_raw = result.all()
@@ -1401,7 +1401,7 @@ async def verify_installation(
                         "app_installed": False,
                         "installation_id": None,
                         "status": "deleted",
-                        "message": f"Installation was deleted on GitHub"
+                        "message": "Installation was deleted on GitHub"
                     }
             else:
                 logger.warning(f"⚠️ No active installation found for {org_name} by user {user_uuid}")

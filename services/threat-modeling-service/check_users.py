@@ -14,13 +14,13 @@ async def check_users():
             user = result.fetchone()
             
             if user:
-                print(f"\n✅ Found user mapping:")
+                print("\n✅ Found user mapping:")
                 print(f"  Internal UUID: {user[0]}")
                 print(f"  Auth0 ID: {user[1]}")
                 print(f"  Email: {user[2]}")
-                print(f"\n🔍 This UUID should match threat_models.user_id")
+                print("\n🔍 This UUID should match threat_models.user_id")
             else:
-                print(f"\n❌ No user found with auth_user_id: google-oauth2|104809585699210919063")
+                print("\n❌ No user found with auth_user_id: google-oauth2|104809585699210919063")
                 
     except Exception as e:
         print(f"❌ Error: {e}")

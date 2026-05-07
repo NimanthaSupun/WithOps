@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { page } from '$app/stores';
 	import { ragAPI } from '$lib/api/rag';
 	import { conversationsAPI } from '$lib/api/conversations';
@@ -331,7 +331,7 @@
 				</div>
 
 				<div class="conversations-list">
-					{#each conversations as conversation}
+					{#each conversations as conversation (conversation.id)}
 						<div
 							class="conversation-item"
 							class:active={currentConversation?.id === conversation.id}
@@ -578,7 +578,7 @@
 							<div class="suggested-questions">
 								<p class="section-label">Quick Start Questions:</p>
 								<div class="suggestions-grid">
-									{#each suggestedQuestions as suggested}
+									{#each suggestedQuestions as suggested (suggested)}
 										<button class="suggestion-chip" onclick={() => useSuggestedQuestion(suggested)}>
 											<svg
 												width="16"
@@ -600,7 +600,7 @@
 						</div>
 					{:else}
 						<div class="messages-list">
-							{#each messages as message, i}
+							{#each messages as message (message.timestamp)}
 								<div
 									class="message-wrapper {message.role}"
 									in:fly={{ y: 20, duration: 300, delay: 50 }}
@@ -686,7 +686,7 @@
 															View Sources ({message.sources.length})
 														</summary>
 														<div class="sources-list">
-															{#each message.sources as source}
+															{#each message.sources as source (source.file ?? source.analysis_type)}
 																<div class="source-item">
 																	{#if source.type === 'workflow'}
 																		<div class="source-icon">

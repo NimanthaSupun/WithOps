@@ -12,7 +12,6 @@ backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
 from database.config import db_manager
-from database.models import Base
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -109,17 +108,14 @@ async def check_database_status():
         # Check tables exist
         async with db_manager.get_session() as session:
             from sqlalchemy import text
-            from database.models import User
             result = await session.execute(text("SELECT COUNT(*) FROM users"))
             user_count = result.scalar()
             print(f"✅ Users table: {user_count} records")
             
-            from database.models import Organization
             result = await session.execute(text("SELECT COUNT(*) FROM organizations"))
             org_count = result.scalar()
             print(f"✅ Organizations table: {org_count} records")
             
-            from database.models import OrganizationInstallation
             result = await session.execute(text("SELECT COUNT(*) FROM organization_installations"))
             install_count = result.scalar()
             print(f"✅ Installations table: {install_count} records")

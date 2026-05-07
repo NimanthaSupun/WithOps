@@ -3,10 +3,8 @@ Security utilities for GitHub Service
 Uses shared auth library for JWT validation
 """
 
-import os
 import logging
-from typing import Optional
-from fastapi import HTTPException, Security, Depends
+from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 # Import from shared library

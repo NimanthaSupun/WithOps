@@ -1,6 +1,5 @@
 # core/github_client.py
 import re
-import yaml
 import asyncio
 import httpx
 import jwt
@@ -41,14 +40,14 @@ class GitHubClient:
             else:
                 print(f"❌ Private key file NOT found at: {self.private_key_path}")
                 # List files in current directory to help debug
-                print(f"🔍 DEBUG: Files in current directory:")
+                print("🔍 DEBUG: Files in current directory:")
                 try:
                     for file in os.listdir('.'):
                         print(f"  - {file}")
                 except Exception as e:
                     print(f"  Error listing files: {e}")
         else:
-            print(f"❌ GITHUB_PRIVATE_KEY_PATH environment variable not set")
+            print("❌ GITHUB_PRIVATE_KEY_PATH environment variable not set")
         
         self.github_app_name = os.getenv('GITHUB_APP_NAME', 'WithOps-DevSecOps-Platform')  # App name for installation URLs
         
@@ -80,8 +79,8 @@ class GitHubClient:
         # Default installation ID for version checking
         self.default_installation_id = None
         
-        print(f"HTTP client configured with HTTP/2 and enhanced connection pooling")
-        print(f"Enhanced memory cache initialized with dynamic TTLs")
+        print("HTTP client configured with HTTP/2 and enhanced connection pooling")
+        print("Enhanced memory cache initialized with dynamic TTLs")
         
         self.base_url = "https://api.github.com"
         
@@ -120,7 +119,7 @@ class GitHubClient:
         """
         Exchange OAuth code for access token (for organization discovery only)
         """
-        print(f"🔄 Exchanging OAuth code for token...")
+        print("🔄 Exchanging OAuth code for token...")
         print(f"🔄 Using client_id: {self.github_oauth_client_id}")
         print(f"🔄 Code: {code[:10]}...")
         
@@ -142,7 +141,7 @@ class GitHubClient:
                 data = response.json()
                 access_token = data.get("access_token")
                 if access_token:
-                    print(f"✅ Successfully obtained access token")
+                    print("✅ Successfully obtained access token")
                     return access_token
                 else:
                     print(f"❌ No access token in response: {data}")
@@ -287,7 +286,7 @@ class GitHubClient:
         """
         # Always blow away the global installations list cache
         self.cache.pop("all_installations", None)
-        print(f"🗑️ Cleared in-memory 'all_installations' cache")
+        print("🗑️ Cleared in-memory 'all_installations' cache")
 
         if org_login:
             keys_to_remove = [
@@ -671,7 +670,6 @@ class GitHubClient:
         Extracts all 'uses' statements at the job level (reusable workflow calls) from a workflow YAML content string.
         Returns a list of reusable workflow references (e.g., 'org/repo/.github/workflows/other.yml@ref').
         """
-        import yaml
         import re
         reusable_uses = []
         try:
@@ -1238,7 +1236,7 @@ class GitHubClient:
             # Print a summary of actions per workflow file
             from collections import Counter
             wf_counter = Counter([a.get('repo_name') for a in final_actions])
-            print(f"🔎 [DEBUG] Actions per workflow file:")
+            print("🔎 [DEBUG] Actions per workflow file:")
             for wf, count in wf_counter.items():
                 print(f"  - {wf}: {count} actions")
 

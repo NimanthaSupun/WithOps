@@ -4,13 +4,12 @@ Uses Ollama to generate comprehensive GitHub PR descriptions
 Also includes Claude AI for advanced threat modeling analysis
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import asyncio
 import logging
 import json
-import yaml
 from core.ollama_client import ollama_client
 from core.claude_ai_client import claude_client
 
@@ -75,7 +74,7 @@ async def test_post_endpoint(data: dict):
 async def debug_pydantic_endpoint(request: PRDescriptionRequest):
     """Debug endpoint to test Pydantic model validation"""
     try:
-        logger.info(f"🔍 DEBUG: Pydantic validation successful!")
+        logger.info("🔍 DEBUG: Pydantic validation successful!")
         logger.info(f"🔍 DEBUG: Title: {request.title}")
         logger.info(f"🔍 DEBUG: Changes count: {len(request.changes)}")
         logger.info(f"🔍 DEBUG: First change: {request.changes[0] if request.changes else 'None'}")
@@ -685,13 +684,11 @@ async def export_pdf_options():
 async def export_ai_analysis_pdf(request: PDFExportRequest):
     """Export Claude AI analysis results to PDF"""
     from fastapi.responses import Response
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
     from reportlab.lib.units import inch
-    import reportlab
     import io
     import base64
     from datetime import datetime
@@ -730,7 +727,7 @@ async def export_ai_analysis_pdf(request: PDFExportRequest):
         story = []
         
         # Title page
-        title = f"AI Threat Analysis Report"
+        title = "AI Threat Analysis Report"
         story.append(Paragraph(title, title_style))
         story.append(Spacer(1, 20))
         
@@ -839,9 +836,7 @@ async def export_ai_analysis_pdf(request: PDFExportRequest):
 @router.post("/claude/export-pdf-url")
 async def export_ai_analysis_pdf_url(request: PDFExportRequest):
     """Export Claude AI analysis results to PDF as base64 URL (alternative for CORS issues)"""
-    from fastapi.responses import Response
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
@@ -886,7 +881,7 @@ async def export_ai_analysis_pdf_url(request: PDFExportRequest):
         story = []
         
         # Title page
-        title = f"AI Threat Analysis Report"
+        title = "AI Threat Analysis Report"
         story.append(Paragraph(title, title_style))
         story.append(Spacer(1, 20))
         

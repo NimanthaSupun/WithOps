@@ -2,9 +2,8 @@
 API Routes for Workspace Intelligence & DevSecOps Maturity Analysis
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Security
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Security
 from fastapi.security import HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Dict, List, Optional
@@ -347,7 +346,7 @@ async def get_analysis(
                 findings.extend(repo_findings)
                 logger.info(f"📋 Repository '{repo.get('repository_name')}' has {len(repo_findings)} findings")
         else:
-            logger.warning(f"⚠️ No 'repositories' key found in analysis_data")
+            logger.warning("⚠️ No 'repositories' key found in analysis_data")
         
         logger.info(f"✅ Returning {len(repositories)} repositories and {len(findings)} findings")
         
@@ -1131,7 +1130,7 @@ async def _run_unified_workspace_analysis(
             fetch_github_data
         )
         
-        logger.info(f"📊 Analysis complete. Saving unified analysis...")
+        logger.info("📊 Analysis complete. Saving unified analysis...")
         
         # Save as ONE unified analysis record
         async with db_manager.get_session() as session:

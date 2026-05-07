@@ -9,7 +9,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from database.config import DatabaseManager
 from database.models import ThreatModel, User
 import logging
@@ -74,7 +74,7 @@ async def migrate_threat_models():
                 logger.info("No migration needed!")
                 return
             
-            logger.info(f"\n📋 Migration Plan:")
+            logger.info("\n📋 Migration Plan:")
             logger.info(f"  • Target User: {target_user.email} (ID: {target_user.id})")
             logger.info(f"  • Models to migrate: {len(models_to_migrate)}")
             logger.info(f"  • Models already correct: {len(all_models) - len(models_to_migrate)}")
@@ -96,7 +96,7 @@ async def migrate_threat_models():
                 return
             
             # Perform migration
-            logger.info(f"\n🔄 Starting migration...")
+            logger.info("\n🔄 Starting migration...")
             
             for model in models_to_migrate:
                 old_user_id = model.user_id
@@ -105,12 +105,12 @@ async def migrate_threat_models():
             
             await session.commit()
             
-            logger.info(f"\n✅ Migration completed successfully!")
+            logger.info("\n✅ Migration completed successfully!")
             logger.info(f"  • {len(models_to_migrate)} models migrated to {target_user.email}")
             logger.info(f"  • Total models for {target_user.email}: {len(all_models)}")
             
             # Verify migration
-            logger.info(f"\n🔍 Verifying migration...")
+            logger.info("\n🔍 Verifying migration...")
             verify_result = await session.execute(
                 select(ThreatModel).where(ThreatModel.user_id == target_user.id)
             )

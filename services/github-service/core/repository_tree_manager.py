@@ -6,12 +6,11 @@ Completely separate from workflow treeview (ProjectTree)
 
 from typing import Dict, List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, select
 from datetime import datetime
 import logging
-import json
 
-from database.models import RepositoryTree, Organization, User
+from database.models import RepositoryTree
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ class RepositoryTreeManager:
                     try:
                         tree_data = json.loads(tree_data)
                     except json.JSONDecodeError:
-                        logger.warning(f"Failed to parse tree_data as JSON, using empty list")
+                        logger.warning("Failed to parse tree_data as JSON, using empty list")
                         tree_data = []
                 elif tree_data is None:
                     tree_data = []
