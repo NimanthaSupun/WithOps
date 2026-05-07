@@ -80,6 +80,13 @@ services:
   ai-rag-service:
     restart: always
 
+  pipeline-prediction-service:
+    env_file:
+      - services/pipeline-prediction-service/.env.production
+    environment:
+      - ENVIRONMENT=production
+    restart: always
+
   # Infrastructure services
   redis:
     restart: always
