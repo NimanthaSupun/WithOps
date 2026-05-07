@@ -119,7 +119,7 @@ async def handle_workflow_completion(
         conclusion = workflow_run.get("conclusion")  # success, failure, cancelled, timed_out, neutral
         repo_full_name = workflow_run.get("repository", {}).get("full_name", "")
         org_name, repo_name = repo_full_name.split("/") if "/" in repo_full_name else (None, None)
-        head_sha = workflow_run.get("head_commit", {}).get("sha", "")
+        head_sha = workflow_run.get("head_sha", "") or workflow_run.get("head_commit", {}).get("id", "")
         
         if not all([run_id, conclusion, org_name, repo_name, head_sha]):
             logger.warning(f"❌ Missing required fields in webhook: {data}")
