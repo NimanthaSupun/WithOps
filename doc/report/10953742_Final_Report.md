@@ -26,37 +26,42 @@
   - 2.1 Background and Context
   - 2.2 Literature Review
   - 2.3 Objectives and Deliverables Summary
-- Chapter 03 — Method of Approach
-  - 3.1 Research Design
-  - 3.2 Development Methodology
-  - 3.3 Data Sources and Collection
-  - 3.4 Evaluation Strategy
-- Chapter 04 — Requirements
-  - 4.1 Functional Requirements
-  - 4.2 Non-Functional Requirements
-  - 4.3 Hardware and Software Requirements
-- Chapter 05 — System Design and Architecture
-  - 5.1 High-Level Architecture
-  - 5.2 Microservices Design
-  - 5.3 Database Design
-  - 5.4 Frontend Architecture
-- Chapter 06 — Implementation
-  - 6.1 Core Platform Features
-  - 6.2 DORA Metrics Dashboard
-  - 6.3 Pipeline Prediction Service
-  - 6.4 AI and RAG Integration
-  - 6.5 Key Implementation Challenges
-- Chapter 07 — End-Project Report
-  - 7.1 Project Summary
-  - 7.2 Objectives Evaluation
-  - 7.3 Changes During the Project
-- Chapter 08 — Project Post-Mortem
-  - 8.1 Were the Objectives Right?
-  - 8.2 Technology Evaluation
-  - 8.3 Process Evaluation
-  - 8.4 Personal Performance
-  - 8.5 Lessons Learned
-- Chapter 09 — Conclusions
+- Chapter 03 — The OWASP DevSecOps Maturity Model
+  - 3.1 Overview of DSOMM
+  - 3.2 The Five DSOMM Dimensions
+  - 3.3 Maturity Levels
+  - 3.4 Automated Scoring Methodology
+- Chapter 04 — Method of Approach
+  - 4.1 Research Design
+  - 4.2 Development Methodology
+  - 4.3 Data Sources and Collection
+  - 4.4 Evaluation Strategy
+- Chapter 05 — Requirements
+  - 5.1 Functional Requirements
+  - 5.2 Non-Functional Requirements
+  - 5.3 Hardware and Software Requirements
+- Chapter 06 — System Design and Architecture
+  - 6.1 High-Level Architecture
+  - 6.2 Microservices Design
+  - 6.3 Database Design
+  - 6.4 Frontend Architecture
+- Chapter 07 — Implementation
+  - 7.1 Core Platform Features
+  - 7.2 DORA Metrics Dashboard
+  - 7.3 Pipeline Prediction Service
+  - 7.4 AI and RAG Integration
+  - 7.5 Key Implementation Challenges
+- Chapter 08 — End-Project Report
+  - 8.1 Project Summary
+  - 8.2 Objectives Evaluation
+  - 8.3 Changes During the Project
+- Chapter 09 — Project Post-Mortem
+  - 9.1 Were the Objectives Right?
+  - 9.2 Technology Evaluation
+  - 9.3 Process Evaluation
+  - 9.4 Personal Performance
+  - 9.5 Lessons Learned
+- Chapter 10 — Conclusions
 - Reference List
 - Bibliography
 - Appendices
@@ -127,7 +132,7 @@ Despite these pressures, the tooling landscape remains fragmented. GitHub Depend
 
 The WithOps platform addresses gaps across five research domains.
 
-**DSOMM Maturity Assessment.** The OWASP DevSecOps Maturity Model provides a comprehensive framework for assessing security integration across five dimensions, defining maturity levels from basic awareness to advanced automation (OWASP Foundation, 2024). However, Jit (2024) identifies a "theory-to-practice gap" where organisations understand DSOMM conceptually but struggle with operationalisation. Manual evaluation requires 40–80 hours per assessment, making continuous monitoring impractical. No existing tool automatically derives maturity scores from observable repository artifacts.
+**DSOMM Maturity Assessment.** The OWASP DevSecOps Maturity Model (DSOMM) provides a comprehensive framework for assessing security integration across five dimensions (OWASP Foundation, 2024). However, a significant "theory-to-practice gap" exists where organisations struggle to operationalise the framework manually. No existing tool automatically derives maturity scores from observable repository artifacts. A detailed examination of the DSOMM framework and its application in this project is provided in Chapter 03.
 
 **CI/CD Pipeline Security.** Pan et al. (2024) analysed 16,000 repositories, finding 62.3% contained at least one high-severity workflow misconfiguration. Common vulnerabilities include actions pinned to mutable tags (73%), excessive permissions (41%), insecure triggers (28%), and hardcoded secrets (15%). Ayala and Garcia (2023) found only 14% of repositories implement adequate dependency pinning. Existing tools provide fragmented coverage focused on application code rather than workflow security.
 
@@ -152,15 +157,53 @@ The project delivers the following tangible artifacts:
 
 ---
 
-## Chapter 03 — Method of Approach
+## Chapter 03 — The OWASP DevSecOps Maturity Model
 
-### 3.1 Research Design
+### 3.1 Overview of DSOMM
+
+The OWASP DevSecOps Maturity Model (DSOMM) is an open-source framework published by the OWASP Foundation that provides a structured, repeatable methodology for assessing how deeply security practices are integrated into an organisation's software development lifecycle (OWASP Foundation, 2024). Unlike compliance checklists that produce binary pass/fail outcomes, DSOMM defines a progressive maturity scale that recognises security integration as a continuum — from organisations with no formal security practices to those with fully automated, continuously monitored security operations.
+
+### 3.2 The Five DSOMM Dimensions
+
+DSOMM organises security practices into five distinct dimensions, each representing a critical domain of DevSecOps capability:
+
+1. **Build and Deployment** — This dimension evaluates the security of the CI/CD pipeline infrastructure itself: whether build processes are reproducible and tamper-proof, whether deployment pipelines enforce security gates (e.g., blocking deployments with critical vulnerabilities), whether container images are signed and verified, whether infrastructure-as-code is scanned for misconfigurations, and whether artifact integrity is maintained throughout the supply chain. In WithOps, this dimension is assessed by analysing GitHub Actions workflow definitions for security controls such as pinned action versions, restricted permissions, and deployment approval gates.
+
+2. **Implementation** — This dimension measures the security of the application code and its dependencies: whether secure coding standards are enforced, whether dependencies are managed and regularly updated, whether secrets management follows best practices (e.g., using GitHub Secrets rather than hardcoded credentials), and whether security-focused code review processes are in place. WithOps assesses this dimension by inspecting dependency management configurations (Dependabot, Renovate), secret scanning settings, and branch protection rules requiring code review approvals.
+
+3. **Test and Verification** — This dimension evaluates the breadth and depth of security testing: whether static application security testing (SAST) is integrated into CI/CD pipelines, whether dynamic testing (DAST) is performed, whether software composition analysis (SCA) identifies vulnerable dependencies, and whether penetration testing occurs regularly. WithOps detects the presence of security testing tools within workflow definitions — scanning for steps invoking tools such as Snyk, Trivy, CodeQL, or OWASP ZAP — and scores the dimension based on coverage breadth and automation level.
+
+4. **Information Gathering** — This dimension assesses the organisation's ability to collect, aggregate, and act upon security intelligence: whether security findings are centralised and tracked, whether vulnerability databases are monitored, whether threat intelligence feeds are consumed, and whether security metrics are reported to stakeholders. WithOps evaluates this dimension by detecting enabled GitHub security features (Dependabot alerts, secret scanning alerts, code scanning alerts) and checking for centralised logging and monitoring configurations.
+
+5. **Culture and Organization** — This dimension measures the human and organisational factors: whether security responsibilities are defined and assigned, whether developers receive security training, whether incident response procedures exist, whether security champions are designated within teams, and whether security is considered in architectural decision-making. This is the most challenging dimension to assess automatically; WithOps approximates it by analysing repository governance indicators such as CODEOWNERS files, security policy documents (SECURITY.md), contribution guidelines, and branch protection enforcement.
+
+### 3.3 Maturity Levels
+
+For each dimension, DSOMM defines five maturity levels representing progressive stages of security integration:
+
+| Level | Name | Description |
+|:---:|---|---|
+| **Level 0** | Not Performed | No evidence of security practices in this dimension. The organisation has not begun addressing security in this area. |
+| **Level 1** | Initial | Basic, ad-hoc security practices exist but are inconsistent and not formally defined. Security activities occur reactively rather than proactively. |
+| **Level 2** | Managed | Security practices are defined and documented. Processes are repeatable but may not be fully automated. Basic tooling is in place. |
+| **Level 3** | Defined | Security practices are standardised across the organisation, integrated into development workflows, and consistently enforced through automation. |
+| **Level 4** | Advanced | Security practices are fully automated, continuously monitored, and proactively improved. Advanced capabilities such as threat intelligence integration and automated remediation are operational. |
+
+### 3.4 Automated Scoring Methodology
+
+The platform's maturity assessment algorithm operates by programmatically analysing observable repository artifacts — workflow definitions, configuration files, branch protection rules, and enabled security features — and mapping detected practices to the corresponding DSOMM dimension and maturity level. For each dimension, the algorithm assigns a score from 0 to 4 based on the highest level of practice detected. The overall maturity score is computed as a weighted average across all five dimensions, providing a single numeric indicator of the organisation's DevSecOps maturity posture. Results are stored temporally, enabling the platform to track maturity progression over time and demonstrate measurable security improvement to stakeholders.
+
+---
+
+## Chapter 04 — Method of Approach
+
+### 4.1 Research Design
 
 This project adopted a design science research approach with elements of experimental, prototype-driven, and case study-based research. The primary outcome was a functional software artifact — the WithOps DevSecOps Intelligence Platform — designed to address real-world challenges in CI/CD security and DevSecOps maturity assessment.
 
 The research was prototype-driven, where the platform was incrementally designed, implemented, and refined through multiple iterations. Experimental elements were introduced by evaluating automated security detection, AI-assisted threat modelling, DORA metrics computation, and pipeline prediction against defined metrics. A case-study approach was used by applying the platform to multiple GitHub organisations, enabling observation of security posture and delivery performance in realistic environments.
 
-### 3.2 Development Methodology
+### 4.2 Development Methodology
 
 The project followed an Agile development methodology integrated with DevOps practices, using structured two-week sprint cycles.
 
@@ -171,7 +214,7 @@ The project followed an Agile development methodology integrated with DevOps pra
 
 Version control was managed using Git with a feature-branch workflow. All changes went through pull request reviews before merging. The repository included CI/CD workflow definitions enforcing automated testing, security scanning (Gitleaks for secret detection, TruffleHog for PR enforcement), and quality gates.
 
-### 3.3 Data Sources and Collection
+### 4.3 Data Sources and Collection
 
 **Primary Data Source — GitHub Ecosystem:** Repository metadata, CI/CD workflow definitions (.github/workflows/*.yml), GitHub Actions usage and version information, and webhook events (push, pull request, workflow_run) were collected through the GitHub REST API (v3) and GitHub App installation flows.
 
@@ -179,7 +222,7 @@ Version control was managed using Git with a feature-branch workflow. All change
 
 **Pipeline Prediction Data:** Historical workflow run data — including repository metadata, workflow configuration patterns, and execution outcomes — was collected via GitHub webhooks and stored for training the pipeline prediction model.
 
-### 3.4 Evaluation Strategy
+### 4.4 Evaluation Strategy
 
 System effectiveness was evaluated using quantitative metrics:
 - **Security Accuracy:** Precision, recall, and F1-score of workflow vulnerability detection against manually verified datasets.
@@ -191,9 +234,9 @@ System effectiveness was evaluated using quantitative metrics:
 
 ---
 
-## Chapter 04 — Requirements
+## Chapter 05 — Requirements
 
-### 4.1 Functional Requirements
+### 5.1 Functional Requirements
 
 The WithOps platform specifies the following functional requirements, organised by feature module:
 
@@ -215,7 +258,7 @@ The WithOps platform specifies the following functional requirements, organised 
 
 **FR-09: DORA Metrics** — The system shall automatically compute Deployment Frequency, Lead Time for Changes, Change Failure Rate, and Mean Time to Recovery from GitHub webhook events. The system shall classify organisation performance against Google DORA benchmarks (Elite, High, Medium, Low), display weekly performance trends, provide per-repository metric breakdowns, and correlate DORA performance with DSOMM security maturity scores.
 
-### 4.2 Non-Functional Requirements
+### 5.2 Non-Functional Requirements
 
 **Performance:** API response latency shall not exceed 200ms for 95th percentile requests. Organisation-wide security analysis for up to 200 repositories shall complete within 3 minutes. Frontend first contentful paint shall be under 1.5 seconds.
 
@@ -229,7 +272,7 @@ The WithOps platform specifies the following functional requirements, organised 
 
 **Observability:** All services shall expose Prometheus metrics, OpenTelemetry distributed traces, and structured logs. Centralised monitoring dashboards shall be available via Grafana.
 
-### 4.3 Hardware and Software Requirements
+### 5.3 Hardware and Software Requirements
 
 **Server-Side Requirements:**
 
@@ -258,9 +301,9 @@ The WithOps platform specifies the following functional requirements, organised 
 
 ---
 
-## Chapter 05 — System Design and Architecture
+## Chapter 06 — System Design and Architecture
 
-### 5.1 High-Level Architecture
+### 6.1 High-Level Architecture
 
 The WithOps platform implements a microservices architecture with an event-driven communication backbone. The architecture comprises five layers:
 
@@ -288,7 +331,7 @@ The WithOps platform implements a microservices architecture with an event-drive
 
 **Container Orchestration.** The entire platform is orchestrated using Docker Compose, defining 16+ containers with explicit service dependency management, health check configurations, volume mounts for data persistence, and network isolation. All microservices, databases, caches, and observability tools are defined in a single `docker-compose.yml` file, enabling one-command deployment of the complete platform. Each service container is built from a dedicated Dockerfile specifying Python 3.11 base images with multi-stage builds to minimise image sizes. Environment variables are injected from a shared `.env` file, enabling configuration to be varied across development, staging, and production environments without code changes. For production deployment, a separate `docker-compose.prod.yml` provides optimised configurations including resource limits, restart policies, and external network configurations suitable for Kubernetes migration.
 
-### 5.2 Microservices Design
+### 6.2 Microservices Design
 
 Inter-service communication follows two patterns:
 
@@ -304,7 +347,7 @@ Each microservice follows a consistent internal structure: `main.py` (FastAPI ap
 
 **DORA Event Pipeline Architecture.** The DORA metrics data pipeline exemplifies the event-driven architecture's strengths. When a GitHub Actions workflow completes, GitHub dispatches a webhook to the GitHub Service (port 9102). The GitHub Service validates the webhook signature using HMAC-SHA256, extracts the relevant payload fields, and publishes a structured event to the `github_events` Redis channel. The Workspace Intelligence Service's DORA Event Handler, running as a background async task initialised during service startup, receives this event within milliseconds. The handler creates a `DeploymentEvent` database record and optionally triggers metric recalculation. This fully decoupled architecture means the GitHub Service has no knowledge of DORA metrics — it simply publishes events — while the DORA subsystem can evolve independently.
 
-### 5.3 Database Design
+### 6.3 Database Design
 
 The platform uses Supabase PostgreSQL as the primary relational database. Key entities include:
 
@@ -319,7 +362,7 @@ The platform uses Supabase PostgreSQL as the primary relational database. Key en
 - **dora_metric_snapshots** — Periodic DORA metric computations storing deployment frequency, lead time, change failure rate, MTTR, and overall classification.
 - **conversations** — AI RAG chat histories with per-user access control.
 
-### 5.4 Frontend Architecture
+### 6.4 Frontend Architecture
 
 The frontend was built with SvelteKit 2 and Svelte 5, leveraging the Runes API ($state, $derived, $effect) for compile-time reactive programming. The application follows a consistent "Matte Engineering" design language featuring:
 
@@ -330,11 +373,16 @@ The frontend was built with SvelteKit 2 and Svelte 5, leveraging the Runes API (
 
 Each workspace page (Intelligence, Predictor, DORA Metrics) follows the same structural template: loading screen → header with breadcrumbs → page title with action buttons → tab navigation → content panels. This ensures users experience consistent interaction patterns regardless of which feature they access.
 
+Figure 1 illustrates the WithOps landing page, which serves as the public-facing entry point of the platform. The design employs a dark-themed hero section with a prominent headline communicating the platform's core value proposition — "AI for Secure CI/CD Pipelines." An embedded code preview on the right demonstrates the platform's configuration structure, reinforcing the developer-focused identity. The top navigation bar provides access to Documentation, Security, Analytics, and Pricing sections, while an authenticated user greeting and Dashboard button indicate the Auth0 integration. The landing page was designed to establish immediate credibility and communicate the platform's technical sophistication to prospective users.
+
+![Figure 1 — WithOps Landing Page](./screenshots/fig1_landing_page.png)
+*Figure 1: The WithOps landing page featuring the hero section with code preview, navigation bar, and call-to-action button.*
+
 ---
 
-## Chapter 06 — Implementation
+## Chapter 07 — Implementation
 
-### 6.1 Core Platform Features
+### 7.1 Core Platform Features
 
 The following features were fully implemented and deployed:
 
@@ -355,6 +403,21 @@ The following features were fully implemented and deployed:
 | Pipeline Prediction | ML-based CI/CD outcome prediction with accuracy tracking |
 | DORA Metrics Dashboard | Four-metric delivery performance tracking with DSOMM correlation |
 
+**GitHub Integration and Onboarding Flow.** The platform's onboarding process begins with GitHub App installation. When a user selects an organisation to connect, the platform redirects them to the GitHub App permissions consent screen (Figure 2), which requests the precise set of read and write permissions required for workflow analysis, webhook registration, and automated pull request creation. This granular permission model follows the principle of least privilege, requesting only the access necessary for platform functionality.
+
+![Figure 2 — GitHub App Installation Permissions](./screenshots/fig2_github_app_install.png)
+*Figure 2: The GitHub App installation consent screen showing the granular permissions requested by the WithOps platform, including read access to organisation metadata and read/write access to actions, workflows, and pull requests.*
+
+After granting permissions, the user is returned to the WithOps Organisation Discovery page (Figure 3), which displays all GitHub organisations accessible to the authenticated user. Each organisation card indicates its installation status — "Installed" with an "Open Workspace" action, or "Not Installed" with an "Install GitHub App" action and step-by-step instructions. This two-state card design provides clear visual feedback about which organisations are connected and which require setup.
+
+![Figure 3 — Organisation Discovery Page](./screenshots/fig3_org_discovery.png)
+*Figure 3: The Organisation Discovery page displaying connected and available GitHub organisations with installation status indicators and action buttons.*
+
+Once an organisation is connected, the user enters the Workspace Dashboard (Figure 4), which serves as the central command interface for the platform. The dashboard displays four stat cards summarising the organisation's repository count, total workflows, connection status, and last synchronisation time. Below, a tabbed interface switches between Repositories and Workflows views, with the Workflows tab presenting a table listing each CI/CD workflow with its trigger type, last run timestamp, success status, dependencies, author, and active status. The left sidebar provides navigation to all platform modules — Repo Tree, Threats, Audit, Canvas, Treeview, Predictor, and DORA — demonstrating the breadth of integrated functionality accessible from a single workspace.
+
+![Figure 4 — Workspace Dashboard](./screenshots/fig4_workspace_dashboard.png)
+*Figure 4: The Workspace Dashboard showing organisation stat cards, workflow listing with trigger types and execution history, and sidebar navigation to all platform modules.*
+
 **Workflow Security Analysis Engine.** The security analysis engine parses GitHub Actions YAML files into structured representations and traverses them to detect vulnerability patterns. The detection system covers five major categories: unpinned action references (detecting mutable tag usage versus immutable commit SHA pinning), outdated action versions (comparing against GitHub Marketplace latest releases using semantic versioning), insecure workflow triggers (identifying `pull_request_target` and `workflow_dispatch` triggers vulnerable to code injection), excessive permissions (flagging `write-all` or overly broad permission scopes), and credential exposure (using both regex pattern matching against 150+ known secret formats and Shannon entropy calculation for detecting high-entropy strings). Each finding was categorised by severity (Critical, High, Medium, Low) using CVSS v3.1 scoring principles, with detailed remediation guidance generated for each vulnerability type.
 
 **DSOMM Maturity Assessment System.** The automated maturity assessment system analyses repository artifacts to detect security practice indicators and maps them to the five OWASP DSOMM dimensions. The assessment algorithm inspects repository configurations including branch protection rules, CI/CD workflow definitions, dependency management configurations, secret scanning settings, and code review policies. For each dimension — Build and Deployment, Implementation, Test and Verification, Information Gathering, and Culture and Organization — the system assigns a maturity level from Level 0 (no practices detected) to Level 4 (advanced automation). The overall maturity score was computed as a weighted average across all dimensions, with results stored temporally to enable progression tracking over time. The Intelligence dashboard visualises dimensional scores using radar charts and provides trend analysis showing maturity improvement trajectories.
@@ -365,7 +428,7 @@ The following features were fully implemented and deployed:
 
 **Canvas Builder.** The Canvas Builder provides a visual drag-and-drop interface for constructing CI/CD pipelines. Users create pipeline stages by dragging pre-configured workflow step blocks (checkout, setup-node, install dependencies, run tests, build, deploy) onto a canvas and connecting them in execution order. The visual representation was then transformed into valid GitHub Actions YAML through a code generation algorithm that maps visual block properties to YAML configuration syntax. Users could preview the generated YAML, customise it, and create a pull request directly from the interface, eliminating the need for manual YAML authoring and reducing the error-prone nature of indentation-sensitive configuration.
 
-### 6.2 DORA Metrics Dashboard
+### 7.2 DORA Metrics Dashboard
 
 The DORA Metrics Dashboard represents a significant addition to the platform, providing quantitative delivery performance measurement based on the Google DORA research programme.
 
@@ -405,13 +468,13 @@ The DORA dashboard page (`dora/+page.svelte`) was built to strictly adhere to th
 
 The correlation between DORA delivery metrics and DSOMM security maturity scores represents a novel analytical capability. The `/correlation` endpoint retrieves the organisation's latest DSOMM assessment (average maturity score across all assessed projects) and its current DORA performance classification, then generates an AI-derived insight describing whether higher security maturity correlates with improved delivery performance. This addresses the common misconception that "security slows development down" by providing empirical evidence within the organisation's own data.
 
-### 6.3 Pipeline Prediction Service
+### 7.3 Pipeline Prediction Service
 
 The Pipeline Prediction Service provides ML-based forecasting of CI/CD pipeline outcomes. The service analyses historical workflow run data — including repository metadata, workflow configuration patterns, and past execution outcomes — to predict whether a forthcoming pipeline run will succeed or fail.
 
 The prediction model was trained on historical GitHub Actions workflow data and deployed within the Workspace Intelligence Service. The frontend Predictor page displays prediction confidence scores and tracks accuracy over time by comparing predictions against actual outcomes received via webhook events.
 
-### 6.4 AI and RAG Integration
+### 7.4 AI and RAG Integration
 
 The platform integrates AI capabilities through a multi-provider strategy:
 
@@ -421,7 +484,7 @@ The platform integrates AI capabilities through a multi-provider strategy:
 
 The RAG pipeline follows three stages: (1) workspace analysis data is chunked and embedded using Ollama's embedding models, with vectors stored in Qdrant collections; (2) user queries trigger semantic similarity search to retrieve relevant context; (3) retrieved context is combined with the query for Claude API inference, producing contextually grounded responses.
 
-### 6.5 Key Implementation Challenges
+### 7.5 Key Implementation Challenges
 
 **Challenge 1: DORA Data Collection Without Deployment Infrastructure.** The DORA metrics system required deployment event data, but many development organisations do not have formal deployment workflows. The solution was to treat any completed GitHub Actions workflow as a deployment proxy, which aligns with the DORA research definition that measures "code changes that result in software being built and tested."
 
@@ -437,13 +500,13 @@ The RAG pipeline follows three stages: (1) workspace analysis data is chunked an
 
 ---
 
-## Chapter 07 — End-Project Report
+## Chapter 08 — End-Project Report
 
-### 7.1 Project Summary
+### 8.1 Project Summary
 
 The WithOps DevSecOps Intelligence Platform was successfully designed, implemented, and deployed as a comprehensive system addressing critical gaps in CI/CD workflow security analysis, DevSecOps maturity assessment, AI-assisted threat modelling, pipeline outcome prediction, and delivery performance measurement. The platform comprises nine independently deployable FastAPI microservices, a SvelteKit 5 frontend application, a Kong API gateway, and a full observability stack, all orchestrated through Docker Compose and deployable on Kubernetes. The completed system is publicly accessible at https://app.withops.com/.
 
-### 7.2 Objectives Evaluation
+### 8.2 Objectives Evaluation
 
 Each project objective is evaluated below with an honest assessment of achievement:
 
@@ -463,7 +526,7 @@ Each project objective is evaluated below with an honest assessment of achieveme
 
 **Objective 8: DORA Metrics Dashboard — Achieved.** The DORA metrics system automatically computes all four metrics from GitHub webhook events, classifies performance against Google benchmarks, provides weekly trend analysis, per-repository breakdowns, and the novel DORA × DSOMM correlation analysis. This objective was added during the project lifecycle and was fully delivered.
 
-### 7.3 Changes During the Project
+### 8.3 Changes During the Project
 
 Several significant changes were made during the project:
 
@@ -479,15 +542,15 @@ Several significant changes were made during the project:
 
 ---
 
-## Chapter 08 — Project Post-Mortem
+## Chapter 09 — Project Post-Mortem
 
-### 8.1 Were the Objectives Right?
+### 9.1 Were the Objectives Right?
 
 The original six objectives proved to be well-chosen foundations for the platform. The subsequent addition of Pipeline Prediction and DORA Metrics objectives strengthened the project by providing quantitative measurement capabilities that transformed the platform from a purely analytical tool into a comprehensive intelligence system.
 
 In retrospect, the DORA Metrics objective should have been included from the initial specification. The ability to measure delivery performance and correlate it with security maturity is central to the platform's value proposition and represents the strongest research contribution. Its late addition, while successfully delivered, meant less time was available for comprehensive testing and user evaluation of this feature.
 
-### 8.2 Technology Evaluation
+### 9.2 Technology Evaluation
 
 **SvelteKit 5 and Svelte 5 Runes API:** This technology choice proved excellent. The compile-time reactivity model produced smaller bundle sizes and faster rendering than alternatives. However, the Runes API was relatively new, resulting in limited community documentation and occasional compiler quirks (e.g., the `const_tag_invalid_placement` restriction). The benefits of early adoption outweighed these minor difficulties.
 
@@ -499,7 +562,7 @@ In retrospect, the DORA Metrics objective should have been included from the ini
 
 **Docker Compose:** Essential for managing the 16+ container development environment. However, the resource consumption on development machines (particularly RAM) was substantial and occasionally problematic on machines with less than 16 GB RAM.
 
-### 8.3 Process Evaluation
+### 9.3 Process Evaluation
 
 The Agile methodology with two-week sprints proved appropriate for the project scope. Sprint structure provided regular checkpoints and forced prioritisation. However, several process observations emerged:
 
@@ -507,7 +570,7 @@ The feature-branch Git workflow ensured code quality through pull request review
 
 Sprint planning was occasionally disrupted by the discovery of blocking technical challenges (e.g., GitHub API rate limiting, Windows port conflicts) that consumed sprint capacity. Building more buffer time into sprint estimates would have improved delivery predictability.
 
-### 8.4 Personal Performance
+### 9.4 Personal Performance
 
 Technical skills in full-stack development, microservices architecture, and AI integration were significantly strengthened through this project. Key areas of growth included:
 
@@ -517,7 +580,7 @@ Technical skills in full-stack development, microservices architecture, and AI i
 
 Areas requiring improvement include automated testing discipline (the target 80% coverage was not achieved) and documentation completeness during active development phases.
 
-### 8.5 Lessons Learned
+### 9.5 Lessons Learned
 
 1. **Start with observability.** Implementing the Prometheus/Grafana/Jaeger/Loki stack early proved invaluable for debugging inter-service communication issues. Future projects should establish observability infrastructure before feature development begins.
 
@@ -537,7 +600,7 @@ Areas requiring improvement include automated testing discipline (the target 80%
 
 ---
 
-## Chapter 09 — Conclusions
+## Chapter 10 — Conclusions
 
 The WithOps DevSecOps Intelligence Platform was successfully designed, implemented, and deployed as a comprehensive system that addresses five critical challenges facing modern software development organisations: CI/CD workflow security vulnerabilities, DevSecOps maturity measurement, disconnected threat modelling, CI/CD pipeline reliability, and delivery performance quantification.
 

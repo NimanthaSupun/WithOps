@@ -785,12 +785,12 @@ features:
 				<span class="trust-logo-name">Terraform</span>
 			</div>
 
-			<div class="trust-logo">
+			<!-- <div class="trust-logo">
 				<div class="trust-logo-box">
 					<img src="/logos/Harness_Logo.svg" alt="Harness" width="32" height="32" />
 				</div>
 				<span class="trust-logo-name">Harness</span>
-			</div>
+			</div> -->
 
 			<div class="trust-logo">
 				<div class="trust-logo-box">
