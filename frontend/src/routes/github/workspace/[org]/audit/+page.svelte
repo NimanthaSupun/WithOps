@@ -14,6 +14,18 @@
 	let loadingStage = 'Initializing...';
 	let viewMode = 'detailed'; // 'detailed' or 'grouped'
 
+	// Toast notification state
+	let toasts = [];
+	let toastIdCounter = 0;
+
+	// Confirmation modal state
+	let confirmModal = {
+		visible: false,
+		title: '',
+		message: '',
+		resolve: null
+	};
+
 	// Subscribe to dark mode
 	let darkMode = false;
 	$: {
@@ -22,7 +34,7 @@
 		});
 	}
 
-	// Pagination state
+	// Pagination statef
 	let currentPage = 1;
 	let perPage = 20;
 	let totalPages = 1;
@@ -159,6 +171,60 @@
 	// Cache status
 	let isCached = false;
 	let lastUpdated = null;
+
+	// Toast notification helpers
+	function showToast(type, title, message, options = {}) {
+		const id = ++toastIdCounter;
+		const toast = {
+			id,
+			type, // 'success' | 'error' | 'warning' | 'info'
+			title,
+			message,
+			link: options.link || null,
+			linkLabel: options.linkLabel || 'View',
+			duration: options.duration || (type === 'error' ? 8000 : 5000),
+			visible: false,
+			dismissing: false
+		};
+
+		toasts = [...toasts, toast];
+
+		// Animate in after a tick
+		requestAnimationFrame(() => {
+			toasts = toasts.map(t => t.id === id ? { ...t, visible: true } : t);
+		});
+
+		// Auto-dismiss
+		setTimeout(() => dismissToast(id), toast.duration);
+
+		return id;
+	}
+
+	function dismissToast(id) {
+		toasts = toasts.map(t => t.id === id ? { ...t, dismissing: true } : t);
+		setTimeout(() => {
+			toasts = toasts.filter(t => t.id !== id);
+		}, 350);
+	}
+
+	// Confirmation modal helper
+	function showConfirm(title, message) {
+		return new Promise((resolve) => {
+			confirmModal = {
+				visible: true,
+				title,
+				message,
+				resolve
+			};
+		});
+	}
+
+	function handleConfirm(accepted) {
+		if (confirmModal.resolve) {
+			confirmModal.resolve(accepted);
+		}
+		confirmModal = { visible: false, title: '', message: '', resolve: null };
+	}
 
 	onMount(async () => {
 		orgName = $page.params.org;
@@ -370,7 +436,7 @@
 
 			if (missingFields.length > 0) {
 				console.error('❌ Missing required fields:', missingFields);
-				alert(`❌ Cannot create PR: Missing required fields: ${missingFields.join(', ')}`);
+				showToast('error', 'Cannot Create PR', `Missing required fields: ${missingFields.join(', ')}`);
 				return;
 			}
 
@@ -385,18 +451,20 @@
 
 			if (result.success) {
 				// Show success message
-				alert(
-					`✅ Pull request created successfully!\n\nPR #${result.pr_number}: ${result.pr_title}\n\nYou can view it at: ${result.pr_url}`
-				);
+				showToast('success', 'Pull Request Created', `PR #${result.pr_number}: ${result.pr_title}`, {
+					link: result.pr_url,
+					linkLabel: 'View PR on GitHub',
+					duration: 8000
+				});
 
 				// Refresh the data to reflect the changes
 				await loadActionDetails(currentPage, searchQuery);
 			} else {
-				alert(`❌ Failed to create pull request: ${result.error}`);
+				showToast('error', 'PR Creation Failed', result.error);
 			}
 		} catch (err) {
 			console.error('Error creating pull request:', err);
-			alert(`❌ Error creating pull request: ${err.message}`);
+			showToast('error', 'PR Creation Error', err.message);
 		} finally {
 			// Reset loading state
 			action.prCreating = false;
@@ -415,8 +483,11 @@
 				return;
 			}
 
-			const confirmMsg = `Create pull request to fix ${outdatedActions.length} outdated action(s) in ${workflowGroup.repo_name}/${workflowGroup.workflow}?`;
-			if (!confirm(confirmMsg)) {
+			const accepted = await showConfirm(
+				'Create Bulk Pull Request',
+				`Fix ${outdatedActions.length} outdated action(s) in ${workflowGroup.repo_name}/${workflowGroup.workflow}?`
+			);
+			if (!accepted) {
 				return;
 			}
 
@@ -433,16 +504,18 @@
 			});
 
 			if (result.success) {
-				alert(
-					`✅ Pull request created successfully!\n\nPR #${result.pr_number}: ${result.pr_title}\n\nYou can view it at: ${result.pr_url}`
-				);
+				showToast('success', 'Bulk PR Created', `PR #${result.pr_number}: ${result.pr_title}`, {
+					link: result.pr_url,
+					linkLabel: 'View PR on GitHub',
+					duration: 8000
+				});
 				await loadActionDetails(currentPage, searchQuery);
 			} else {
-				alert(`❌ Failed to create pull request: ${result.error}`);
+				showToast('error', 'Bulk PR Failed', result.error);
 			}
 		} catch (err) {
 			console.error('Error creating bulk pull request:', err);
-			alert(`❌ Error creating pull request: ${err.message}`);
+			showToast('error', 'Bulk PR Error', err.message);
 		}
 	}
 
@@ -874,6 +947,64 @@
 			{/if}
 		</main>
 	</div>
+
+	<!-- Toast Notifications -->
+	{#if toasts.length > 0}
+		<div class="toast-container" aria-live="polite">
+			{#each toasts as toast (toast.id)}
+				<div
+					class="toast toast-{toast.type} {toast.visible ? 'toast-enter' : ''} {toast.dismissing ? 'toast-exit' : ''}"
+					role="alert"
+				>
+					<div class="toast-icon">
+						{#if toast.type === 'success'}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+						{:else if toast.type === 'error'}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+						{:else if toast.type === 'warning'}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+						{:else}
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+						{/if}
+					</div>
+					<div class="toast-body">
+						<span class="toast-title">{toast.title}</span>
+						{#if toast.message}
+							<span class="toast-message">{toast.message}</span>
+						{/if}
+						{#if toast.link}
+							<a href={toast.link} target="_blank" rel="noopener noreferrer" class="toast-link">
+								{toast.linkLabel}
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+							</a>
+						{/if}
+					</div>
+					<button class="toast-close" onclick={() => dismissToast(toast.id)} aria-label="Dismiss notification">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+					</button>
+					<div class="toast-progress" style="animation-duration: {toast.duration}ms;"></div>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	<!-- Confirmation Modal -->
+	{#if confirmModal.visible}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="confirm-overlay" onkeydown={(e) => e.key === 'Escape' && handleConfirm(false)} tabindex="-1">
+			<div class="confirm-modal">
+				<div class="confirm-icon-wrap">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+				</div>
+				<h3 class="confirm-title">{confirmModal.title}</h3>
+				<p class="confirm-message">{confirmModal.message}</p>
+				<div class="confirm-actions">
+					<button class="btn btn-secondary" onclick={() => handleConfirm(false)}>Cancel</button>
+					<button class="btn btn-primary" onclick={() => handleConfirm(true)}>Confirm</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -1691,6 +1822,236 @@
 		}
 		.search-input:focus {
 			width: 200px;
+		}
+	}
+
+	/* ============================================
+	   TOAST NOTIFICATIONS
+	   ============================================ */
+	.toast-container {
+		position: fixed;
+		top: calc(var(--nav-height) + 12px);
+		right: 1.5rem;
+		z-index: 9999;
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
+		max-width: 420px;
+		width: 100%;
+		pointer-events: none;
+	}
+
+	.toast {
+		position: relative;
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		padding: 0.875rem 1rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+		backdrop-filter: blur(16px);
+		overflow: hidden;
+		pointer-events: auto;
+		opacity: 0;
+		transform: translateX(40px) scale(0.96);
+		transition: all 0.35s var(--ease-premium);
+	}
+
+	.toast.toast-enter {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+
+	.toast.toast-exit {
+		opacity: 0;
+		transform: translateX(40px) scale(0.96);
+	}
+
+	.toast-success { border-left: 3px solid var(--success); }
+	.toast-error   { border-left: 3px solid var(--error); }
+	.toast-warning { border-left: 3px solid var(--warning); }
+	.toast-info    { border-left: 3px solid var(--accent); }
+
+	.toast-icon {
+		flex-shrink: 0;
+		margin-top: 1px;
+	}
+
+	.toast-success .toast-icon { color: var(--success); }
+	.toast-error .toast-icon   { color: var(--error); }
+	.toast-warning .toast-icon { color: var(--warning); }
+	.toast-info .toast-icon    { color: var(--accent); }
+
+	.toast-body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.toast-title {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		line-height: 1.3;
+	}
+
+	.toast-message {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		line-height: 1.4;
+		word-break: break-word;
+	}
+
+	.toast-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		margin-top: 0.25rem;
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--accent);
+		text-decoration: none;
+		transition: opacity 0.15s;
+	}
+
+	.toast-link:hover {
+		opacity: 0.8;
+		text-decoration: underline;
+	}
+
+	.toast-close {
+		flex-shrink: 0;
+		background: none;
+		border: none;
+		color: var(--text-muted);
+		cursor: pointer;
+		padding: 0.2rem;
+		border-radius: 4px;
+		transition: all 0.15s;
+		line-height: 0;
+	}
+
+	.toast-close:hover {
+		color: var(--text-primary);
+		background: var(--border);
+	}
+
+	.toast-progress {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		height: 2px;
+		width: 100%;
+		background: var(--border-focus);
+		animation: toast-progress-shrink linear forwards;
+		transform-origin: left;
+	}
+
+	.toast-success .toast-progress { background: var(--success); opacity: 0.4; }
+	.toast-error .toast-progress   { background: var(--error); opacity: 0.4; }
+	.toast-warning .toast-progress { background: var(--warning); opacity: 0.4; }
+	.toast-info .toast-progress    { background: var(--accent); opacity: 0.4; }
+
+	@keyframes toast-progress-shrink {
+		from { transform: scaleX(1); }
+		to   { transform: scaleX(0); }
+	}
+
+	/* ============================================
+	   CONFIRMATION MODAL
+	   ============================================ */
+	.confirm-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 10000;
+		background: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(6px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		animation: overlay-fade-in 0.2s ease forwards;
+	}
+
+	@keyframes overlay-fade-in {
+		from { opacity: 0; }
+		to   { opacity: 1; }
+	}
+
+	.confirm-modal {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		padding: 2rem;
+		max-width: 420px;
+		width: 100%;
+		text-align: center;
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.1);
+		animation: modal-scale-in 0.25s var(--ease-premium) forwards;
+	}
+
+	@keyframes modal-scale-in {
+		from {
+			opacity: 0;
+			transform: scale(0.92) translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+
+	.confirm-icon-wrap {
+		width: 48px;
+		height: 48px;
+		border-radius: 50%;
+		background: rgba(245, 158, 11, 0.1);
+		border: 1px solid rgba(245, 158, 11, 0.15);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto 1rem;
+		color: var(--warning);
+	}
+
+	.confirm-title {
+		font-size: 1rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		margin-bottom: 0.5rem;
+		letter-spacing: -0.01em;
+	}
+
+	.confirm-message {
+		font-size: 0.8125rem;
+		color: var(--text-secondary);
+		line-height: 1.5;
+		margin-bottom: 1.5rem;
+	}
+
+	.confirm-actions {
+		display: flex;
+		gap: 0.625rem;
+		justify-content: center;
+	}
+
+	.confirm-actions .btn {
+		min-width: 100px;
+	}
+
+	@media (max-width: 480px) {
+		.toast-container {
+			right: 0.75rem;
+			left: 0.75rem;
+			max-width: 100%;
+		}
+
+		.confirm-modal {
+			padding: 1.5rem;
 		}
 	}
 </style>

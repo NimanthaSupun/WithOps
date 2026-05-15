@@ -5006,147 +5006,98 @@
 	<CollaborationLayer {modelId} {currentUser} />
 {/if}
 
-<div class="flex min-h-screen flex-col bg-gray-50">
+<div class="tm-canvas-page">
+	<!-- Header Navigation -->
+	<nav class="tm-header">
+		<div class="tm-header-content">
+			<a href="/" class="tm-nav-brand">
+				<img src="/icons/excellence_17274210.png" alt="WithOps" class="tm-brand-icon" />
+				<span class="tm-brand-name">WithOps</span>
+			</a>
+			<div class="tm-nav-menu">
+				<a href="/dashboard" class="tm-nav-link">Overview</a>
+				<a href="/organizations" class="tm-nav-link">Organizations</a>
+				<a href={`/github/workspace/${orgName}`} class="tm-nav-link">{orgName}</a>
+				<a href={`/github/workspace/${orgName}/threat-modeling`} class="tm-nav-link">Threat Modeling</a>
+				<span class="tm-nav-link active">{modelData?.name || 'Canvas'}</span>
+			</div>
+		</div>
+	</nav>
+
+
 	{#if loading}
 		<!-- Loading State -->
-		<div class="flex flex-1 items-center justify-center">
-			<div class="text-center">
-				<div
-					class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-red-600"
-				></div>
-				<p class="text-gray-600">Loading threat model canvas...</p>
-			</div>
+		<div class="tm-center-state">
+			<img src="/icons/excellence_17274210.png" alt="" class="tm-loader-icon" />
+			<div class="tm-loader-text">LOADING THREAT MODEL CANVAS...</div>
 		</div>
 	{:else if error}
 		<!-- Error State -->
-		<div class="flex flex-1 items-center justify-center">
-			<div class="text-center">
-				<div
-					class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100"
-				>
-					<svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</div>
-				<h3 class="mb-2 text-lg font-medium text-gray-900">Failed to Load Threat Model</h3>
-				<p class="mb-6 text-sm text-red-600">{error}</p>
-				<div class="space-x-3">
-					<button
-						on:click={loadThreatModel}
-						class="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-					>
-						Retry
-					</button>
-					<button
-						on:click={() => goto(`/github/workspace/${orgName}/threat-modeling`)}
-						class="rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
-					>
-						Go Back
-					</button>
-				</div>
+		<div class="tm-center-state">
+			<svg class="tm-error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+			</svg>
+			<h3 class="tm-error-title">Failed to Load Threat Model</h3>
+			<p class="tm-error-text">{error}</p>
+			<div class="tm-error-actions">
+				<button on:click={loadThreatModel} class="tm-btn tm-btn-primary">Retry Connection</button>
+				<button on:click={() => goto(`/github/workspace/${orgName}/threat-modeling`)} class="tm-btn tm-btn-secondary">Go Back</button>
 			</div>
 		</div>
 	{:else}
-		<!-- Header Toolbar -->
-		<header class="border-b border-gray-200 bg-white px-6 py-4">
-			<div class="flex items-center justify-between">
-				<div class="flex items-center space-x-4">
-					<!-- Breadcrumbs -->
-					<nav class="flex items-center space-x-2 text-sm text-gray-500">
-						<a href="/" class="hover:text-gray-700">Dashboard</a>
-						<span>/</span>
-						<a href={`/github/workspace/${orgName}`} class="hover:text-gray-700">{orgName}</a>
-						<span>/</span>
-						<a href={`/github/workspace/${orgName}/threat-modeling`} class="hover:text-gray-700"
-							>Threat Modeling</a
-						>
-						<span>/</span>
-						<span class="font-medium text-gray-900">{modelData?.name || 'Canvas Editor'}</span>
-					</nav>
-				</div>
+		<!-- Action Toolbar -->
+		<div class="tm-action-bar">
+			<div class="tm-action-left">
+				<!-- Share Collaboration -->
+				{#if collaborationInitialized && currentUser}
+					<ShareCollaboration {modelId} {orgName} {currentUser} />
+				{/if}
 
-				<div class="flex items-center space-x-3">
-					<!-- Share Collaboration -->
-					{#if collaborationInitialized && currentUser}
-						<ShareCollaboration {modelId} {orgName} {currentUser} />
+				<!-- Save Status -->
+				<div class="tm-save-status">
+					{#if saving}
+						<span class="tm-save-spinner"></span>
+						<span>Saving...</span>
+					{:else if lastSaved}
+						<span class="tm-save-dot"></span>
+						<span>Saved {lastSaved.toLocaleTimeString()}</span>
 					{:else}
-						<!-- Debug: Show collaboration status -->
-						<div class="rounded bg-yellow-100 px-2 py-1 text-xs">
-							Debug: collaborationInitialized={collaborationInitialized}, currentUser={currentUser
-								? 'exists'
-								: 'null'}
-						</div>
+						<span class="tm-save-muted">Auto-save enabled</span>
 					{/if}
-
-					<!-- Save Status -->
-					<div class="flex items-center space-x-2 text-sm">
-						{#if saving}
-							<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-red-600"></div>
-							<span class="text-gray-600">Saving...</span>
-						{:else if lastSaved}
-							<span class="text-green-600">✓ Saved {lastSaved.toLocaleTimeString()}</span>
-						{:else}
-							<span class="text-gray-500">Auto-save enabled</span>
-						{/if}
-					</div>
-
-					<!-- Toolbar Actions -->
-					<button
-						on:click={() => (showAIAnalysisPanel = !showAIAnalysisPanel)}
-						class="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:from-purple-700 hover:to-indigo-700 hover:shadow-md {showAIAnalysisPanel
-							? 'ring-2 ring-purple-300'
-							: ''}"
-						title="{showAIAnalysisPanel ? 'Hide' : 'Show'} AI analysis panel"
-					>
-						<div class="flex items-center space-x-2">
-							<span>🧠</span>
-							<span>{showAIAnalysisPanel ? 'Hide AI Panel' : 'AI Analyze Architecture'}</span>
-							{#if aiAnalysisResult || analysisHistory.length > 0}
-								<span
-									class="h-2 w-2 animate-pulse rounded-full bg-green-400"
-									title="Has saved analysis"
-								></span>
-							{/if}
-						</div>
-					</button>
-
-					<button
-						on:click={exportToJSON}
-						class="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
-						title="Export threat model as JSON"
-					>
-						💾 Export JSON
-					</button>
-
-					<button
-						on:click={() => document.getElementById('import-json-input').click()}
-						class="rounded bg-yellow-600 px-3 py-1 text-sm text-white hover:bg-yellow-700"
-						title="Import threat model from JSON"
-					>
-						📂 Import JSON
-					</button>
-
-					<button
-						on:click={() => exportDiagram('svg')}
-						class="rounded bg-purple-600 px-3 py-1 text-sm text-white hover:bg-purple-700"
-					>
-						📄 SVG
-					</button>
-
-					<button
-						on:click={() => goto(`/github/workspace/${orgName}/threat-modeling`)}
-						class="rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
-					>
-						✕ Close
-					</button>
 				</div>
 			</div>
-		</header>
+
+			<div class="tm-action-right">
+				<button
+					on:click={() => (showAIAnalysisPanel = !showAIAnalysisPanel)}
+					class="tm-btn tm-btn-ai {showAIAnalysisPanel ? 'active' : ''}"
+					title="{showAIAnalysisPanel ? 'Hide' : 'Show'} AI analysis panel"
+				>
+					<span>🧠</span>
+					<span>{showAIAnalysisPanel ? 'Hide AI' : 'AI Analyze'}</span>
+					{#if aiAnalysisResult || analysisHistory.length > 0}
+						<span class="tm-ai-dot"></span>
+					{/if}
+				</button>
+
+				<button on:click={exportToJSON} class="tm-btn tm-btn-secondary" title="Export threat model as JSON">
+					💾 Export
+				</button>
+
+				<button on:click={() => document.getElementById('import-json-input').click()} class="tm-btn tm-btn-secondary" title="Import threat model from JSON">
+					📂 Import
+				</button>
+
+				<button on:click={() => exportDiagram('svg')} class="tm-btn tm-btn-secondary">
+					📄 SVG
+				</button>
+
+				<button on:click={() => goto(`/github/workspace/${orgName}/threat-modeling`)} class="tm-btn tm-btn-secondary">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+					Back
+				</button>
+			</div>
+		</div>
 
 		<!-- Hidden file input for JSON import -->
 		<input
@@ -5158,7 +5109,7 @@
 		/>
 
 		<!-- Main Canvas Area with Fixed Height -->
-		<div class="flex flex-1 overflow-hidden" style="height: calc(100vh - 80px);">
+				<div class="flex flex-1 overflow-hidden" style="height: calc(100vh - 112px);">
 			<!-- Left Tools Panel - Conditional Display -->
 
 			{#if showDrawingToolsPanel}
@@ -5516,7 +5467,7 @@
 			{#if showAIAnalysisPanel}
 				<div
 					class="relative flex flex-col overflow-hidden border-l border-slate-200 bg-white"
-					style="width: {aiPanelWidth}px; height: calc(100vh - 80px);"
+					style="width: {aiPanelWidth}px; height: calc(100vh - 112px);"
 				>
 					<!-- Resize Handle -->
 					<button
@@ -6417,7 +6368,7 @@
 												type="text"
 												value={$editingThreat.title}
 												required
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+												class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 											/>
 										</div>
 
@@ -6429,7 +6380,7 @@
 											<select
 												id="edit-threat-type"
 												name="type"
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+												class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 											>
 												{#each ['Spoofing', 'Tampering', 'Repudiation', 'Information Disclosure', 'Denial of Service', 'Elevation of Privilege'] as threatType}
 													<option value={threatType} selected={$editingThreat.type === threatType}
@@ -6595,7 +6546,7 @@
 												min="1"
 												max="10"
 												value={$editingThreat.score}
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+												class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 											/>
 										</div>
 									</div>
@@ -6611,7 +6562,7 @@
 												id="edit-threat-description"
 												name="description"
 												rows="4"
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+												class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 												placeholder="Describe the threat...">{$editingThreat.description}</textarea
 											>
 										</div>
@@ -6625,7 +6576,7 @@
 												id="edit-threat-mitigation"
 												name="mitigation"
 												rows="4"
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+												class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 												placeholder="How to mitigate this threat..."
 												>{$editingThreat.mitigation}</textarea
 											>
@@ -6984,7 +6935,7 @@
 								name="title"
 								type="text"
 								value={$editingThreat.title}
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 								required
 							/>
 						</div>
@@ -6996,7 +6947,7 @@
 							<select
 								id="edit-threat-type"
 								name="type"
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							>
 								{#each Object.keys(THREAT_METHODOLOGIES[currentMethodology].threats) as threatType}
 									<option value={threatType} selected={$editingThreat.type === threatType}
@@ -7020,7 +6971,7 @@
 								<select
 									id="edit-threat-likelihood"
 									name="likelihood"
-									class="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
+									class="w-full rounded border border-gray-300 px-2 py-1 text-sm text-slate-900 focus:ring-1 focus:ring-red-500 focus:outline-none"
 								>
 									{#each [1, 2, 3, 4, 5] as level}
 										<option value={level} selected={$editingThreat.likelihood == level}
@@ -7037,7 +6988,7 @@
 								<select
 									id="edit-threat-impact"
 									name="impact"
-									class="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
+									class="w-full rounded border border-gray-300 px-2 py-1 text-sm text-slate-900 focus:ring-1 focus:ring-red-500 focus:outline-none"
 								>
 									{#each [1, 2, 3, 4, 5] as level}
 										<option value={level} selected={$editingThreat.impact == level}>{level}</option>
@@ -7069,7 +7020,7 @@
 							<select
 								id="edit-threat-status"
 								name="status"
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							>
 								<option value="Open" selected={$editingThreat.status === 'Open'}>Open</option>
 								<option value="In Progress" selected={$editingThreat.status === 'In Progress'}
@@ -7094,7 +7045,7 @@
 							<select
 								id="edit-threat-severity"
 								name="severity"
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+								class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							>
 								<option value="Low" selected={$editingThreat.severity === 'Low'}>Low</option>
 								<option value="Medium" selected={$editingThreat.severity === 'Medium'}
@@ -7117,7 +7068,7 @@
 							id="edit-threat-description"
 							name="description"
 							rows="4"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							placeholder="Describe the threat...">{$editingThreat.description}</textarea
 						>
 					</div>
@@ -7130,7 +7081,7 @@
 							id="edit-threat-mitigation"
 							name="mitigation"
 							rows="4"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							placeholder="How to mitigate this threat...">{$editingThreat.mitigation}</textarea
 						>
 					</div>
@@ -7226,7 +7177,7 @@
 							name="title"
 							type="text"
 							required
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							placeholder="Enter threat title..."
 						/>
 					</div>
@@ -7239,7 +7190,7 @@
 							id="threat-type"
 							name="type"
 							required
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 						>
 							<option value="" disabled selected>Select threat type...</option>
 							<option value="Spoofing">Spoofing</option>
@@ -7258,7 +7209,7 @@
 						<select
 							id="threat-severity"
 							name="severity"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 						>
 							<option value="Low">Low</option>
 							<option value="Medium" selected>Medium</option>
@@ -7274,7 +7225,7 @@
 						<select
 							id="threat-status"
 							name="status"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 						>
 							<option value="Open" selected>Open</option>
 							<option value="In Progress">In Progress</option>
@@ -7291,7 +7242,7 @@
 							id="threat-description"
 							name="description"
 							rows="3"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							placeholder="Describe the threat scenario..."
 						></textarea>
 					</div>
@@ -7304,7 +7255,7 @@
 							id="threat-mitigation"
 							name="mitigation"
 							rows="2"
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
+							class="w-full rounded-md border border-gray-300 px-3 py-2 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 							placeholder="How to mitigate this threat..."
 						></textarea>
 					</div>
@@ -7470,6 +7421,275 @@
 {/if}
 
 <style>
+	/* ============================================
+	   MATTE ENGINEERING DESIGN SYSTEM (LIGHT ONLY)
+	   ============================================ */
+	.tm-canvas-page {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+		--ease-premium: cubic-bezier(0.2, 0, 0, 1);
+		--tm-nav-height: 64px;
+		--tm-bar-height: 40px;
+		--tm-action-height: 48px;
+		--bg-app: #ffffff;
+		--bg-surface: #f8fafc;
+		--bg-surface-alt: #f1f5f9;
+		--border: rgba(0, 0, 0, 0.06);
+		--border-focus: rgba(0, 173, 239, 0.2);
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--accent: #0082b4;
+		--accent-soft: rgba(0, 130, 180, 0.08);
+		--success: #059669;
+		--error: #dc2626;
+		--warning: #d97706;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		background: var(--bg-app);
+		font-family: var(--font-sans);
+		position: relative;
+	}
+
+	/* ---- Header Navigation ---- */
+	.tm-header {
+		height: var(--tm-nav-height);
+		background: var(--bg-app);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		flex-shrink: 0;
+	}
+	.tm-header-content {
+		max-width: 1440px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.tm-nav-brand {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		text-decoration: none;
+		color: var(--text-primary);
+	}
+	.tm-brand-icon { width: 28px; height: 28px; }
+	.tm-brand-name {
+		font-weight: 700;
+		font-size: 1rem;
+		letter-spacing: -0.02em;
+		color: var(--text-primary);
+	}
+	.tm-nav-menu {
+		display: flex;
+		gap: 1.5rem;
+		margin-left: 3rem;
+	}
+	.tm-nav-link {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: color 0.15s;
+		padding: 0.5rem 0;
+		position: relative;
+	}
+	.tm-nav-link:hover, .tm-nav-link.active { color: var(--text-primary); }
+	.tm-nav-link.active::after {
+		content: '';
+		position: absolute;
+		bottom: -1px;
+		left: 0; right: 0;
+		height: 2px;
+		background: var(--accent);
+	}
+
+	/* ---- Technical Breadcrumb Bar ---- */
+	
+	@keyframes tm-blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.3; }
+	}
+
+	/* ---- Loading / Center State ---- */
+	.tm-center-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 6rem 2rem;
+		text-align: center;
+		gap: 1rem;
+		flex: 1;
+	}
+	.tm-loader-icon {
+		width: 40px; height: 40px;
+		animation: tm-pulse 2s ease-in-out infinite;
+	}
+	@keyframes tm-pulse {
+		0%, 100% { opacity: 0.5; transform: scale(0.95); }
+		50% { opacity: 1; transform: scale(1); }
+	}
+	.tm-loader-text {
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		letter-spacing: 0.1em;
+	}
+
+	/* ---- Error State ---- */
+	.tm-error-icon {
+		width: 40px; height: 40px;
+		color: var(--error);
+		opacity: 0.7;
+	}
+	.tm-error-title {
+		font-size: 1.125rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		letter-spacing: -0.02em;
+	}
+	.tm-error-text {
+		color: var(--error);
+		font-size: 0.8125rem;
+		font-weight: 500;
+	}
+	.tm-error-actions {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 0.5rem;
+	}
+
+	/* ---- Action Toolbar ---- */
+	.tm-action-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.5rem 1.25rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg-surface);
+		height: var(--tm-action-height);
+		flex-shrink: 0;
+		gap: 1rem;
+	}
+	.tm-action-left, .tm-action-right {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+	}
+
+	/* ---- Save Status ---- */
+	.tm-save-status {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-muted);
+	}
+	.tm-save-spinner {
+		width: 12px; height: 12px;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent);
+		border-radius: 50%;
+		animation: tm-spin 0.8s linear infinite;
+	}
+	@keyframes tm-spin { to { transform: rotate(360deg); } }
+	.tm-save-dot {
+		width: 6px; height: 6px;
+		background: var(--success);
+		border-radius: 50%;
+	}
+	.tm-save-muted { color: var(--text-muted); }
+
+	/* ---- Buttons ---- */
+	.tm-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		padding: 0.375rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.15s;
+		font-family: var(--font-sans);
+		border: 1px solid var(--border);
+		background: var(--bg-surface-alt);
+		color: var(--text-secondary);
+		white-space: nowrap;
+	}
+	.tm-btn:hover {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+		transform: translateY(-1px);
+	}
+	.tm-btn-primary {
+		background: var(--text-primary);
+		color: var(--bg-app);
+		border-color: var(--text-primary);
+	}
+	.tm-btn-primary:hover { opacity: 0.9; }
+	.tm-btn-secondary {
+		background: var(--bg-surface-alt);
+		border-color: var(--border);
+		color: var(--text-secondary);
+	}
+	.tm-btn-ai {
+		background: linear-gradient(135deg, #6366f1, #8b5cf6);
+		color: #ffffff;
+		border-color: transparent;
+		box-shadow: 0 1px 3px rgba(99, 102, 241, 0.2);
+	}
+	.tm-btn-ai:hover {
+		background: linear-gradient(135deg, #4f46e5, #7c3aed);
+		color: #ffffff;
+		border-color: transparent;
+		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+	}
+	.tm-btn-ai.active {
+		box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3), 0 1px 3px rgba(99, 102, 241, 0.2);
+	}
+	.tm-ai-dot {
+		width: 6px; height: 6px;
+		background: #4ade80;
+		border-radius: 50%;
+		animation: tm-pulse 2s ease-in-out infinite;
+	}
+
+	/* ---- Responsive ---- */
+	@media (max-width: 768px) {
+		.tm-nav-menu { display: none; }
+		.tm-action-bar { flex-wrap: wrap; height: auto; padding: 0.5rem; }
+	}
+
+	/* ---- Fix form input text visibility in dialogs ---- */
+	:global(.fixed input[type="text"]),
+	:global(.fixed input[type="number"]),
+	:global(.fixed input:not([type])),
+	:global(.fixed textarea),
+	:global(.fixed select) {
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+	}
+	:global(.fixed input::placeholder),
+	:global(.fixed textarea::placeholder) {
+		color: #94a3b8 !important;
+	}
+	:global(.fixed option) {
+		color: #0f172a !important;
+		background-color: #ffffff !important;
+	}
 	:global(.element) {
 		transition: all 0.2s ease;
 	}

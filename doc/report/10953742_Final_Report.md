@@ -51,6 +51,7 @@
   - 7.3 Pipeline Prediction Service
   - 7.4 AI and RAG Integration
   - 7.5 Key Implementation Challenges
+  - 7.6 Observability and Monitoring
 - Chapter 08 — End-Project Report
   - 8.1 Project Summary
   - 8.2 Objectives Evaluation
@@ -497,6 +498,29 @@ The RAG pipeline follows three stages: (1) workspace analysis data is chunked an
 **Challenge 5: GitHub API Rate Limiting.** GitHub enforces 5,000 authenticated requests per hour. A multi-layered caching strategy was implemented using Redis with 24-hour TTL, intelligent request batching, and exponential backoff retry logic via the tenacity library.
 
 **Challenge 6: Multi-Provider AI Orchestration.** Integrating three AI providers (Anthropic Claude, Groq/Llama 3, and Ollama) required a unified provider abstraction layer. Each provider exposed different API interfaces, authentication mechanisms, and response formats. A strategy pattern was implemented in the AI Service, where a provider factory selected the appropriate client based on the operation type — Claude for vision analysis, Groq for fast text inference, and Ollama for embedding generation. This abstraction enabled transparent provider switching and fallback behaviour without modifying calling code throughout the platform.
+
+### 7.6 Observability and Monitoring
+
+The WithOps platform implements a comprehensive observability stack to ensure the reliability and performance of its distributed microservices architecture. This is achieved through the integration of Prometheus for metric collection and Grafana for real-time visualization and alerting.
+
+**Metric Collection with Prometheus.** Every microservice in the platform exposes a `/metrics` endpoint instrumented with Prometheus client libraries. The Prometheus server is configured to perform service discovery via Docker DNS, automatically scraping metrics from all 12+ backend components, including microservices, databases (PostgreSQL/Supabase), and caches (Redis). Figure 5 illustrates the Prometheus targets dashboard, confirming that all system components are "UP" and actively being monitored. This centralized health check capability was critical for debugging inter-service connectivity during development.
+
+![Figure 5 — Prometheus Targets and Service Health](./screenshots/fig5_prometheus_targets.png)
+*Figure 5: The Prometheus status dashboard showing all microservices, databases, and gateway components in a healthy "UP" state.*
+
+**Visualization with Grafana.** For real-time monitoring and performance analysis, the platform uses Grafana dashboards connected to the Prometheus data source. Each microservice has a dedicated monitoring dashboard (Figure 6) that visualizes critical signals:
+- **Traffic:** HTTP request rates (requests/sec) broken down by endpoint and status code.
+- **Latency:** Request duration tracking, specifically focusing on the 95th percentile (P95) to identify slow responses that impact user experience.
+- **Saturation:** Real-time memory and CPU usage per container, enabling early detection of resource leaks.
+- **Uptime:** Continuous monitoring of service availability.
+
+![Figure 6 — Service Performance Monitoring Dashboard](./screenshots/fig6_grafana_service_dashboard.png)
+*Figure 6: A Grafana dashboard for the GitHub Service visualizing request rates, P95 latency (under 10ms), and memory usage (115 MiB).*
+
+The platform maintains a centralized directory of dashboards (Figure 7), providing an "at-a-glance" overview of the entire organization's technical health. This unified observability layer allows for rapid incident response and performance tuning, ensuring that the platform remains responsive even under heavy concurrent analysis loads.
+
+![Figure 7 — Centralized Monitoring Dashboard Directory](./screenshots/fig7_grafana_dashboard_list.png)
+*Figure 7: The Grafana dashboard index showing dedicated monitoring configurations for AI, Auth, Collaboration, and Intelligence services.*
 
 ---
 
