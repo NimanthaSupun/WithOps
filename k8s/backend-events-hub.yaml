@@ -53,22 +53,43 @@ spec:
               value: "https://app.withops.com,https://withops.com"
             # Supabase Configuration
             - name: SUPABASE_URL
-              value: "https://fcmcsbmsntmpeyjltqbi.supabase.co"
+              value: "https://YOUR-PROJECT-ID.supabase.co"
             - name: SUPABASE_ANON_KEY
-              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTMyNTksImV4cCI6MjA2NzI4OTI1OX0.hYdwkcoiMuKPY4GbGRHnKdTB1FpJzcIYcgbZ6BqW7nA"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPABASE_ANON_KEY
             - name: SUPABASE_SERVICE_ROLE_KEY
-              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9zZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTcxMzI1OSwiZXhwIjoyMDY3Mjg5MjU5fQ.GB8WzUj8yf-R1xUUVXmCd5mZwK_BUAAvlB1IYwvLzhA"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
             - name: SUPABASE_DATABASE_URL
-              value: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPABASE_DATABASE_URL
             - name: DATABASE_ENCRYPTION_KEY
-              value: "6VFNM3kaPxOVcX6QyZ2m6QFH5CrBLu1-qfaTOJcv2B8"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_ENCRYPTION_KEY
             # GitHub App Configuration - PRODUCTION
             - name: GITHUB_APP_ID
-              value: "2710627"
+              valueFrom:
+                secretKeyRef:
+                  name: github-service-secrets
+                  key: GITHUB_APP_ID
             - name: GITHUB_APP_CLIENT_ID
-              value: "Iv23liO0msKfq5HsEJrx"
+              valueFrom:
+                secretKeyRef:
+                  name: github-service-secrets
+                  key: GITHUB_APP_CLIENT_ID
             - name: GITHUB_APP_CLIENT_SECRET
-              value: "7a872666551f4cac553823a4560d5afd82066f83"
+              valueFrom:
+                secretKeyRef:
+                  name: github-service-secrets
+                  key: GITHUB_APP_CLIENT_SECRET
             - name: GITHUB_APP_NAME
               value: "WithOps-DevSecOps-Platform"
             - name: GITHUB_PRIVATE_KEY_PATH
@@ -77,9 +98,15 @@ spec:
               value: "withops-devsecops-platform-production.private-key.pem"
             # GitHub OAuth Configuration
             - name: GITHUB_OAUTH_CLIENT_ID
-              value: "Ov23liwyM2h7DYnNUw9g"
+              valueFrom:
+                secretKeyRef:
+                  name: github-service-secrets
+                  key: GITHUB_OAUTH_CLIENT_ID
             - name: GITHUB_OAUTH_CLIENT_SECRET
-              value: "014e0b6f4062df35e8c6a82226aa3092e1df1082"
+              valueFrom:
+                secretKeyRef:
+                  name: github-service-secrets
+                  key: GITHUB_OAUTH_CLIENT_SECRET
           resources:
             requests:
               memory: "512Mi"

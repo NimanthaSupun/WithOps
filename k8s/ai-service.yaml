@@ -33,9 +33,12 @@ spec:
               value: "redis://redis:6379"
             - name: ENABLE_METRICS
               value: "true"
-            # Claude API credentials should be set in your deployment
+            # Claude API credentials - Use Kubernetes Secret
             - name: ANTHROPIC_API_KEY
-              value: "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"
+              valueFrom:
+                secretKeyRef:
+                  name: ai-service-secrets
+                  key: ANTHROPIC_API_KEY
           resources:
             requests:
               memory: "1Gi"

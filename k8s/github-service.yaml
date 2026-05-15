@@ -5,34 +5,34 @@ metadata:
   namespace: withops
 type: Opaque
 stringData:
-  # Supabase
-  SUPABASE_URL: "https://fcmcsbmsntmpeyjltqbi.supabase.co"
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MTMyNTksImV4cCI6MjA2NzI4OTI1OX0.hYdwkcoiMuKPY4GbGRHnKdTB1FpJzcIYcgbZ6BqW7nA"
-  SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbWNzYm1zbnRtcGV5amx0cWJpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTcxMzI1OSwiZXhwIjoyMDY3Mjg5MjU5fQ.GB8WzUj8yf-R1xUUVXmCd5mZwK_BUAAvlB1IYwvLzhA"
-  SUPABASE_DATABASE_URL: "postgresql://postgres.fcmcsbmsntmpeyjltqbi:5m19NTF6y0x1fJgr@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
-  
-  # Production GitHub OAuth App (for organization discovery)
-  GITHUB_OAUTH_CLIENT_ID: "Ov23liHD06jkBjt320fW"
-  GITHUB_OAUTH_CLIENT_SECRET: "587b480981e88103bbef9cdf387a53169258e974"
-  
-  # Production GitHub App
-  GITHUB_APP_ID: "2710627"
-  GITHUB_APP_CLIENT_ID: "Iv23liO0msKfq5HsEJrx"
-  GITHUB_APP_CLIENT_SECRET: "7a872666551f4cac553823a4560d5afd82066f83"
+  # Supabase - Replace with actual values from your Supabase project
+  SUPABASE_URL: "https://YOUR-PROJECT-ID.supabase.co"
+  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY_HERE"
+  SUPABASE_SERVICE_ROLE_KEY: "YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE"
+  SUPABASE_DATABASE_URL: "postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+
+  # Production GitHub OAuth App - Replace with your credentials
+  GITHUB_OAUTH_CLIENT_ID: "YOUR_GITHUB_OAUTH_CLIENT_ID"
+  GITHUB_OAUTH_CLIENT_SECRET: "YOUR_GITHUB_OAUTH_CLIENT_SECRET"
+
+  # Production GitHub App - Replace with your credentials
+  GITHUB_APP_ID: "YOUR_GITHUB_APP_ID"
+  GITHUB_APP_CLIENT_ID: "YOUR_GITHUB_APP_CLIENT_ID"
+  GITHUB_APP_CLIENT_SECRET: "YOUR_GITHUB_APP_CLIENT_SECRET"
   GITHUB_APP_NAME: "WithOps-DevSecOps-Platform"
-  GITHUB_WEBHOOK_SECRET: "your-production-webhook-secret-here"
-  
-  # GitHub Personal Access Token
-  GITHUB_TOKEN: "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"
-  
-  # Security
-  DATABASE_ENCRYPTION_KEY: "6VFNM3kaPxOVcX6QyZ2m6QFH5CrBLu1-qfaTOJcv2B8"
-  JWT_SECRET_KEY: "W1th0ps_D3vS3c0ps_Pl4tf0rm_JWT_S3cr3t_K3y_2024_Sup3r_S3cur3_R4nd0m_123456789_ABC"
-  
-  # Auth0
-  AUTH0_DOMAIN: "dev-sabxychpf6paj41u.us.auth0.com"
-  AUTH0_CLIENT_ID: "KDsPl6bF0ngW5Y2lyk7EqaE0t3fAPDR7"
-  AUTH0_CLIENT_SECRET: "your-auth0-client-secret"
+  GITHUB_WEBHOOK_SECRET: "YOUR_GITHUB_WEBHOOK_SECRET"
+
+  # GitHub Personal Access Token - Replace with your token
+  GITHUB_TOKEN: "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+
+  # Security Keys - Generate new secure keys
+  DATABASE_ENCRYPTION_KEY: "YOUR_DATABASE_ENCRYPTION_KEY_BASE64"
+  JWT_SECRET_KEY: "YOUR_JWT_SECRET_KEY_MIN_32_CHARS"
+
+  # Auth0 - Replace with your Auth0 credentials
+  AUTH0_DOMAIN: "YOUR_AUTH0_DOMAIN.auth0.com"
+  AUTH0_CLIENT_ID: "YOUR_AUTH0_CLIENT_ID"
+  AUTH0_CLIENT_SECRET: "YOUR_AUTH0_CLIENT_SECRET"
   AUTH0_API_AUDIENCE: "https://api.withops.com"
 ---
 apiVersion: apps/v1

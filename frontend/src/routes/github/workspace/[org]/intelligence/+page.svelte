@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { isDarkMode } from '$lib/stores';
 	import ChatModal from '$lib/components/ChatModal.svelte';
@@ -21,14 +22,17 @@
 
 	// Helper function to get auth token (matches github.js logic)
 	function getAuthToken() {
+		if (!browser) return null;
 		return localStorage.getItem('auth0_token') || localStorage.getItem('auth_token');
 	}
 
 	// Debug logging
-	console.log('[INIT] Intelligence Page Initialized');
-	console.log('[PARAM] Org param:', org);
-	console.log('[CONFIG] API Base URL:', API_BASE_URL);
-	console.log('[AUTH] Has auth token:', !!getAuthToken());
+	if (browser) {
+		console.log('[INIT] Intelligence Page Initialized');
+		console.log('[PARAM] Org param:', org);
+		console.log('[CONFIG] API Base URL:', API_BASE_URL);
+		console.log('[AUTH] Has auth token:', !!getAuthToken());
+	}
 
 	let loading = true;
 	let error = null;
@@ -47,12 +51,9 @@
 	let selectedRepository = null;
 	let expandedFindings = new Set();
 
-	// Load existing analyses on page mount
-	onMount(async () => {
-		await fetchAnalysis();
-	});
 
-	// DSOMM Dimensions mapping
+
+	// DSOMM Dimensions mapping (kept for backward compatibility with calculateDimensionLevel / getOverallScore)
 	const dsommDimensions = [
 		{
 			id: 'build_deployment',
@@ -94,6 +95,255 @@
 		3: { label: 'Mature', color: '#86EFAC', emoji: '', bgDark: '#14532D' },
 		4: { label: 'Optimized', color: '#22C55E', emoji: '', bgDark: '#052E16' }
 	};
+
+	// ──────────────────────────────────────────────────────────
+	// COMPREHENSIVE DSOMM MODEL (based on OWASP DSOMM v4)
+	// Hierarchy: Dimension → Sub-dimension → Activity (per level)
+	// Each activity has a `detect` function that evaluates the
+	// user's `detected_practices` to determine if it is met.
+	// ──────────────────────────────────────────────────────────
+	const dsommLevelLabels = {
+		1: 'Level 1 — Basic understanding of security practices',
+		2: 'Level 2 — Adoption of basic security practices',
+		3: 'Level 3 — High adoption of security practices',
+		4: 'Level 4 — Very high adoption of security practices'
+	};
+
+	const dsommFullModel = [
+		{
+			id: 'build_deployment',
+			name: 'Build and Deployment',
+			icon: '🚀',
+			description: 'Secure build pipelines, deployment automation, and patch management',
+			subDimensions: [
+				{
+					id: 'build',
+					name: 'Build',
+					activities: [
+						{ level: 1, title: 'Defined build process', description: 'A consistent, repeatable build process is defined and used across projects.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 2, title: 'Building and testing of artifacts in virtual environments', description: 'Builds run in isolated, reproducible virtual environments (containers, VMs).', detect: (p) => (p?.container_scanning_tools?.length || 0) > 0, tags: ['container'] },
+						{ level: 2, title: 'Pinning of artifacts', description: 'Dependencies and base images are pinned to specific, verified versions.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['inventory', 'sca'] },
+						{ level: 2, title: 'SBOM of components', description: 'A Software Bill of Materials is generated for every build.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['inventory', 'scanning', 'sca'] },
+						{ level: 3, title: 'Signing of code', description: 'Source code commits are cryptographically signed.', detect: (p) => !!p?.signed_commits_required, tags: [] },
+						{ level: 4, title: 'Signing of artifacts', description: 'Build artifacts are cryptographically signed and verified before deployment.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'deployment',
+					name: 'Deployment',
+					activities: [
+						{ level: 1, title: 'Automated deployment process', description: 'Deployments are automated through CI/CD pipelines.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 1, title: 'Defined deployment process', description: 'A standard deployment workflow is documented and followed.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 2, title: 'Environment-dependent configuration parameters (secrets)', description: 'Secrets and configurations are managed separately per environment.', detect: (p) => (p?.secret_scanning_tools?.length || 0) > 0, tags: ['secret'] },
+						{ level: 2, title: 'Inventory of production artifacts', description: 'A clear inventory of all production-deployed artifacts exists.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['inventory'] },
+						{ level: 3, title: 'Handover of confidential parameters', description: 'Secure mechanisms are used for secret handover (e.g., vault-based injection).', detect: (p) => (p?.secret_scanning_tools?.length || 0) > 0, tags: ['secret'] },
+						{ level: 3, title: 'Rolling update on deployment', description: 'Zero-downtime deployments via rolling updates or canary releases.', detect: () => false, tags: [] },
+						{ level: 4, title: 'Blue/Green Deployment', description: 'Blue/green or advanced deployment strategies are used.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'patch_management',
+					name: 'Patch Management',
+					activities: [
+						{ level: 1, title: 'Usage of a maximum lifetime for images', description: 'Container images have a defined maximum age before mandatory rebuild.', detect: (p) => (p?.container_scanning_tools?.length || 0) > 0, tags: ['container'] },
+						{ level: 2, title: 'Automated merge of automated PRs', description: 'Dependency update PRs (e.g., Dependabot, Renovate) are auto-merged when safe.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['patching'] },
+						{ level: 3, title: 'Automated PRs for patches', description: 'Automated pull requests are raised for known vulnerability patches.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['patching'] },
+						{ level: 4, title: 'Usage of a patching cluster for components', description: 'Dedicated infrastructure for automated patching and testing.', detect: () => false, tags: [] }
+					]
+				}
+			]
+		},
+		{
+			id: 'culture_organization',
+			name: 'Culture and Organization',
+			icon: '👥',
+			description: 'Security culture, education, and organizational processes',
+			subDimensions: [
+				{
+					id: 'design',
+					name: 'Design',
+					activities: [
+						{ level: 1, title: 'Threat modeling of technical assets', description: 'Technical assets are assessed through threat modeling exercises.', detect: () => false, tags: [] },
+						{ level: 2, title: 'Creation of threat models for new features', description: 'New features go through threat modeling before development.', detect: () => false, tags: [] },
+						{ level: 3, title: 'Creation of advanced threat models', description: 'Advanced threat models (STRIDE, attack trees) are maintained and regularly updated.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'education_guidance',
+					name: 'Education and Guidance',
+					activities: [
+						{ level: 1, title: 'Security awareness training for all team members', description: 'All team members receive baseline security awareness training.', detect: () => false, tags: [] },
+						{ level: 2, title: 'Security champions program', description: 'Dedicated security champions are appointed in each development team.', detect: (p) => !!p?.has_codeowners, tags: [] },
+						{ level: 3, title: 'Secure coding guidelines', description: 'Documented and enforced secure coding standards exist.', detect: (p) => !!p?.has_precommit_hooks, tags: [] },
+						{ level: 4, title: 'Continuous security education', description: 'Ongoing, measurable security training programs with tracked metrics.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'process',
+					name: 'Process',
+					activities: [
+						{ level: 1, title: 'Defined process for handling findings', description: 'A clear process exists for triaging and addressing security findings.', detect: (p) => !!p?.branch_protection_enabled, tags: [] },
+						{ level: 2, title: 'Peer review of code changes', description: 'All code changes go through peer review before merging.', detect: (p) => (p?.required_reviews || 0) > 0, tags: [] },
+						{ level: 2, title: 'Security review of PRs', description: 'Pull requests include security-focused reviews.', detect: (p) => !!p?.has_pr_workflows, tags: [] },
+						{ level: 3, title: 'Conduction of security audits', description: 'Regular security audits are performed on codebases and infrastructure.', detect: () => false, tags: [] },
+						{ level: 4, title: 'Continuous improvement program', description: 'Security posture is continuously measured and improved through a formal program.', detect: () => false, tags: [] }
+					]
+				}
+			]
+		},
+		{
+			id: 'information_gathering',
+			name: 'Information Gathering',
+			icon: '📊',
+			description: 'Logging, monitoring, and vulnerability intelligence',
+			subDimensions: [
+				{
+					id: 'logging',
+					name: 'Logging',
+					activities: [
+						{ level: 1, title: 'Centralized logging of security events', description: 'Security-relevant events are logged to a centralized system.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 2, title: 'Structured logging with context', description: 'Logs include structured data with security context (user, action, resource).', detect: () => false, tags: [] },
+						{ level: 3, title: 'Tamper-proof logging', description: 'Log integrity is ensured through immutable storage or cryptographic signing.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'monitoring',
+					name: 'Monitoring',
+					activities: [
+						{ level: 1, title: 'Alerting on security-relevant events', description: 'Alerts are configured for critical security events and anomalies.', detect: (p) => !!p?.branch_protection_enabled, tags: [] },
+						{ level: 2, title: 'Vulnerability tracking and dashboard', description: 'Vulnerabilities are tracked in a centralized dashboard with SLA tracking.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: [] },
+						{ level: 3, title: 'Proactive security monitoring', description: 'Real-time security monitoring with automated threat detection.', detect: () => false, tags: [] },
+						{ level: 4, title: 'Advanced threat detection', description: 'ML-based or behavioral analysis for advanced threat detection.', detect: () => false, tags: [] }
+					]
+				}
+			]
+		},
+		{
+			id: 'implementation',
+			name: 'Implementation',
+			icon: '🔧',
+			description: 'Application and infrastructure hardening practices',
+			subDimensions: [
+				{
+					id: 'application_hardening',
+					name: 'Application Hardening',
+					activities: [
+						{ level: 1, title: 'Dependency management', description: 'Third-party dependencies are tracked and managed.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['sca'] },
+						{ level: 1, title: 'Secret management', description: 'Secrets are detected and prevented from leaking into source code.', detect: (p) => (p?.secret_scanning_tools?.length || 0) > 0, tags: ['secret'] },
+						{ level: 2, title: 'Dependency vulnerability scanning', description: 'Dependencies are continuously scanned for known vulnerabilities.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['sca', 'scanning'] },
+						{ level: 2, title: 'Pre-commit hooks for security', description: 'Pre-commit hooks enforce security checks before code is committed.', detect: (p) => !!p?.has_precommit_hooks, tags: [] },
+						{ level: 3, title: 'Supply chain security', description: 'Software supply chain integrity is verified (signed deps, verified registries).', detect: (p) => !!p?.signed_commits_required, tags: [] },
+						{ level: 4, title: 'Automated dependency remediation', description: 'Vulnerable dependencies are automatically patched or updated.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'infrastructure_hardening',
+					name: 'Infrastructure Hardening',
+					activities: [
+						{ level: 1, title: 'Defined security baselines', description: 'Security baselines for infrastructure are documented and enforced.', detect: (p) => !!p?.branch_protection_enabled, tags: [] },
+						{ level: 2, title: 'Container image scanning', description: 'Container images are scanned for vulnerabilities before deployment.', detect: (p) => (p?.container_scanning_tools?.length || 0) > 0, tags: ['container'] },
+						{ level: 2, title: 'Infrastructure as Code (IaC) scanning', description: 'IaC templates are scanned for security misconfigurations.', detect: (p) => (p?.sast_tools?.length || 0) > 0, tags: ['sast'] },
+						{ level: 3, title: 'Runtime protection', description: 'Runtime application protection (RASP, WAF) is deployed.', detect: () => false, tags: [] },
+						{ level: 4, title: 'Immutable infrastructure', description: 'Infrastructure is immutable — changes require rebuild, not in-place modification.', detect: () => false, tags: [] }
+					]
+				}
+			]
+		},
+		{
+			id: 'test_verification',
+			name: 'Test and Verification',
+			icon: '🔍',
+			description: 'Security testing at various depths and stages',
+			subDimensions: [
+				{
+					id: 'static_analysis',
+					name: 'Static Depth for Applications',
+					activities: [
+						{ level: 1, title: 'SAST (Static Application Security Testing)', description: 'Static code analysis tools scan source code for vulnerabilities.', detect: (p) => (p?.sast_tools?.length || 0) > 0, tags: ['sast'] },
+						{ level: 2, title: 'Custom SAST rules', description: 'Custom rules are configured for organization-specific security patterns.', detect: (p) => (p?.sast_tools?.length || 0) > 1, tags: ['sast'] },
+						{ level: 3, title: 'SAST in CI/CD pipeline', description: 'SAST is integrated into the CI/CD pipeline and blocks on critical findings.', detect: (p) => (p?.sast_tools?.length || 0) > 0 && (p?.repos_with_workflows || 0) > 0, tags: ['sast'] },
+						{ level: 4, title: 'Advanced SAST with taint analysis', description: 'Advanced SAST techniques like taint analysis and data-flow analysis are used.', detect: () => false, tags: ['sast'] }
+					]
+				},
+				{
+					id: 'dynamic_analysis',
+					name: 'Dynamic Depth for Applications',
+					activities: [
+						{ level: 1, title: 'DAST (Dynamic Application Security Testing)', description: 'Dynamic scanning tools test running applications for vulnerabilities.', detect: (p) => (p?.dast_tools?.length || 0) > 0, tags: ['dast'] },
+						{ level: 2, title: 'Authenticated DAST scans', description: 'DAST scans include authenticated sessions to test protected endpoints.', detect: (p) => (p?.dast_tools?.length || 0) > 0, tags: ['dast'] },
+						{ level: 3, title: 'DAST in CI/CD pipeline', description: 'DAST is integrated into the CI/CD pipeline with automated test environments.', detect: (p) => (p?.dast_tools?.length || 0) > 0 && (p?.repos_with_workflows || 0) > 0, tags: ['dast'] }
+					]
+				},
+				{
+					id: 'sca',
+					name: 'Software Composition Analysis',
+					activities: [
+						{ level: 1, title: 'SCA scanning', description: 'Dependencies are scanned for known vulnerabilities using SCA tools.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['sca'] },
+						{ level: 2, title: 'License compliance checking', description: 'Open-source licenses are checked for compliance requirements.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['sca'] },
+						{ level: 3, title: 'Continuous SCA monitoring', description: 'Dependencies are continuously monitored for new vulnerabilities post-deployment.', detect: (p) => (p?.sca_tools?.length || 0) > 0, tags: ['sca'] }
+					]
+				},
+				{
+					id: 'test_intensity',
+					name: 'Test Intensity',
+					activities: [
+						{ level: 1, title: 'Security unit tests', description: 'Unit tests include security-focused test cases.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 2, title: 'Integration security tests', description: 'Integration tests validate security controls across components.', detect: (p) => (p?.has_pr_workflows), tags: [] },
+						{ level: 3, title: 'Penetration testing', description: 'Regular penetration tests are conducted by qualified testers.', detect: () => false, tags: [] },
+						{ level: 4, title: 'Bug bounty program', description: 'A public or private bug bounty program incentivizes external security research.', detect: () => false, tags: [] }
+					]
+				},
+				{
+					id: 'consolidation',
+					name: 'Consolidation',
+					activities: [
+						{ level: 1, title: 'Centralized finding tracking', description: 'Security findings from all tools are tracked in a single system.', detect: (p) => (p?.repos_with_workflows || 0) > 0, tags: [] },
+						{ level: 2, title: 'Finding deduplication and correlation', description: 'Duplicate findings are merged and correlated across tools.', detect: () => false, tags: [] },
+						{ level: 3, title: 'Risk-based prioritization', description: 'Findings are prioritized based on business risk and exploitability.', detect: () => false, tags: [] }
+					]
+				}
+			]
+		}
+	];
+
+	// ──── DSOMM tab state ────
+	let dsommSelectedDimension = dsommFullModel[0].id;
+	let dsommExpandedSubs = new Set();
+
+	function toggleDsommSub(subId) {
+		if (dsommExpandedSubs.has(subId)) {
+			dsommExpandedSubs.delete(subId);
+		} else {
+			dsommExpandedSubs.add(subId);
+		}
+		dsommExpandedSubs = dsommExpandedSubs;
+	}
+
+	function getDsommDimensionSummary(dimension, practices) {
+		let total = 0;
+		let met = 0;
+		for (const sub of dimension.subDimensions) {
+			for (const act of sub.activities) {
+				total++;
+				if (act.detect(practices)) met++;
+			}
+		}
+		return { total, met, pct: total > 0 ? Math.round((met / total) * 100) : 0 };
+	}
+
+	function getSubDimensionSummary(sub, practices) {
+		let total = 0;
+		let met = 0;
+		let maxLevel = 0;
+		for (const act of sub.activities) {
+			total++;
+			if (act.detect(practices)) {
+				met++;
+				if (act.level > maxLevel) maxLevel = act.level;
+			}
+		}
+		return { total, met, pct: total > 0 ? Math.round((met / total) * 100) : 0, maxLevel };
+	}
 
 	onMount(async () => {
 		console.log('[MOUNT] Intelligence page mounted for org:', org);
@@ -947,77 +1197,207 @@
 							</div>
 						{/if}
 
-						<!-- ===== DSOMM TAB ===== -->
-					{:else if activeTab === 'dsomm'}
-						<div class="intel-card">
-							<h2 class="card-heading">OWASP DSOMM Maturity Levels</h2>
-							<div class="dsomm-table-wrap">
-								<table class="dsomm-table">
-									<thead>
-										<tr>
-											<th>Dimension</th>
-											{#each [0, 1, 2, 3, 4] as level}
-												<th class="level-th">L{level}</th>
-											{/each}
-										</tr>
-									</thead>
-									<tbody>
-										{#each dsommDimensions as dimension}
-											{@const currentLevel = calculateDimensionLevel(
-												dimension,
-												analysisData.detected_practices
-											)}
-											<tr>
-												<td>
-													<div class="dim-cell">
-														<span class="dim-icon">{dimension.icon}</span>
-														<div>
-															<div class="dim-name">{dimension.name}</div>
-															<div class="dim-desc">{dimension.description}</div>
-														</div>
-													</div>
-												</td>
-												{#each [0, 1, 2, 3, 4] as level}
-													<td class="level-cell">
-														<div
-															class="level-dot {level <= currentLevel ? 'filled' : 'empty'}"
-															style="--dot-color: {levelConfig[level].color}"
-														></div>
-													</td>
-												{/each}
-											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
-						</div>
+					<!-- ===== DSOMM TAB ===== -->
+				{:else if activeTab === 'dsomm'}
 
-						<div class="dimension-grid">
-							{#each dsommDimensions as dimension}
-								{@const currentLevel = calculateDimensionLevel(
-									dimension,
-									analysisData.detected_practices
-								)}
-								{@const levelInfo = levelConfig[currentLevel]}
-								<div class="intel-card compact">
-									<div class="dim-card-header">
-										<div class="dim-card-title">
-											<span>{dimension.icon}</span>
-											<h3>{dimension.name}</h3>
-										</div>
-										<div class="dim-level-badge">Level {currentLevel}</div>
-									</div>
-									<div class="progress-track">
-										<div
-											class="progress-fill-bar"
-											style="width: {(currentLevel / 4) *
-												100}%; background-color: {levelInfo.color}"
-										></div>
-									</div>
-									<p class="dim-card-desc">{dimension.description}</p>
+					<!-- DSOMM Header -->
+					<div class="dsomm-hero">
+						<div class="dsomm-hero-top">
+							<div class="dsomm-hero-info">
+								<h2 class="dsomm-hero-title">OWASP DSOMM Assessment</h2>
+								<p class="dsomm-hero-subtitle">DevSecOps Maturity Model — comprehensive security posture evaluation across 5 dimensions, {dsommFullModel.reduce((s, d) => s + d.subDimensions.length, 0)} sub-dimensions, and {dsommFullModel.reduce((s, d) => s + d.subDimensions.reduce((ss, sub) => ss + sub.activities.length, 0), 0)} activities</p>
+							</div>
+							<a href="https://dsomm.owasp.org" target="_blank" rel="noopener noreferrer" class="dsomm-ext-link">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+								dsomm.owasp.org
+							</a>
+						</div>
+						<!-- Level Legend -->
+						<div class="dsomm-legend">
+							{#each [1, 2, 3, 4] as lvl}
+								<div class="legend-item">
+									<div class="legend-dot" style="background-color: {levelConfig[lvl].color}"></div>
+									<span class="legend-label">L{lvl}</span>
+									<span class="legend-text">{dsommLevelLabels[lvl].split('\u2014')[1]?.trim() || ''}</span>
 								</div>
 							{/each}
 						</div>
+					</div>
+
+					<!-- Dimension Navigator Tabs -->
+					<div class="dsomm-dim-nav">
+						{#each dsommFullModel as dim}
+							{@const summary = getDsommDimensionSummary(dim, analysisData?.detected_practices)}
+							<button
+								class="dsomm-dim-tab {dsommSelectedDimension === dim.id ? 'active' : ''}"
+								onclick={() => dsommSelectedDimension = dim.id}
+							>
+								<span class="dsomm-dim-tab-icon">{dim.icon}</span>
+								<div class="dsomm-dim-tab-info">
+									<span class="dsomm-dim-tab-name">{dim.name}</span>
+									<span class="dsomm-dim-tab-stat">{summary.met}/{summary.total} activities</span>
+								</div>
+								<div class="dsomm-dim-tab-pct" style="--pct-color: {summary.pct >= 60 ? 'var(--success)' : summary.pct >= 30 ? 'var(--warning)' : 'var(--text-muted)'}">
+									{summary.pct}%
+								</div>
+							</button>
+						{/each}
+					</div>
+
+					<!-- Selected Dimension Detail -->
+					{#each dsommFullModel.filter(d => d.id === dsommSelectedDimension) as dim}
+						{@const dimSummary = getDsommDimensionSummary(dim, analysisData?.detected_practices)}
+						<div class="dsomm-dim-detail">
+							<!-- Dimension Overview Card -->
+							<div class="dsomm-dim-overview">
+								<div class="dsomm-dim-overview-left">
+									<div class="dsomm-dim-overview-icon">{dim.icon}</div>
+									<div>
+										<h3 class="dsomm-dim-overview-title">{dim.name}</h3>
+										<p class="dsomm-dim-overview-desc">{dim.description}</p>
+									</div>
+								</div>
+								<div class="dsomm-dim-overview-right">
+									<div class="dsomm-dim-ring">
+										<svg viewBox="0 0 36 36" class="dsomm-ring-svg">
+											<path class="dsomm-ring-bg" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" />
+											<path class="dsomm-ring-fill" stroke-dasharray="{dimSummary.pct}, 100" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" />
+										</svg>
+										<span class="dsomm-ring-text">{dimSummary.pct}%</span>
+									</div>
+									<div class="dsomm-dim-stat-group">
+										<div class="dsomm-dim-stat-item">
+											<span class="dsomm-dim-stat-num">{dimSummary.met}</span>
+											<span class="dsomm-dim-stat-lbl">Met</span>
+										</div>
+										<div class="dsomm-dim-stat-item">
+											<span class="dsomm-dim-stat-num">{dimSummary.total - dimSummary.met}</span>
+											<span class="dsomm-dim-stat-lbl">Remaining</span>
+										</div>
+										<div class="dsomm-dim-stat-item">
+											<span class="dsomm-dim-stat-num">{dim.subDimensions.length}</span>
+											<span class="dsomm-dim-stat-lbl">Sub-dimensions</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Sub-dimensions -->
+							<div class="dsomm-subs">
+								{#each dim.subDimensions as sub}
+									{@const subSummary = getSubDimensionSummary(sub, analysisData?.detected_practices)}
+									<div class="dsomm-sub-card {dsommExpandedSubs.has(sub.id) ? 'expanded' : ''}">
+										<button class="dsomm-sub-header" onclick={() => toggleDsommSub(sub.id)}>
+											<div class="dsomm-sub-header-left">
+												<h4 class="dsomm-sub-name">{sub.name}</h4>
+												<div class="dsomm-sub-meta">
+													<span class="dsomm-sub-count">{subSummary.met}/{subSummary.total} activities</span>
+													{#if subSummary.maxLevel > 0}
+														<span class="dsomm-sub-level-tag" style="background-color: {levelConfig[subSummary.maxLevel]?.color}20; color: {levelConfig[subSummary.maxLevel]?.color}; border-color: {levelConfig[subSummary.maxLevel]?.color}40">
+															Reached L{subSummary.maxLevel}
+														</span>
+													{/if}
+												</div>
+											</div>
+											<div class="dsomm-sub-header-right">
+												<div class="dsomm-sub-pct-bar">
+													<div class="dsomm-sub-pct-fill" style="width: {subSummary.pct}%; background: {subSummary.pct >= 60 ? 'var(--success)' : subSummary.pct >= 30 ? 'var(--warning)' : 'var(--text-muted)'}"></div>
+												</div>
+												<span class="dsomm-sub-pct-num">{subSummary.pct}%</span>
+												<svg class="chevron {dsommExpandedSubs.has(sub.id) ? 'open' : ''}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+											</div>
+										</button>
+
+										{#if dsommExpandedSubs.has(sub.id)}
+											<div class="dsomm-activities">
+												{#each [1, 2, 3, 4] as level}
+													{@const levelActivities = sub.activities.filter(a => a.level === level)}
+													{#if levelActivities.length > 0}
+														<div class="dsomm-level-group">
+															<div class="dsomm-level-header">
+																<div class="dsomm-level-indicator" style="background-color: {levelConfig[level]?.color}"></div>
+																<span class="dsomm-level-label">Level {level}</span>
+																<span class="dsomm-level-desc">{dsommLevelLabels[level]?.split('\u2014')[1]?.trim() || ''}</span>
+															</div>
+															<div class="dsomm-activity-list">
+																{#each levelActivities as activity}
+																	{@const isMet = activity.detect(analysisData?.detected_practices)}
+																	<div class="dsomm-activity-row {isMet ? 'met' : 'unmet'}">
+																		<div class="dsomm-activity-status">
+																			{#if isMet}
+																				<svg class="dsomm-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+																			{:else}
+																				<div class="dsomm-empty-circle"></div>
+																			{/if}
+																		</div>
+																		<div class="dsomm-activity-info">
+																			<span class="dsomm-activity-title">{activity.title}</span>
+																			<span class="dsomm-activity-desc">{activity.description}</span>
+																		</div>
+																		{#if activity.tags.length > 0}
+																			<div class="dsomm-activity-tags">
+																				{#each activity.tags as tag}
+																					<span class="dsomm-tag">{tag}</span>
+																				{/each}
+																			</div>
+																		{/if}
+																	</div>
+																{/each}
+															</div>
+														</div>
+													{/if}
+												{/each}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/each}
+
+					<!-- Original Summary Table (preserved) -->
+					<div class="intel-card" style="margin-top: 1.5rem;">
+						<h2 class="card-heading">Maturity Summary Table</h2>
+						<div class="dsomm-table-wrap">
+							<table class="dsomm-table">
+								<thead>
+									<tr>
+										<th>Dimension</th>
+										{#each [0, 1, 2, 3, 4] as level}
+											<th class="level-th">L{level}</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody>
+									{#each dsommDimensions as dimension}
+										{@const currentLevel = calculateDimensionLevel(
+											dimension,
+											analysisData.detected_practices
+										)}
+										<tr>
+											<td>
+												<div class="dim-cell">
+													<span class="dim-icon">{dimension.icon}</span>
+													<div>
+														<div class="dim-name">{dimension.name}</div>
+														<div class="dim-desc">{dimension.description}</div>
+													</div>
+												</div>
+											</td>
+											{#each [0, 1, 2, 3, 4] as level}
+												<td class="level-cell">
+													<div
+														class="level-dot {level <= currentLevel ? 'filled' : 'empty'}"
+														style="--dot-color: {levelConfig[level].color}"
+													></div>
+												</td>
+											{/each}
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					</div>
 
 						<!-- ===== REPOSITORIES TAB ===== -->
 					{:else if activeTab === 'repositories'}
@@ -2175,10 +2555,10 @@
 		gap: 0.5rem;
 	}
 
-	.dim-card-title h3 {
+	/* .dim-card-title h3 {
 		font-size: 0.875rem;
 		font-weight: 700;
-	}
+	} */
 
 	.dim-level-badge {
 		font-family: var(--font-mono);
@@ -2780,4 +3160,557 @@
 			padding: 0 1rem;
 		}
 	}
+	/* ============================================
+	   COMPREHENSIVE DSOMM SECTION
+	   ============================================ */
+
+	/* Hero Header */
+	.dsomm-hero {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1.5rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.dsomm-hero-top {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.dsomm-hero-title {
+		font-size: 1.125rem;
+		font-weight: 800;
+		letter-spacing: -0.02em;
+		margin-bottom: 0.375rem;
+	}
+
+	.dsomm-hero-subtitle {
+		font-size: 0.8125rem;
+		color: var(--text-secondary);
+		line-height: 1.5;
+		max-width: 640px;
+	}
+
+	.dsomm-ext-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--accent);
+		text-decoration: none;
+		border: 1px solid var(--border);
+		padding: 0.375rem 0.75rem;
+		border-radius: 6px;
+		white-space: nowrap;
+		transition: all 0.15s;
+		flex-shrink: 0;
+	}
+
+	.dsomm-ext-link:hover {
+		background: var(--accent-soft);
+		border-color: var(--accent);
+	}
+
+	/* Level Legend */
+	.dsomm-legend {
+		display: flex;
+		gap: 1.5rem;
+		flex-wrap: wrap;
+		padding-top: 1rem;
+		border-top: 1px solid var(--border);
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+
+	.legend-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	.legend-label {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.legend-text {
+		font-size: 0.7rem;
+		color: var(--text-secondary);
+	}
+
+	/* Dimension Navigator Tabs */
+	.dsomm-dim-nav {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 0.5rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.dsomm-dim-tab {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		padding: 0.875rem;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		cursor: pointer;
+		transition: all 0.2s var(--ease-premium);
+		text-align: left;
+		font-family: var(--font-sans);
+		color: var(--text-primary);
+	}
+
+	.dsomm-dim-tab:hover {
+		border-color: var(--border-focus);
+		transform: translateY(-1px);
+	}
+
+	.dsomm-dim-tab.active {
+		border-color: var(--accent);
+		background: var(--accent-soft);
+	}
+
+	.dsomm-dim-tab-icon {
+		font-size: 1.25rem;
+		flex-shrink: 0;
+	}
+
+	.dsomm-dim-tab-info {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.dsomm-dim-tab-name {
+		display: block;
+		font-size: 0.75rem;
+		font-weight: 700;
+		line-height: 1.3;
+		margin-bottom: 0.125rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.dsomm-dim-tab-stat {
+		display: block;
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		color: var(--text-muted);
+	}
+
+	.dsomm-dim-tab-pct {
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--pct-color, var(--text-muted));
+		flex-shrink: 0;
+	}
+
+	/* Dimension Detail */
+	.dsomm-dim-detail {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	/* Dimension Overview Card */
+	.dsomm-dim-overview {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 1.5rem;
+		gap: 2rem;
+	}
+
+	.dsomm-dim-overview-left {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.dsomm-dim-overview-icon {
+		font-size: 2rem;
+		flex-shrink: 0;
+	}
+
+	.dsomm-dim-overview-title {
+		font-size: 1.125rem;
+		font-weight: 800;
+		letter-spacing: -0.02em;
+		margin-bottom: 0.25rem;
+	}
+
+	.dsomm-dim-overview-desc {
+		font-size: 0.8125rem;
+		color: var(--text-secondary);
+	}
+
+	.dsomm-dim-overview-right {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		flex-shrink: 0;
+	}
+
+	/* Ring Chart */
+	.dsomm-dim-ring {
+		position: relative;
+		width: 64px;
+		height: 64px;
+		flex-shrink: 0;
+	}
+
+	.dsomm-ring-svg {
+		width: 100%;
+		height: 100%;
+		transform: rotate(-90deg);
+	}
+
+	.dsomm-ring-bg {
+		fill: none;
+		stroke: var(--border);
+		stroke-width: 3;
+	}
+
+	.dsomm-ring-fill {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 3;
+		stroke-linecap: round;
+		transition: stroke-dasharray 0.6s var(--ease-premium);
+	}
+
+	.dsomm-ring-text {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--accent);
+	}
+
+	/* Dimension Stat Group */
+	.dsomm-dim-stat-group {
+		display: flex;
+		gap: 1.25rem;
+	}
+
+	.dsomm-dim-stat-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+	}
+
+	.dsomm-dim-stat-num {
+		font-family: var(--font-mono);
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.dsomm-dim-stat-lbl {
+		font-size: 0.6rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	/* Sub-dimension Cards */
+	.dsomm-subs {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.dsomm-sub-card {
+		background: var(--bg-surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		overflow: hidden;
+		transition: border-color 0.2s;
+	}
+
+	.dsomm-sub-card.expanded {
+		border-color: var(--border-focus);
+	}
+
+	.dsomm-sub-header {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.875rem 1.25rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		font-family: var(--font-sans);
+		color: var(--text-primary);
+		transition: background 0.15s;
+	}
+
+	.dsomm-sub-header:hover {
+		background: var(--bg-surface-alt);
+	}
+
+	.dsomm-sub-header-left {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.dsomm-sub-name {
+		font-size: 0.875rem;
+		font-weight: 700;
+		margin-bottom: 0.25rem;
+	}
+
+	.dsomm-sub-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.dsomm-sub-count {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		color: var(--text-secondary);
+	}
+
+	.dsomm-sub-level-tag {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 600;
+		padding: 0.125rem 0.375rem;
+		border-radius: 3px;
+		border: 1px solid;
+	}
+
+	.dsomm-sub-header-right {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex-shrink: 0;
+	}
+
+	.dsomm-sub-pct-bar {
+		width: 80px;
+		height: 4px;
+		background: var(--bg-surface-alt);
+		border-radius: 2px;
+		overflow: hidden;
+	}
+
+	.dsomm-sub-pct-fill {
+		height: 100%;
+		border-radius: 2px;
+		transition: width 0.5s var(--ease-premium);
+	}
+
+	.dsomm-sub-pct-num {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: var(--text-secondary);
+		min-width: 2.5rem;
+		text-align: right;
+	}
+
+	/* Activity Section */
+	.dsomm-activities {
+		border-top: 1px solid var(--border);
+		padding: 0.5rem 0;
+	}
+
+	.dsomm-level-group {
+		padding: 0.5rem 1.25rem;
+	}
+
+	.dsomm-level-group + .dsomm-level-group {
+		border-top: 1px solid var(--border);
+	}
+
+	.dsomm-level-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0;
+		margin-bottom: 0.25rem;
+	}
+
+	.dsomm-level-indicator {
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	.dsomm-level-label {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.dsomm-level-desc {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+	}
+
+	.dsomm-activity-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.dsomm-activity-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		padding: 0.5rem 0.625rem;
+		border-radius: 6px;
+		transition: background 0.15s;
+	}
+
+	.dsomm-activity-row:hover {
+		background: var(--bg-surface-alt);
+	}
+
+	.dsomm-activity-row.met {
+		opacity: 1;
+	}
+
+	.dsomm-activity-row.unmet {
+		opacity: 0.55;
+	}
+
+	.dsomm-activity-row.unmet:hover {
+		opacity: 0.8;
+	}
+
+	.dsomm-activity-status {
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-top: 1px;
+	}
+
+	.dsomm-check-icon {
+		color: var(--success);
+	}
+
+	.dsomm-empty-circle {
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		border: 1.5px solid var(--text-muted);
+		opacity: 0.4;
+	}
+
+	.dsomm-activity-info {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.dsomm-activity-title {
+		display: block;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		line-height: 1.3;
+		margin-bottom: 0.125rem;
+	}
+
+	.dsomm-activity-desc {
+		display: block;
+		font-size: 0.7rem;
+		color: var(--text-secondary);
+		line-height: 1.4;
+	}
+
+	.dsomm-activity-tags {
+		display: flex;
+		gap: 0.25rem;
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.dsomm-tag {
+		font-family: var(--font-mono);
+		font-size: 0.55rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		background: var(--bg-surface-alt);
+		padding: 0.125rem 0.375rem;
+		border-radius: 3px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	/* ============================================
+	   DSOMM RESPONSIVE
+	   ============================================ */
+	@media (max-width: 1200px) {
+		.dsomm-dim-nav {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		.dsomm-dim-overview {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.dsomm-dim-overview-right {
+			width: 100%;
+			justify-content: flex-start;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.dsomm-dim-nav {
+			grid-template-columns: 1fr;
+		}
+
+		.dsomm-hero-top {
+			flex-direction: column;
+		}
+
+		.dsomm-dim-stat-group {
+			gap: 0.75rem;
+		}
+
+		.dsomm-sub-pct-bar {
+			display: none;
+		}
+
+		.dsomm-legend {
+			gap: 0.75rem;
+		}
+	}
+
 </style>
