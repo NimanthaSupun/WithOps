@@ -93,6 +93,7 @@ uploads/
 uploads/*
 !uploads/.gitkeep
 documents/
+doc/
 temp/
 tmp/
 
