@@ -23,9 +23,9 @@ class ClaudeAIClient:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         
         self.client = Anthropic(api_key=self.api_key)
-        # Using Claude 3 Opus - stable model that should be available
-        # If this fails, check your Anthropic API tier/access
-        self.model = "claude-3-opus-20240229"
+        # Use env var for model selection (allows overriding without code changes)
+        # Default: claude-sonnet-4-20250514 (latest stable model)
+        self.model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
         self.max_tokens = 4000
         
     async def analyze_threats(self, request: Dict[str, Any]) -> Dict[str, Any]:

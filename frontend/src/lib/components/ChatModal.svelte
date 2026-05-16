@@ -46,7 +46,7 @@
 	});
 
 	async function initializeChat() {
-		authToken = $page.data.user?.accessToken || localStorage.getItem('auth_token');
+		authToken = $page.data.user?.accessToken || localStorage.getItem('auth0_token') || localStorage.getItem('auth_token');
 		if (!authToken) {
 			errorMessage = 'Please log in to use the AI Assistant';
 			return;
@@ -600,7 +600,7 @@
 						</div>
 					{:else}
 						<div class="messages-list">
-							{#each messages as message (message.timestamp)}
+							{#each messages as message, msgIdx (msgIdx)}
 								<div
 									class="message-wrapper {message.role}"
 									in:fly={{ y: 20, duration: 300, delay: 50 }}
@@ -686,7 +686,7 @@
 															View Sources ({message.sources.length})
 														</summary>
 														<div class="sources-list">
-															{#each message.sources as source (source.file ?? source.analysis_type)}
+															{#each message.sources as source, srcIdx (srcIdx)}
 																<div class="source-item">
 																	{#if source.type === 'workflow'}
 																		<div class="source-icon">
@@ -711,10 +711,10 @@
 																				<div class="relevance-bar">
 																					<div
 																						class="relevance-fill"
-																						style="width: {source.relevance * 100}%"
+																						style="width: {parseFloat(source.relevance) * 100}%"
 																					></div>
 																				</div>
-																				<span>{(source.relevance * 100).toFixed(0)}%</span>
+																				<span>{(parseFloat(source.relevance) * 100).toFixed(0)}%</span>
 																			</div>
 																		</div>
 																	{:else if source.type === 'analysis'}
@@ -739,10 +739,10 @@
 																				<div class="relevance-bar">
 																					<div
 																						class="relevance-fill"
-																						style="width: {source.relevance * 100}%"
+																						style="width: {parseFloat(source.relevance) * 100}%"
 																					></div>
 																				</div>
-																				<span>{(source.relevance * 100).toFixed(0)}%</span>
+																				<span>{(parseFloat(source.relevance) * 100).toFixed(0)}%</span>
 																			</div>
 																		</div>
 																	{/if}
